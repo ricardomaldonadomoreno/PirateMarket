@@ -17,7 +17,7 @@ export default function Navbar({ user }) {
     <nav className="navbar">
       <div className="navbar-container">
         <Link to="/" className="navbar-logo">
-          <span className="logo-icon">🏴‍☠️</span>
+          <img src="/logo-icon.svg" alt="Pirata Market" className="logo-icon" />
           <div className="logo-text">
             <span className="logo-brand luxury-gold">pirata</span>
             <span className="logo-suffix">market</span>
