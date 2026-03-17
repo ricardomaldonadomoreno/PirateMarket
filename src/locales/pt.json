@@ -106,9 +106,17 @@
   "email_sent": "Verifique seu email para confirmar sua conta",
   "email_not_confirmed": "Você deve confirmar seu email antes de fazer login",
   "check_inbox": "Verifique sua caixa de entrada"
-  "email_sent": "تحقق من بريدك الإلكتروني لتأكيد حسابك",
-  "email_not_confirmed": "يجب عليك تأكيد بريدك الإلكتروني قبل تسجيل الدخول",
-  "check_inbox": "تحقق من صندوق الوارد"
+  "email_sent": "Verifique seu email para confirmar sua conta",
+  "email_not_confirmed": "Você deve confirmar seu email antes de fazer login",
+  "check_inbox": "Verifique sua caixa de entrada"
+  "email_sent_title": "Verifique seu email!",
+  "email_sent_message": "Enviamos um email de confirmação para",
+  "step_1": "Abra sua caixa de entrada (verifique o spam também)",
+  "step_2": "Procure o email do Pirata Market",
+  "step_3": "Clique no botão de confirmação",
+  "resend_email": "Reenviar email",
+  "resending": "Reenviando...",
+  "back_to_login": "Voltar ao login"
   },
   
   "dashboard": {
