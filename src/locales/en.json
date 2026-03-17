@@ -102,10 +102,18 @@
   "error_name": "Name must be at least 2 characters",
   "error_whatsapp": "Invalid WhatsApp",
   "password_hint": "Minimum 6 characters",
-  "pirate_notice": "You can also publish without an account as a Pirate (72h)"
+  "pirate_notice": "You can also publish without an account as a Pirate (72h)",
   "email_sent": "Check your email to confirm your account",
   "email_not_confirmed": "You must confirm your email before signing in",
-  "check_inbox": "Check your inbox"
+  "check_inbox": "Check your inbox",
+  "email_sent_title": "Check your email!",
+  "email_sent_message": "We sent a confirmation email to",
+  "step_1": "Open your inbox (check spam too)",
+  "step_2": "Look for the email from Pirata Market",
+  "step_3": "Click the confirmation button",
+  "resend_email": "Resend email",
+  "resending": "Resending...",
+  "back_to_login": "Back to login"
   },
   
   "dashboard": {
