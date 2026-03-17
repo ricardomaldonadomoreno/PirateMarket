@@ -1,0 +1,209 @@
+{
+  "brand": {
+    "name": "سوق القراصنة",
+    "tagline": "التجارة بدون وسطاء",
+    "by": "خدمة من تطبيق الحافلات"
+  },
+  
+  "navbar": {
+    "publish": "نشر",
+    "login": "تسجيل الدخول",
+    "logout": "تسجيل الخروج",
+    "dashboard": "لوحة التحكم",
+    "language": "اللغة"
+  },
+  
+  "home": {
+    "title": "ابحث عما تريد",
+    "no_results": "لم يتم العثور على إعلانات",
+    "loading": "جاري تحميل الإعلانات...",
+    "filters": {
+      "title": "الفلاتر",
+      "categories": "الفئات",
+      "all": "الكل",
+      "price": "السعر",
+      "min": "الحد الأدنى",
+      "max": "الحد الأقصى",
+      "seller_type": "نوع البائع",
+      "pirates": "القراصنة",
+      "verified": "موثق",
+      "shops": "المتاجر",
+      "only_pirates": "القراصنة فقط"
+    }
+  },
+  
+  "listing": {
+    "create": {
+      "title_pirate": "نشر سريع (بدون تسجيل)",
+      "title_registered": "نشر إعلان",
+      "pirate_notice": "سيستمر إعلانك لمدة 72 ساعة",
+      "pirate_upgrade": "تريد إعلانات دائمة؟ أنشئ حساباً",
+      "fields": {
+        "title": "العنوان",
+        "title_placeholder": "مثال: آيفون 13 برو 256 جيجابايت",
+        "price": "السعر",
+        "category": "الفئة",
+        "description": "الوصف",
+        "description_placeholder": "صف منتجك وأضف جهة اتصالك (واتساب، تيليجرام، إلخ)",
+        "photos": "الصور (حد أقصى 5)",
+        "video": "فيديو (3-6 ثواني)",
+        "whatsapp": "واتساب",
+        "accepts_offers": "أقبل العروض",
+        "location": "الموقع"
+      },
+      "location": {
+        "title": "أين تريد أن يظهر إعلانك؟",
+        "entire_city": "المدينة بأكملها",
+        "custom_radius": "نطاق مخصص",
+        "draw_zone": "رسم المنطقة"
+      },
+      "submit": "نشر",
+      "submit_pirate": "نشر 72 ساعة",
+      "cancel": "إلغاء",
+      "success": "تم نشر الإعلان!",
+      "error": "خطأ في النشر"
+    },
+    "detail": {
+      "contact_whatsapp": "اتصل عبر واتساب",
+      "share": "مشاركة",
+      "report": "إبلاغ",
+      "expires_in": "ينتهي في",
+      "published": "نُشر",
+      "views": "مشاهدة",
+      "contacts": "جهات اتصال",
+      "seller": "البائع",
+      "member_since": "عضو منذ",
+      "active_listings": "إعلانات نشطة",
+      "view_all": "عرض جميع الإعلانات"
+    }
+  },
+  
+  "auth": {
+    "login": "تسجيل الدخول",
+    "signup": "إنشاء حساب",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "display_name": "الاسم أو اللقب",
+    "whatsapp": "واتساب",
+    "account_type": "نوع الحساب",
+    "person": "شخص",
+    "shop": "متجر",
+    "wholesale": "جملة",
+    "forgot": "هل نسيت كلمة المرور؟",
+    "no_account": "ليس لديك حساب؟",
+    "have_account": "لديك حساب بالفعل؟",
+    "register_here": "سجل هنا",
+    "login_here": "سجل الدخول هنا",
+    "submit": "متابعة",
+    "logging_in": "جاري تسجيل الدخول...",
+    "signing_up": "جاري إنشاء الحساب..."
+  },
+  
+  "dashboard": {
+    "title": "لوحة التحكم",
+    "my_listings": "إعلاناتي",
+    "stats": {
+      "total_views": "إجمالي المشاهدات",
+      "total_contacts": "إجمالي جهات الاتصال",
+      "active_listings": "الإعلانات النشطة"
+    },
+    "listing_status": {
+      "active": "نشط",
+      "paused": "متوقف مؤقتاً",
+      "sold": "مباع",
+      "deleted": "محذوف"
+    },
+    "actions": {
+      "edit": "تعديل",
+      "pause": "إيقاف مؤقت",
+      "activate": "تفعيل",
+      "delete": "حذف",
+      "mark_sold": "وضع علامة كمباع",
+      "view": "عرض"
+    },
+    "no_listings": "ليس لديك إعلانات منشورة",
+    "create_first": "انشر إعلانك الأول"
+  },
+  
+  "admin": {
+    "title": "الإدارة",
+    "dashboard": "لوحة التحكم",
+    "users": "المستخدمون",
+    "listings": "الإعلانات",
+    "reports": "البلاغات",
+    "pirates": "إعلانات القراصنة",
+    "categories": "الفئات",
+    "settings": "الإعدادات",
+    "stats": {
+      "total_users": "إجمالي المستخدمين",
+      "total_listings": "إجمالي الإعلانات",
+      "pending_reports": "البلاغات المعلقة",
+      "pirate_listings": "إعلانات القراصنة النشطة"
+    },
+    "actions": {
+      "view": "عرض",
+      "edit": "تعديل",
+      "delete": "حذف",
+      "ban": "حظر",
+      "approve": "موافقة",
+      "reject": "رفض"
+    }
+  },
+  
+  "categories": {
+    "electronics": "إلكترونيات",
+    "vehicles": "مركبات",
+    "real_estate": "عقارات",
+    "furniture": "أثاث",
+    "clothing": "ملابس وإكسسوارات",
+    "services": "خدمات",
+    "food": "طعام",
+    "pets": "حيوانات أليفة",
+    "sports": "رياضة",
+    "home": "المنزل والحديقة",
+    "art": "فن ومقتنيات",
+    "books": "كتب",
+    "music": "آلات موسيقية",
+    "baby": "أطفال ورضع",
+    "beauty": "جمال وصحة",
+    "jobs": "وظائف",
+    "adult": "للبالغين +18"
+  },
+  
+  "badges": {
+    "pirate": "قرصان",
+    "verified": "موثق",
+    "shop": "متجر",
+    "wholesale": "جملة"
+  },
+  
+  "buttons": {
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "back": "رجوع",
+    "load_more": "تحميل المزيد",
+    "confirm": "تأكيد",
+    "close": "إغلاق"
+  },
+  
+  "messages": {
+    "success": "نجحت العملية",
+    "error": "حدث خطأ",
+    "confirm_delete": "هل أنت متأكد من الحذف؟",
+    "loading": "جاري التحميل...",
+    "no_data": "لا توجد بيانات متاحة",
+    "copied": "تم النسخ إلى الحافظة!",
+    "share_title": "مشاركة الإعلان"
+  },
+  
+  "time": {
+    "now": "الآن",
+    "minutes": "د",
+    "hours": "س",
+    "days": "ي",
+    "ago": "منذ"
+  }
+}
+```
