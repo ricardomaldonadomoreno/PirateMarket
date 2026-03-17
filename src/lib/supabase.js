@@ -107,7 +107,6 @@ export async function incrementViews(listingId) {
   const { error } = await supabase.rpc('increment_listing_views', {
     listing_uuid: listingId
   })
-
   if (error) console.error('Error incrementing views:', error)
 }
 
@@ -116,16 +115,15 @@ export async function incrementContacts(listingId) {
   const { error } = await supabase.rpc('increment_listing_contacts', {
     listing_uuid: listingId
   })
-
   if (error) console.error('Error incrementing contacts:', error)
 }
 
-// Get categories
+// Get categories - ✅ CORREGIDO
 export async function getCategories() {
   const { data, error } = await supabase
     .from('categories')
     .select('*')
-    .order('name')  // ✅ Ordenar por nombre (que SÍ existe)
+    .order('name')  // ✅ Solo ordenar por nombre
   
   if (error) throw error
   return data
@@ -136,6 +134,5 @@ export async function incrementShares(listingId) {
   const { error } = await supabase.rpc('increment_listing_shares', {
     listing_uuid: listingId
   })
-
   if (error) console.error('Error incrementing shares:', error)
 }
