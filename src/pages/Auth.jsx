@@ -11,7 +11,8 @@ export default function Auth() {
   const [mode, setMode] = useState('login') // 'login', 'signup', or 'email_sent'
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  const [userEmail, setUserEmail] = useState('') // Para mostrar en pantalla de confirmación
+  const [userEmail, setUserEmail] = useState('')
+  const [showPassword, setShowPassword] = useState(false) // NUEVO
   
   const [formData, setFormData] = useState({
     email: '',
@@ -39,7 +40,6 @@ export default function Auth() {
       })
 
       if (error) {
-        // Email no confirmado
         if (error.message.includes('Email not confirmed')) {
           setError(t('auth.email_not_confirmed'))
           setLoading(false)
@@ -48,7 +48,6 @@ export default function Auth() {
         throw error
       }
 
-      // Redirect to where they came from or dashboard
       const from = location.state?.from?.pathname || '/dashboard'
       navigate(from)
     } catch (err) {
@@ -64,7 +63,6 @@ export default function Auth() {
     setLoading(true)
     setError(null)
 
-    // Validation
     if (!formData.display_name || formData.display_name.length < 2) {
       setError(t('auth.error_name'))
       setLoading(false)
@@ -78,7 +76,6 @@ export default function Auth() {
     }
 
     try {
-      // Create auth user (con confirmación por email)
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -94,13 +91,9 @@ export default function Auth() {
 
       if (authError) throw authError
 
-      // Guardar email para mostrarlo en pantalla de confirmación
       setUserEmail(formData.email)
-      
-      // Cambiar a modo "email_sent"
       setMode('email_sent')
       
-      // Limpiar formulario
       setFormData({
         email: '',
         password: '',
@@ -117,7 +110,6 @@ export default function Auth() {
     }
   }
 
-  // Función para reenviar email de confirmación
   const handleResendEmail = async () => {
     setLoading(true)
     setError(null)
@@ -193,7 +185,7 @@ export default function Auth() {
             </div>
           )}
 
-          {/* TABS (Solo si no está en modo email_sent) */}
+          {/* TABS */}
           {mode !== 'email_sent' && (
             <>
               <div className="auth-tabs">
@@ -202,6 +194,7 @@ export default function Auth() {
                   onClick={() => {
                     setMode('login')
                     setError(null)
+                    setShowPassword(false)
                   }}
                 >
                   {t('auth.login')}
@@ -211,6 +204,7 @@ export default function Auth() {
                   onClick={() => {
                     setMode('signup')
                     setError(null)
+                    setShowPassword(false)
                   }}
                 >
                   {t('auth.signup')}
@@ -242,16 +236,26 @@ export default function Auth() {
 
                   <div className="form-group">
                     <label>{t('auth.password')}</label>
-                    <input
-                      type="password"
-                      name="password"
-                      className="input"
-                      placeholder="••••••••"
-                      value={formData.password}
-                      onChange={handleInputChange}
-                      required
-                      minLength={6}
-                    />
+                    <div className="password-input-wrapper">
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        name="password"
+                        className="input"
+                        placeholder="••••••••"
+                        value={formData.password}
+                        onChange={handleInputChange}
+                        required
+                        minLength={6}
+                      />
+                      <button
+                        type="button"
+                        className="password-toggle"
+                        onClick={() => setShowPassword(!showPassword)}
+                        aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                      >
+                        {showPassword ? '👁️' : '👁️‍🗨️'}
+                      </button>
+                    </div>
                   </div>
 
                   <button
@@ -329,16 +333,26 @@ export default function Auth() {
 
                   <div className="form-group">
                     <label>{t('auth.password')} *</label>
-                    <input
-                      type="password"
-                      name="password"
-                      className="input"
-                      placeholder="••••••••"
-                      value={formData.password}
-                      onChange={handleInputChange}
-                      required
-                      minLength={6}
-                    />
+                    <div className="password-input-wrapper">
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        name="password"
+                        className="input"
+                        placeholder="••••••••"
+                        value={formData.password}
+                        onChange={handleInputChange}
+                        required
+                        minLength={6}
+                      />
+                      <button
+                        type="button"
+                        className="password-toggle"
+                        onClick={() => setShowPassword(!showPassword)}
+                        aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                      >
+                        {showPassword ? '👁️' : '👁️‍🗨️'}
+                      </button>
+                    </div>
                     <p className="form-hint">{t('auth.password_hint')}</p>
                   </div>
 
