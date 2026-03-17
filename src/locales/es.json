@@ -126,6 +126,9 @@
     "error_whatsapp": "WhatsApp inválido",
     "password_hint": "Mínimo 6 caracteres",
     "pirate_notice": "También puedes publicar sin cuenta como Pirata (72h)"
+    "email_sent": "Revisa tu email para confirmar tu cuenta",
+    "email_not_confirmed": "Debes confirmar tu email antes de iniciar sesión",
+    "check_inbox": "Revisa tu bandeja de entrada"
   },
   
   "dashboard": {
