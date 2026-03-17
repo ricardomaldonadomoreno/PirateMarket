@@ -206,16 +206,3 @@
     "ago": "Há"
   }
 }
-```
-
----
-
-**✅ Copia esto y guárdalo como `pt.json` dentro de la carpeta `src/locales` en GitHub**
-
-**Estructura:**
-```
-src/
-└── locales/
-    ├── es.json  ✅
-    ├── en.json  ✅
-    └── pt.json  ← AQUÍ (Português)
