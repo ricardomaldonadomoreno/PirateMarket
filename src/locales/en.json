@@ -1,0 +1,197 @@
+{
+  "brand": {
+    "name": "PIRATA MARKET",
+    "tagline": "Trade without intermediaries",
+    "by": "A service by Buses App"
+  },
+  
+  "navbar": {
+    "publish": "Publish",
+    "login": "Sign In",
+    "logout": "Sign Out",
+    "dashboard": "My Panel",
+    "language": "Language"
+  },
+  
+  "home": {
+    "title": "Find what you're looking for",
+    "no_results": "No listings found",
+    "loading": "Loading listings...",
+    "filters": {
+      "title": "Filters",
+      "categories": "Categories",
+      "all": "All",
+      "price": "Price",
+      "min": "Min",
+      "max": "Max",
+      "seller_type": "Seller type",
+      "pirates": "Pirates",
+      "verified": "Verified",
+      "shops": "Shops",
+      "only_pirates": "Pirates Only"
+    }
+  },
+  
+  "listing": {
+    "create": {
+      "title_pirate": "Quick Publish (no registration)",
+      "title_registered": "Publish Listing",
+      "pirate_notice": "Your listing will last 72 hours",
+      "pirate_upgrade": "Want permanent listings? Create an account",
+      "fields": {
+        "title": "Title",
+        "title_placeholder": "Ex: iPhone 13 Pro 256GB",
+        "price": "Price",
+        "category": "Category",
+        "description": "Description",
+        "description_placeholder": "Describe your product and add your contact (WhatsApp, Telegram, etc.)",
+        "photos": "Photos (max 5)",
+        "video": "Video (3-6 seconds)",
+        "whatsapp": "WhatsApp",
+        "accepts_offers": "Accepts offers",
+        "location": "Location"
+      },
+      "location": {
+        "title": "Where do you want your listing to be visible?",
+        "entire_city": "Entire city",
+        "custom_radius": "Custom radius",
+        "draw_zone": "Draw zone"
+      },
+      "submit": "Publish",
+      "submit_pirate": "Publish 72h",
+      "cancel": "Cancel",
+      "success": "Listing published!",
+      "error": "Error publishing"
+    },
+    "detail": {
+      "contact_whatsapp": "Contact via WhatsApp",
+      "share": "Share",
+      "report": "Report",
+      "expires_in": "Expires in",
+      "published": "Published",
+      "views": "views",
+      "contacts": "contacts",
+      "seller": "Seller",
+      "member_since": "Member since",
+      "active_listings": "active listings",
+      "view_all": "View all listings"
+    }
+  },
+  
+  "auth": {
+    "login": "Sign In",
+    "signup": "Create Account",
+    "email": "Email",
+    "password": "Password",
+    "display_name": "Name or Alias",
+    "whatsapp": "WhatsApp",
+    "account_type": "Account type",
+    "person": "Person",
+    "shop": "Shop",
+    "wholesale": "Wholesale",
+    "forgot": "Forgot your password?",
+    "no_account": "Don't have an account?",
+    "have_account": "Already have an account?",
+    "register_here": "Register here",
+    "login_here": "Sign in here",
+    "submit": "Continue",
+    "logging_in": "Signing in...",
+    "signing_up": "Creating account..."
+  },
+  
+  "dashboard": {
+    "title": "My Panel",
+    "my_listings": "My Listings",
+    "stats": {
+      "total_views": "Total views",
+      "total_contacts": "Total contacts",
+      "active_listings": "Active listings"
+    },
+    "listing_status": {
+      "active": "Active",
+      "paused": "Paused",
+      "sold": "Sold",
+      "deleted": "Deleted"
+    },
+    "actions": {
+      "edit": "Edit",
+      "pause": "Pause",
+      "activate": "Activate",
+      "delete": "Delete",
+      "mark_sold": "Mark as sold",
+      "view": "View"
+    },
+    "no_listings": "You have no published listings",
+    "create_first": "Publish your first listing"
+  },
+  
+  "admin": {
+    "title": "Administration",
+    "dashboard": "Dashboard",
+    "users": "Users",
+    "listings": "Listings",
+    "reports": "Reports",
+    "pirates": "Pirate Listings",
+    "categories": "Categories",
+    "settings": "Settings",
+    "stats": {
+      "total_users": "Total users",
+      "total_listings": "Total listings",
+      "pending_reports": "Pending reports",
+      "pirate_listings": "Active pirate listings"
+    },
+    "actions": {
+      "view": "View",
+      "edit": "Edit",
+      "delete": "Delete",
+      "ban": "Ban",
+      "approve": "Approve",
+      "reject": "Reject"
+    }
+  },
+  
+  "categories": {
+    "electronics": "Electronics",
+    "vehicles": "Vehicles",
+    "real_estate": "Real Estate",
+    "furniture": "Furniture",
+    "clothing": "Clothing & Accessories",
+    "services": "Services",
+    "food": "Food",
+    "pets": "Pets",
+    "sports": "Sports",
+    "home": "Home & Garden",
+    "art": "Art & Collectibles",
+    "books": "Books",
+    "music": "Musical Instruments",
+    "baby": "Baby & Kids",
+    "beauty": "Beauty & Health",
+    "jobs": "Jobs",
+    "adult": "Adults +18"
+  },
+  
+  "badges": {
+    "pirate": "Pirate",
+    "verified": "Verified",
+    "shop": "Shop",
+    "wholesale": "Wholesale"
+  },
+  
+  "buttons": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "back": "Back",
+    "load_more": "Load more",
+    "confirm": "Confirm",
+    "close": "Close"
+  },
+  
+  "messages": {
+    "success": "Operation successful",
+    "error": "An error occurred",
+    "confirm_delete": "Are you sure you want to delete?",
+    "loading": "Loading...",
+    "no_data": "No data available",
+    "c
