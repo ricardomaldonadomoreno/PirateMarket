@@ -50,4 +50,3 @@ export default function Navbar({ user }) {
     </nav>
   )
 }
-```
