@@ -102,10 +102,18 @@
     "error_name": "姓名必须至少2个字符",
     "error_whatsapp": "WhatsApp无效",
     "password_hint": "最少6个字符",
-    "pirate_notice": "您也可以不用账户以海盗身份发布（72小时）"
+    "pirate_notice": "您也可以不用账户以海盗身份发布（72小时）",
     "email_sent": "请检查您的电子邮件以确认您的账户",
     "email_not_confirmed": "您必须在登录前确认您的电子邮件",
-    "check_inbox": "检查您的收件箱"
+    "check_inbox": "检查您的收件箱",
+    "email_sent_title": "检查您的电子邮件！",
+    "email_sent_message": "我们向您发送了确认邮件至",
+    "step_1": "打开您的收件箱（也检查垃圾邮件）",
+    "step_2": "查找来自 Pirata Market 的电子邮件",
+    "step_3": "点击确认按钮",
+    "resend_email": "重新发送电子邮件",
+    "resending": "正在重新发送...",
+    "back_to_login": "返回登录"
   },
   
   "dashboard": {
