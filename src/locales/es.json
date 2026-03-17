@@ -38,6 +38,22 @@
       "title_registered": "Publicar Anuncio",
       "pirate_notice": "Tu anuncio durará 72 horas",
       "pirate_upgrade": "¿Quieres anuncios permanentes? Crea una cuenta",
+      "basic_info": "Información Básica",
+      "media": "Fotos y Video",
+      "contact": "Contacto",
+      "select_category": "Selecciona una categoría",
+      "upload_photos": "Subir fotos",
+      "upload_video": "Subir video",
+      "max_photos_error": "Máximo 5 fotos",
+      "title_min_error": "El título debe tener al menos 10 caracteres",
+      "price_error": "Ingresa un precio válido",
+      "category_error": "Selecciona una categoría",
+      "description_error": "Agrega una descripción",
+      "whatsapp_error": "Ingresa un WhatsApp válido",
+      "uploading": "Subiendo archivos...",
+      "publishing": "Publicando...",
+      "location_hint_pirate": "Tu anuncio se verá en toda la ciudad",
+      "location_hint_registered": "Escribe tu zona o barrio",
       "fields": {
         "title": "Título",
         "title_placeholder": "Ej: iPhone 13 Pro 256GB",
@@ -64,6 +80,7 @@
       "error": "Error al publicar"
     },
     "detail": {
+      "description": "Descripción",
       "contact_whatsapp": "Contactar por WhatsApp",
       "share": "Compartir",
       "report": "Reportar",
@@ -74,7 +91,13 @@
       "seller": "Vendedor",
       "member_since": "Miembro desde",
       "active_listings": "anuncios activos",
-      "view_all": "Ver todos sus anuncios"
+      "view_all": "Ver todos sus anuncios",
+      "pirate_contact_notice": "Anuncio Pirata: contacto en la descripción",
+      "open_maps": "Ver en Mapas",
+      "expired": "Expirado"
+    },
+    "fields": {
+      "location": "Ubicación"
     }
   },
   
@@ -96,7 +119,13 @@
     "login_here": "Ingresa aquí",
     "submit": "Continuar",
     "logging_in": "Ingresando...",
-    "signing_up": "Creando cuenta..."
+    "signing_up": "Creando cuenta...",
+    "error_login": "Error al iniciar sesión",
+    "error_signup": "Error al crear cuenta",
+    "error_name": "El nombre debe tener al menos 2 caracteres",
+    "error_whatsapp": "WhatsApp inválido",
+    "password_hint": "Mínimo 6 caracteres",
+    "pirate_notice": "También puedes publicar sin cuenta como Pirata (72h)"
   },
   
   "dashboard": {
@@ -120,6 +149,9 @@
       "delete": "Eliminar",
       "mark_sold": "Marcar como vendido",
       "view": "Ver"
+    },
+    "filters": {
+      "all": "Todos"
     },
     "no_listings": "No tienes anuncios publicados",
     "create_first": "Publica tu primer anuncio"
@@ -151,23 +183,23 @@
   },
   
   "categories": {
-    "electronics": "Electrónica",
-    "vehicles": "Vehículos",
-    "real_estate": "Inmuebles",
-    "furniture": "Muebles",
-    "clothing": "Ropa y Accesorios",
-    "services": "Servicios",
-    "food": "Alimentos",
-    "pets": "Mascotas",
-    "sports": "Deportes",
-    "home": "Hogar y Jardín",
-    "art": "Arte y Coleccionables",
-    "books": "Libros",
-    "music": "Instrumentos Musicales",
-    "baby": "Bebés y Niños",
-    "beauty": "Belleza y Salud",
-    "jobs": "Empleos",
-    "adult": "Adultos +18"
+    "electronica": "Electrónica",
+    "vehiculos": "Vehículos",
+    "inmuebles": "Inmuebles",
+    "muebles": "Muebles",
+    "ropa": "Ropa y Accesorios",
+    "servicios": "Servicios",
+    "alimentos": "Alimentos",
+    "mascotas": "Mascotas",
+    "deportes": "Deportes",
+    "hogar": "Hogar y Jardín",
+    "arte": "Arte y Coleccionables",
+    "libros": "Libros",
+    "musica": "Instrumentos Musicales",
+    "bebes": "Bebés y Niños",
+    "belleza": "Belleza y Salud",
+    "empleos": "Empleos",
+    "adultos": "Adultos +18"
   },
   
   "badges": {
