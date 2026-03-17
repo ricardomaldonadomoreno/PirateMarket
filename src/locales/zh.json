@@ -1,0 +1,225 @@
+{
+  "brand": {
+    "name": "海盗市场",
+    "tagline": "无中介交易",
+    "by": "Buses App 的服务"
+  },
+  
+  "navbar": {
+    "publish": "发布",
+    "login": "登录",
+    "logout": "退出",
+    "dashboard": "我的面板",
+    "language": "语言"
+  },
+  
+  "home": {
+    "title": "找到你想要的",
+    "no_results": "未找到广告",
+    "loading": "正在加载广告...",
+    "filters": {
+      "title": "筛选",
+      "categories": "类别",
+      "all": "全部",
+      "price": "价格",
+      "min": "最低",
+      "max": "最高",
+      "seller_type": "卖家类型",
+      "pirates": "海盗",
+      "verified": "已验证",
+      "shops": "商店",
+      "only_pirates": "仅海盗"
+    }
+  },
+  
+  "listing": {
+    "create": {
+      "title_pirate": "快速发布（无需注册）",
+      "title_registered": "发布广告",
+      "pirate_notice": "您的广告将持续72小时",
+      "pirate_upgrade": "想要永久广告？创建账户",
+      "fields": {
+        "title": "标题",
+        "title_placeholder": "例如：iPhone 13 Pro 256GB",
+        "price": "价格",
+        "category": "类别",
+        "description": "描述",
+        "description_placeholder": "描述您的产品并添加联系方式（WhatsApp、Telegram等）",
+        "photos": "照片（最多5张）",
+        "video": "视频（3-6秒）",
+        "whatsapp": "WhatsApp",
+        "accepts_offers": "接受报价",
+        "location": "位置"
+      },
+      "location": {
+        "title": "您希望广告在哪里显示？",
+        "entire_city": "整个城市",
+        "custom_radius": "自定义半径",
+        "draw_zone": "绘制区域"
+      },
+      "submit": "发布",
+      "submit_pirate": "发布72小时",
+      "cancel": "取消",
+      "success": "广告已发布！",
+      "error": "发布错误"
+    },
+    "detail": {
+      "contact_whatsapp": "通过WhatsApp联系",
+      "share": "分享",
+      "report": "举报",
+      "expires_in": "到期时间",
+      "published": "发布于",
+      "views": "浏览",
+      "contacts": "联系",
+      "seller": "卖家",
+      "member_since": "会员自",
+      "active_listings": "活跃广告",
+      "view_all": "查看所有广告"
+    }
+  },
+  
+  "auth": {
+    "login": "登录",
+    "signup": "创建账户",
+    "email": "邮箱",
+    "password": "密码",
+    "display_name": "姓名或昵称",
+    "whatsapp": "WhatsApp",
+    "account_type": "账户类型",
+    "person": "个人",
+    "shop": "商店",
+    "wholesale": "批发",
+    "forgot": "忘记密码？",
+    "no_account": "没有账户？",
+    "have_account": "已有账户？",
+    "register_here": "在此注册",
+    "login_here": "在此登录",
+    "submit": "继续",
+    "logging_in": "正在登录...",
+    "signing_up": "正在创建账户..."
+  },
+  
+  "dashboard": {
+    "title": "我的面板",
+    "my_listings": "我的广告",
+    "stats": {
+      "total_views": "总浏览量",
+      "total_contacts": "总联系次数",
+      "active_listings": "活跃广告"
+    },
+    "listing_status": {
+      "active": "活跃",
+      "paused": "已暂停",
+      "sold": "已售出",
+      "deleted": "已删除"
+    },
+    "actions": {
+      "edit": "编辑",
+      "pause": "暂停",
+      "activate": "激活",
+      "delete": "删除",
+      "mark_sold": "标记为已售",
+      "view": "查看"
+    },
+    "no_listings": "您没有发布的广告",
+    "create_first": "发布您的第一个广告"
+  },
+  
+  "admin": {
+    "title": "管理",
+    "dashboard": "仪表板",
+    "users": "用户",
+    "listings": "广告",
+    "reports": "举报",
+    "pirates": "海盗广告",
+    "categories": "类别",
+    "settings": "设置",
+    "stats": {
+      "total_users": "总用户数",
+      "total_listings": "总广告数",
+      "pending_reports": "待处理举报",
+      "pirate_listings": "活跃海盗广告"
+    },
+    "actions": {
+      "view": "查看",
+      "edit": "编辑",
+      "delete": "删除",
+      "ban": "封禁",
+      "approve": "批准",
+      "reject": "拒绝"
+    }
+  },
+  
+  "categories": {
+    "electronics": "电子产品",
+    "vehicles": "车辆",
+    "real_estate": "房地产",
+    "furniture": "家具",
+    "clothing": "服装配饰",
+    "services": "服务",
+    "food": "食品",
+    "pets": "宠物",
+    "sports": "体育",
+    "home": "家居园艺",
+    "art": "艺术收藏品",
+    "books": "书籍",
+    "music": "乐器",
+    "baby": "婴儿儿童",
+    "beauty": "美容健康",
+    "jobs": "工作",
+    "adult": "成人+18"
+  },
+  
+  "badges": {
+    "pirate": "海盗",
+    "verified": "已验证",
+    "shop": "商店",
+    "wholesale": "批发"
+  },
+  
+  "buttons": {
+    "save": "保存",
+    "cancel": "取消",
+    "delete": "删除",
+    "edit": "编辑",
+    "back": "返回",
+    "load_more": "加载更多",
+    "confirm": "确认",
+    "close": "关闭"
+  },
+  
+  "messages": {
+    "success": "操作成功",
+    "error": "发生错误",
+    "confirm_delete": "确定要删除吗？",
+    "loading": "加载中...",
+    "no_data": "无可用数据",
+    "copied": "已复制到剪贴板！",
+    "share_title": "分享广告"
+  },
+  
+  "time": {
+    "now": "现在",
+    "minutes": "分钟",
+    "hours": "小时",
+    "days": "天",
+    "ago": "前"
+  }
+}
+```
+
+---
+
+**✅ Copia esto y guárdalo como `zh.json` dentro de la carpeta `src/locales` en GitHub**
+
+**Nota:** "海盗市场" = "Pirate Market" en chino simplificado
+
+**Estructura completa de traducciones:**
+```
+src/
+└── locales/
+    ├── es.json  ✅ Español
+    ├── en.json  ✅ English
+    ├── pt.json  ✅ Português
+    ├── ar.json  ✅ العربية (RTL)
+    └── zh.json  ✅ 中文 (Chino)
