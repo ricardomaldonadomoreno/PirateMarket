@@ -44,7 +44,7 @@ export default function Auth() {
       navigate(from)
     } catch (err) {
       console.error('Login error:', err)
-      setError(err.message || 'Error al iniciar sesión')
+      setError(err.message || t('auth.error_login'))
     } finally {
       setLoading(false)
     }
@@ -57,13 +57,13 @@ export default function Auth() {
 
     // Validation
     if (!formData.display_name || formData.display_name.length < 2) {
-      setError('El nombre debe tener al menos 2 caracteres')
+      setError(t('auth.error_name'))
       setLoading(false)
       return
     }
 
     if (!formData.whatsapp || formData.whatsapp.length < 8) {
-      setError('WhatsApp inválido')
+      setError(t('auth.error_whatsapp'))
       setLoading(false)
       return
     }
@@ -94,7 +94,7 @@ export default function Auth() {
       navigate('/dashboard')
     } catch (err) {
       console.error('Signup error:', err)
-      setError(err.message || 'Error al crear cuenta')
+      setError(err.message || t('auth.error_signup'))
     } finally {
       setLoading(false)
     }
@@ -255,7 +255,7 @@ export default function Auth() {
                   required
                   minLength={6}
                 />
-                <p className="form-hint">Mínimo 6 caracteres</p>
+                <p className="form-hint">{t('auth.password_hint')}</p>
               </div>
 
               <button
@@ -277,7 +277,7 @@ export default function Auth() {
 
           {/* Pirate Notice */}
           <div className="auth-notice">
-            <p>🏴‍☠️ También puedes publicar sin cuenta como Pirata (72h)</p>
+            <p>🏴‍☠️ {t('auth.pirate_notice')}</p>
           </div>
         </div>
       </div>
