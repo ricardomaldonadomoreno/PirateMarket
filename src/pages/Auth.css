@@ -127,6 +127,16 @@
   gap: 0.5rem;
 }
 
+.auth-success {
+  background-color: rgba(6, 214, 160, 0.1);
+  border: 1px solid var(--success);
+  color: var(--success);
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  margin-bottom: 20px;
+  font-size: 14px;
+  text-align: center;
+}
 /* ============================================
    NOTICE
    ============================================ */
