@@ -206,20 +206,3 @@
     "ago": "前"
   }
 }
-```
-
----
-
-**✅ Copia esto y guárdalo como `zh.json` dentro de la carpeta `src/locales` en GitHub**
-
-**Nota:** "海盗市场" = "Pirate Market" en chino simplificado
-
-**Estructura completa de traducciones:**
-```
-src/
-└── locales/
-    ├── es.json  ✅ Español
-    ├── en.json  ✅ English
-    ├── pt.json  ✅ Português
-    ├── ar.json  ✅ العربية (RTL)
-    └── zh.json  ✅ 中文 (Chino)
