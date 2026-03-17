@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { supabase, uploadImage, uploadVideo } from '../lib/supabase'
+import { supabase, uploadImage, uploadVideo, getCategories } from '../lib/supabase'
 import { validateImage, validateVideo, compressImage } from '../lib/utils'
 import './CreateListing.css'
 
@@ -18,16 +18,14 @@ export default function CreateListing() {
     price: '',
     category_id: '',
     description: '',
-    photos: [],
-    video: null,
-    whatsapp: '',
+    whatsapp_number: '',
     accepts_offers: false,
     location: ''
   })
 
+  const [photoFiles, setPhotoFiles] = useState([])
+  const [videoFile, setVideoFile] = useState(null)
   const [errors, setErrors] = useState({})
-  const [photoPreviews, setPhotoPreviews] = useState([])
-  const [videoPreview, setVideoPreview] = useState(null)
 
   useEffect(() => {
     checkUser()
@@ -38,7 +36,6 @@ export default function CreateListing() {
     const { data: { user } } = await supabase.auth.getUser()
     setUser(user)
     
-    // Si hay usuario, cargar su WhatsApp
     if (user) {
       const { data: userData } = await supabase
         .from('users')
@@ -47,24 +44,18 @@ export default function CreateListing() {
         .single()
       
       if (userData?.whatsapp) {
-        setFormData(prev => ({ ...prev, whatsapp: userData.whatsapp }))
+        setFormData(prev => ({ ...prev, whatsapp_number: userData.whatsapp }))
       }
     }
   }
 
   const loadCategories = async () => {
-    console.log('Loading categories...')
-    const { data, error } = await supabase
-      .from('categories')
-      .select('*')
-      .order('name')
-    
-    if (error) {
+    try {
+      const cats = await getCategories()
+      setCategories(cats)
+    } catch (error) {
       console.error('Error loading categories:', error)
       alert('Error al cargar categorías: ' + error.message)
-    } else {
-      console.log('Categories loaded:', data)
-      setCategories(data || [])
     }
   }
 
@@ -74,89 +65,59 @@ export default function CreateListing() {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }))
-    // Clear error when user types
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: null }))
     }
   }
 
-  const handlePhotoUpload = async (e) => {
+  const handlePhotoChange = async (e) => {
     const files = Array.from(e.target.files)
-    
-    // Validar cantidad
-    if (formData.photos.length + files.length > 5) {
-      setErrors(prev => ({ ...prev, photos: t('listing.create.max_photos_error') }))
+    const newErrors = {}
+
+    if (photoFiles.length + files.length > 5) {
+      newErrors.photos = t('listing.create.max_photos_error')
+      setErrors(prev => ({ ...prev, ...newErrors }))
       return
     }
 
-    setUploadingMedia(true)
-    const newPhotos = []
-    const newPreviews = []
-
+    // Validar cada archivo
     for (const file of files) {
-      // Validar imagen
-      const validation = validateImage(file)
-      if (!validation.valid) {
-        alert(validation.error)
-        continue
-      }
-
-      try {
-        // Comprimir imagen
-        const compressed = await compressImage(file)
-        
-        // Subir a Supabase
-        const url = await uploadImage(compressed, 'listing-photos')
-        newPhotos.push(url)
-        newPreviews.push(URL.createObjectURL(compressed))
-      } catch (err) {
-        console.error('Error uploading photo:', err)
-        alert('Error al subir foto: ' + err.message)
+      const error = validateImage(file)
+      if (error) {
+        newErrors.photos = error
+        setErrors(prev => ({ ...prev, ...newErrors }))
+        return
       }
     }
 
-    setFormData(prev => ({
-      ...prev,
-      photos: [...prev.photos, ...newPhotos]
-    }))
-    setPhotoPreviews(prev => [...prev, ...newPreviews])
-    setUploadingMedia(false)
+    // Comprimir imágenes
+    const compressedFiles = await Promise.all(
+      files.map(file => compressImage(file))
+    )
+
+    setPhotoFiles(prev => [...prev, ...compressedFiles])
   }
 
-  const handleVideoUpload = async (e) => {
+  const handleVideoChange = (e) => {
     const file = e.target.files[0]
     if (!file) return
 
-    // Validar video
-    const validation = validateVideo(file)
-    if (!validation.valid) {
-      alert(validation.error)
+    const error = validateVideo(file)
+    if (error) {
+      setErrors(prev => ({ ...prev, video: error }))
       return
     }
 
-    setUploadingMedia(true)
-    try {
-      const url = await uploadVideo(file, 'listing-videos')
-      setFormData(prev => ({ ...prev, video: url }))
-      setVideoPreview(URL.createObjectURL(file))
-    } catch (err) {
-      console.error('Error uploading video:', err)
-      alert('Error al subir video: ' + err.message)
-    }
-    setUploadingMedia(false)
+    setVideoFile(file)
+    setErrors(prev => ({ ...prev, video: null }))
   }
 
   const removePhoto = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      photos: prev.photos.filter((_, i) => i !== index)
-    }))
-    setPhotoPreviews(prev => prev.filter((_, i) => i !== index))
+    setPhotoFiles(prev => prev.filter((_, i) => i !== index))
   }
 
   const removeVideo = () => {
-    setFormData(prev => ({ ...prev, video: null }))
-    setVideoPreview(null)
+    setVideoFile(null)
   }
 
   const validateForm = () => {
@@ -166,21 +127,21 @@ export default function CreateListing() {
       newErrors.title = t('listing.create.title_min_error')
     }
 
-    if (!formData.price || parseFloat(formData.price) <= 0) {
+    if (!formData.price || formData.price <= 0) {
       newErrors.price = t('listing.create.price_error')
     }
 
     if (!formData.category_id) {
-      newErrors.category = t('listing.create.category_error')
+      newErrors.category_id = t('listing.create.category_error')
     }
 
     if (!formData.description) {
       newErrors.description = t('listing.create.description_error')
     }
 
-    // Si es usuario registrado, validar WhatsApp
-    if (user && (!formData.whatsapp || formData.whatsapp.length < 8)) {
-      newErrors.whatsapp = t('listing.create.whatsapp_error')
+    // Para usuarios registrados, requerir WhatsApp
+    if (user && !formData.whatsapp_number) {
+      newErrors.whatsapp_number = t('listing.create.whatsapp_error')
     }
 
     setErrors(newErrors)
@@ -195,24 +156,39 @@ export default function CreateListing() {
     }
 
     setLoading(true)
+    setUploadingMedia(true)
 
     try {
-      const listingData = {
-        title: formData.title,
-        price: parseFloat(formData.price),
-        category_id: formData.category_id,
-        description: formData.description,
-        photos: formData.photos,
-        video_url: formData.video,
-        display_location: formData.location || null,
-        status: 'active',
-        is_ghost: !user, // true si no hay usuario
-        user_id: user ? user.id : null,
-        whatsapp_number: user ? formData.whatsapp : null,
-        accepts_offers: user ? formData.accepts_offers : false
+      // Subir fotos
+      const photoUrls = []
+      for (const file of photoFiles) {
+        const url = await uploadImage(file)
+        photoUrls.push(url)
       }
 
-      console.log('Submitting listing:', listingData)
+      // Subir video
+      let videoUrl = null
+      if (videoFile) {
+        videoUrl = await uploadVideo(videoFile)
+      }
+
+      setUploadingMedia(false)
+
+      // Crear listing
+      const listingData = {
+        title: formData.title,
+        description: formData.description,
+        price: parseFloat(formData.price),
+        category_id: formData.category_id,
+        photos: photoUrls,
+        video_url: videoUrl,
+        accepts_offers: formData.accepts_offers,
+        display_location: formData.location || 'Santa Cruz',
+        is_ghost: !user,
+        user_id: user?.id || null,
+        whatsapp_number: user ? formData.whatsapp_number : null,
+        status: 'active'
+      }
 
       const { data, error } = await supabase
         .from('listings')
@@ -220,20 +196,18 @@ export default function CreateListing() {
         .select()
         .single()
 
-      if (error) {
-        console.error('Error creating listing:', error)
-        throw error
-      }
+      if (error) throw error
 
-      console.log('Listing created:', data)
-
-      // Redirigir a la ficha creada
+      // Success
+      alert(t('listing.create.success'))
       navigate(`/ficha/${data.slug}`)
-    } catch (err) {
-      console.error('Error:', err)
-      alert('Error al publicar: ' + err.message)
+
+    } catch (error) {
+      console.error('Error creating listing:', error)
+      alert(t('listing.create.error'))
     } finally {
       setLoading(false)
+      setUploadingMedia(false)
     }
   }
 
@@ -242,31 +216,26 @@ export default function CreateListing() {
   return (
     <div className="create-listing">
       <div className="create-listing-container">
-        <div className="create-listing-header">
-          <h1>
-            {isPirate 
-              ? t('listing.create.title_pirate') 
-              : t('listing.create.title_registered')
-            }
+        <div className="create-header">
+          <h1 className="serif luxury-gold">
+            {isPirate ? t('listing.create.title_pirate') : t('listing.create.title_registered')}
           </h1>
           {isPirate && (
             <div className="pirate-notice">
-              <p>⏱️ {t('listing.create.pirate_notice')}</p>
-              <p className="pirate-upgrade">
-                {t('listing.create.pirate_upgrade')} 
-                <button onClick={() => navigate('/auth')} className="link-button">
-                  {t('auth.signup')}
-                </button>
-              </p>
+              <span>⏱️</span>
+              <div>
+                <strong>{t('listing.create.pirate_notice')}</strong>
+                <p>{t('listing.create.pirate_upgrade')}</p>
+              </div>
             </div>
           )}
         </div>
 
-        <form onSubmit={handleSubmit} className="create-listing-form">
-          {/* Información Básica */}
-          <section className="form-section">
-            <h2>{t('listing.create.basic_info')}</h2>
-
+        <form onSubmit={handleSubmit} className="create-form">
+          {/* Basic Info */}
+          <div className="form-section card">
+            <h3>{t('listing.create.basic_info')}</h3>
+            
             <div className="form-group">
               <label>{t('listing.create.fields.title')} *</label>
               <input
@@ -276,11 +245,9 @@ export default function CreateListing() {
                 placeholder={t('listing.create.fields.title_placeholder')}
                 value={formData.title}
                 onChange={handleInputChange}
-                required
+                maxLength={100}
               />
-              {errors.title && (
-                <p className="error-message">{errors.title}</p>
-              )}
+              {errors.title && <span className="error">{errors.title}</span>}
             </div>
 
             <div className="form-row">
@@ -291,15 +258,12 @@ export default function CreateListing() {
                   name="price"
                   className="input"
                   placeholder="0.00"
-                  step="0.01"
-                  min="0"
                   value={formData.price}
                   onChange={handleInputChange}
-                  required
+                  min="0"
+                  step="0.01"
                 />
-                {errors.price && (
-                  <p className="error-message">{errors.price}</p>
-                )}
+                {errors.price && <span className="error">{errors.price}</span>}
               </div>
 
               <div className="form-group">
@@ -309,7 +273,6 @@ export default function CreateListing() {
                   className="input select"
                   value={formData.category_id}
                   onChange={handleInputChange}
-                  required
                 >
                   <option value="">{t('listing.create.select_category')}</option>
                   {categories.map(cat => (
@@ -318,9 +281,7 @@ export default function CreateListing() {
                     </option>
                   ))}
                 </select>
-                {errors.category && (
-                  <p className="error-message">{errors.category}</p>
-                )}
+                {errors.category_id && <span className="error">{errors.category_id}</span>}
               </div>
             </div>
 
@@ -330,103 +291,14 @@ export default function CreateListing() {
                 name="description"
                 className="input textarea"
                 placeholder={t('listing.create.fields.description_placeholder')}
-                rows="6"
                 value={formData.description}
                 onChange={handleInputChange}
-                required
+                rows={6}
               />
-              {errors.description && (
-                <p className="error-message">{errors.description}</p>
-              )}
-            </div>
-          </section>
-
-          {/* Fotos y Video */}
-          <section className="form-section">
-            <h2>{t('listing.create.media')}</h2>
-
-            <div className="form-group">
-              <label>{t('listing.create.fields.photos')}</label>
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={handlePhotoUpload}
-                className="input-file"
-                disabled={uploadingMedia || formData.photos.length >= 5}
-              />
-              {errors.photos && (
-                <p className="error-message">{errors.photos}</p>
-              )}
-              
-              {photoPreviews.length > 0 && (
-                <div className="photo-previews">
-                  {photoPreviews.map((preview, index) => (
-                    <div key={index} className="photo-preview">
-                      <img src={preview} alt={`Preview ${index + 1}`} />
-                      <button
-                        type="button"
-                        onClick={() => removePhoto(index)}
-                        className="remove-photo"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
+              {errors.description && <span className="error">{errors.description}</span>}
             </div>
 
-            <div className="form-group">
-              <label>{t('listing.create.fields.video')}</label>
-              <input
-                type="file"
-                accept="video/*"
-                onChange={handleVideoUpload}
-                className="input-file"
-                disabled={uploadingMedia || formData.video}
-              />
-              
-              {videoPreview && (
-                <div className="video-preview">
-                  <video src={videoPreview} controls />
-                  <button
-                    type="button"
-                    onClick={removeVideo}
-                    className="remove-video"
-                  >
-                    ×
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {uploadingMedia && (
-              <p className="upload-status">{t('listing.create.uploading')}</p>
-            )}
-          </section>
-
-          {/* Contacto (solo para usuarios registrados) */}
-          {user && (
-            <section className="form-section">
-              <h2>{t('listing.create.contact')}</h2>
-
-              <div className="form-group">
-                <label>{t('listing.create.fields.whatsapp')} *</label>
-                <input
-                  type="tel"
-                  name="whatsapp"
-                  className="input"
-                  placeholder="+591 7XXXXXXX"
-                  value={formData.whatsapp}
-                  onChange={handleInputChange}
-                  required
-                />
-                {errors.whatsapp && (
-                  <p className="error-message">{errors.whatsapp}</p>
-                )}
-              </div>
-
+            {!isPirate && (
               <div className="form-group">
                 <label className="checkbox-label">
                   <input
@@ -438,23 +310,112 @@ export default function CreateListing() {
                   <span>{t('listing.create.fields.accepts_offers')}</span>
                 </label>
               </div>
-            </section>
+            )}
+          </div>
+
+          {/* Media */}
+          <div className="form-section card">
+            <h3>{t('listing.create.media')}</h3>
+            
+            {/* Photos */}
+            <div className="form-group">
+              <label>{t('listing.create.fields.photos')}</label>
+              <div className="photo-upload">
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handlePhotoChange}
+                  disabled={photoFiles.length >= 5}
+                  id="photo-input"
+                  style={{ display: 'none' }}
+                />
+                <label htmlFor="photo-input" className="btn btn-secondary upload-btn">
+                  📷 {t('listing.create.upload_photos')} ({photoFiles.length}/5)
+                </label>
+              </div>
+              {errors.photos && <span className="error">{errors.photos}</span>}
+              
+              {photoFiles.length > 0 && (
+                <div className="photo-preview-grid">
+                  {photoFiles.map((file, index) => (
+                    <div key={index} className="photo-preview-item">
+                      <img src={URL.createObjectURL(file)} alt={`Preview ${index + 1}`} />
+                      <button
+                        type="button"
+                        className="photo-remove"
+                        onClick={() => removePhoto(index)}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Video */}
+            <div className="form-group">
+              <label>{t('listing.create.fields.video')}</label>
+              {!videoFile ? (
+                <>
+                  <input
+                    type="file"
+                    accept="video/*"
+                    onChange={handleVideoChange}
+                    id="video-input"
+                    style={{ display: 'none' }}
+                  />
+                  <label htmlFor="video-input" className="btn btn-secondary upload-btn">
+                    🎥 {t('listing.create.upload_video')}
+                  </label>
+                </>
+              ) : (
+                <div className="video-preview">
+                  <video src={URL.createObjectURL(videoFile)} controls />
+                  <button
+                    type="button"
+                    className="btn btn-ghost"
+                    onClick={removeVideo}
+                  >
+                    {t('buttons.delete')}
+                  </button>
+                </div>
+              )}
+              {errors.video && <span className="error">{errors.video}</span>}
+            </div>
+          </div>
+
+          {/* Contact (for registered users) */}
+          {!isPirate && (
+            <div className="form-section card">
+              <h3>{t('listing.create.contact')}</h3>
+              
+              <div className="form-group">
+                <label>{t('listing.create.fields.whatsapp')} *</label>
+                <input
+                  type="tel"
+                  name="whatsapp_number"
+                  className="input"
+                  placeholder="+591 7XXXXXXX"
+                  value={formData.whatsapp_number}
+                  onChange={handleInputChange}
+                />
+                {errors.whatsapp_number && <span className="error">{errors.whatsapp_number}</span>}
+              </div>
+            </div>
           )}
 
-          {/* Ubicación */}
-          <section className="form-section">
-            <h2>{t('listing.create.fields.location')}</h2>
-
+          {/* Location */}
+          <div className="form-section card">
+            <h3>📍 {t('listing.create.fields.location')}</h3>
+            
             <div className="form-group">
               <input
                 type="text"
                 name="location"
                 className="input"
-                placeholder={
-                  isPirate 
-                    ? t('listing.create.location_hint_pirate')
-                    : t('listing.create.location_hint_registered')
-                }
+                placeholder="Ej: Equipetrol, Santa Cruz"
                 value={formData.location}
                 onChange={handleInputChange}
               />
@@ -465,14 +426,14 @@ export default function CreateListing() {
                 }
               </p>
             </div>
-          </section>
+          </div>
 
-          {/* Botones */}
+          {/* Submit */}
           <div className="form-actions">
             <button
               type="button"
-              onClick={() => navigate(-1)}
               className="btn btn-secondary"
+              onClick={() => navigate('/')}
               disabled={loading}
             >
               {t('buttons.cancel')}
@@ -480,17 +441,17 @@ export default function CreateListing() {
             <button
               type="submit"
               className="btn btn-primary"
-              disabled={loading || uploadingMedia}
+              disabled={loading}
             >
               {loading ? (
                 <>
                   <span className="loading"></span>
-                  {t('listing.create.publishing')}
+                  {uploadingMedia ? t('listing.create.uploading') : t('listing.create.publishing')}
                 </>
               ) : (
-                isPirate 
-                  ? t('listing.create.submit_pirate')
-                  : t('listing.create.submit')
+                <>
+                  🏴‍☠️ {isPirate ? t('listing.create.submit_pirate') : t('listing.create.submit')}
+                </>
               )}
             </button>
           </div>
