@@ -131,3 +131,12 @@ export async function getCategories() {
   if (error) throw error
   return data
 }
+
+// Increment listing shares
+export async function incrementShares(listingId) {
+  const { error } = await supabase.rpc('increment_listing_shares', {
+    listing_uuid: listingId
+  })
+
+  if (error) console.error('Error incrementing shares:', error)
+}
