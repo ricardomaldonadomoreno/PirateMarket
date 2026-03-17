@@ -30,9 +30,11 @@
 }
 
 .auth-logo-icon {
-  font-size: 4rem;
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+  margin: 0 auto 1rem;
   display: block;
-  margin-bottom: 1rem;
 }
 
 .auth-logo h1 {
@@ -152,24 +154,11 @@
   }
 
   .auth-logo-icon {
-    font-size: 3rem;
+    width: 80px;
+    height: 80px;
   }
 
   .auth-logo h1 {
     font-size: 2rem;
   }
 }
-```
-
----
-
-## 🎨 AHORA: TUS ICONOS Y LOGOS
-
-### 📁 **Dónde subir tus archivos:**
-
-Crea una carpeta `public` en la raíz de tu proyecto GitHub y sube ahí:
-```
-public/
-├── logo.svg          (tu logo pirata completo)
-├── logo-icon.svg     (solo el icono/símbolo)
-└── favicon.ico       (icono para el navegador)
