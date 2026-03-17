@@ -131,4 +131,3 @@ export async function getCategories() {
   if (error) throw error
   return data
 }
-```
