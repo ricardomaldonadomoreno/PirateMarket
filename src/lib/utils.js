@@ -241,4 +241,3 @@ export async function compressImage(file, maxWidth = 1200, quality = 0.8) {
     reader.onerror = reject
   })
 }
-```
