@@ -1,174 +1,86 @@
-.auth {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem 1rem;
-  background: var(--dark);
-}
-
-.auth-container {
-  width: 100%;
-  max-width: 480px;
-}
-
-.auth-card {
-  background: var(--dark-surface);
-  border: 1px solid var(--dark-border);
-  border-radius: var(--radius-lg);
-  padding: 2.5rem;
-  box-shadow: var(--shadow-lg);
-}
-
-/* ============================================
-   LOGO
-   ============================================ */
-
-.auth-logo {
+/* Email Sent Screen */
+.email-sent {
   text-align: center;
-  margin-bottom: 2rem;
+  padding: 20px 0;
 }
 
-.auth-logo-icon {
-  width: 100px;
-  height: 100px;
-  object-fit: contain;
-  margin: 0 auto 1rem;
-  display: block;
-}
-
-.auth-logo h1 {
-  font-size: 2.5rem;
-  margin-bottom: 0.5rem;
-}
-
-.auth-tagline {
-  color: var(--text-muted);
-  font-size: 0.95rem;
-}
-
-/* ============================================
-   TABS
-   ============================================ */
-
-.auth-tabs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
-  margin-bottom: 2rem;
-  background: var(--dark);
-  padding: 0.5rem;
-  border-radius: var(--radius-md);
-}
-
-.auth-tab {
-  padding: 0.875rem;
-  background: transparent;
-  border: none;
-  color: var(--text-muted);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: all 0.2s;
-  font-weight: 600;
-  font-size: 0.95rem;
-}
-
-.auth-tab:hover {
-  color: var(--text-light);
-  background: var(--dark-border);
-}
-
-.auth-tab.active {
-  background: var(--gold);
-  color: var(--dark);
-}
-
-/* ============================================
-   FORM
-   ============================================ */
-
-.auth-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-}
-
-.auth-form .form-group {
-  margin-bottom: 0;
-}
-
-.auth-form .form-hint {
-  margin-top: 0.5rem;
-  font-size: 0.85rem;
-  color: var(--text-muted);
-}
-
-.btn-full {
-  width: 100%;
-  padding: 1rem;
-  font-size: 1rem;
-  margin-top: 0.5rem;
-}
-
-/* ============================================
-   ERROR MESSAGE
-   ============================================ */
-
-.auth-error {
-  background: rgba(230, 57, 70, 0.15);
-  border: 1.5px solid var(--danger);
-  color: var(--danger);
-  padding: 1rem;
-  border-radius: var(--radius-md);
-  margin-bottom: 1.5rem;
-  font-size: 0.9rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.auth-success {
-  background-color: rgba(6, 214, 160, 0.1);
-  border: 1px solid var(--success);
-  color: var(--success);
-  padding: 12px 16px;
-  border-radius: var(--radius-md);
+.email-sent-icon {
+  font-size: 64px;
   margin-bottom: 20px;
-  font-size: 14px;
-  text-align: center;
-}
-/* ============================================
-   NOTICE
-   ============================================ */
-
-.auth-notice {
-  margin-top: 2rem;
-  padding-top: 2rem;
-  border-top: 1px solid var(--dark-border);
-  text-align: center;
+  animation: bounce 2s infinite;
 }
 
-.auth-notice p {
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.email-sent h2 {
+  color: var(--text-light);
+  margin-bottom: 12px;
+  font-size: 24px;
+}
+
+.email-sent-message {
   color: var(--text-muted);
-  font-size: 0.9rem;
+  margin-bottom: 30px;
   line-height: 1.6;
 }
 
-/* ============================================
-   RESPONSIVE
-   ============================================ */
+.email-sent-message strong {
+  color: var(--gold);
+}
 
-@media (max-width: 480px) {
-  .auth-card {
-    padding: 2rem 1.5rem;
-  }
+.email-sent-steps {
+  background: var(--dark-surface);
+  border: 1px solid var(--dark-border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  margin: 30px 0;
+  text-align: left;
+}
 
-  .auth-logo-icon {
-    width: 80px;
-    height: 80px;
-  }
+.step {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 20px;
+}
 
-  .auth-logo h1 {
-    font-size: 2rem;
-  }
+.step:last-child {
+  margin-bottom: 0;
+}
+
+.step-number {
+  background: var(--gold);
+  color: var(--dark);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.step p {
+  margin: 0;
+  color: var(--text-light);
+  line-height: 1.6;
+  padding-top: 4px;
+}
+
+.btn-text {
+  background: none;
+  border: none;
+  color: var(--gold);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 8px;
+  transition: opacity 0.2s;
+}
+
+.btn-text:hover {
+  opacity: 0.8;
 }
