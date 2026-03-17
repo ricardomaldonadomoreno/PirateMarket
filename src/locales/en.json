@@ -103,6 +103,9 @@
   "error_whatsapp": "Invalid WhatsApp",
   "password_hint": "Minimum 6 characters",
   "pirate_notice": "You can also publish without an account as a Pirate (72h)"
+  "email_sent": "Check your email to confirm your account",
+  "email_not_confirmed": "You must confirm your email before signing in",
+  "check_inbox": "Check your inbox"
   },
   
   "dashboard": {
