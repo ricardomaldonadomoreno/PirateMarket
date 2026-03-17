@@ -125,10 +125,18 @@
     "error_name": "El nombre debe tener al menos 2 caracteres",
     "error_whatsapp": "WhatsApp inválido",
     "password_hint": "Mínimo 6 caracteres",
-    "pirate_notice": "También puedes publicar sin cuenta como Pirata (72h)"
+    "pirate_notice": "También puedes publicar sin cuenta como Pirata (72h)",
     "email_sent": "Revisa tu email para confirmar tu cuenta",
     "email_not_confirmed": "Debes confirmar tu email antes de iniciar sesión",
-    "check_inbox": "Revisa tu bandeja de entrada"
+    "check_inbox": "Revisa tu bandeja de entrada",
+     "email_sent_title": "¡Revisa tu email!",
+    "email_sent_message": "Te enviamos un email de confirmación a",
+    "step_1": "Abre tu bandeja de entrada (revisa spam también)",
+    "step_2": "Busca el email de Pirata Market",
+    "step_3": "Haz click en el botón de confirmación",
+    "resend_email": "Reenviar email",
+    "resending": "Reenviando...",
+    "back_to_login": "Volver al login"
   },
   
   "dashboard": {
