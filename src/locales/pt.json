@@ -1,0 +1,221 @@
+{
+  "brand": {
+    "name": "PIRATA MARKET",
+    "tagline": "Comércio sem intermediários",
+    "by": "Um serviço da Buses App"
+  },
+  
+  "navbar": {
+    "publish": "Publicar",
+    "login": "Entrar",
+    "logout": "Sair",
+    "dashboard": "Meu Painel",
+    "language": "Idioma"
+  },
+  
+  "home": {
+    "title": "Encontre o que você procura",
+    "no_results": "Nenhum anúncio encontrado",
+    "loading": "Carregando anúncios...",
+    "filters": {
+      "title": "Filtros",
+      "categories": "Categorias",
+      "all": "Todas",
+      "price": "Preço",
+      "min": "Mínimo",
+      "max": "Máximo",
+      "seller_type": "Tipo de vendedor",
+      "pirates": "Piratas",
+      "verified": "Verificados",
+      "shops": "Lojas",
+      "only_pirates": "Apenas Piratas"
+    }
+  },
+  
+  "listing": {
+    "create": {
+      "title_pirate": "Publicar Rápido (sem cadastro)",
+      "title_registered": "Publicar Anúncio",
+      "pirate_notice": "Seu anúncio durará 72 horas",
+      "pirate_upgrade": "Quer anúncios permanentes? Crie uma conta",
+      "fields": {
+        "title": "Título",
+        "title_placeholder": "Ex: iPhone 13 Pro 256GB",
+        "price": "Preço",
+        "category": "Categoria",
+        "description": "Descrição",
+        "description_placeholder": "Descreva seu produto e adicione seu contato (WhatsApp, Telegram, etc.)",
+        "photos": "Fotos (máx 5)",
+        "video": "Vídeo (3-6 segundos)",
+        "whatsapp": "WhatsApp",
+        "accepts_offers": "Aceito ofertas",
+        "location": "Localização"
+      },
+      "location": {
+        "title": "Onde você quer que seu anúncio seja visível?",
+        "entire_city": "Cidade inteira",
+        "custom_radius": "Raio personalizado",
+        "draw_zone": "Desenhar zona"
+      },
+      "submit": "Publicar",
+      "submit_pirate": "Publicar 72h",
+      "cancel": "Cancelar",
+      "success": "Anúncio publicado!",
+      "error": "Erro ao publicar"
+    },
+    "detail": {
+      "contact_whatsapp": "Contatar via WhatsApp",
+      "share": "Compartilhar",
+      "report": "Denunciar",
+      "expires_in": "Expira em",
+      "published": "Publicado",
+      "views": "visualizações",
+      "contacts": "contatos",
+      "seller": "Vendedor",
+      "member_since": "Membro desde",
+      "active_listings": "anúncios ativos",
+      "view_all": "Ver todos os anúncios"
+    }
+  },
+  
+  "auth": {
+    "login": "Entrar",
+    "signup": "Criar Conta",
+    "email": "Email",
+    "password": "Senha",
+    "display_name": "Nome ou Apelido",
+    "whatsapp": "WhatsApp",
+    "account_type": "Tipo de conta",
+    "person": "Pessoa",
+    "shop": "Loja",
+    "wholesale": "Atacado",
+    "forgot": "Esqueceu sua senha?",
+    "no_account": "Não tem uma conta?",
+    "have_account": "Já tem uma conta?",
+    "register_here": "Cadastre-se aqui",
+    "login_here": "Entre aqui",
+    "submit": "Continuar",
+    "logging_in": "Entrando...",
+    "signing_up": "Criando conta..."
+  },
+  
+  "dashboard": {
+    "title": "Meu Painel",
+    "my_listings": "Meus Anúncios",
+    "stats": {
+      "total_views": "Visualizações totais",
+      "total_contacts": "Contatos totais",
+      "active_listings": "Anúncios ativos"
+    },
+    "listing_status": {
+      "active": "Ativo",
+      "paused": "Pausado",
+      "sold": "Vendido",
+      "deleted": "Eliminado"
+    },
+    "actions": {
+      "edit": "Editar",
+      "pause": "Pausar",
+      "activate": "Ativar",
+      "delete": "Eliminar",
+      "mark_sold": "Marcar como vendido",
+      "view": "Ver"
+    },
+    "no_listings": "Você não tem anúncios publicados",
+    "create_first": "Publique seu primeiro anúncio"
+  },
+  
+  "admin": {
+    "title": "Administração",
+    "dashboard": "Painel",
+    "users": "Usuários",
+    "listings": "Anúncios",
+    "reports": "Denúncias",
+    "pirates": "Anúncios Piratas",
+    "categories": "Categorias",
+    "settings": "Configurações",
+    "stats": {
+      "total_users": "Usuários totais",
+      "total_listings": "Anúncios totais",
+      "pending_reports": "Denúncias pendentes",
+      "pirate_listings": "Anúncios piratas ativos"
+    },
+    "actions": {
+      "view": "Ver",
+      "edit": "Editar",
+      "delete": "Eliminar",
+      "ban": "Banir",
+      "approve": "Aprovar",
+      "reject": "Rejeitar"
+    }
+  },
+  
+  "categories": {
+    "electronics": "Eletrônicos",
+    "vehicles": "Veículos",
+    "real_estate": "Imóveis",
+    "furniture": "Móveis",
+    "clothing": "Roupas e Acessórios",
+    "services": "Serviços",
+    "food": "Alimentos",
+    "pets": "Animais",
+    "sports": "Esportes",
+    "home": "Casa e Jardim",
+    "art": "Arte e Colecionáveis",
+    "books": "Livros",
+    "music": "Instrumentos Musicais",
+    "baby": "Bebês e Crianças",
+    "beauty": "Beleza e Saúde",
+    "jobs": "Empregos",
+    "adult": "Adultos +18"
+  },
+  
+  "badges": {
+    "pirate": "Pirata",
+    "verified": "Verificado",
+    "shop": "Loja",
+    "wholesale": "Atacado"
+  },
+  
+  "buttons": {
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "back": "Voltar",
+    "load_more": "Carregar mais",
+    "confirm": "Confirmar",
+    "close": "Fechar"
+  },
+  
+  "messages": {
+    "success": "Operação bem-sucedida",
+    "error": "Ocorreu um erro",
+    "confirm_delete": "Tem certeza que deseja eliminar?",
+    "loading": "Carregando...",
+    "no_data": "Nenhum dado disponível",
+    "copied": "Copiado para a área de transferência!",
+    "share_title": "Compartilhar anúncio"
+  },
+  
+  "time": {
+    "now": "Agora",
+    "minutes": "min",
+    "hours": "h",
+    "days": "d",
+    "ago": "Há"
+  }
+}
+```
+
+---
+
+**✅ Copia esto y guárdalo como `pt.json` dentro de la carpeta `src/locales` en GitHub**
+
+**Estructura:**
+```
+src/
+└── locales/
+    ├── es.json  ✅
+    ├── en.json  ✅
+    └── pt.json  ← AQUÍ (Português)
