@@ -125,9 +125,8 @@ export async function getCategories() {
   const { data, error } = await supabase
     .from('categories')
     .select('*')
-    .eq('is_active', true)
-    .order('sort_order')
-
+    .order('name')  // ✅ Ordenar por nombre (que SÍ existe)
+  
   if (error) throw error
   return data
 }
