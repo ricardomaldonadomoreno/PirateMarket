@@ -28,9 +28,22 @@ export default function CreateListing({ user }) {
   const [videoFile, setVideoFile] = useState(null)
   const [errors, setErrors] = useState({})
 
-  useEffect(() => {
-    loadCategories()
-  }, [])
+useEffect(() => {
+  const loadCategories = async () => {
+    const { data, error } = await supabase
+      .from('categories')
+      .select('*')
+      .order('name')
+    
+    if (error) {
+      console.error('Error loading categories:', error)
+    } else {
+      setCategories(data || [])
+    }
+  }
+  
+  loadCategories()
+}, [])
 
   const loadCategories = async () => {
     try {
