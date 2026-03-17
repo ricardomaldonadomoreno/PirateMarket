@@ -443,4 +443,3 @@ export default function CreateListing({ user }) {
     </div>
   )
 }
-```
