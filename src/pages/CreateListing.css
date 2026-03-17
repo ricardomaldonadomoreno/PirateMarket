@@ -1,73 +1,89 @@
+/* CreateListing Page */
 .create-listing {
-  min-height: calc(100vh - 60px);
-  padding: 2rem 0;
+  min-height: 100vh;
+  padding: 80px 20px 40px;
+  background: var(--dark);
 }
 
 .create-listing-container {
-  max-width: 900px;
+  max-width: 800px;
   margin: 0 auto;
-  padding: 0 1.5rem;
 }
 
-.create-header {
-  margin-bottom: 2rem;
+.create-listing-header {
+  margin-bottom: 40px;
 }
 
-.create-header h1 {
-  font-size: 2.5rem;
-  margin-bottom: 1rem;
-}
-
-.pirate-notice {
-  display: flex;
-  gap: 1rem;
-  padding: 1.25rem;
-  background: rgba(184, 152, 95, 0.15);
-  border: 1.5px solid var(--gold);
-  border-radius: var(--radius-md);
-  align-items: flex-start;
-}
-
-.pirate-notice span {
-  font-size: 1.5rem;
-}
-
-.pirate-notice strong {
-  display: block;
+.create-listing-header h1 {
   color: var(--gold);
-  margin-bottom: 0.25rem;
-  font-size: 1rem;
+  font-size: 32px;
+  margin-bottom: 16px;
+}
+
+/* Pirate Notice */
+.pirate-notice {
+  background: rgba(184, 152, 95, 0.1);
+  border: 1px solid var(--gold);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  margin-top: 16px;
 }
 
 .pirate-notice p {
-  color: var(--text-muted);
-  font-size: 0.9rem;
   margin: 0;
+  color: var(--text-light);
+  font-size: 14px;
+  line-height: 1.6;
 }
 
-/* ============================================
-   FORM
-   ============================================ */
+.pirate-notice p:first-child {
+  margin-bottom: 8px;
+}
 
-.create-form {
+.pirate-upgrade {
+  color: var(--text-muted);
+}
+
+.link-button {
+  background: none;
+  border: none;
+  color: var(--gold);
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 4px;
+  font-size: inherit;
+  font-family: inherit;
+}
+
+.link-button:hover {
+  opacity: 0.8;
+}
+
+/* Form */
+.create-listing-form {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 32px;
 }
 
 .form-section {
-  padding: 1.75rem;
+  background: var(--dark-surface);
+  border: 1px solid var(--dark-border);
+  border-radius: var(--radius-lg);
+  padding: 32px;
 }
 
-.form-section h3 {
-  font-size: 1.25rem;
-  margin-bottom: 1.5rem;
+.form-section h2 {
   color: var(--gold);
-  font-family: 'Playfair Display', serif;
+  font-size: 20px;
+  margin: 0 0 24px 0;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--dark-border);
 }
 
 .form-group {
-  margin-bottom: 1.5rem;
+  margin-bottom: 20px;
 }
 
 .form-group:last-child {
@@ -76,159 +92,200 @@
 
 .form-group label {
   display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 600;
-  font-size: 0.95rem;
   color: var(--text-light);
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 8px;
 }
 
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
+  gap: 20px;
 }
 
-.error {
-  display: block;
+.textarea {
+  min-height: 150px;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.error-message {
   color: var(--danger);
-  font-size: 0.85rem;
-  margin-top: 0.5rem;
+  font-size: 12px;
+  margin: 6px 0 0 0;
 }
 
 .form-hint {
   color: var(--text-muted);
-  font-size: 0.85rem;
-  margin-top: 0.5rem;
-  line-height: 1.5;
+  font-size: 12px;
+  margin: 6px 0 0 0;
+  line-height: 1.4;
 }
 
-/* ============================================
-   PHOTO UPLOAD
-   ============================================ */
-
-.photo-upload {
-  margin-bottom: 1rem;
-}
-
-.upload-btn {
+/* File Upload */
+.input-file {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  background: var(--dark);
+  border: 1px dashed var(--dark-border);
+  border-radius: var(--radius-md);
+  color: var(--text-light);
   cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
+  transition: all 0.2s;
 }
 
-.upload-btn:disabled {
+.input-file:hover:not(:disabled) {
+  border-color: var(--gold);
+  background: rgba(184, 152, 95, 0.05);
+}
+
+.input-file:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.photo-preview-grid {
+/* Photo Previews */
+.photo-previews {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 1rem;
-  margin-top: 1rem;
+  gap: 12px;
+  margin-top: 16px;
 }
 
-.photo-preview-item {
+.photo-preview {
   position: relative;
   aspect-ratio: 1;
   border-radius: var(--radius-md);
   overflow: hidden;
-  background: var(--dark-border);
-  border: 2px solid var(--dark-border);
+  border: 1px solid var(--dark-border);
 }
 
-.photo-preview-item img {
+.photo-preview img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.photo-remove {
+.remove-photo,
+.remove-video {
   position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: rgba(230, 57, 70, 0.9);
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  background: var(--danger);
   color: white;
   border: none;
-  font-size: 1.5rem;
-  line-height: 1;
+  border-radius: 50%;
   cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
-  backdrop-filter: blur(5px);
+  transition: opacity 0.2s;
 }
 
-.photo-remove:hover {
-  background: var(--danger);
-  transform: scale(1.1);
+.remove-photo:hover,
+.remove-video:hover {
+  opacity: 0.8;
 }
 
-/* ============================================
-   VIDEO UPLOAD
-   ============================================ */
-
+/* Video Preview */
 .video-preview {
-  margin-top: 1rem;
+  position: relative;
+  margin-top: 16px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--dark-border);
 }
 
 .video-preview video {
   width: 100%;
-  max-height: 300px;
-  border-radius: var(--radius-md);
-  margin-bottom: 1rem;
-  background: var(--dark);
+  max-height: 400px;
+  display: block;
 }
 
-/* ============================================
-   FORM ACTIONS
-   ============================================ */
+/* Checkbox */
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+}
 
+.checkbox-label input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: var(--gold);
+}
+
+.checkbox-label span {
+  color: var(--text-light);
+  font-size: 14px;
+}
+
+/* Upload Status */
+.upload-status {
+  color: var(--gold);
+  font-size: 14px;
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.upload-status::before {
+  content: '';
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--gold);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Form Actions */
 .form-actions {
   display: flex;
-  gap: 1rem;
+  gap: 16px;
   justify-content: flex-end;
-  padding-top: 1rem;
-  border-top: 1px solid var(--dark-border);
+  padding-top: 20px;
 }
 
 .form-actions .btn {
   min-width: 140px;
 }
 
-/* ============================================
-   RESPONSIVE
-   ============================================ */
-
+/* Responsive */
 @media (max-width: 768px) {
   .create-listing {
-    padding: 1rem 0;
+    padding: 60px 16px 40px;
   }
 
-  .create-listing-container {
-    padding: 0 1rem;
-  }
-
-  .create-header h1 {
-    font-size: 2rem;
+  .create-listing-header h1 {
+    font-size: 24px;
   }
 
   .form-section {
-    padding: 1.25rem;
+    padding: 24px 20px;
   }
 
   .form-row {
     grid-template-columns: 1fr;
   }
 
-  .photo-preview-grid {
+  .photo-previews {
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-    gap: 0.75rem;
   }
 
   .form-actions {
@@ -241,12 +298,19 @@
 }
 
 @media (max-width: 480px) {
-  .pirate-notice {
-    flex-direction: column;
-    gap: 0.75rem;
+  .create-listing-header h1 {
+    font-size: 20px;
   }
 
-  .photo-preview-grid {
+  .form-section {
+    padding: 20px 16px;
+  }
+
+  .form-section h2 {
+    font-size: 18px;
+  }
+
+  .photo-previews {
     grid-template-columns: repeat(3, 1fr);
   }
 }
