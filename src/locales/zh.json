@@ -96,7 +96,13 @@
     "login_here": "在此登录",
     "submit": "继续",
     "logging_in": "正在登录...",
-    "signing_up": "正在创建账户..."
+    "signing_up": "正在创建账户...",
+    "error_login": "登录错误",
+    "error_signup": "创建账户错误",
+    "error_name": "姓名必须至少2个字符",
+    "error_whatsapp": "WhatsApp无效",
+    "password_hint": "最少6个字符",
+    "pirate_notice": "您也可以不用账户以海盗身份发布（72小时）"
   },
   
   "dashboard": {
