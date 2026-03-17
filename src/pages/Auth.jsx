@@ -8,10 +8,10 @@ export default function Auth() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
-  const [mode, setMode] = useState('login') // 'login' or 'signup'
+  const [mode, setMode] = useState('login') // 'login', 'signup', or 'email_sent'
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  const [success, setSuccess] = useState(null) // NUEVO
+  const [userEmail, setUserEmail] = useState('') // Para mostrar en pantalla de confirmación
   
   const [formData, setFormData] = useState({
     email: '',
@@ -25,14 +25,12 @@ export default function Auth() {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
     setError(null)
-    setSuccess(null) // NUEVO
   }
 
   const handleLogin = async (e) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
-    setSuccess(null)
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -43,7 +41,9 @@ export default function Auth() {
       if (error) {
         // Email no confirmado
         if (error.message.includes('Email not confirmed')) {
-          throw new Error('Debes confirmar tu email antes de iniciar sesión. Revisa tu bandeja de entrada.')
+          setError(t('auth.email_not_confirmed'))
+          setLoading(false)
+          return
         }
         throw error
       }
@@ -63,7 +63,6 @@ export default function Auth() {
     e.preventDefault()
     setLoading(true)
     setError(null)
-    setSuccess(null)
 
     // Validation
     if (!formData.display_name || formData.display_name.length < 2) {
@@ -79,7 +78,7 @@ export default function Auth() {
     }
 
     try {
-      // 1. Create auth user (con confirmación por email)
+      // Create auth user (con confirmación por email)
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -95,14 +94,11 @@ export default function Auth() {
 
       if (authError) throw authError
 
-      // 2. Crear perfil en tabla users (se hará automáticamente con trigger)
-      // PERO solo si el email NO requiere confirmación
-      // Si requiere confirmación, el perfil se crea cuando confirme el email
-
-      // Mostrar mensaje de éxito
-      setSuccess(
-        'Cuenta creada exitosamente! 🎉 Revisa tu email para confirmar tu cuenta.'
-      )
+      // Guardar email para mostrarlo en pantalla de confirmación
+      setUserEmail(formData.email)
+      
+      // Cambiar a modo "email_sent"
+      setMode('email_sent')
       
       // Limpiar formulario
       setFormData({
@@ -112,12 +108,32 @@ export default function Auth() {
         whatsapp: '',
         user_type: 'person'
       })
-
-      // NO redirigir, quedarse en la página para que vea el mensaje
       
     } catch (err) {
       console.error('Signup error:', err)
       setError(err.message || t('auth.error_signup'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Función para reenviar email de confirmación
+  const handleResendEmail = async () => {
+    setLoading(true)
+    setError(null)
+
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: userEmail
+      })
+
+      if (error) throw error
+
+      alert('Email reenviado! Revisa tu bandeja de entrada.')
+    } catch (err) {
+      console.error('Resend error:', err)
+      setError('Error al reenviar email')
     } finally {
       setLoading(false)
     }
@@ -134,183 +150,221 @@ export default function Auth() {
             <p className="auth-tagline">{t('brand.tagline')}</p>
           </div>
 
-          {/* Tabs */}
-          <div className="auth-tabs">
-            <button
-              className={`auth-tab ${mode === 'login' ? 'active' : ''}`}
-              onClick={() => {
-                setMode('login')
-                setError(null)
-                setSuccess(null)
-              }}
-            >
-              {t('auth.login')}
-            </button>
-            <button
-              className={`auth-tab ${mode === 'signup' ? 'active' : ''}`}
-              onClick={() => {
-                setMode('signup')
-                setError(null)
-                setSuccess(null)
-              }}
-            >
-              {t('auth.signup')}
-            </button>
-          </div>
-
-          {/* Success Message */}
-          {success && (
-            <div className="auth-success">
-              ✅ {success}
-            </div>
-          )}
-
-          {/* Error Message */}
-          {error && (
-            <div className="auth-error">
-              ⚠️ {error}
-            </div>
-          )}
-
-          {/* Login Form */}
-          {mode === 'login' && (
-            <form onSubmit={handleLogin} className="auth-form">
-              <div className="form-group">
-                <label>{t('auth.email')}</label>
-                <input
-                  type="email"
-                  name="email"
-                  className="input"
-                  placeholder="tu@email.com"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label>{t('auth.password')}</label>
-                <input
-                  type="password"
-                  name="password"
-                  className="input"
-                  placeholder="••••••••"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  required
-                  minLength={6}
-                />
+          {/* EMAIL SENT SCREEN */}
+          {mode === 'email_sent' && (
+            <div className="email-sent">
+              <div className="email-sent-icon">📧</div>
+              <h2>{t('auth.email_sent_title')}</h2>
+              <p className="email-sent-message">
+                {t('auth.email_sent_message')} <strong>{userEmail}</strong>
+              </p>
+              
+              <div className="email-sent-steps">
+                <div className="step">
+                  <span className="step-number">1</span>
+                  <p>{t('auth.step_1')}</p>
+                </div>
+                <div className="step">
+                  <span className="step-number">2</span>
+                  <p>{t('auth.step_2')}</p>
+                </div>
+                <div className="step">
+                  <span className="step-number">3</span>
+                  <p>{t('auth.step_3')}</p>
+                </div>
               </div>
 
               <button
-                type="submit"
-                className="btn btn-primary btn-full"
+                onClick={handleResendEmail}
+                className="btn btn-secondary btn-full"
                 disabled={loading}
+                style={{ marginTop: '20px' }}
               >
-                {loading ? (
-                  <>
-                    <span className="loading"></span>
-                    {t('auth.logging_in')}
-                  </>
-                ) : (
-                  t('auth.login')
-                )}
+                {loading ? t('auth.resending') : t('auth.resend_email')}
               </button>
-            </form>
+
+              <button
+                onClick={() => setMode('login')}
+                className="btn-text"
+                style={{ marginTop: '10px', width: '100%', textAlign: 'center' }}
+              >
+                {t('auth.back_to_login')}
+              </button>
+            </div>
           )}
 
-          {/* Signup Form */}
-          {mode === 'signup' && (
-            <form onSubmit={handleSignup} className="auth-form">
-              <div className="form-group">
-                <label>{t('auth.display_name')} *</label>
-                <input
-                  type="text"
-                  name="display_name"
-                  className="input"
-                  placeholder={t('auth.display_name')}
-                  value={formData.display_name}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label>{t('auth.whatsapp')} *</label>
-                <input
-                  type="tel"
-                  name="whatsapp"
-                  className="input"
-                  placeholder="+591 7XXXXXXX"
-                  value={formData.whatsapp}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label>{t('auth.account_type')}</label>
-                <select
-                  name="user_type"
-                  className="input select"
-                  value={formData.user_type}
-                  onChange={handleInputChange}
+          {/* TABS (Solo si no está en modo email_sent) */}
+          {mode !== 'email_sent' && (
+            <>
+              <div className="auth-tabs">
+                <button
+                  className={`auth-tab ${mode === 'login' ? 'active' : ''}`}
+                  onClick={() => {
+                    setMode('login')
+                    setError(null)
+                  }}
                 >
-                  <option value="person">👤 {t('auth.person')}</option>
-                  <option value="shop">🏪 {t('auth.shop')}</option>
-                  <option value="wholesale">📦 {t('auth.wholesale')}</option>
-                </select>
+                  {t('auth.login')}
+                </button>
+                <button
+                  className={`auth-tab ${mode === 'signup' ? 'active' : ''}`}
+                  onClick={() => {
+                    setMode('signup')
+                    setError(null)
+                  }}
+                >
+                  {t('auth.signup')}
+                </button>
               </div>
 
-              <div className="form-group">
-                <label>{t('auth.email')} *</label>
-                <input
-                  type="email"
-                  name="email"
-                  className="input"
-                  placeholder="tu@email.com"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
+              {/* Error Message */}
+              {error && (
+                <div className="auth-error">
+                  ⚠️ {error}
+                </div>
+              )}
 
-              <div className="form-group">
-                <label>{t('auth.password')} *</label>
-                <input
-                  type="password"
-                  name="password"
-                  className="input"
-                  placeholder="••••••••"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  required
-                  minLength={6}
-                />
-                <p className="form-hint">{t('auth.password_hint')}</p>
-              </div>
+              {/* Login Form */}
+              {mode === 'login' && (
+                <form onSubmit={handleLogin} className="auth-form">
+                  <div className="form-group">
+                    <label>{t('auth.email')}</label>
+                    <input
+                      type="email"
+                      name="email"
+                      className="input"
+                      placeholder="tu@email.com"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
 
-              <button
-                type="submit"
-                className="btn btn-primary btn-full"
-                disabled={loading}
-              >
-                {loading ? (
-                  <>
-                    <span className="loading"></span>
-                    {t('auth.signing_up')}
-                  </>
-                ) : (
-                  t('auth.signup')
-                )}
-              </button>
-            </form>
+                  <div className="form-group">
+                    <label>{t('auth.password')}</label>
+                    <input
+                      type="password"
+                      name="password"
+                      className="input"
+                      placeholder="••••••••"
+                      value={formData.password}
+                      onChange={handleInputChange}
+                      required
+                      minLength={6}
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="btn btn-primary btn-full"
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <>
+                        <span className="loading"></span>
+                        {t('auth.logging_in')}
+                      </>
+                    ) : (
+                      t('auth.login')
+                    )}
+                  </button>
+                </form>
+              )}
+
+              {/* Signup Form */}
+              {mode === 'signup' && (
+                <form onSubmit={handleSignup} className="auth-form">
+                  <div className="form-group">
+                    <label>{t('auth.display_name')} *</label>
+                    <input
+                      type="text"
+                      name="display_name"
+                      className="input"
+                      placeholder={t('auth.display_name')}
+                      value={formData.display_name}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>{t('auth.whatsapp')} *</label>
+                    <input
+                      type="tel"
+                      name="whatsapp"
+                      className="input"
+                      placeholder="+591 7XXXXXXX"
+                      value={formData.whatsapp}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>{t('auth.account_type')}</label>
+                    <select
+                      name="user_type"
+                      className="input select"
+                      value={formData.user_type}
+                      onChange={handleInputChange}
+                    >
+                      <option value="person">👤 {t('auth.person')}</option>
+                      <option value="shop">🏪 {t('auth.shop')}</option>
+                      <option value="wholesale">📦 {t('auth.wholesale')}</option>
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label>{t('auth.email')} *</label>
+                    <input
+                      type="email"
+                      name="email"
+                      className="input"
+                      placeholder="tu@email.com"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>{t('auth.password')} *</label>
+                    <input
+                      type="password"
+                      name="password"
+                      className="input"
+                      placeholder="••••••••"
+                      value={formData.password}
+                      onChange={handleInputChange}
+                      required
+                      minLength={6}
+                    />
+                    <p className="form-hint">{t('auth.password_hint')}</p>
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="btn btn-primary btn-full"
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <>
+                        <span className="loading"></span>
+                        {t('auth.signing_up')}
+                      </>
+                    ) : (
+                      t('auth.signup')
+                    )}
+                  </button>
+                </form>
+              )}
+
+              {/* Pirate Notice */}
+              <div className="auth-notice">
+                <p>🏴‍☠️ {t('auth.pirate_notice')}</p>
+              </div>
+            </>
           )}
-
-          {/* Pirate Notice */}
-          <div className="auth-notice">
-            <p>🏴‍☠️ {t('auth.pirate_notice')}</p>
-          </div>
         </div>
       </div>
     </div>
