@@ -20,7 +20,6 @@ Ricardo Maldonado Moreno
 - **Backend:** Supabase (PostgreSQL + Auth + Storage)
 - **Internacionalización:** react-i18next
 - **Mapas:** Leaflet.js
-- **Deploy:** Vercel
 - **Estilo:** CSS personalizado (paleta Buses App)
 
 ---
@@ -39,61 +38,6 @@ pirata-market/
 ├── supabase/           # Schema y migraciones SQL
 └── README.md
 ```
-
----
-
-## 🛠️ Instalación Local
-
-### 1. Clonar el repositorio
-```bash
-git clone https://github.com/tu-usuario/pirata-market.git
-cd pirata-market
-```
-
-### 2. Instalar dependencias
-```bash
-npm install
-```
-
-### 3. Configurar variables de entorno
-
-Crea un archivo `.env.local` en la raíz:
-```env
-VITE_SUPABASE_URL=https://tu-proyecto.supabase.co
-VITE_SUPABASE_ANON_KEY=tu_anon_key_aqui
-VITE_MAPBOX_TOKEN=tu_mapbox_token_aqui
-```
-
-### 4. Ejecutar en desarrollo
-```bash
-npm run dev
-```
-
-Abre [http://localhost:5173](http://localhost:5173)
-
----
-
-## 📊 Setup Supabase
-
-### 1. Crear proyecto
-
-- Ve a [supabase.com](https://supabase.com)
-- Crea un nuevo proyecto
-- Copia URL y anon key
-
-### 2. Ejecutar Schema SQL
-
-- Abre **SQL Editor** en Supabase
-- Copia el contenido de `supabase/schema.sql`
-- Ejecuta el script
-
-### 3. Configurar Storage
-
-Crea dos buckets públicos:
-- `listing-photos`
-- `listing-videos`
-
----
 
 ## 🎯 Características
 
@@ -114,27 +58,6 @@ Crea dos buckets públicos:
 - **Visitante:** Ver marketplace, publicar Pirata
 - **Registrado:** Fichas permanentes (Persona/Tienda/Mayorista)
 - **Admin:** Backoffice completo
-
----
-
-## 🚀 Deploy en Vercel
-
-### Opción 1: GitHub Integration
-
-1. Push tu código a GitHub
-2. Ve a [vercel.com](https://vercel.com)
-3. Importa tu repositorio
-4. Agrega variables de entorno:
-   - `VITE_SUPABASE_URL`
-   - `VITE_SUPABASE_ANON_KEY`
-   - `VITE_MAPBOX_TOKEN`
-5. Deploy
-
-### Opción 2: Vercel CLI
-```bash
-npm i -g vercel
-vercel
-```
 
 ---
 
@@ -202,7 +125,7 @@ Ricardo Maldonado Moreno
 ## 🤝 Contribuir
 
 Este es un proyecto privado de Buses App.
-
+Ricardo Maldonado Moreno
 ---
 
 ## 📞 Soporte
@@ -211,4 +134,4 @@ Para soporte, contacta a: soporte@buses.app
 
 ---
 
-**Hecho con 🏴‍☠️ por el equipo de Buses App**
+**🏴‍☠️ por Ricardo Maldonado Moreno - Buses**
