@@ -194,4 +194,15 @@
     "confirm_delete": "Are you sure you want to delete?",
     "loading": "Loading...",
     "no_data": "No data available",
-    "c
+    "copied": "Copied to clipboard!",
+    "share_title": "Share listing"
+  },
+  
+  "time": {
+    "now": "Now",
+    "minutes": "min",
+    "hours": "h",
+    "days": "d",
+    "ago": "ago"
+  }
+}
