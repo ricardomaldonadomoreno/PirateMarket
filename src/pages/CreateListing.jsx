@@ -1,35 +1,59 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { supabase, uploadImage, uploadVideo, getCategories } from '../lib/supabase'
+import { supabase, uploadImage, uploadVideo } from '../lib/supabase'
 import { validateImage, validateVideo, compressImage } from '../lib/utils'
 import './CreateListing.css'
 
-export default function CreateListing({ user }) {
+export default function CreateListing() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const [categories, setCategories] = useState([])
+  const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(false)
   const [uploadingMedia, setUploadingMedia] = useState(false)
+  const [categories, setCategories] = useState([])
   
   const [formData, setFormData] = useState({
     title: '',
-    description: '',
     price: '',
     category_id: '',
+    description: '',
     photos: [],
     video: null,
-    whatsapp_number: user?.whatsapp || '',
+    whatsapp: '',
     accepts_offers: false,
     location: ''
   })
 
-  const [photoFiles, setPhotoFiles] = useState([])
-  const [videoFile, setVideoFile] = useState(null)
   const [errors, setErrors] = useState({})
+  const [photoPreviews, setPhotoPreviews] = useState([])
+  const [videoPreview, setVideoPreview] = useState(null)
 
-useEffect(() => {
+  useEffect(() => {
+    checkUser()
+    loadCategories()
+  }, [])
+
+  const checkUser = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    setUser(user)
+    
+    // Si hay usuario, cargar su WhatsApp
+    if (user) {
+      const { data: userData } = await supabase
+        .from('users')
+        .select('whatsapp')
+        .eq('id', user.id)
+        .single()
+      
+      if (userData?.whatsapp) {
+        setFormData(prev => ({ ...prev, whatsapp: userData.whatsapp }))
+      }
+    }
+  }
+
   const loadCategories = async () => {
+    console.log('Loading categories...')
     const { data, error } = await supabase
       .from('categories')
       .select('*')
@@ -37,20 +61,10 @@ useEffect(() => {
     
     if (error) {
       console.error('Error loading categories:', error)
+      alert('Error al cargar categorías: ' + error.message)
     } else {
+      console.log('Categories loaded:', data)
       setCategories(data || [])
-    }
-  }
-  
-  loadCategories()
-}, [])
-
-  const loadCategories = async () => {
-    try {
-      const cats = await getCategories()
-      setCategories(cats)
-    } catch (error) {
-      console.error('Error loading categories:', error)
     }
   }
 
@@ -60,60 +74,89 @@ useEffect(() => {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }))
-    // Clear error for this field
+    // Clear error when user types
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: null }))
     }
   }
 
-  const handlePhotoChange = async (e) => {
+  const handlePhotoUpload = async (e) => {
     const files = Array.from(e.target.files)
-    const newErrors = {}
-
-    if (photoFiles.length + files.length > 5) {
-      newErrors.photos = t('listing.create.max_photos_error')
-      setErrors(prev => ({ ...prev, ...newErrors }))
+    
+    // Validar cantidad
+    if (formData.photos.length + files.length > 5) {
+      setErrors(prev => ({ ...prev, photos: t('listing.create.max_photos_error') }))
       return
     }
 
-    // Validate each file
+    setUploadingMedia(true)
+    const newPhotos = []
+    const newPreviews = []
+
     for (const file of files) {
-      const error = validateImage(file)
-      if (error) {
-        newErrors.photos = error
-        setErrors(prev => ({ ...prev, ...newErrors }))
-        return
+      // Validar imagen
+      const validation = validateImage(file)
+      if (!validation.valid) {
+        alert(validation.error)
+        continue
+      }
+
+      try {
+        // Comprimir imagen
+        const compressed = await compressImage(file)
+        
+        // Subir a Supabase
+        const url = await uploadImage(compressed, 'listing-photos')
+        newPhotos.push(url)
+        newPreviews.push(URL.createObjectURL(compressed))
+      } catch (err) {
+        console.error('Error uploading photo:', err)
+        alert('Error al subir foto: ' + err.message)
       }
     }
 
-    // Compress images
-    const compressedFiles = await Promise.all(
-      files.map(file => compressImage(file))
-    )
-
-    setPhotoFiles(prev => [...prev, ...compressedFiles])
+    setFormData(prev => ({
+      ...prev,
+      photos: [...prev.photos, ...newPhotos]
+    }))
+    setPhotoPreviews(prev => [...prev, ...newPreviews])
+    setUploadingMedia(false)
   }
 
-  const handleVideoChange = (e) => {
+  const handleVideoUpload = async (e) => {
     const file = e.target.files[0]
     if (!file) return
 
-    const error = validateVideo(file)
-    if (error) {
-      setErrors(prev => ({ ...prev, video: error }))
+    // Validar video
+    const validation = validateVideo(file)
+    if (!validation.valid) {
+      alert(validation.error)
       return
     }
 
-    setVideoFile(file)
-    setErrors(prev => ({ ...prev, video: null }))
+    setUploadingMedia(true)
+    try {
+      const url = await uploadVideo(file, 'listing-videos')
+      setFormData(prev => ({ ...prev, video: url }))
+      setVideoPreview(URL.createObjectURL(file))
+    } catch (err) {
+      console.error('Error uploading video:', err)
+      alert('Error al subir video: ' + err.message)
+    }
+    setUploadingMedia(false)
   }
 
   const removePhoto = (index) => {
-    setPhotoFiles(prev => prev.filter((_, i) => i !== index))
+    setFormData(prev => ({
+      ...prev,
+      photos: prev.photos.filter((_, i) => i !== index)
+    }))
+    setPhotoPreviews(prev => prev.filter((_, i) => i !== index))
   }
 
   const removeVideo = () => {
-    setVideoFile(null)
+    setFormData(prev => ({ ...prev, video: null }))
+    setVideoPreview(null)
   }
 
   const validateForm = () => {
@@ -123,21 +166,21 @@ useEffect(() => {
       newErrors.title = t('listing.create.title_min_error')
     }
 
-    if (!formData.price || formData.price <= 0) {
+    if (!formData.price || parseFloat(formData.price) <= 0) {
       newErrors.price = t('listing.create.price_error')
     }
 
     if (!formData.category_id) {
-      newErrors.category_id = t('listing.create.category_error')
+      newErrors.category = t('listing.create.category_error')
     }
 
     if (!formData.description) {
       newErrors.description = t('listing.create.description_error')
     }
 
-    // For registered users, require WhatsApp
-    if (user && !formData.whatsapp_number) {
-      newErrors.whatsapp_number = t('listing.create.whatsapp_error')
+    // Si es usuario registrado, validar WhatsApp
+    if (user && (!formData.whatsapp || formData.whatsapp.length < 8)) {
+      newErrors.whatsapp = t('listing.create.whatsapp_error')
     }
 
     setErrors(newErrors)
@@ -152,39 +195,24 @@ useEffect(() => {
     }
 
     setLoading(true)
-    setUploadingMedia(true)
 
     try {
-      // Upload photos
-      const photoUrls = []
-      for (const file of photoFiles) {
-        const url = await uploadImage(file)
-        photoUrls.push(url)
-      }
-
-      // Upload video
-      let videoUrl = null
-      if (videoFile) {
-        videoUrl = await uploadVideo(videoFile)
-      }
-
-      setUploadingMedia(false)
-
-      // Create listing
       const listingData = {
         title: formData.title,
-        description: formData.description,
         price: parseFloat(formData.price),
         category_id: formData.category_id,
-        photos: photoUrls,
-        video_url: videoUrl,
-        accepts_offers: formData.accepts_offers,
-        display_location: formData.location || 'Santa Cruz',
-        is_ghost: !user,
-        user_id: user?.id || null,
-        whatsapp_number: user ? formData.whatsapp_number : null,
-        status: 'active'
+        description: formData.description,
+        photos: formData.photos,
+        video_url: formData.video,
+        display_location: formData.location || null,
+        status: 'active',
+        is_ghost: !user, // true si no hay usuario
+        user_id: user ? user.id : null,
+        whatsapp_number: user ? formData.whatsapp : null,
+        accepts_offers: user ? formData.accepts_offers : false
       }
+
+      console.log('Submitting listing:', listingData)
 
       const { data, error } = await supabase
         .from('listings')
@@ -192,18 +220,20 @@ useEffect(() => {
         .select()
         .single()
 
-      if (error) throw error
+      if (error) {
+        console.error('Error creating listing:', error)
+        throw error
+      }
 
-      // Success
-      alert(t('listing.create.success'))
+      console.log('Listing created:', data)
+
+      // Redirigir a la ficha creada
       navigate(`/ficha/${data.slug}`)
-
-    } catch (error) {
-      console.error('Error creating listing:', error)
-      alert(t('listing.create.error'))
+    } catch (err) {
+      console.error('Error:', err)
+      alert('Error al publicar: ' + err.message)
     } finally {
       setLoading(false)
-      setUploadingMedia(false)
     }
   }
 
@@ -212,26 +242,31 @@ useEffect(() => {
   return (
     <div className="create-listing">
       <div className="create-listing-container">
-        <div className="create-header">
-          <h1 className="serif luxury-gold">
-            {isPirate ? t('listing.create.title_pirate') : t('listing.create.title_registered')}
+        <div className="create-listing-header">
+          <h1>
+            {isPirate 
+              ? t('listing.create.title_pirate') 
+              : t('listing.create.title_registered')
+            }
           </h1>
           {isPirate && (
             <div className="pirate-notice">
-              <span>⏱️</span>
-              <div>
-                <strong>{t('listing.create.pirate_notice')}</strong>
-                <p>{t('listing.create.pirate_upgrade')}</p>
-              </div>
+              <p>⏱️ {t('listing.create.pirate_notice')}</p>
+              <p className="pirate-upgrade">
+                {t('listing.create.pirate_upgrade')} 
+                <button onClick={() => navigate('/auth')} className="link-button">
+                  {t('auth.signup')}
+                </button>
+              </p>
             </div>
           )}
         </div>
 
-        <form onSubmit={handleSubmit} className="create-form">
-          {/* Basic Info */}
-          <div className="form-section card">
-            <h3>{t('listing.create.basic_info')}</h3>
-            
+        <form onSubmit={handleSubmit} className="create-listing-form">
+          {/* Información Básica */}
+          <section className="form-section">
+            <h2>{t('listing.create.basic_info')}</h2>
+
             <div className="form-group">
               <label>{t('listing.create.fields.title')} *</label>
               <input
@@ -241,9 +276,11 @@ useEffect(() => {
                 placeholder={t('listing.create.fields.title_placeholder')}
                 value={formData.title}
                 onChange={handleInputChange}
-                maxLength={100}
+                required
               />
-              {errors.title && <span className="error">{errors.title}</span>}
+              {errors.title && (
+                <p className="error-message">{errors.title}</p>
+              )}
             </div>
 
             <div className="form-row">
@@ -254,12 +291,15 @@ useEffect(() => {
                   name="price"
                   className="input"
                   placeholder="0.00"
+                  step="0.01"
+                  min="0"
                   value={formData.price}
                   onChange={handleInputChange}
-                  min="0"
-                  step="0.01"
+                  required
                 />
-                {errors.price && <span className="error">{errors.price}</span>}
+                {errors.price && (
+                  <p className="error-message">{errors.price}</p>
+                )}
               </div>
 
               <div className="form-group">
@@ -269,15 +309,18 @@ useEffect(() => {
                   className="input select"
                   value={formData.category_id}
                   onChange={handleInputChange}
+                  required
                 >
                   <option value="">{t('listing.create.select_category')}</option>
                   {categories.map(cat => (
                     <option key={cat.id} value={cat.id}>
-                      {cat.icon} {t(`categories.${cat.slug}`)}
+                      {cat.icon} {cat.name}
                     </option>
                   ))}
                 </select>
-                {errors.category_id && <span className="error">{errors.category_id}</span>}
+                {errors.category && (
+                  <p className="error-message">{errors.category}</p>
+                )}
               </div>
             </div>
 
@@ -287,14 +330,103 @@ useEffect(() => {
                 name="description"
                 className="input textarea"
                 placeholder={t('listing.create.fields.description_placeholder')}
+                rows="6"
                 value={formData.description}
                 onChange={handleInputChange}
-                rows={6}
+                required
               />
-              {errors.description && <span className="error">{errors.description}</span>}
+              {errors.description && (
+                <p className="error-message">{errors.description}</p>
+              )}
+            </div>
+          </section>
+
+          {/* Fotos y Video */}
+          <section className="form-section">
+            <h2>{t('listing.create.media')}</h2>
+
+            <div className="form-group">
+              <label>{t('listing.create.fields.photos')}</label>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handlePhotoUpload}
+                className="input-file"
+                disabled={uploadingMedia || formData.photos.length >= 5}
+              />
+              {errors.photos && (
+                <p className="error-message">{errors.photos}</p>
+              )}
+              
+              {photoPreviews.length > 0 && (
+                <div className="photo-previews">
+                  {photoPreviews.map((preview, index) => (
+                    <div key={index} className="photo-preview">
+                      <img src={preview} alt={`Preview ${index + 1}`} />
+                      <button
+                        type="button"
+                        onClick={() => removePhoto(index)}
+                        className="remove-photo"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
-            {!isPirate && (
+            <div className="form-group">
+              <label>{t('listing.create.fields.video')}</label>
+              <input
+                type="file"
+                accept="video/*"
+                onChange={handleVideoUpload}
+                className="input-file"
+                disabled={uploadingMedia || formData.video}
+              />
+              
+              {videoPreview && (
+                <div className="video-preview">
+                  <video src={videoPreview} controls />
+                  <button
+                    type="button"
+                    onClick={removeVideo}
+                    className="remove-video"
+                  >
+                    ×
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {uploadingMedia && (
+              <p className="upload-status">{t('listing.create.uploading')}</p>
+            )}
+          </section>
+
+          {/* Contacto (solo para usuarios registrados) */}
+          {user && (
+            <section className="form-section">
+              <h2>{t('listing.create.contact')}</h2>
+
+              <div className="form-group">
+                <label>{t('listing.create.fields.whatsapp')} *</label>
+                <input
+                  type="tel"
+                  name="whatsapp"
+                  className="input"
+                  placeholder="+591 7XXXXXXX"
+                  value={formData.whatsapp}
+                  onChange={handleInputChange}
+                  required
+                />
+                {errors.whatsapp && (
+                  <p className="error-message">{errors.whatsapp}</p>
+                )}
+              </div>
+
               <div className="form-group">
                 <label className="checkbox-label">
                   <input
@@ -306,112 +438,23 @@ useEffect(() => {
                   <span>{t('listing.create.fields.accepts_offers')}</span>
                 </label>
               </div>
-            )}
-          </div>
-
-          {/* Media */}
-          <div className="form-section card">
-            <h3>{t('listing.create.media')}</h3>
-            
-            {/* Photos */}
-            <div className="form-group">
-              <label>{t('listing.create.fields.photos')}</label>
-              <div className="photo-upload">
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handlePhotoChange}
-                  disabled={photoFiles.length >= 5}
-                  id="photo-input"
-                  style={{ display: 'none' }}
-                />
-                <label htmlFor="photo-input" className="btn btn-secondary upload-btn">
-                  📷 {t('listing.create.upload_photos')} ({photoFiles.length}/5)
-                </label>
-              </div>
-              {errors.photos && <span className="error">{errors.photos}</span>}
-              
-              {photoFiles.length > 0 && (
-                <div className="photo-preview-grid">
-                  {photoFiles.map((file, index) => (
-                    <div key={index} className="photo-preview-item">
-                      <img src={URL.createObjectURL(file)} alt={`Preview ${index + 1}`} />
-                      <button
-                        type="button"
-                        className="photo-remove"
-                        onClick={() => removePhoto(index)}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Video */}
-            <div className="form-group">
-              <label>{t('listing.create.fields.video')}</label>
-              {!videoFile ? (
-                <>
-                  <input
-                    type="file"
-                    accept="video/*"
-                    onChange={handleVideoChange}
-                    id="video-input"
-                    style={{ display: 'none' }}
-                  />
-                  <label htmlFor="video-input" className="btn btn-secondary upload-btn">
-                    🎥 {t('listing.create.upload_video')}
-                  </label>
-                </>
-              ) : (
-                <div className="video-preview">
-                  <video src={URL.createObjectURL(videoFile)} controls />
-                  <button
-                    type="button"
-                    className="btn btn-ghost"
-                    onClick={removeVideo}
-                  >
-                    {t('buttons.delete')}
-                  </button>
-                </div>
-              )}
-              {errors.video && <span className="error">{errors.video}</span>}
-            </div>
-          </div>
-
-          {/* Contact (for registered users) */}
-          {!isPirate && (
-            <div className="form-section card">
-              <h3>{t('listing.create.contact')}</h3>
-              
-              <div className="form-group">
-                <label>{t('listing.create.fields.whatsapp')} *</label>
-                <input
-                  type="tel"
-                  name="whatsapp_number"
-                  className="input"
-                  placeholder="+591 7XXXXXXX"
-                  value={formData.whatsapp_number}
-                  onChange={handleInputChange}
-                />
-                {errors.whatsapp_number && <span className="error">{errors.whatsapp_number}</span>}
-              </div>
-            </div>
+            </section>
           )}
 
-          {/* Location */}
-          <div className="form-section card">
-            <h3>📍 {t('listing.create.fields.location')}</h3>
-            
+          {/* Ubicación */}
+          <section className="form-section">
+            <h2>{t('listing.create.fields.location')}</h2>
+
             <div className="form-group">
               <input
                 type="text"
                 name="location"
                 className="input"
-                placeholder="Ej: Equipetrol, Santa Cruz"
+                placeholder={
+                  isPirate 
+                    ? t('listing.create.location_hint_pirate')
+                    : t('listing.create.location_hint_registered')
+                }
                 value={formData.location}
                 onChange={handleInputChange}
               />
@@ -422,14 +465,14 @@ useEffect(() => {
                 }
               </p>
             </div>
-          </div>
+          </section>
 
-          {/* Submit */}
+          {/* Botones */}
           <div className="form-actions">
             <button
               type="button"
+              onClick={() => navigate(-1)}
               className="btn btn-secondary"
-              onClick={() => navigate('/')}
               disabled={loading}
             >
               {t('buttons.cancel')}
@@ -437,17 +480,17 @@ useEffect(() => {
             <button
               type="submit"
               className="btn btn-primary"
-              disabled={loading}
+              disabled={loading || uploadingMedia}
             >
               {loading ? (
                 <>
                   <span className="loading"></span>
-                  {uploadingMedia ? t('listing.create.uploading') : t('listing.create.publishing')}
+                  {t('listing.create.publishing')}
                 </>
               ) : (
-                <>
-                  🏴‍☠️ {isPirate ? t('listing.create.submit_pirate') : t('listing.create.submit')}
-                </>
+                isPirate 
+                  ? t('listing.create.submit_pirate')
+                  : t('listing.create.submit')
               )}
             </button>
           </div>
