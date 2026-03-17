@@ -103,6 +103,9 @@
     "error_whatsapp": "WhatsApp无效",
     "password_hint": "最少6个字符",
     "pirate_notice": "您也可以不用账户以海盗身份发布（72小时）"
+    "email_sent": "请检查您的电子邮件以确认您的账户",
+    "email_not_confirmed": "您必须在登录前确认您的电子邮件",
+    "check_inbox": "检查您的收件箱"
   },
   
   "dashboard": {
