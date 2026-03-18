@@ -148,59 +148,101 @@ export default function CreateListing() {
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
+const handleSubmit = async (e) => {
+  e.preventDefault()
 
-    if (!validateForm()) {
-      return
+  console.log('🚀 SUBMIT INICIADO')
+  console.log('📋 FormData:', formData)
+  console.log('📸 PhotoFiles:', photoFiles)
+  console.log('🎥 VideoFile:', videoFile)
+  console.log('👤 User:', user)
+
+  if (!validateForm()) {
+    console.log('❌ Validación falló')
+    return
+  }
+
+  setLoading(true)
+  setUploadingMedia(true)
+
+  try {
+    console.log('📤 Iniciando subida de fotos...')
+    
+    // Subir fotos
+    const photoUrls = []
+    for (let i = 0; i < photoFiles.length; i++) {
+      const file = photoFiles[i]
+      console.log(`📸 Subiendo foto ${i + 1}/${photoFiles.length}:`, file.name)
+      
+      const url = await uploadImage(file)
+      console.log(`✅ Foto ${i + 1} subida:`, url)
+      photoUrls.push(url)
     }
 
-    setLoading(true)
-    setUploadingMedia(true)
+    console.log('✅ Todas las fotos subidas:', photoUrls)
 
-    try {
-      // Subir fotos
-      const photoUrls = []
-      for (const file of photoFiles) {
-        const url = await uploadImage(file)
-        photoUrls.push(url)
-      }
+    // Subir video
+    let videoUrl = null
+    if (videoFile) {
+      console.log('🎥 Subiendo video...')
+      videoUrl = await uploadVideo(videoFile)
+      console.log('✅ Video subido:', videoUrl)
+    }
 
-      // Subir video
-      let videoUrl = null
-      if (videoFile) {
-        videoUrl = await uploadVideo(videoFile)
-      }
+    setUploadingMedia(false)
 
-      setUploadingMedia(false)
+    // Crear listing
+    const listingData = {
+      title: formData.title,
+      description: formData.description,
+      price: parseFloat(formData.price),
+      category_id: formData.category_id,
+      photos: photoUrls,
+      video_url: videoUrl,
+      accepts_offers: formData.accepts_offers,
+      display_location: formData.location || 'Santa Cruz',
+      is_ghost: !user,
+      user_id: user?.id || null,
+      whatsapp_number: user ? formData.whatsapp_number : null,
+      status: 'active'
+    }
 
-      // Crear listing
-      const listingData = {
-        title: formData.title,
-        description: formData.description,
-        price: parseFloat(formData.price),
-        category_id: formData.category_id,
-        photos: photoUrls,
-        video_url: videoUrl,
-        accepts_offers: formData.accepts_offers,
-        display_location: formData.location || 'Santa Cruz',
-        is_ghost: !user,
-        user_id: user?.id || null,
-        whatsapp_number: user ? formData.whatsapp_number : null,
-        status: 'active'
-      }
+    console.log('📝 Datos del listing:', listingData)
+    console.log('💾 Insertando en Supabase...')
 
-      const { data, error } = await supabase
-        .from('listings')
-        .insert([listingData])
-        .select()
-        .single()
+    const { data, error } = await supabase
+      .from('listings')
+      .insert([listingData])
+      .select()
+      .single()
 
-      if (error) throw error
+    if (error) {
+      console.error('❌ Error de Supabase:', error)
+      console.error('❌ Error code:', error.code)
+      console.error('❌ Error message:', error.message)
+      console.error('❌ Error details:', error.details)
+      console.error('❌ Error hint:', error.hint)
+      throw error
+    }
 
-      // Success
-      alert(t('listing.create.success'))
-      navigate(`/ficha/${data.slug}`)
+    console.log('✅ Listing creado exitosamente:', data)
+
+    // Success
+    alert(t('listing.create.success'))
+    navigate(`/ficha/${data.slug}`)
+
+  } catch (error) {
+    console.error('💥 ERROR COMPLETO:', error)
+    console.error('💥 Error name:', error.name)
+    console.error('💥 Error message:', error.message)
+    console.error('💥 Error stack:', error.stack)
+    
+    alert('Error al publicar: ' + error.message)
+  } finally {
+    setLoading(false)
+    setUploadingMedia(false)
+  }
+}
 
     } catch (error) {
       console.error('Error creating listing:', error)
