@@ -73,21 +73,62 @@
   border: 3px solid var(--gold);
 }
 
-.avatar-overlay {
+.avatar-loading {
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.25rem;
-  opacity: 0;
-  transition: opacity 0.2s;
 }
 
-.avatar-wrapper:hover .avatar-overlay {
-  opacity: 1;
+.avatar-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.avatar-actions {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.avatar-btn {
+  padding: 0.3rem 0.65rem;
+  background: var(--dark-border);
+  border: 1px solid var(--dark-border);
+  border-radius: var(--radius-full);
+  color: var(--text-light);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+}
+
+.avatar-btn:hover:not(:disabled) {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.avatar-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.avatar-btn-delete {
+  padding: 0.3rem 0.5rem;
+  background: rgba(230, 57, 70, 0.1);
+  border-color: rgba(230, 57, 70, 0.3);
+}
+
+.avatar-btn-delete:hover:not(:disabled) {
+  border-color: var(--danger);
+  color: var(--danger);
+  background: rgba(230, 57, 70, 0.2);
 }
 
 /* ============================================
