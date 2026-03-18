@@ -153,6 +153,7 @@ export default function ComoFunciona() {
           <p>Los anuncios marcados como "Pirata" (sin registro) son publicados de forma anónima. Pirata Market no puede identificar ni contactar a estos vendedores.</p>
           <p>Nos reservamos el derecho de eliminar cualquier anuncio que viole nuestras reglas de comunidad o la legislación aplicable, sin previo aviso.</p>
           <p className="cf-legal">© {new Date().getFullYear()} Pirata Market · Un servicio de <strong>Buses App</strong></p>
+          <p>CONTACTO: busesapp55@gmail.com.</p>
         </section>
 
         <Link to="/" className="btn btn-primary" style={{ marginTop: '1rem' }}>
