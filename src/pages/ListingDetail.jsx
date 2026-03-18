@@ -69,7 +69,7 @@ export default function ListingDetail({ user }) {
   }
 
   const handleShare = async () => {
-    const url = generateShareURL(listing.slug)
+    const url = `${window.location.origin}/api/og?slug=${listing.slug}`
     
     if (navigator.share) {
       try {
