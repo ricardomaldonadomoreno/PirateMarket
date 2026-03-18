@@ -201,7 +201,7 @@
 
 .results-count {
   color: var(--text-muted);
-  font-size: 0.5rem;
+  font-size: 0.9rem;
   margin-top: 0.5rem;
 }
 
@@ -281,7 +281,7 @@
 }
 
 .listing-card:hover .listing-image img {
-  transform: scale(1);
+  transform: scale(1.05);
 }
 
 .listing-no-image {
@@ -345,14 +345,14 @@
 }
 
 .listing-price {
-  font-size: 0.5rem;
-  font-weight: 600;
+  font-size: 0.9rem;
+  font-weight: 700;
   font-family: 'Playfair Display', serif;
   line-height: 1.1;
 }
 
 .listing-title {
-  font-size: 0.5rem;
+  font-size: 0.8rem;
   font-weight: 600;
   line-height: 1.2;
   display: -webkit-box;
