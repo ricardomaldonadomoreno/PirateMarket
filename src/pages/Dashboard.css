@@ -73,7 +73,40 @@
   border: 3px solid var(--gold);
 }
 
-.avatar-loading {
+.user-type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.875rem;
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-top: 0.25rem;
+}
+
+.user-type-person {
+  background: rgba(184, 152, 95, 0.15);
+  color: var(--gold);
+  border: 1.5px solid var(--gold);
+}
+
+.user-type-shop {
+  background: rgba(255, 183, 3, 0.15);
+  color: var(--warning);
+  border: 1.5px solid var(--warning);
+}
+
+.user-type-wholesale {
+  background: rgba(6, 214, 160, 0.15);
+  color: var(--success);
+  border: 1.5px solid var(--success);
+}
+
+.user-type-admin {
+  background: rgba(230, 57, 70, 0.15);
+  color: var(--danger);
+  border: 1.5px solid var(--danger);
+}
   position: absolute;
   inset: 0;
   border-radius: 50%;
