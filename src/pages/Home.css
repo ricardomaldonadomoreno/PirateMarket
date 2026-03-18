@@ -337,41 +337,41 @@
 }
 
 .listing-info {
-  padding: 0.6rem 0.75rem;
+  padding: 0.5rem 0.6rem;
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: 0.1rem;
 }
 
 .listing-price {
-  font-size: 1rem;
+  font-size: 0.9rem;
   font-weight: 700;
   font-family: 'Playfair Display', serif;
-  line-height: 1.2;
+  line-height: 1.1;
 }
 
 .listing-title {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 600;
-  line-height: 1.3;
+  line-height: 1.2;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   color: var(--text-light);
   font-family: 'Inter', sans-serif;
-  margin: 0.15rem 0;
+  margin: 0;
 }
 
 .listing-meta {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: var(--text-muted);
-  margin-top: auto;
-  padding-top: 0.25rem;
+  margin-top: 0.1rem;
+  padding-top: 0;
 }
 
 .listing-location {
@@ -541,12 +541,11 @@
 .listing-seller-type {
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
-  font-size: 0.7rem;
+  gap: 0.2rem;
+  font-size: 0.65rem;
   font-weight: 600;
-  padding: 0.15rem 0.5rem;
+  padding: 0.1rem 0.4rem;
   border-radius: var(--radius-full);
-  margin-bottom: 0.15rem;
 }
 
 .listing-seller-pirate {
