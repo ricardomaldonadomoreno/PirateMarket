@@ -85,7 +85,7 @@ export default function Auth() {
             whatsapp: formData.whatsapp,
             user_type: formData.user_type
           },
-          emailRedirectTo: 'https://pirata-market.vercel.app/auth'
+          emailRedirectTo: 'https://pirate-market.vercel.app/auth'
         }
       })
 
