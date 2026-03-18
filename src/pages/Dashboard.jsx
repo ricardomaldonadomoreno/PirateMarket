@@ -81,9 +81,20 @@ export default function Dashboard({ user }) {
       const fileExt = file.name.split('.').pop()
       const filePath = `${user.id}.${fileExt}`
 
+      // Eliminar cualquier versión anterior (todos los formatos posibles)
+      await supabase.storage
+        .from('avatars')
+        .remove([
+          `${user.id}.jpg`,
+          `${user.id}.jpeg`,
+          `${user.id}.png`,
+          `${user.id}.webp`
+        ])
+
+      // Subir nueva foto
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(filePath, file, { upsert: true })
+        .upload(filePath, file)
 
       if (uploadError) throw uploadError
 
@@ -91,14 +102,17 @@ export default function Dashboard({ user }) {
         .from('avatars')
         .getPublicUrl(filePath)
 
+      // Timestamp para evitar caché del navegador
+      const urlWithCache = `${publicUrl}?t=${Date.now()}`
+
       const { error: updateError } = await supabase
         .from('users')
-        .update({ avatar_url: publicUrl })
+        .update({ avatar_url: urlWithCache })
         .eq('id', user.id)
 
       if (updateError) throw updateError
 
-      setProfile(prev => ({ ...prev, avatar_url: publicUrl }))
+      setProfile(prev => ({ ...prev, avatar_url: urlWithCache }))
     } catch (error) {
       console.error('Error uploading avatar:', error)
       alert('Error al subir la foto')
