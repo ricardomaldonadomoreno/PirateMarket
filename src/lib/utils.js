@@ -1,6 +1,6 @@
 // Format price with currency
 export function formatPrice(price, currency = 'BOB') {
-  return `${currency} ${Number(price).toLocaleString('es-BO')}`
+  return `${currency || 'BOB'} ${Number(price).toLocaleString('es-BO')}`
 }
 
 // Calculate relative time
@@ -53,7 +53,6 @@ export function validateImage(file) {
 export function validateVideo(file) {
   const validTypes = ['video/mp4', 'video/webm', 'video/quicktime']
   const maxSize = 20 * 1024 * 1024 // 20MB
-  const maxDuration = 6 // seconds
   
   if (!validTypes.includes(file.type)) {
     return 'Solo se permiten videos MP4, WebM o MOV'
@@ -70,9 +69,7 @@ export function validateVideo(file) {
 export function generateWhatsAppURL(phone, listingTitle, listingSlug) {
   const baseUrl = window.location.origin
   const message = `Hola, vi tu anuncio en Pirata Market:\n${listingTitle}\n${baseUrl}/ficha/${listingSlug}`
-  
   const cleanPhone = phone.replace(/\D/g, '')
-  
   return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`
 }
 
@@ -94,31 +91,15 @@ export async function copyToClipboard(text) {
 // Get user badge info
 export function getUserBadge(userType, isVerified, t) {
   if (userType === 'shop') {
-    return { 
-      icon: '🏪', 
-      label: t('badges.shop'),
-      color: 'warning'
-    }
+    return { icon: '🏪', label: t('badges.shop'), color: 'warning' }
   }
   if (userType === 'wholesale') {
-    return { 
-      icon: '📦', 
-      label: t('badges.wholesale'),
-      color: 'warning'
-    }
+    return { icon: '📦', label: t('badges.wholesale'), color: 'warning' }
   }
   if (isVerified) {
-    return { 
-      icon: '✓', 
-      label: t('badges.verified'),
-      color: 'success'
-    }
+    return { icon: '✓', label: t('badges.verified'), color: 'success' }
   }
-  return { 
-    icon: '👤', 
-    label: t('badges.pirate'),
-    color: 'gold'
-  }
+  return { icon: '👤', label: t('badges.pirate'), color: 'gold' }
 }
 
 // Validate WhatsApp number
@@ -129,19 +110,15 @@ export function validateWhatsApp(phone) {
 
 // Calculate distance between two coordinates (Haversine formula)
 export function calculateDistance(lat1, lon1, lat2, lon2) {
-  const R = 6371 // Earth radius in km
+  const R = 6371
   const dLat = toRad(lat2 - lat1)
   const dLon = toRad(lon2 - lon1)
-  
-  const a = 
+  const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
     Math.sin(dLon / 2) * Math.sin(dLon / 2)
-  
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-  const distance = R * c
-  
-  return distance.toFixed(1) // Return in km with 1 decimal
+  return (R * c).toFixed(1)
 }
 
 function toRad(degrees) {
@@ -150,21 +127,16 @@ function toRad(degrees) {
 
 // Format distance for display
 export function formatDistance(km, t) {
-  if (km < 1) {
-    return `${Math.round(km * 1000)}m`
-  }
+  if (km < 1) return `${Math.round(km * 1000)}m`
   return `${km} km`
 }
 
 // Open location in maps (Google Maps or Apple Maps)
 export function openInMaps(lat, lng) {
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
-  
   if (isIOS) {
-    // Apple Maps
     window.open(`https://maps.apple.com/?q=${lat},${lng}`, '_blank')
   } else {
-    // Google Maps
     window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank')
   }
 }
@@ -184,9 +156,7 @@ export function debounce(func, wait) {
 
 // Check if user is on mobile
 export function isMobile() {
-  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-    navigator.userAgent
-  )
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 }
 
 // Get device type for maps
@@ -202,27 +172,21 @@ export async function compressImage(file, maxWidth = 1200, quality = 0.8) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
     reader.readAsDataURL(file)
-    
     reader.onload = (event) => {
       const img = new Image()
       img.src = event.target.result
-      
       img.onload = () => {
         const canvas = document.createElement('canvas')
         let width = img.width
         let height = img.height
-        
         if (width > maxWidth) {
           height = (height * maxWidth) / width
           width = maxWidth
         }
-        
         canvas.width = width
         canvas.height = height
-        
         const ctx = canvas.getContext('2d')
         ctx.drawImage(img, 0, 0, width, height)
-        
         canvas.toBlob(
           (blob) => {
             resolve(new File([blob], file.name, {
@@ -234,10 +198,8 @@ export async function compressImage(file, maxWidth = 1200, quality = 0.8) {
           quality
         )
       }
-      
       img.onerror = reject
     }
-    
     reader.onerror = reject
   })
 }
