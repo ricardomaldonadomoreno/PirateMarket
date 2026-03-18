@@ -3,12 +3,19 @@
   "outputDirectory": "dist",
   "routes": [
     {
-      "src": "/ficha/(.*)",
-      "dest": "/api/og?slug=$1"
-    },
-    {
       "src": "/api/(.*)",
       "dest": "/api/$1"
+    },
+    {
+      "src": "/ficha/(.*)",
+      "dest": "/api/og?slug=$1",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i).*(whatsapp|facebookexternalhit|facebot|twitterbot|telegrambot|linkedinbot|slackbot|discordbot|googlebot|bingbot|applebot|bot|crawler|spider|preview|opengraph|iframely|embedly).*"
+        }
+      ]
     },
     {
       "handle": "filesystem"
