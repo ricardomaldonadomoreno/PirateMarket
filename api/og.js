@@ -12,25 +12,38 @@ export default async function handler(req, res) {
   try {
     const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
     const supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY
+
+    // Debug: verificar variables
+    if (!supabaseUrl || !supabaseKey) {
+      return res.status(500).send(`Missing env vars: URL=${!!supabaseUrl} KEY=${!!supabaseKey}`)
+    }
+
     const supabase = createClient(supabaseUrl, supabaseKey)
 
-    const { data: listing } = await supabase
+    const { data: listing, error } = await supabase
       .from('listings')
       .select('title, description, price, currency, photos, slug, display_location')
       .eq('slug', slug)
       .eq('status', 'active')
       .single()
 
+    // Debug: mostrar error si falla
+    if (error) {
+      return res.status(500).send(`Supabase error: ${JSON.stringify(error)}`)
+    }
+
+    if (!listing) {
+      return res.status(404).send(`Listing not found for slug: ${slug}`)
+    }
+
     const siteUrl = `https://${req.headers.host}`
-    const pageUrl = `${siteUrl}/ficha/${listing?.slug || slug}`
-    const imageUrl = listing?.photos?.length > 0
+    const pageUrl = `${siteUrl}/ficha/${listing.slug}`
+    const imageUrl = listing.photos?.length > 0
       ? listing.photos[0]
       : `${siteUrl}/logo.png`
-    const price = listing ? `BOB ${Number(listing.price).toLocaleString('es-BO')}` : ''
-    const title = listing
-      ? `${listing.title} - ${price} | Pirata Market`
-      : 'Pirata Market'
-    const description = listing?.description
+    const price = `BOB ${Number(listing.price).toLocaleString('es-BO')}`
+    const title = `${listing.title} - ${price} | Pirata Market`
+    const description = listing.description
       ? listing.description.substring(0, 150).replace(/\n/g, ' ') + '...'
       : `Pirata Market - Comercio sin intermediarios`
 
@@ -38,11 +51,9 @@ export default async function handler(req, res) {
       .replace(/&/g, '&amp;').replace(/</g, '&lt;')
       .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
-    // Leer index.html de React
     const indexPath = join(process.cwd(), 'dist', 'index.html')
     let html = readFileSync(indexPath, 'utf-8')
 
-    // Inyectar meta tags Y base href
     const metaTags = `
   <base href="${siteUrl}/" />
   <title>${e(title)}</title>
@@ -60,7 +71,6 @@ export default async function handler(req, res) {
   <meta name="twitter:image"       content="${imageUrl}" />
   <meta name="description"         content="${e(description)}" />`
 
-    // Reemplazar el <title> existente y agregar meta tags
     html = html
       .replace(/<title>.*?<\/title>/, '')
       .replace('<head>', '<head>' + metaTags)
@@ -70,14 +80,6 @@ export default async function handler(req, res) {
     return res.status(200).send(html)
 
   } catch (err) {
-    console.error('OG error:', err)
-    try {
-      const indexPath = join(process.cwd(), 'dist', 'index.html')
-      const html = readFileSync(indexPath, 'utf-8')
-      res.setHeader('Content-Type', 'text/html; charset=utf-8')
-      return res.status(200).send(html)
-    } catch (e) {
-      return res.status(500).send('Error')
-    }
+    return res.status(500).send(`Exception: ${err.message}`)
   }
 }
