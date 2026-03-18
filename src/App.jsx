@@ -9,6 +9,8 @@ import ListingDetail from './pages/ListingDetail'
 import CreateListing from './pages/CreateListing'
 import Dashboard from './pages/Dashboard'
 import Auth from './pages/Auth'
+import VentasTV from './pages/VentasTV'
+import ComoFunciona from './pages/ComoFunciona'
 
 // Components
 import Navbar from './components/Navbar'
@@ -55,6 +57,8 @@ function App() {
         <Route path="/publicar" element={<CreateListing user={user} />} />
         <Route path="/dashboard" element={<Dashboard user={user} />} />
         <Route path="/auth" element={<Auth />} />
+        <Route path="/ventas-tv" element={<VentasTV />} />
+        <Route path="/como-funciona" element={<ComoFunciona />} />
       </Routes>
     </Router>
   )
