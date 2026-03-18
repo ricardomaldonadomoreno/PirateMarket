@@ -255,8 +255,9 @@ export default function Home() {
                     </div>
 
                     <div className="listing-info">
-                      <div className="listing-price">
+                      <span className="listing-price">
                         {formatPrice(listing.price, listing.currency)}
+                      </span>
                       </div>
                       {/* Badge tipo vendedor */}
                       <span className={`listing-seller-type listing-seller-${sellerClass}`}>
