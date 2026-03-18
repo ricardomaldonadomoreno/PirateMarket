@@ -255,7 +255,7 @@ export default function Home() {
                     </div>
 
                     <div className="listing-info">
-                      <div className="listing-price luxury-gold">
+                      <div className="listing-price">
                         {formatPrice(listing.price, listing.currency)}
                       </div>
                       {/* Badge tipo vendedor */}
@@ -264,7 +264,7 @@ export default function Home() {
                           listing.is_ghost ? t('badges.pirate')
                           : uType === 'shop' ? t('badges.shop')
                           : uType === 'wholesale' ? t('badges.wholesale')
-                          : t('badges.verified')
+                          : t('badges.pirate')
                         }
                       </span>
                       <h3 className="listing-title">{listing.title}</h3>
