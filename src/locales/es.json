@@ -17,32 +17,27 @@
     "title": "Encuentra lo que buscas",
     "no_results": "No se encontraron anuncios",
     "loading": "Cargando anuncios...",
-    
-    "filters": {
-      "title": "Filtros",
-      "categories": "Categorías",
-      "all": "Todas",
-      "price": "Precio",
-      "min": "Mínimo",
-      "max": "Máximo",
-      "seller_type": "Tipo de vendedor",
-      "pirates": "Piratas",
-      "verified": "Verificados",
-      "shops": "Tiendas",
-      "only_pirates": "Solo Piratas"
-    }
-    
-    "diff": {
-      "no_bans": "Sin baneos",
-      "no_restrictions": "Sin prohibiciones",
-      "no_algorithms": "Sin algoritmos basura"
-    },
-
     "how_it_works": "¿Cómo funciona?",
-      "filters": {
-      "live": "PRONTO"
-    }
+    "diff": {
+    "no_bans": "Sin baneos",
+    "no_restrictions": "Sin prohibiciones",
+    "no_algorithms": "Sin algoritmos basura"
   },
+  "filters": {
+    "title": "Filtros",
+    "categories": "Categorías",
+    "all": "Todas",
+    "price": "Precio",
+    "min": "Mínimo",
+    "max": "Máximo",
+    "seller_type": "Tipo de vendedor",
+    "pirates": "Piratas",
+    "verified": "Verificados",
+    "shops": "Tiendas",
+    "only_pirates": "Solo Piratas",
+    "live": "PRONTO"
+  }
+},
   
   "listing": {
     "create": {
