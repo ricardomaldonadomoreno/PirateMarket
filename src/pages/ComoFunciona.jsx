@@ -1,14 +1,47 @@
+import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import './ComoFunciona.css'
 
 export default function ComoFunciona() {
+
+  useEffect(() => {
+    if (document.getElementById('google-translate-script')) return
+
+    window.googleTranslateElementInit = () => {
+      new window.google.translate.TranslateElement(
+        {
+          pageLanguage: 'es',
+          includedLanguages: 'en,pt,ar,zh,fr,de,it,ru,ja,ko',
+          layout: window.google.translate.TranslateElement.InlineLayout.SIMPLE,
+          autoDisplay: false
+        },
+        'google_translate_element'
+      )
+    }
+
+    const script = document.createElement('script')
+    script.id = 'google-translate-script'
+    script.src = '//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit'
+    script.async = true
+    document.body.appendChild(script)
+  }, [])
+
   return (
     <div className="como-funciona">
       <div className="cf-container">
 
+        {/* Google Translate */}
+        <div className="cf-translate">
+          <span>🌍 Traducir esta página:</span>
+          <div id="google_translate_element"></div>
+        </div>
+
         {/* Hero */}
         <div className="cf-hero">
-          <h1 className="serif luxury-gold">🏴‍☠️ Pirata Market</h1>
+          <h1 className="serif luxury-gold">
+            <img src="/logo - ico.png" alt="Pirata Market" className="cf-logo" />
+            Pirata Market
+          </h1>
           <p className="cf-tagline">Comercio sin intermediarios, sin censura, sin algoritmos basura.</p>
         </div>
 
@@ -19,15 +52,21 @@ export default function ComoFunciona() {
             <div className="cf-step">
               <span className="cf-step-num">1</span>
               <div>
-                <strong>Publica sin registro</strong>
-                <p>Cualquier persona puede publicar un anuncio sin crear cuenta. Tu anuncio dura 72 horas y aparece al instante.</p>
+                <strong>🏴‍☠️ Publica como Pirata (sin registro)</strong>
+                <p>
+                  Cualquier persona puede publicar un anuncio sin crear cuenta — estos son los <strong>vendedores Piratas</strong>.
+                  El anuncio aparece al instante y <strong>se elimina automáticamente en 72 horas</strong>.
+                  El contacto con el comprador lo incluye el propio vendedor en la descripción del anuncio (WhatsApp, Telegram, etc.).
+                  <br /><br />
+                  <em>Pirata-Marketplace no guarda ningún dato personal sobre estos vendedores ni lleva registro de sus publicaciones.</em>
+                </p>
               </div>
             </div>
             <div className="cf-step">
               <span className="cf-step-num">2</span>
               <div>
                 <strong>O crea una cuenta para anuncios permanentes</strong>
-                <p>Registrate como Persona, Tienda o Mayorista. Tus anuncios no expiran y puedes gestionarlos desde tu panel.</p>
+                <p>Regístrate como Persona, Tienda o Mayorista. Tus anuncios no expiran y puedes gestionarlos desde tu panel.</p>
               </div>
             </div>
             <div className="cf-step">
@@ -113,7 +152,7 @@ export default function ComoFunciona() {
           <p>No verificamos la calidad, legalidad ni autenticidad de los productos publicados. El comprador y vendedor son responsables de acordar los términos de sus transacciones.</p>
           <p>Los anuncios marcados como "Pirata" (sin registro) son publicados de forma anónima. Pirata Market no puede identificar ni contactar a estos vendedores.</p>
           <p>Nos reservamos el derecho de eliminar cualquier anuncio que viole nuestras reglas de comunidad o la legislación aplicable, sin previo aviso.</p>
-          <p className="cf-legal">© {new Date().getFullYear()} Pirata Market · Un servicio de <strong>Buses App</strong> · Ricardo Maldonado Moreno</p>
+          <p className="cf-legal">© {new Date().getFullYear()} Pirata Market · Un servicio de <strong>Buses App</strong></p>
         </section>
 
         <Link to="/" className="btn btn-primary" style={{ marginTop: '1rem' }}>
