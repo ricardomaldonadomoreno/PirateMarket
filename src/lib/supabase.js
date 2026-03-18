@@ -36,15 +36,15 @@ export async function uploadVideo(file) {
 // Get current user
 export async function getCurrentUser() {
   const { data: { user } } = await supabase.auth.getUser()
-  
+
   if (!user) return null
-  
+
   const { data } = await supabase
     .from('users')
     .select('*')
     .eq('id', user.id)
     .single()
-  
+
   return data
 }
 
@@ -72,8 +72,9 @@ export async function getListings(filters = {}) {
     query = query.lte('price', filters.maxPrice)
   }
 
-  if (filters.isPirate !== undefined) {
-    query = query.eq('is_ghost', filters.isPirate)
+  // Filtro piratas — solo anuncios ghost
+  if (filters.isPirate) {
+    query = query.eq('is_ghost', true)
   }
 
   if (filters.search) {
@@ -81,8 +82,17 @@ export async function getListings(filters = {}) {
   }
 
   const { data, error } = await query
-
   if (error) throw error
+
+  // Filtrar por tipo de vendedor en cliente
+  // Supabase no soporta filtrar por columnas de joins directamente
+  if (filters.sellerTypes && filters.sellerTypes.length > 0) {
+    return data.filter(listing =>
+      !listing.is_ghost &&
+      filters.sellerTypes.includes(listing.user?.user_type)
+    )
+  }
+
   return data
 }
 
@@ -118,13 +128,13 @@ export async function incrementContacts(listingId) {
   if (error) console.error('Error incrementing contacts:', error)
 }
 
-// Get categories - ✅ CORREGIDO
+// Get categories
 export async function getCategories() {
   const { data, error } = await supabase
     .from('categories')
     .select('*')
-    .order('name')  // ✅ Solo ordenar por nombre
-  
+    .order('name')
+
   if (error) throw error
   return data
 }
