@@ -23,7 +23,6 @@ export default async function handler(req, res) {
       .single()
 
     if (error || !listing) {
-      // Si falla, devolver index.html normal
       const indexPath = join(process.cwd(), 'dist', 'index.html')
       const html = readFileSync(indexPath, 'utf-8')
       res.setHeader('Content-Type', 'text/html; charset=utf-8')
@@ -49,7 +48,6 @@ export default async function handler(req, res) {
     let html = readFileSync(indexPath, 'utf-8')
 
     const metaTags = `
-  <base href="${siteUrl}/" />
   <title>${e(title)}</title>
   <meta property="og:type"         content="product" />
   <meta property="og:site_name"    content="Pirata Market" />
@@ -65,9 +63,14 @@ export default async function handler(req, res) {
   <meta name="twitter:image"       content="${imageUrl}" />
   <meta name="description"         content="${e(description)}" />`
 
+    // Quitar base href y reemplazar rutas relativas de assets con absolutas
     html = html
+      .replace(/<base[^>]*>/g, '')
       .replace(/<title>.*?<\/title>/, '')
       .replace('<head>', '<head>' + metaTags)
+      .replace(/src="\/assets\//g, `src="${siteUrl}/assets/`)
+      .replace(/href="\/assets\//g, `href="${siteUrl}/assets/`)
+      .replace('href="/favicon.ico"', `href="${siteUrl}/favicon.ico"`)
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8')
     res.setHeader('Cache-Control', 'public, max-age=3600')
