@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { getListings, getCategories } from '../lib/supabase'
 import { formatPrice, timeAgo } from '../lib/utils'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import './Home.css'
 
 export default function Home() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const [listings, setListings] = useState([])
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
@@ -59,7 +60,7 @@ export default function Home() {
         <aside className="sidebar">
           <div className="filter-section">
             <h3 className="filter-title">{t('home.filters.title')}</h3>
-            
+
             {/* Search */}
             <input
               type="text"
@@ -68,6 +69,29 @@ export default function Home() {
               value={filters.search}
               onChange={(e) => handleFilterChange('search', e.target.value)}
             />
+          </div>
+
+          {/* Solo Piratas — arriba por ser lo novedoso */}
+          <div className="filter-section">
+            <label className="checkbox-label pirate-filter">
+              <input
+                type="checkbox"
+                checked={filters.isPirate === true}
+                onChange={(e) => handleFilterChange('isPirate', e.target.checked ? true : undefined)}
+              />
+              <span>🏴‍☠️ {t('home.filters.only_pirates')}</span>
+            </label>
+          </div>
+
+          {/* VentasTV */}
+          <div className="filter-section">
+            <button
+              className="ventas-tv-btn"
+              onClick={() => navigate('/ventas-tv')}
+            >
+              📺 VentasTV
+              <span className="ventas-tv-badge">{t('home.filters.live')}</span>
+            </button>
           </div>
 
           {/* Categories */}
@@ -115,27 +139,23 @@ export default function Home() {
               />
             </div>
           </div>
-
-          {/* Seller Type */}
-          <div className="filter-section">
-            <h4 className="filter-subtitle">{t('home.filters.seller_type')}</h4>
-            <div className="seller-filters">
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={filters.isPirate === true}
-                  onChange={(e) => handleFilterChange('isPirate', e.target.checked ? true : undefined)}
-                />
-                <span>🏴‍☠️ {t('home.filters.only_pirates')}</span>
-              </label>
-            </div>
-          </div>
         </aside>
 
         {/* Main Content - Listings Grid */}
         <main className="content">
           <div className="content-header">
             <h2 className="serif">{t('home.title')}</h2>
+
+            {/* Diferenciadores */}
+            <div className="differentiators">
+              <span>🚫 {t('home.diff.no_bans')}</span>
+              <span>🔓 {t('home.diff.no_restrictions')}</span>
+              <span>⚡ {t('home.diff.no_algorithms')}</span>
+              <Link to="/como-funciona" className="how-it-works-btn">
+                {t('home.how_it_works')} →
+              </Link>
+            </div>
+
             <p className="results-count">
               {listings.length} {listings.length === 1 ? 'anuncio' : 'anuncios'}
             </p>
@@ -144,7 +164,7 @@ export default function Home() {
           {loading ? (
             <div className="listings-grid">
               {[...Array(8)].map((_, i) => (
-                <div key={i} className="listing-card skeleton" style={{ height: '300px' }}></div>
+                <div key={i} className="listing-card skeleton" style={{ height: '240px' }}></div>
               ))}
             </div>
           ) : listings.length === 0 ? (
@@ -169,13 +189,11 @@ export default function Home() {
                         <span>{listing.category?.icon || '📦'}</span>
                       </div>
                     )}
-                    
-                    {/* Video indicator */}
+
                     {listing.video_url && (
                       <div className="video-badge">▶ 6s</div>
                     )}
-                    
-                    {/* Seller badge */}
+
                     <div className={`seller-badge ${listing.is_ghost ? 'pirate' : 'verified'}`}>
                       {listing.is_ghost ? '🏴‍☠️' : '✓'}
                     </div>
