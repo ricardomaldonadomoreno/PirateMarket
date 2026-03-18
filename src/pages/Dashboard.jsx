@@ -198,7 +198,10 @@ export default function Dashboard({ user }) {
             {/* Name & type */}
             <div>
               <h1 className="serif luxury-gold">{t('dashboard.title')}</h1>
-              <p className="dashboard-subtitle">{userTypeIcon} {displayName}</p>
+              <p className="dashboard-subtitle">{displayName}</p>
+		 {userTypeIcon} {t(`auth.${userType}`)}
+		 </span>
+	      <span className={`user-type-badge user-type-${userType}`}>
             </div>
           </div>
 
@@ -299,8 +302,7 @@ export default function Dashboard({ user }) {
               ))}
             </div>
           )}
-        </div>
-      </div>
+       </div>
     </div>
   )
 }
