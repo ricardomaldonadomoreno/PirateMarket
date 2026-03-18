@@ -1,14 +1,23 @@
 import { createClient } from '@supabase/supabase-js'
-import { readFileSync } from 'fs'
-import { join } from 'path'
 
 export default async function handler(req, res) {
   const { slug } = req.query
 
   if (!slug) {
-    return res.status(400).send('Missing slug')
+    res.setHeader('Location', '/')
+    return res.status(302).end()
   }
 
+  const userAgent = req.headers['user-agent'] || ''
+  const isCrawler = /whatsapp|facebookexternalhit|facebot|twitterbot|telegrambot|linkedinbot|slackbot|discordbot|googlebot|bingbot|applebot|vkshare|bot|crawler|spider|preview|opengraph|iframely|embedly/i.test(userAgent)
+
+  // Usuarios normales: redirigir directamente a React
+  if (!isCrawler) {
+    res.setHeader('Location', `/ficha/${slug}`)
+    return res.status(302).end()
+  }
+
+  // Crawlers: devolver HTML con meta tags
   try {
     const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
     const supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY
@@ -38,12 +47,7 @@ export default async function handler(req, res) {
       .replace(/&/g, '&amp;').replace(/</g, '&lt;')
       .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
-    const userAgent = req.headers['user-agent'] || ''
-    const isCrawler = /whatsapp|facebookexternalhit|facebot|twitterbot|telegrambot|linkedinbot|slackbot|discordbot|googlebot|bingbot|applebot|vkshare|bot|crawler|spider|preview|opengraph|iframely|embedly/i.test(userAgent)
-
-    if (isCrawler) {
-      // Crawlers: HTML mínimo solo con meta tags
-      const html = `<!DOCTYPE html>
+    const html = `<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
@@ -66,20 +70,17 @@ export default async function handler(req, res) {
   <h1>${e(title)}</h1>
   <p>${e(description)}</p>
   <img src="${imageUrl}" alt="${e(title)}" />
+  <a href="${pageUrl}">Ver anuncio completo</a>
 </body>
 </html>`
-      res.setHeader('Content-Type', 'text/html; charset=utf-8')
-      res.setHeader('Cache-Control', 'public, max-age=3600')
-      return res.status(200).send(html)
-    }
 
-    // Usuarios normales: redirigir a la ruta real de React
-    res.setHeader('Location', pageUrl)
-    return res.status(302).send('')
+    res.setHeader('Content-Type', 'text/html; charset=utf-8')
+    res.setHeader('Cache-Control', 'public, max-age=3600')
+    return res.status(200).send(html)
 
   } catch (err) {
     console.error('OG error:', err)
-    res.setHeader('Location', `https://${req.headers.host}/ficha/${req.query.slug}`)
-    return res.status(302).send('')
+    res.setHeader('Location', `/ficha/${slug}`)
+    return res.status(302).end()
   }
 }
