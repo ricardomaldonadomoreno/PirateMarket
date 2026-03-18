@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
@@ -8,6 +8,7 @@ import './Dashboard.css'
 export default function Dashboard({ user }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const fileInputRef = useRef(null)
   const [listings, setListings] = useState([])
   const [stats, setStats] = useState({
     total_views: 0,
@@ -15,26 +16,38 @@ export default function Dashboard({ user }) {
     active_listings: 0
   })
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState('active') // active, sold, paused, all
+  const [filter, setFilter] = useState('active')
+  const [profile, setProfile] = useState(null)
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
 
   useEffect(() => {
     if (!user) {
       navigate('/auth')
       return
     }
+    loadProfile()
     loadDashboard()
   }, [user, filter])
+
+  const loadProfile = async () => {
+    try {
+      const { data } = await supabase
+        .from('users')
+        .select('display_name, user_type, avatar_url')
+        .eq('id', user.id)
+        .single()
+      if (data) setProfile(data)
+    } catch (error) {
+      console.error('Error loading profile:', error)
+    }
+  }
 
   const loadDashboard = async () => {
     setLoading(true)
     try {
-      // Load user listings
       let query = supabase
         .from('listings')
-        .select(`
-          *,
-          category:categories(name, slug, icon)
-        `)
+        .select(`*, category:categories(name, slug, icon)`)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
 
@@ -43,26 +56,54 @@ export default function Dashboard({ user }) {
       }
 
       const { data: listingsData, error: listingsError } = await query
-
       if (listingsError) throw listingsError
 
       setListings(listingsData)
 
-      // Calculate stats
       const totalViews = listingsData.reduce((sum, l) => sum + (l.views_count || 0), 0)
       const totalContacts = listingsData.reduce((sum, l) => sum + (l.contacts_count || 0), 0)
       const activeCount = listingsData.filter(l => l.status === 'active').length
 
-      setStats({
-        total_views: totalViews,
-        total_contacts: totalContacts,
-        active_listings: activeCount
-      })
-
+      setStats({ total_views: totalViews, total_contacts: totalContacts, active_listings: activeCount })
     } catch (error) {
       console.error('Error loading dashboard:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    setUploadingAvatar(true)
+    try {
+      const fileExt = file.name.split('.').pop()
+      const filePath = `${user.id}.${fileExt}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, { upsert: true })
+
+      if (uploadError) throw uploadError
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath)
+
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ avatar_url: publicUrl })
+        .eq('id', user.id)
+
+      if (updateError) throw updateError
+
+      setProfile(prev => ({ ...prev, avatar_url: publicUrl }))
+    } catch (error) {
+      console.error('Error uploading avatar:', error)
+      alert('Error al subir la foto')
+    } finally {
+      setUploadingAvatar(false)
     }
   }
 
@@ -72,9 +113,7 @@ export default function Dashboard({ user }) {
         .from('listings')
         .update({ status: newStatus })
         .eq('id', listingId)
-
       if (error) throw error
-
       loadDashboard()
     } catch (error) {
       console.error('Error updating status:', error)
@@ -84,15 +123,12 @@ export default function Dashboard({ user }) {
 
   const handleDelete = async (listingId) => {
     if (!confirm(t('messages.confirm_delete'))) return
-
     try {
       const { error } = await supabase
         .from('listings')
         .delete()
         .eq('id', listingId)
-
       if (error) throw error
-
       loadDashboard()
     } catch (error) {
       console.error('Error deleting listing:', error)
@@ -100,21 +136,50 @@ export default function Dashboard({ user }) {
     }
   }
 
-  if (!user) {
-    return null
-  }
+  if (!user) return null
+
+  const displayName = profile?.display_name || user.email?.split('@')[0]
+  const userType = profile?.user_type || 'person'
+  const avatarUrl = profile?.avatar_url
+  const userTypeIcon = userType === 'shop' ? '🏪' : userType === 'wholesale' ? '📦' : '👤'
 
   return (
     <div className="dashboard">
       <div className="dashboard-container">
         {/* Header */}
         <div className="dashboard-header">
-          <div>
-            <h1 className="serif luxury-gold">{t('dashboard.title')}</h1>
-            <p className="dashboard-subtitle">
-              {user.display_name} • {user.user_type === 'shop' ? '🏪' : user.user_type === 'wholesale' ? '📦' : '👤'}
-            </p>
+          <div className="dashboard-profile">
+            {/* Avatar */}
+            <div className="avatar-wrapper" onClick={() => fileInputRef.current?.click()}>
+              {avatarUrl ? (
+                <img src={avatarUrl} alt={displayName} className="avatar-img" />
+              ) : (
+                <div className="avatar-placeholder">
+                  {displayName?.charAt(0).toUpperCase()}
+                </div>
+              )}
+              <div className="avatar-overlay">
+                {uploadingAvatar ? '⏳' : '📷'}
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                capture="user"
+                onChange={handleAvatarChange}
+                style={{ display: 'none' }}
+              />
+            </div>
+
+            {/* Name & type */}
+            <div>
+              <h1 className="serif luxury-gold">{t('dashboard.title')}</h1>
+              <p className="dashboard-subtitle">
+                {userTypeIcon} {displayName}
+              </p>
+            </div>
           </div>
+
           <Link to="/publicar" className="btn btn-primary">
             + {t('navbar.publish')}
           </Link>
@@ -129,7 +194,6 @@ export default function Dashboard({ user }) {
               <div className="stat-label">{t('dashboard.stats.total_views')}</div>
             </div>
           </div>
-
           <div className="stat-card">
             <div className="stat-icon">📱</div>
             <div className="stat-info">
@@ -137,7 +201,6 @@ export default function Dashboard({ user }) {
               <div className="stat-label">{t('dashboard.stats.total_contacts')}</div>
             </div>
           </div>
-
           <div className="stat-card">
             <div className="stat-icon">🏴‍☠️</div>
             <div className="stat-info">
@@ -149,28 +212,16 @@ export default function Dashboard({ user }) {
 
         {/* Filters */}
         <div className="dashboard-filters">
-          <button
-            className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
-            onClick={() => setFilter('all')}
-          >
+          <button className={`filter-btn ${filter === 'all' ? 'active' : ''}`} onClick={() => setFilter('all')}>
             {t('dashboard.filters.all')}
           </button>
-          <button
-            className={`filter-btn ${filter === 'active' ? 'active' : ''}`}
-            onClick={() => setFilter('active')}
-          >
+          <button className={`filter-btn ${filter === 'active' ? 'active' : ''}`} onClick={() => setFilter('active')}>
             {t('dashboard.listing_status.active')}
           </button>
-          <button
-            className={`filter-btn ${filter === 'sold' ? 'active' : ''}`}
-            onClick={() => setFilter('sold')}
-          >
+          <button className={`filter-btn ${filter === 'sold' ? 'active' : ''}`} onClick={() => setFilter('sold')}>
             {t('dashboard.listing_status.sold')}
           </button>
-          <button
-            className={`filter-btn ${filter === 'paused' ? 'active' : ''}`}
-            onClick={() => setFilter('paused')}
-          >
+          <button className={`filter-btn ${filter === 'paused' ? 'active' : ''}`} onClick={() => setFilter('paused')}>
             {t('dashboard.listing_status.paused')}
           </button>
         </div>
@@ -197,7 +248,6 @@ export default function Dashboard({ user }) {
             <div className="listings-list">
               {listings.map((listing) => (
                 <div key={listing.id} className="listing-row card">
-                  {/* Image */}
                   <div className="listing-row-image">
                     {listing.photos && listing.photos.length > 0 ? (
                       <img src={listing.photos[0]} alt={listing.title} />
@@ -208,7 +258,6 @@ export default function Dashboard({ user }) {
                     )}
                   </div>
 
-                  {/* Info */}
                   <div className="listing-row-info">
                     <Link to={`/ficha/${listing.slug}`} className="listing-row-title">
                       {listing.title}
@@ -231,58 +280,32 @@ export default function Dashboard({ user }) {
                     </div>
                   </div>
 
-                  {/* Status */}
                   <div className="listing-row-status">
                     <span className={`status-badge status-${listing.status}`}>
                       {t(`dashboard.listing_status.${listing.status}`)}
                     </span>
                   </div>
 
-                  {/* Actions */}
                   <div className="listing-row-actions">
-                    <Link 
-                      to={`/ficha/${listing.slug}`} 
-                      className="btn-icon"
-                      title={t('dashboard.actions.view')}
-                    >
+                    <Link to={`/ficha/${listing.slug}`} className="btn-icon" title={t('dashboard.actions.view')}>
                       👁️
                     </Link>
-
                     {listing.status === 'active' && (
-                      <button
-                        className="btn-icon"
-                        onClick={() => handleStatusChange(listing.id, 'paused')}
-                        title={t('dashboard.actions.pause')}
-                      >
+                      <button className="btn-icon" onClick={() => handleStatusChange(listing.id, 'paused')} title={t('dashboard.actions.pause')}>
                         ⏸️
                       </button>
                     )}
-
                     {listing.status === 'paused' && (
-                      <button
-                        className="btn-icon"
-                        onClick={() => handleStatusChange(listing.id, 'active')}
-                        title={t('dashboard.actions.activate')}
-                      >
+                      <button className="btn-icon" onClick={() => handleStatusChange(listing.id, 'active')} title={t('dashboard.actions.activate')}>
                         ▶️
                       </button>
                     )}
-
                     {listing.status === 'active' && (
-                      <button
-                        className="btn-icon"
-                        onClick={() => handleStatusChange(listing.id, 'sold')}
-                        title={t('dashboard.actions.mark_sold')}
-                      >
+                      <button className="btn-icon" onClick={() => handleStatusChange(listing.id, 'sold')} title={t('dashboard.actions.mark_sold')}>
                         ✓
                       </button>
                     )}
-
-                    <button
-                      className="btn-icon btn-icon-danger"
-                      onClick={() => handleDelete(listing.id)}
-                      title={t('dashboard.actions.delete')}
-                    >
+                    <button className="btn-icon btn-icon-danger" onClick={() => handleDelete(listing.id)} title={t('dashboard.actions.delete')}>
                       🗑️
                     </button>
                   </div>
