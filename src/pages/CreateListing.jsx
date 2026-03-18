@@ -80,7 +80,6 @@ export default function CreateListing() {
       return
     }
 
-    // Validar cada archivo
     for (const file of files) {
       const error = validateImage(file)
       if (error) {
@@ -90,7 +89,6 @@ export default function CreateListing() {
       }
     }
 
-    // Comprimir imágenes
     const compressedFiles = await Promise.all(
       files.map(file => compressImage(file))
     )
@@ -139,7 +137,6 @@ export default function CreateListing() {
       newErrors.description = t('listing.create.description_error')
     }
 
-    // Para usuarios registrados, requerir WhatsApp
     if (user && !formData.whatsapp_number) {
       newErrors.whatsapp_number = t('listing.create.whatsapp_error')
     }
@@ -148,105 +145,60 @@ export default function CreateListing() {
     return Object.keys(newErrors).length === 0
   }
 
-const handleSubmit = async (e) => {
-  e.preventDefault()
+  const handleSubmit = async (e) => {
+    e.preventDefault()
 
-  console.log('🚀 SUBMIT INICIADO')
-  console.log('📋 FormData:', formData)
-  console.log('📸 PhotoFiles:', photoFiles)
-  console.log('🎥 VideoFile:', videoFile)
-  console.log('👤 User:', user)
+    if (!validateForm()) return
 
-  if (!validateForm()) {
-    console.log('❌ Validación falló')
-    return
-  }
+    setLoading(true)
+    setUploadingMedia(true)
 
-  setLoading(true)
-  setUploadingMedia(true)
+    try {
+      // Subir fotos
+      const photoUrls = []
+      for (let i = 0; i < photoFiles.length; i++) {
+        const url = await uploadImage(photoFiles[i])
+        photoUrls.push(url)
+      }
 
-  try {
-    console.log('📤 Iniciando subida de fotos...')
-    
-    // Subir fotos
-    const photoUrls = []
-    for (let i = 0; i < photoFiles.length; i++) {
-      const file = photoFiles[i]
-      console.log(`📸 Subiendo foto ${i + 1}/${photoFiles.length}:`, file.name)
-      
-      const url = await uploadImage(file)
-      console.log(`✅ Foto ${i + 1} subida:`, url)
-      photoUrls.push(url)
-    }
+      // Subir video
+      let videoUrl = null
+      if (videoFile) {
+        videoUrl = await uploadVideo(videoFile)
+      }
 
-    console.log('✅ Todas las fotos subidas:', photoUrls)
+      setUploadingMedia(false)
 
-    // Subir video
-    let videoUrl = null
-    if (videoFile) {
-      console.log('🎥 Subiendo video...')
-      videoUrl = await uploadVideo(videoFile)
-      console.log('✅ Video subido:', videoUrl)
-    }
+      // Crear listing
+      const listingData = {
+        title: formData.title,
+        description: formData.description,
+        price: parseFloat(formData.price),
+        category_id: formData.category_id,
+        photos: photoUrls,
+        video_url: videoUrl,
+        accepts_offers: formData.accepts_offers,
+        display_location: formData.location || 'Santa Cruz',
+        is_ghost: !user,
+        user_id: user?.id || null,
+        whatsapp_number: user ? formData.whatsapp_number : null,
+        status: 'active'
+      }
 
-    setUploadingMedia(false)
+      const { data, error } = await supabase
+        .from('listings')
+        .insert([listingData])
+        .select()
+        .single()
 
-    // Crear listing
-    const listingData = {
-      title: formData.title,
-      description: formData.description,
-      price: parseFloat(formData.price),
-      category_id: formData.category_id,
-      photos: photoUrls,
-      video_url: videoUrl,
-      accepts_offers: formData.accepts_offers,
-      display_location: formData.location || 'Santa Cruz',
-      is_ghost: !user,
-      user_id: user?.id || null,
-      whatsapp_number: user ? formData.whatsapp_number : null,
-      status: 'active'
-    }
+      if (error) throw error
 
-    console.log('📝 Datos del listing:', listingData)
-    console.log('💾 Insertando en Supabase...')
-
-    const { data, error } = await supabase
-      .from('listings')
-      .insert([listingData])
-      .select()
-      .single()
-
-    if (error) {
-      console.error('❌ Error de Supabase:', error)
-      console.error('❌ Error code:', error.code)
-      console.error('❌ Error message:', error.message)
-      console.error('❌ Error details:', error.details)
-      console.error('❌ Error hint:', error.hint)
-      throw error
-    }
-
-    console.log('✅ Listing creado exitosamente:', data)
-
-    // Success
-    alert(t('listing.create.success'))
-    navigate(`/ficha/${data.slug}`)
-
-  } catch (error) {
-    console.error('💥 ERROR COMPLETO:', error)
-    console.error('💥 Error name:', error.name)
-    console.error('💥 Error message:', error.message)
-    console.error('💥 Error stack:', error.stack)
-    
-    alert('Error al publicar: ' + error.message)
-  } finally {
-    setLoading(false)
-    setUploadingMedia(false)
-  }
-}
+      alert(t('listing.create.success'))
+      navigate(`/ficha/${data.slug}`)
 
     } catch (error) {
-      console.error('Error creating listing:', error)
-      alert(t('listing.create.error'))
+      console.error('Error al publicar:', error)
+      alert(t('listing.create.error') + ': ' + error.message)
     } finally {
       setLoading(false)
       setUploadingMedia(false)
@@ -359,7 +311,6 @@ const handleSubmit = async (e) => {
           <div className="form-section card">
             <h3>{t('listing.create.media')}</h3>
             
-            {/* Photos */}
             <div className="form-group">
               <label>{t('listing.create.fields.photos')}</label>
               <div className="photo-upload">
@@ -396,7 +347,6 @@ const handleSubmit = async (e) => {
               )}
             </div>
 
-            {/* Video */}
             <div className="form-group">
               <label>{t('listing.create.fields.video')}</label>
               {!videoFile ? (
