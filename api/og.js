@@ -22,12 +22,18 @@ export default async function handler(req, res) {
       .eq('status', 'active')
       .single()
 
-    // Leer el index.html del build de Vite
     const indexPath = join(process.cwd(), 'dist', 'index.html')
     let html = readFileSync(indexPath, 'utf-8')
 
+    const siteUrl = `https://${req.headers.host}`
+
+    // Arreglar rutas relativas de assets para que carguen correctamente
+    html = html.replace(
+      '<head>',
+      `<head><base href="${siteUrl}/" />`
+    )
+
     if (listing) {
-      const siteUrl = `https://${req.headers.host}`
       const pageUrl = `${siteUrl}/ficha/${listing.slug}`
       const imageUrl = listing.photos && listing.photos.length > 0
         ? listing.photos[0]
@@ -43,7 +49,6 @@ export default async function handler(req, res) {
         .replace(/&/g, '&amp;').replace(/</g, '&lt;')
         .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
-      // Inyectar meta tags en el <head> del index.html
       const metaTags = `
     <title>${e(title)}</title>
     <meta property="og:type"         content="product" />
@@ -60,7 +65,6 @@ export default async function handler(req, res) {
     <meta name="twitter:image"       content="${imageUrl}" />
     <meta name="description"         content="${e(description)}" />`
 
-      // Insertar justo después de <head>
       html = html.replace('<head>', '<head>' + metaTags)
     }
 
@@ -70,7 +74,6 @@ export default async function handler(req, res) {
 
   } catch (err) {
     console.error('OG error:', err)
-    // Si falla, leer y devolver el index.html normal
     try {
       const indexPath = join(process.cwd(), 'dist', 'index.html')
       const html = readFileSync(indexPath, 'utf-8')
