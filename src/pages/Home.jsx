@@ -264,7 +264,7 @@ export default function Home() {
                           listing.is_ghost ? t('badges.pirate')
                           : uType === 'shop' ? t('badges.shop')
                           : uType === 'wholesale' ? t('badges.wholesale')
-                          : t('badges.pirate')
+                          : t('badges.verified')
                         }
                       </span>
                       <h3 className="listing-title">{listing.title}</h3>
