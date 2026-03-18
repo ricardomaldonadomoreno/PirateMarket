@@ -5,6 +5,16 @@ import { supabase, uploadImage, uploadVideo, getCategories } from '../lib/supaba
 import { validateImage, validateVideo, compressImage } from '../lib/utils'
 import './CreateListing.css'
 
+const CURRENCIES = [
+  { code: 'BOB', label: 'BOB — Boliviano' },
+  { code: 'USD', label: 'USD — Dólar' },
+  { code: 'BRL', label: 'BRL — Real' },
+  { code: 'ARS', label: 'ARS — Peso Arg.' },
+  { code: 'PEN', label: 'PEN — Sol' },
+  { code: 'CLP', label: 'CLP — Peso Chi.' },
+  { code: 'PYG', label: 'PYG — Guaraní' },
+]
+
 export default function CreateListing() {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -12,10 +22,11 @@ export default function CreateListing() {
   const [loading, setLoading] = useState(false)
   const [uploadingMedia, setUploadingMedia] = useState(false)
   const [categories, setCategories] = useState([])
-  
+
   const [formData, setFormData] = useState({
     title: '',
     price: '',
+    currency: 'BOB',
     category_id: '',
     description: '',
     whatsapp_number: '',
@@ -35,14 +46,14 @@ export default function CreateListing() {
   const checkUser = async () => {
     const { data: { user } } = await supabase.auth.getUser()
     setUser(user)
-    
+
     if (user) {
       const { data: userData } = await supabase
         .from('users')
         .select('whatsapp')
         .eq('id', user.id)
         .single()
-      
+
       if (userData?.whatsapp) {
         setFormData(prev => ({ ...prev, whatsapp_number: userData.whatsapp }))
       }
@@ -92,7 +103,6 @@ export default function CreateListing() {
     const compressedFiles = await Promise.all(
       files.map(file => compressImage(file))
     )
-
     setPhotoFiles(prev => [...prev, ...compressedFiles])
   }
 
@@ -154,14 +164,12 @@ export default function CreateListing() {
     setUploadingMedia(true)
 
     try {
-      // Subir fotos
       const photoUrls = []
       for (let i = 0; i < photoFiles.length; i++) {
         const url = await uploadImage(photoFiles[i])
         photoUrls.push(url)
       }
 
-      // Subir video
       let videoUrl = null
       if (videoFile) {
         videoUrl = await uploadVideo(videoFile)
@@ -169,11 +177,11 @@ export default function CreateListing() {
 
       setUploadingMedia(false)
 
-      // Crear listing
       const listingData = {
         title: formData.title,
         description: formData.description,
         price: parseFloat(formData.price),
+        currency: formData.currency,
         category_id: formData.category_id,
         photos: photoUrls,
         video_url: videoUrl,
@@ -229,7 +237,7 @@ export default function CreateListing() {
           {/* Basic Info */}
           <div className="form-section card">
             <h3>{t('listing.create.basic_info')}</h3>
-            
+
             <div className="form-group">
               <label>{t('listing.create.fields.title')} *</label>
               <input
@@ -244,19 +252,35 @@ export default function CreateListing() {
               {errors.title && <span className="error">{errors.title}</span>}
             </div>
 
+            {/* Precio + Moneda en la misma fila */}
             <div className="form-row">
               <div className="form-group">
-                <label>{t('listing.create.fields.price')} (BOB) *</label>
-                <input
-                  type="number"
-                  name="price"
-                  className="input"
-                  placeholder="0.00"
-                  value={formData.price}
-                  onChange={handleInputChange}
-                  min="0"
-                  step="0.01"
-                />
+                <label>{t('listing.create.fields.price')} *</label>
+                <div className="price-currency-row">
+                  <select
+                    name="currency"
+                    className="input select currency-select"
+                    value={formData.currency}
+                    onChange={handleInputChange}
+                  >
+                    {CURRENCIES.map(c => (
+                      <option key={c.code} value={c.code}>{c.code}</option>
+                    ))}
+                  </select>
+                  <input
+                    type="number"
+                    name="price"
+                    className="input price-input"
+                    placeholder="0.00"
+                    value={formData.price}
+                    onChange={handleInputChange}
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+                <p className="form-hint">
+                  {CURRENCIES.find(c => c.code === formData.currency)?.label}
+                </p>
                 {errors.price && <span className="error">{errors.price}</span>}
               </div>
 
@@ -310,7 +334,7 @@ export default function CreateListing() {
           {/* Media */}
           <div className="form-section card">
             <h3>{t('listing.create.media')}</h3>
-            
+
             <div className="form-group">
               <label>{t('listing.create.fields.photos')}</label>
               <div className="photo-upload">
@@ -328,7 +352,7 @@ export default function CreateListing() {
                 </label>
               </div>
               {errors.photos && <span className="error">{errors.photos}</span>}
-              
+
               {photoFiles.length > 0 && (
                 <div className="photo-preview-grid">
                   {photoFiles.map((file, index) => (
@@ -365,11 +389,7 @@ export default function CreateListing() {
               ) : (
                 <div className="video-preview">
                   <video src={URL.createObjectURL(videoFile)} controls />
-                  <button
-                    type="button"
-                    className="btn btn-ghost"
-                    onClick={removeVideo}
-                  >
+                  <button type="button" className="btn btn-ghost" onClick={removeVideo}>
                     {t('buttons.delete')}
                   </button>
                 </div>
@@ -378,11 +398,10 @@ export default function CreateListing() {
             </div>
           </div>
 
-          {/* Contact (for registered users) */}
+          {/* Contact */}
           {!isPirate && (
             <div className="form-section card">
               <h3>{t('listing.create.contact')}</h3>
-              
               <div className="form-group">
                 <label>{t('listing.create.fields.whatsapp')} *</label>
                 <input
@@ -401,7 +420,6 @@ export default function CreateListing() {
           {/* Location */}
           <div className="form-section card">
             <h3>📍 {t('listing.create.fields.location')}</h3>
-            
             <div className="form-group">
               <input
                 type="text"
@@ -412,7 +430,7 @@ export default function CreateListing() {
                 onChange={handleInputChange}
               />
               <p className="form-hint">
-                {isPirate 
+                {isPirate
                   ? t('listing.create.location_hint_pirate')
                   : t('listing.create.location_hint_registered')
                 }
@@ -441,9 +459,7 @@ export default function CreateListing() {
                   {uploadingMedia ? t('listing.create.uploading') : t('listing.create.publishing')}
                 </>
               ) : (
-                <>
-                  🏴‍☠️ {isPirate ? t('listing.create.submit_pirate') : t('listing.create.submit')}
-                </>
+                <>🏴‍☠️ {isPirate ? t('listing.create.submit_pirate') : t('listing.create.submit')}</>
               )}
             </button>
           </div>
