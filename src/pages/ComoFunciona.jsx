@@ -1,39 +1,40 @@
-import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import './ComoFunciona.css'
 
+const LANGUAGES = [
+  { code: 'en', label: '🇺🇸 English' },
+  { code: 'pt', label: '🇧🇷 Português' },
+  { code: 'ar', label: '🇸🇦 العربية' },
+  { code: 'zh-CN', label: '🇨🇳 中文' },
+  { code: 'fr', label: '🇫🇷 Français' },
+  { code: 'de', label: '🇩🇪 Deutsch' },
+]
+
 export default function ComoFunciona() {
 
-  useEffect(() => {
-    if (document.getElementById('google-translate-script')) return
-
-    window.googleTranslateElementInit = () => {
-      new window.google.translate.TranslateElement(
-        {
-          pageLanguage: 'es',
-          includedLanguages: 'en,pt,ar,zh,fr,de,it,ru,ja,ko',
-          layout: window.google.translate.TranslateElement.InlineLayout.SIMPLE,
-          autoDisplay: false
-        },
-        'google_translate_element'
-      )
-    }
-
-    const script = document.createElement('script')
-    script.id = 'google-translate-script'
-    script.src = '//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit'
-    script.async = true
-    document.body.appendChild(script)
-  }, [])
+  const translatePage = (langCode) => {
+    const url = `https://translate.google.com/translate?sl=es&tl=${langCode}&u=${encodeURIComponent(window.location.href)}`
+    window.open(url, '_blank')
+  }
 
   return (
     <div className="como-funciona">
       <div className="cf-container">
 
-        {/* Google Translate */}
+        {/* Traducir */}
         <div className="cf-translate">
           <span>🌍 Traducir esta página:</span>
-          <div id="google_translate_element"></div>
+          <div className="cf-translate-btns">
+            {LANGUAGES.map(lang => (
+              <button
+                key={lang.code}
+                className="cf-translate-btn"
+                onClick={() => translatePage(lang.code)}
+              >
+                {lang.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Hero */}
@@ -58,7 +59,7 @@ export default function ComoFunciona() {
                   El anuncio aparece al instante y <strong>se elimina automáticamente en 72 horas</strong>.
                   El contacto con el comprador lo incluye el propio vendedor en la descripción del anuncio (WhatsApp, Telegram, etc.).
                   <br /><br />
-                  <em>Pirata-Marketplace no guarda ningún dato personal sobre estos vendedores ni lleva registro de sus publicaciones.</em>
+                  <em>Pirata Market no guarda ningún dato personal sobre estos vendedores ni lleva registro de sus publicaciones.</em>
                 </p>
               </div>
             </div>
@@ -153,7 +154,6 @@ export default function ComoFunciona() {
           <p>Los anuncios marcados como "Pirata" (sin registro) son publicados de forma anónima. Pirata Market no puede identificar ni contactar a estos vendedores.</p>
           <p>Nos reservamos el derecho de eliminar cualquier anuncio que viole nuestras reglas de comunidad o la legislación aplicable, sin previo aviso.</p>
           <p className="cf-legal">© {new Date().getFullYear()} Pirata Market · Un servicio de <strong>Buses App</strong></p>
-          <p>CONTACTO: busesapp55@gmail.com.</p>
         </section>
 
         <Link to="/" className="btn btn-primary" style={{ marginTop: '1rem' }}>
