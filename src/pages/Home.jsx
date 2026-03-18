@@ -1,469 +1,284 @@
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { supabase, uploadImage, uploadVideo, getCategories } from '../lib/supabase'
-import { validateImage, validateVideo, compressImage } from '../lib/utils'
-import './CreateListing.css'
+import { getListings, getCategories } from '../lib/supabase'
+import { formatPrice, timeAgo } from '../lib/utils'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
+import './Home.css'
 
-const CURRENCIES = [
-  { code: 'BOB', label: 'BOB — Boliviano' },
-  { code: 'USD', label: 'USD — Dólar' },
-  { code: 'BRL', label: 'BRL — Real' },
-  { code: 'ARS', label: 'ARS — Peso Arg.' },
-  { code: 'PEN', label: 'PEN — Sol' },
-  { code: 'CLP', label: 'CLP — Peso Chi.' },
-  { code: 'PYG', label: 'PYG — Guaraní' },
-]
-
-export default function CreateListing() {
+export default function Home() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const [user, setUser] = useState(null)
-  const [loading, setLoading] = useState(false)
-  const [uploadingMedia, setUploadingMedia] = useState(false)
+  const location = useLocation()
+  const scrollRef = useRef(null)
+  const [listings, setListings] = useState([])
   const [categories, setCategories] = useState([])
-
-  const [formData, setFormData] = useState({
-    title: '',
-    price: '',
-    currency: 'BOB',
-    category_id: '',
-    description: '',
-    whatsapp_number: '',
-    accepts_offers: false,
-    location: ''
+  const [loading, setLoading] = useState(true)
+  const [filters, setFilters] = useState({
+    category: null,
+    minPrice: '',
+    maxPrice: '',
+    isPirate: false,
+    sellerTypes: [], // [] = todos, ['person','shop','wholesale'] = combinados
+    search: ''
   })
 
-  const [photoFiles, setPhotoFiles] = useState([])
-  const [videoFile, setVideoFile] = useState(null)
-  const [errors, setErrors] = useState({})
-
+  // Restaurar scroll al volver de una ficha
   useEffect(() => {
-    checkUser()
-    loadCategories()
+    const savedScroll = sessionStorage.getItem('home_scroll')
+    if (savedScroll) {
+      setTimeout(() => {
+        window.scrollTo(0, parseInt(savedScroll))
+        sessionStorage.removeItem('home_scroll')
+      }, 100)
+    }
   }, [])
 
-  const checkUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    setUser(user)
+  useEffect(() => {
+    loadData()
+  }, [])
 
-    if (user) {
-      const { data: userData } = await supabase
-        .from('users')
-        .select('whatsapp')
-        .eq('id', user.id)
-        .single()
+  useEffect(() => {
+    loadListings()
+  }, [filters])
 
-      if (userData?.whatsapp) {
-        setFormData(prev => ({ ...prev, whatsapp_number: userData.whatsapp }))
-      }
-    }
-  }
-
-  const loadCategories = async () => {
+  const loadData = async () => {
     try {
       const cats = await getCategories()
       setCategories(cats)
+      await loadListings()
     } catch (error) {
-      console.error('Error loading categories:', error)
-      alert('Error al cargar categorías: ' + error.message)
+      console.error('Error loading data:', error)
     }
   }
 
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }))
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: null }))
-    }
-  }
-
-  const handlePhotoChange = async (e) => {
-    const files = Array.from(e.target.files)
-    const newErrors = {}
-
-    if (photoFiles.length + files.length > 5) {
-      newErrors.photos = t('listing.create.max_photos_error')
-      setErrors(prev => ({ ...prev, ...newErrors }))
-      return
-    }
-
-    for (const file of files) {
-      const error = validateImage(file)
-      if (error) {
-        newErrors.photos = error
-        setErrors(prev => ({ ...prev, ...newErrors }))
-        return
-      }
-    }
-
-    const compressedFiles = await Promise.all(
-      files.map(file => compressImage(file))
-    )
-    setPhotoFiles(prev => [...prev, ...compressedFiles])
-  }
-
-  const handleVideoChange = (e) => {
-    const file = e.target.files[0]
-    if (!file) return
-
-    const error = validateVideo(file)
-    if (error) {
-      setErrors(prev => ({ ...prev, video: error }))
-      return
-    }
-
-    setVideoFile(file)
-    setErrors(prev => ({ ...prev, video: null }))
-  }
-
-  const removePhoto = (index) => {
-    setPhotoFiles(prev => prev.filter((_, i) => i !== index))
-  }
-
-  const removeVideo = () => {
-    setVideoFile(null)
-  }
-
-  const validateForm = () => {
-    const newErrors = {}
-
-    if (!formData.title || formData.title.length < 10) {
-      newErrors.title = t('listing.create.title_min_error')
-    }
-
-    if (!formData.price || formData.price <= 0) {
-      newErrors.price = t('listing.create.price_error')
-    }
-
-    if (!formData.category_id) {
-      newErrors.category_id = t('listing.create.category_error')
-    }
-
-    if (!formData.description) {
-      newErrors.description = t('listing.create.description_error')
-    }
-
-    if (user && !formData.whatsapp_number) {
-      newErrors.whatsapp_number = t('listing.create.whatsapp_error')
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-
-    if (!validateForm()) return
-
+  const loadListings = async () => {
     setLoading(true)
-    setUploadingMedia(true)
-
     try {
-      const photoUrls = []
-      for (let i = 0; i < photoFiles.length; i++) {
-        const url = await uploadImage(photoFiles[i])
-        photoUrls.push(url)
-      }
-
-      let videoUrl = null
-      if (videoFile) {
-        videoUrl = await uploadVideo(videoFile)
-      }
-
-      setUploadingMedia(false)
-
-      const listingData = {
-        title: formData.title,
-        description: formData.description,
-        price: parseFloat(formData.price),
-        currency: formData.currency,
-        category_id: formData.category_id,
-        photos: photoUrls,
-        video_url: videoUrl,
-        accepts_offers: formData.accepts_offers,
-        display_location: formData.location || 'Santa Cruz',
-        is_ghost: !user,
-        user_id: user?.id || null,
-        whatsapp_number: user ? formData.whatsapp_number : null,
-        status: 'active'
-      }
-
-      const { data, error } = await supabase
-        .from('listings')
-        .insert([listingData])
-        .select()
-        .single()
-
-      if (error) throw error
-
-      alert(t('listing.create.success'))
-      navigate(`/ficha/${data.slug}`)
-
+      const data = await getListings(filters)
+      setListings(data)
     } catch (error) {
-      console.error('Error al publicar:', error)
-      alert(t('listing.create.error') + ': ' + error.message)
+      console.error('Error loading listings:', error)
     } finally {
       setLoading(false)
-      setUploadingMedia(false)
     }
   }
 
-  const isPirate = !user
+  const handleFilterChange = (key, value) => {
+    setFilters(prev => ({ ...prev, [key]: value }))
+  }
+
+  const toggleSellerType = (type) => {
+    setFilters(prev => {
+      const current = prev.sellerTypes
+      const exists = current.includes(type)
+      return {
+        ...prev,
+        sellerTypes: exists
+          ? current.filter(t => t !== type)
+          : [...current, type]
+      }
+    })
+  }
+
+  const handleCardClick = () => {
+    sessionStorage.setItem('home_scroll', window.scrollY.toString())
+  }
+
+  const sellerTypeButtons = [
+    { type: 'pirate', icon: '🏴‍☠️', label: t('home.filters.pirates') },
+    { type: 'person', icon: '👤', label: t('home.filters.persons') },
+    { type: 'shop', icon: '🏪', label: t('home.filters.shops') },
+    { type: 'wholesale', icon: '📦', label: t('home.filters.wholesale') },
+  ]
 
   return (
-    <div className="create-listing">
-      <div className="create-listing-container">
-        <div className="create-header">
-          <h1 className="serif luxury-gold">
-            {isPirate ? t('listing.create.title_pirate') : t('listing.create.title_registered')}
-          </h1>
-          {isPirate && (
-            <div className="pirate-notice">
-              <span>⏱️</span>
-              <div>
-                <strong>{t('listing.create.pirate_notice')}</strong>
-                <p>{t('listing.create.pirate_upgrade')}</p>
-              </div>
-            </div>
-          )}
-        </div>
+    <div className="home">
+      <div className="home-container">
+        {/* Sidebar - Filters */}
+        <aside className="sidebar">
+          <div className="filter-section">
+            <h3 className="filter-title">{t('home.filters.title')}</h3>
+            <input
+              type="text"
+              className="input"
+              placeholder={t('home.title')}
+              value={filters.search}
+              onChange={(e) => handleFilterChange('search', e.target.value)}
+            />
+          </div>
 
-        <form onSubmit={handleSubmit} className="create-form">
-          {/* Basic Info */}
-          <div className="form-section card">
-            <h3>{t('listing.create.basic_info')}</h3>
-
-            <div className="form-group">
-              <label>{t('listing.create.fields.title')} *</label>
-              <input
-                type="text"
-                name="title"
-                className="input"
-                placeholder={t('listing.create.fields.title_placeholder')}
-                value={formData.title}
-                onChange={handleInputChange}
-                maxLength={100}
-              />
-              {errors.title && <span className="error">{errors.title}</span>}
-            </div>
-
-            {/* Precio + Moneda en la misma fila */}
-            <div className="form-row">
-              <div className="form-group">
-                <label>{t('listing.create.fields.price')} *</label>
-                <div className="price-currency-row">
-                  <select
-                    name="currency"
-                    className="input select currency-select"
-                    value={formData.currency}
-                    onChange={handleInputChange}
-                  >
-                    {CURRENCIES.map(c => (
-                      <option key={c.code} value={c.code}>{c.code}</option>
-                    ))}
-                  </select>
-                  <input
-                    type="number"
-                    name="price"
-                    className="input price-input"
-                    placeholder="0.00"
-                    value={formData.price}
-                    onChange={handleInputChange}
-                    min="0"
-                    step="0.01"
-                  />
-                </div>
-                <p className="form-hint">
-                  {CURRENCIES.find(c => c.code === formData.currency)?.label}
-                </p>
-                {errors.price && <span className="error">{errors.price}</span>}
-              </div>
-
-              <div className="form-group">
-                <label>{t('listing.create.fields.category')} *</label>
-                <select
-                  name="category_id"
-                  className="input select"
-                  value={formData.category_id}
-                  onChange={handleInputChange}
+          {/* Tipo de vendedor — combinable */}
+          <div className="filter-section">
+            <h4 className="filter-subtitle">{t('home.filters.seller_type')}</h4>
+            <div className="seller-type-filters">
+              {sellerTypeButtons.map(({ type, icon, label }) => (
+                <button
+                  key={type}
+                  className={`seller-type-btn seller-type-${type} ${
+                    type === 'pirate'
+                      ? filters.isPirate ? 'active' : ''
+                      : filters.sellerTypes.includes(type) ? 'active' : ''
+                  }`}
+                  onClick={() => {
+                    if (type === 'pirate') {
+                      handleFilterChange('isPirate', !filters.isPirate)
+                    } else {
+                      toggleSellerType(type)
+                    }
+                  }}
                 >
-                  <option value="">{t('listing.create.select_category')}</option>
-                  {categories.map(cat => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.icon} {cat.name}
-                    </option>
-                  ))}
-                </select>
-                {errors.category_id && <span className="error">{errors.category_id}</span>}
-              </div>
+                  {icon} {label}
+                </button>
+              ))}
             </div>
+          </div>
 
-            <div className="form-group">
-              <label>{t('listing.create.fields.description')} *</label>
-              <textarea
-                name="description"
-                className="input textarea"
-                placeholder={t('listing.create.fields.description_placeholder')}
-                value={formData.description}
-                onChange={handleInputChange}
-                rows={6}
+          {/* VentasTV */}
+          <div className="filter-section">
+            <button className="ventas-tv-btn" onClick={() => navigate('/ventas-tv')}>
+              📺 VentasTV
+              <span className="ventas-tv-badge">{t('home.filters.live')}</span>
+            </button>
+          </div>
+
+          {/* Categories */}
+          <div className="filter-section">
+            <h4 className="filter-subtitle">{t('home.filters.categories')}</h4>
+            <div className="category-list">
+              <button
+                className={`category-item ${!filters.category ? 'active' : ''}`}
+                onClick={() => handleFilterChange('category', null)}
+              >
+                <span className="category-icon">🌐</span>
+                <span>{t('home.filters.all')}</span>
+              </button>
+              {categories.map((cat) => (
+                <button
+                  key={cat.id}
+                  className={`category-item ${filters.category === cat.id ? 'active' : ''}`}
+                  onClick={() => handleFilterChange('category', cat.id)}
+                >
+                  <span className="category-icon">{cat.icon}</span>
+                  <span>{t(`categories.${cat.slug}`)}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Price Range */}
+          <div className="filter-section">
+            <h4 className="filter-subtitle">{t('home.filters.price')}</h4>
+            <div className="price-inputs">
+              <input
+                type="number"
+                className="input"
+                placeholder={t('home.filters.min')}
+                value={filters.minPrice}
+                onChange={(e) => handleFilterChange('minPrice', e.target.value)}
               />
-              {errors.description && <span className="error">{errors.description}</span>}
+              <span>—</span>
+              <input
+                type="number"
+                className="input"
+                placeholder={t('home.filters.max')}
+                value={filters.maxPrice}
+                onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
+              />
             </div>
+          </div>
+        </aside>
 
-            {!isPirate && (
-              <div className="form-group">
-                <label className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    name="accepts_offers"
-                    checked={formData.accepts_offers}
-                    onChange={handleInputChange}
-                  />
-                  <span>{t('listing.create.fields.accepts_offers')}</span>
-                </label>
-              </div>
-            )}
+        {/* Main Content */}
+        <main className="content">
+          <div className="content-header">
+            <h2 className="serif">{t('home.title')}</h2>
+            <div className="differentiators">
+              <span>🚫 {t('home.diff.no_bans')}</span>
+              <span>🔓 {t('home.diff.no_restrictions')}</span>
+              <span>⚡ {t('home.diff.no_algorithms')}</span>
+              <Link to="/como-funciona" className="how-it-works-btn">
+                {t('home.how_it_works')} →
+              </Link>
+            </div>
+            <p className="results-count">
+              {listings.length} {listings.length === 1 ? 'anuncio' : 'anuncios'}
+            </p>
           </div>
 
-          {/* Media */}
-          <div className="form-section card">
-            <h3>{t('listing.create.media')}</h3>
+          {loading ? (
+            <div className="listings-grid">
+              {[...Array(8)].map((_, i) => (
+                <div key={i} className="listing-card skeleton" style={{ height: '240px' }}></div>
+              ))}
+            </div>
+          ) : listings.length === 0 ? (
+            <div className="no-results">
+              <span className="no-results-icon">🏴‍☠️</span>
+              <p>{t('home.no_results')}</p>
+            </div>
+          ) : (
+            <div className="listings-grid">
+              {listings.map((listing) => {
+                const uType = listing.user?.user_type
+                const sellerIcon = listing.is_ghost
+                  ? '🏴‍☠️'
+                  : uType === 'shop' ? '🏪'
+                  : uType === 'wholesale' ? '📦'
+                  : '👤'
+                const sellerClass = listing.is_ghost
+                  ? 'pirate'
+                  : uType === 'shop' ? 'shop'
+                  : uType === 'wholesale' ? 'wholesale'
+                  : 'person'
 
-            <div className="form-group">
-              <label>{t('listing.create.fields.photos')}</label>
-              <div className="photo-upload">
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handlePhotoChange}
-                  disabled={photoFiles.length >= 5}
-                  id="photo-input"
-                  style={{ display: 'none' }}
-                />
-                <label htmlFor="photo-input" className="btn btn-secondary upload-btn">
-                  📷 {t('listing.create.upload_photos')} ({photoFiles.length}/5)
-                </label>
-              </div>
-              {errors.photos && <span className="error">{errors.photos}</span>}
-
-              {photoFiles.length > 0 && (
-                <div className="photo-preview-grid">
-                  {photoFiles.map((file, index) => (
-                    <div key={index} className="photo-preview-item">
-                      <img src={URL.createObjectURL(file)} alt={`Preview ${index + 1}`} />
-                      <button
-                        type="button"
-                        className="photo-remove"
-                        onClick={() => removePhoto(index)}
-                      >
-                        ×
-                      </button>
+                return (
+                  <Link
+                    key={listing.id}
+                    to={`/ficha/${listing.slug}`}
+                    className="listing-card"
+                    onClick={handleCardClick}
+                  >
+                    <div className="listing-image">
+                      {listing.photos && listing.photos.length > 0 ? (
+                        <img src={listing.photos[0]} alt={listing.title} />
+                      ) : (
+                        <div className="listing-no-image">
+                          <span>{listing.category?.icon || '📦'}</span>
+                        </div>
+                      )}
+                      {listing.video_url && (
+                        <div className="video-badge">▶ 6s</div>
+                      )}
+                      <div className={`seller-badge ${sellerClass}`}>
+                        {sellerIcon}
+                      </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
 
-            <div className="form-group">
-              <label>{t('listing.create.fields.video')}</label>
-              {!videoFile ? (
-                <>
-                  <input
-                    type="file"
-                    accept="video/*"
-                    onChange={handleVideoChange}
-                    id="video-input"
-                    style={{ display: 'none' }}
-                  />
-                  <label htmlFor="video-input" className="btn btn-secondary upload-btn">
-                    🎥 {t('listing.create.upload_video')}
-                  </label>
-                </>
-              ) : (
-                <div className="video-preview">
-                  <video src={URL.createObjectURL(videoFile)} controls />
-                  <button type="button" className="btn btn-ghost" onClick={removeVideo}>
-                    {t('buttons.delete')}
-                  </button>
-                </div>
-              )}
-              {errors.video && <span className="error">{errors.video}</span>}
-            </div>
-          </div>
-
-          {/* Contact */}
-          {!isPirate && (
-            <div className="form-section card">
-              <h3>{t('listing.create.contact')}</h3>
-              <div className="form-group">
-                <label>{t('listing.create.fields.whatsapp')} *</label>
-                <input
-                  type="tel"
-                  name="whatsapp_number"
-                  className="input"
-                  placeholder="+591 7XXXXXXX"
-                  value={formData.whatsapp_number}
-                  onChange={handleInputChange}
-                />
-                {errors.whatsapp_number && <span className="error">{errors.whatsapp_number}</span>}
-              </div>
+                    <div className="listing-info">
+                      <div className="listing-price luxury-gold">
+                        {formatPrice(listing.price, listing.currency)}
+                      </div>
+                      {/* Badge tipo vendedor */}
+                      <span className={`listing-seller-type listing-seller-${sellerClass}`}>
+                        {sellerIcon} {
+                          listing.is_ghost ? t('badges.pirate')
+                          : uType === 'shop' ? t('badges.shop')
+                          : uType === 'wholesale' ? t('badges.wholesale')
+                          : t('badges.pirate')
+                        }
+                      </span>
+                      <h3 className="listing-title">{listing.title}</h3>
+                      <div className="listing-meta">
+                        <span className="listing-location">📍 {listing.display_location}</span>
+                        <span className="listing-time">{timeAgo(listing.created_at, t)}</span>
+                      </div>
+                    </div>
+                  </Link>
+                )
+              })}
             </div>
           )}
-
-          {/* Location */}
-          <div className="form-section card">
-            <h3>📍 {t('listing.create.fields.location')}</h3>
-            <div className="form-group">
-              <input
-                type="text"
-                name="location"
-                className="input"
-                placeholder="Ej: Equipetrol, Santa Cruz"
-                value={formData.location}
-                onChange={handleInputChange}
-              />
-              <p className="form-hint">
-                {isPirate
-                  ? t('listing.create.location_hint_pirate')
-                  : t('listing.create.location_hint_registered')
-                }
-              </p>
-            </div>
-          </div>
-
-          {/* Submit */}
-          <div className="form-actions">
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => navigate('/')}
-              disabled={loading}
-            >
-              {t('buttons.cancel')}
-            </button>
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={loading}
-            >
-              {loading ? (
-                <>
-                  <span className="loading"></span>
-                  {uploadingMedia ? t('listing.create.uploading') : t('listing.create.publishing')}
-                </>
-              ) : (
-                <>🏴‍☠️ {isPirate ? t('listing.create.submit_pirate') : t('listing.create.submit')}</>
-              )}
-            </button>
-          </div>
-        </form>
+        </main>
       </div>
     </div>
   )
