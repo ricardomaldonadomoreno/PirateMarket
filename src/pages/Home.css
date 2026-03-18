@@ -472,3 +472,99 @@
     font-size: 1.1rem;
   }
 }
+
+/* ============================================
+   SELLER TYPE FILTERS
+   ============================================ */
+
+.seller-type-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.seller-type-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  background: transparent;
+  border: 1px solid var(--dark-border);
+  border-radius: var(--radius-md);
+  color: var(--text-light);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.85rem;
+  font-weight: 500;
+  font-family: 'Inter', sans-serif;
+  text-align: left;
+}
+
+.seller-type-btn:hover {
+  background: var(--dark-border);
+}
+
+.seller-type-btn.active {
+  background: rgba(184, 152, 95, 0.15);
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.seller-type-pirate.active {
+  background: rgba(184, 152, 95, 0.15);
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.seller-type-person.active {
+  background: rgba(184, 152, 95, 0.1);
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.seller-type-shop.active {
+  background: rgba(255, 183, 3, 0.1);
+  border-color: var(--warning);
+  color: var(--warning);
+}
+
+.seller-type-wholesale.active {
+  background: rgba(6, 214, 160, 0.1);
+  border-color: var(--success);
+  color: var(--success);
+}
+
+/* ============================================
+   LISTING SELLER TYPE BADGE
+   ============================================ */
+
+.listing-seller-type {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-full);
+  margin-bottom: 0.15rem;
+}
+
+.listing-seller-pirate {
+  background: rgba(184, 152, 95, 0.15);
+  color: var(--gold);
+}
+
+.listing-seller-person {
+  background: rgba(184, 152, 95, 0.1);
+  color: var(--gold);
+}
+
+.listing-seller-shop {
+  background: rgba(255, 183, 3, 0.1);
+  color: var(--warning);
+}
+
+.listing-seller-wholesale {
+  background: rgba(6, 214, 160, 0.1);
+  color: var(--success);
+}
