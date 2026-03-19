@@ -46,7 +46,31 @@ export default function ComoFunciona() {
           <p className="cf-tagline">Comercio sin intermediarios, sin censura, sin algoritmos basura.</p>
         </div>
 
-        {/* Cómo funciona */}
+        {/* Tip de búsqueda */}
+        <section className="cf-section cf-search-tip">
+          <div className="cf-search-tip-icon">🔍</div>
+          <div>
+            <h2 className="serif">El buscador funciona por título</h2>
+            <p>Como no usamos algoritmos, nuestro buscador encuentra anuncios buscando coincidencias exactas con el <strong>título del anuncio</strong>. No hay magia, no hay ranking pagado — lo que escribes es lo que se busca.</p>
+            <p style={{ marginTop: '0.75rem' }}>
+              <strong style={{ color: 'var(--gold)' }}>💡 Consejo para vendedores:</strong> al crear tu anuncio, incluye en el título hasta <strong>5 palabras clave</strong> que un comprador pueda buscar. Por ejemplo:
+            </p>
+            <div className="cf-keyword-examples">
+              <div className="cf-keyword-example">
+                <span className="cf-keyword-bad">❌ "Vendo mi celular"</span>
+                <span className="cf-keyword-good">✅ "iPhone 13 Pro 256GB desbloqueado"</span>
+              </div>
+              <div className="cf-keyword-example">
+                <span className="cf-keyword-bad">❌ "Ofrezco servicios"</span>
+                <span className="cf-keyword-good">✅ "Plomero urgente domicilio Santa Cruz"</span>
+              </div>
+              <div className="cf-keyword-example">
+                <span className="cf-keyword-bad">❌ "Ropa usada"</span>
+                <span className="cf-keyword-good">✅ "Jeans Levi's 501 talla 32 nuevo"</span>
+              </div>
+            </div>
+          </div>
+        </section>
         <section className="cf-section">
           <h2 className="serif">¿Cómo funciona?</h2>
           <div className="cf-steps">
