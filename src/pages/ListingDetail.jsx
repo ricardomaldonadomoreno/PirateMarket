@@ -340,7 +340,7 @@ export default function ListingDetail({ user }) {
                   className="btn btn-secondary"
                   style={{ width: '100%', marginTop: '0.75rem', textAlign: 'center' }}
                 >
-                  📋 Ver todos sus anuncios
+                  📋 Ver catálogo
                 </Link>
               </div>
             )}
