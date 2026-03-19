@@ -238,3 +238,66 @@
   color: var(--gold);
   background: rgba(184, 152, 95, 0.1);
 }
+
+/* Search tip */
+.cf-search-tip {
+  display: flex;
+  gap: 1.25rem;
+  align-items: flex-start;
+  background: rgba(184, 152, 95, 0.08);
+  border: 1.5px solid rgba(184, 152, 95, 0.3);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+}
+
+.cf-search-tip-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.cf-search-tip h2 {
+  font-size: 1.4rem;
+  margin-bottom: 0.75rem;
+}
+
+.cf-search-tip p {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.cf-keyword-examples {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.cf-keyword-example {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.cf-keyword-bad {
+  font-size: 0.85rem;
+  color: var(--danger);
+  background: rgba(230, 57, 70, 0.08);
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-full);
+}
+
+.cf-keyword-good {
+  font-size: 0.85rem;
+  color: var(--success);
+  background: rgba(6, 214, 160, 0.08);
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-full);
+}
+
+@media (max-width: 640px) {
+  .cf-search-tip { flex-direction: column; gap: 0.75rem; }
+  .cf-keyword-example { flex-direction: column; align-items: flex-start; }
+}
