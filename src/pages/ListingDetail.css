@@ -42,10 +42,11 @@
   overflow: hidden;
 }
 
+/* ✅ ÚNICO CAMBIO: altura fija en lugar de aspect-ratio */
 .photo-main {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 10;
+  height: 480px;
   background: var(--dark);
 }
 
@@ -116,7 +117,7 @@
 
 .photo-placeholder {
   width: 100%;
-  aspect-ratio: 16 / 10;
+  height: 480px;
   background: var(--dark-surface);
   border: 1px solid var(--dark-border);
   border-radius: var(--radius-lg);
@@ -281,5 +282,7 @@
   .listing-detail-container { padding: 0 0.875rem; }
   .listing-price { font-size: 1.5rem; }
   .listing-title-detail { font-size: 1.1rem; }
+  .photo-main { height: 320px; }
+  .photo-placeholder { height: 320px; }
   .photo-thumbnails { grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); }
 }
