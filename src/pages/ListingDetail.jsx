@@ -335,6 +335,13 @@ export default function ListingDetail({ user }) {
                     </div>
                   </div>
                 </div>
+                <Link
+                  to={`/vendedor/${listing.user.id}`}
+                  className="btn btn-secondary"
+                  style={{ width: '100%', marginTop: '0.75rem', textAlign: 'center' }}
+                >
+                  📋 Ver todos sus anuncios
+                </Link>
               </div>
             )}
 
