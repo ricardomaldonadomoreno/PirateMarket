@@ -1,0 +1,87 @@
+.admin-filters-bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.admin-filter-btns {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.filter-btn {
+  padding: 0.5rem 1rem;
+  background: var(--dark-border);
+  border: 1.5px solid var(--dark-border);
+  color: var(--text-light);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.2s;
+  font-family: 'Inter', sans-serif;
+}
+.filter-btn:hover { border-color: var(--gold); }
+.filter-btn.active { background: rgba(184,152,95,0.15); border-color: var(--gold); color: var(--gold); }
+
+.admin-loading { padding: 2rem; text-align: center; color: var(--text-muted); }
+
+.admin-users-table { display: flex; flex-direction: column; gap: 0; }
+.admin-users-header {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 0.5fr 0.75fr 1fr;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--dark-border);
+}
+
+.admin-user-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 0.5fr 0.75fr 1fr;
+  gap: 1rem;
+  padding: 0.875rem 1rem;
+  align-items: center;
+  border-bottom: 1px solid var(--dark-border);
+  transition: background 0.2s;
+  font-size: 0.875rem;
+}
+.admin-user-row:hover { background: var(--dark); }
+.admin-user-row.banned { opacity: 0.5; }
+
+.admin-user-info { display: flex; align-items: center; gap: 0.75rem; }
+.admin-user-avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--gold); color: var(--dark);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 0.9rem; flex-shrink: 0; overflow: hidden;
+}
+.admin-user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.admin-user-name { font-weight: 600; color: var(--text-light); }
+.admin-user-email { font-size: 0.75rem; color: var(--text-muted); }
+.admin-user-badges { display: flex; gap: 0.25rem; flex-wrap: wrap; }
+.badge-banned { background: rgba(230,57,70,0.15); color: var(--danger); }
+.admin-user-count { color: var(--text-muted); text-align: center; }
+.admin-user-date { color: var(--text-muted); font-size: 0.8rem; }
+.admin-user-actions { display: flex; gap: 0.4rem; }
+
+.admin-type-select {
+  background: var(--dark); border: 1px solid var(--dark-border);
+  color: var(--text-light); border-radius: var(--radius-md);
+  padding: 0.3rem 0.5rem; font-size: 0.8rem; cursor: pointer;
+  font-family: 'Inter', sans-serif;
+}
+
+@media (max-width: 1024px) {
+  .admin-users-header, .admin-user-row { grid-template-columns: 1fr 1fr; }
+  .admin-users-header span:nth-child(n+3), .admin-user-row > div:nth-child(n+3) { display: none; }
+  .admin-user-actions { display: flex !important; }
+  .admin-user-row > div:last-child { display: flex !important; }
+}
