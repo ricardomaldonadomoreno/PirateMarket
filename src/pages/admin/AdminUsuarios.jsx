@@ -16,7 +16,7 @@ export default function AdminUsuarios() {
     try {
       const { data } = await supabase
         .from('users')
-        .select('id, display_name, email, user_type, is_verified, is_banned, created_at, listings_count, avatar_url')
+        .select('id, display_name, email, user_type, is_verified, is_banned, created_at, avatar_url, whatsapp')
         .order('created_at', { ascending: false })
       if (data) setUsers(data)
     } catch (error) {
@@ -125,7 +125,7 @@ export default function AdminUsuarios() {
                     {user.is_banned && <span className="admin-badge badge-banned">🚫 Baneado</span>}
                   </div>
 
-                  <div className="admin-user-count">{user.listings_count || 0}</div>
+                  <div className="admin-user-count">—</div>
 
                   <div className="admin-user-date">
                     {new Date(user.created_at).toLocaleDateString()}
