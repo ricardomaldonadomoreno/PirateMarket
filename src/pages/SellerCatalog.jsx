@@ -35,7 +35,7 @@ export default function SellerCatalog() {
     try {
       const { data: sellerData } = await supabase
         .from('users')
-        .select('id, display_name, user_type, is_verified, avatar_url, created_at, whatsapp, bio, shop_name, shop_logo_url')
+        .select('id, display_name, user_type, is_verified, avatar_url, created_at, whatsapp')
         .eq('id', userId)
         .single()
 
@@ -113,12 +113,12 @@ export default function SellerCatalog() {
             <div className="seller-header-avatar">
               {seller.avatar_url
                 ? <img src={seller.avatar_url} alt={seller.display_name} />
-                : <span>{(seller.shop_name || seller.display_name)?.charAt(0).toUpperCase()}</span>
+                : <span>{seller.display_name?.charAt(0).toUpperCase()}</span>
               }
             </div>
             <div className="seller-header-info">
               <div className="seller-header-top">
-                <h1 className="serif">{seller.shop_name || seller.display_name}</h1>
+                <h1 className="serif">{seller.display_name}</h1>
                 <div className="seller-header-badges">
                   <span className={`badge badge-${typeColor(seller.user_type)}`}>
                     {typeLabel(seller.user_type)}
@@ -128,7 +128,7 @@ export default function SellerCatalog() {
                   )}
                 </div>
               </div>
-              {seller.bio && <p className="seller-bio">{seller.bio}</p>}
+              
               <div className="seller-header-meta">
                 <span>📅 Miembro desde {new Date(seller.created_at).toLocaleDateString()}</span>
                 <span>📋 {listings.length} anuncios activos</span>
