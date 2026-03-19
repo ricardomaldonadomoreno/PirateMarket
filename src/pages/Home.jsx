@@ -18,11 +18,10 @@ export default function Home() {
     minPrice: '',
     maxPrice: '',
     isPirate: false,
-    sellerTypes: [], // [] = todos, ['person','shop','wholesale'] = combinados
+    sellerTypes: [],
     search: ''
   })
 
-  // Restaurar scroll al volver de una ficha
   useEffect(() => {
     const savedScroll = sessionStorage.getItem('home_scroll')
     if (savedScroll) {
@@ -33,13 +32,8 @@ export default function Home() {
     }
   }, [])
 
-  useEffect(() => {
-    loadData()
-  }, [])
-
-  useEffect(() => {
-    loadListings()
-  }, [filters])
+  useEffect(() => { loadData() }, [])
+  useEffect(() => { loadListings() }, [filters])
 
   const loadData = async () => {
     try {
@@ -73,9 +67,7 @@ export default function Home() {
       const exists = current.includes(type)
       return {
         ...prev,
-        sellerTypes: exists
-          ? current.filter(t => t !== type)
-          : [...current, type]
+        sellerTypes: exists ? current.filter(t => t !== type) : [...current, type]
       }
     })
   }
@@ -94,7 +86,6 @@ export default function Home() {
   return (
     <div className="home">
       <div className="home-container">
-        {/* Sidebar - Filters */}
         <aside className="sidebar">
           <div className="filter-section">
             <h3 className="filter-title">{t('home.filters.title')}</h3>
@@ -107,7 +98,6 @@ export default function Home() {
             />
           </div>
 
-          {/* Tipo de vendedor — combinable */}
           <div className="filter-section">
             <h4 className="filter-subtitle">{t('home.filters.seller_type')}</h4>
             <div className="seller-type-filters">
@@ -133,7 +123,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* VentasTV */}
           <div className="filter-section">
             <button className="ventas-tv-btn" onClick={() => navigate('/ventas-tv')}>
               📺 VentasTV
@@ -141,7 +130,6 @@ export default function Home() {
             </button>
           </div>
 
-          {/* Categories */}
           <div className="filter-section">
             <h4 className="filter-subtitle">{t('home.filters.categories')}</h4>
             <div className="category-list">
@@ -165,7 +153,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Price Range */}
           <div className="filter-section">
             <h4 className="filter-subtitle">{t('home.filters.price')}</h4>
             <div className="price-inputs">
@@ -188,7 +175,6 @@ export default function Home() {
           </div>
         </aside>
 
-        {/* Main Content */}
         <main className="content">
           <div className="content-header">
             <h2 className="serif">{t('home.title')}</h2>
@@ -220,13 +206,11 @@ export default function Home() {
             <div className="listings-grid">
               {listings.map((listing) => {
                 const uType = listing.user?.user_type
-                const sellerIcon = listing.is_ghost
-                  ? '🏴‍☠️'
+                const sellerIcon = listing.is_ghost ? '🏴‍☠️'
                   : uType === 'shop' ? '🏪'
                   : uType === 'wholesale' ? '📦'
                   : '👤'
-                const sellerClass = listing.is_ghost
-                  ? 'pirate'
+                const sellerClass = listing.is_ghost ? 'pirate'
                   : uType === 'shop' ? 'shop'
                   : uType === 'wholesale' ? 'wholesale'
                   : 'person'
@@ -255,17 +239,15 @@ export default function Home() {
                     </div>
 
                     <div className="listing-info">
-                      <span className="listing-price">
+                      <p className="listing-price">
                         {formatPrice(listing.price, listing.currency)}
-                      </span>
-                      </div>
-                      {/* Badge tipo vendedor */}
+                      </p>
                       <span className={`listing-seller-type listing-seller-${sellerClass}`}>
                         {sellerIcon} {
                           listing.is_ghost ? t('badges.pirate')
                           : uType === 'shop' ? t('badges.shop')
                           : uType === 'wholesale' ? t('badges.wholesale')
-                          : t('badges.pirate')
+                          : t('badges.verified')
                         }
                       </span>
                       <p className="listing-title">{listing.title}</p>
