@@ -11,6 +11,7 @@ import Dashboard from './pages/Dashboard'
 import Auth from './pages/Auth'
 import VentasTV from './pages/VentasTV'
 import ComoFunciona from './pages/ComoFunciona'
+import SellerCatalog from './pages/SellerCatalog'
 
 // Admin Pages
 import AdminLogin from './pages/admin/AdminLogin'
@@ -59,6 +60,7 @@ function App() {
         <Route path="/auth" element={<><Navbar user={user} /><Auth /></>} />
         <Route path="/ventas-tv" element={<><Navbar user={user} /><VentasTV /></>} />
         <Route path="/como-funciona" element={<><Navbar user={user} /><ComoFunciona /></>} />
+        <Route path="/vendedor/:userId" element={<><Navbar user={user} /><SellerCatalog /></>} />
 
         {/* Rutas admin — sin Navbar público */}
         <Route path="/admin" element={<AdminLogin />} />
