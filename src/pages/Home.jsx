@@ -268,7 +268,7 @@ export default function Home() {
                           : t('badges.pirate')
                         }
                       </span>
-                      <h3 className="listing-title">{listing.title}</h3>
+                      <p className="listing-title">{listing.title}</p>
                       <div className="listing-meta">
                         <span className="listing-location">📍 {listing.display_location}</span>
                         <span className="listing-time">{timeAgo(listing.created_at, t)}</span>
