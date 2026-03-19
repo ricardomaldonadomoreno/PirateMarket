@@ -22,15 +22,18 @@ export default function Home() {
     search: ''
   })
 
+  // Restaurar scroll al volver de una ficha — espera que carguen los listings
   useEffect(() => {
-    const savedScroll = sessionStorage.getItem('home_scroll')
-    if (savedScroll) {
-      setTimeout(() => {
-        window.scrollTo(0, parseInt(savedScroll))
-        sessionStorage.removeItem('home_scroll')
-      }, 100)
+    if (!loading && listings.length > 0) {
+      const savedScroll = sessionStorage.getItem('home_scroll')
+      if (savedScroll) {
+        setTimeout(() => {
+          window.scrollTo(0, parseInt(savedScroll))
+          sessionStorage.removeItem('home_scroll')
+        }, 50)
+      }
     }
-  }, [])
+  }, [loading, listings])
 
   useEffect(() => { loadData() }, [])
   useEffect(() => { loadListings() }, [filters])
