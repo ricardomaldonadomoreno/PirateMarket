@@ -19,6 +19,59 @@ import {
 } from '../lib/utils'
 import './ListingDetail.css'
 
+// Helper para actualizar meta tags dinámicamente
+function updateMetaTags({ title, description, image, url }) {
+  // Título
+  document.title = title
+
+  const setMeta = (selector, value) => {
+    let el = document.querySelector(selector)
+    if (!el) {
+      el = document.createElement('meta')
+      // Detectar si es property o name
+      if (selector.includes('property=')) {
+        el.setAttribute('property', selector.match(/property="([^"]+)"/)[1])
+      } else {
+        el.setAttribute('name', selector.match(/name="([^"]+)"/)[1])
+      }
+      document.head.appendChild(el)
+    }
+    el.setAttribute('content', value)
+  }
+
+  // Open Graph (Facebook, WhatsApp, Telegram, LinkedIn)
+  setMeta('meta[property="og:title"]',       title)
+  setMeta('meta[property="og:description"]', description)
+  setMeta('meta[property="og:image"]',       image)
+  setMeta('meta[property="og:image:width"]', '1200')
+  setMeta('meta[property="og:image:height"]','630')
+  setMeta('meta[property="og:url"]',         url)
+  setMeta('meta[property="og:type"]',        'product')
+  setMeta('meta[property="og:site_name"]',   'Pirata Market')
+
+  // Twitter Card
+  setMeta('meta[name="twitter:card"]',        'summary_large_image')
+  setMeta('meta[name="twitter:title"]',       title)
+  setMeta('meta[name="twitter:description"]', description)
+  setMeta('meta[name="twitter:image"]',       image)
+
+  // Meta description general
+  setMeta('meta[name="description"]', description)
+}
+
+function resetMetaTags() {
+  document.title = 'Pirata Market'
+  const setMeta = (selector, value) => {
+    const el = document.querySelector(selector)
+    if (el) el.setAttribute('content', value)
+  }
+  setMeta('meta[property="og:title"]',       'Pirata Market')
+  setMeta('meta[property="og:description"]', 'Comercio sin intermediarios')
+  setMeta('meta[property="og:image"]',       '/logo.png')
+  setMeta('meta[property="og:url"]',         window.location.origin)
+  setMeta('meta[name="description"]',        'Pirata Market - Comercio sin intermediarios')
+}
+
 export default function ListingDetail({ user }) {
   const { slug } = useParams()
   const { t } = useTranslation()
@@ -26,19 +79,37 @@ export default function ListingDetail({ user }) {
   const [listing, setListing] = useState(null)
   const [loading, setLoading] = useState(true)
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0)
-  const [showShareMenu, setShowShareMenu] = useState(false)
 
   useEffect(() => {
     loadListing()
+    // Limpiar meta tags al salir de la página
+    return () => resetMetaTags()
   }, [slug])
 
   const loadListing = async () => {
+    window.scrollTo(0, 0)
     try {
       const data = await getListingBySlug(slug)
       setListing(data)
-      
-      // Increment views
       await incrementViews(data.id)
+
+      // Actualizar meta tags con los datos del anuncio
+      const imageUrl = data.photos && data.photos.length > 0
+        ? data.photos[0]
+        : `${window.location.origin}/logo.png`
+
+      const priceText = formatPrice(data.price, data.currency)
+      const descText = data.description
+        ? data.description.substring(0, 150).replace(/\n/g, ' ') + '...'
+        : `${priceText} - Pirata Market`
+
+      updateMetaTags({
+        title:       `${data.title} - ${priceText} | Pirata Market`,
+        description: descText,
+        image:       imageUrl,
+        url:         `${window.location.origin}/ficha/${data.slug}`
+      })
+
     } catch (error) {
       console.error('Error loading listing:', error)
       navigate('/')
@@ -49,34 +120,22 @@ export default function ListingDetail({ user }) {
 
   const handleContactWhatsApp = async () => {
     if (!listing) return
-    
-    // Increment contacts counter
     await incrementContacts(listing.id)
-    
-    // Generate WhatsApp URL
-    const whatsappNumber = listing.is_ghost 
-      ? null 
-      : listing.whatsapp_number
-    
+    const whatsappNumber = listing.is_ghost ? null : listing.whatsapp_number
     if (whatsappNumber) {
-      const url = generateWhatsAppURL(
-        whatsappNumber,
-        listing.title,
-        listing.slug
-      )
+      const url = generateWhatsAppURL(whatsappNumber, listing.title, listing.slug)
       window.open(url, '_blank')
     }
   }
 
   const handleShare = async () => {
-    const url = `${window.location.origin}/api/og?slug=${listing.slug}`
-    
+    const url = generateShareURL(listing.slug)
     if (navigator.share) {
       try {
         await navigator.share({
           title: listing.title,
-          text: `${listing.title} - ${formatPrice(listing.price, listing.currency)}`,
-          url: url
+          text:  `${listing.title} - ${formatPrice(listing.price, listing.currency)}`,
+          url:   url
         })
         await incrementShares(listing.id)
       } catch (error) {
@@ -100,15 +159,13 @@ export default function ListingDetail({ user }) {
 
   const nextPhoto = () => {
     if (listing.photos.length > 0) {
-      setCurrentPhotoIndex((prev) => 
-        (prev + 1) % listing.photos.length
-      )
+      setCurrentPhotoIndex((prev) => (prev + 1) % listing.photos.length)
     }
   }
 
   const prevPhoto = () => {
     if (listing.photos.length > 0) {
-      setCurrentPhotoIndex((prev) => 
+      setCurrentPhotoIndex((prev) =>
         prev === 0 ? listing.photos.length - 1 : prev - 1
       )
     }
@@ -125,11 +182,9 @@ export default function ListingDetail({ user }) {
     )
   }
 
-  if (!listing) {
-    return null
-  }
+  if (!listing) return null
 
-  const badge = listing.user 
+  const badge = listing.user
     ? getUserBadge(listing.user.user_type, listing.user.is_verified, t)
     : { icon: '🏴‍☠️', label: t('badges.pirate'), color: 'gold' }
 
@@ -138,7 +193,6 @@ export default function ListingDetail({ user }) {
   return (
     <div className="listing-detail">
       <div className="listing-detail-container">
-        {/* Back Button */}
         <Link to="/" className="back-button">
           ← {t('buttons.back')}
         </Link>
@@ -146,22 +200,17 @@ export default function ListingDetail({ user }) {
         <div className="listing-detail-grid">
           {/* Left Column - Media */}
           <div className="listing-media-column">
-            {/* Photo Gallery */}
             {hasPhotos ? (
               <div className="photo-gallery">
                 <div className="photo-main">
-                  <img 
-                    src={listing.photos[currentPhotoIndex]} 
+                  <img
+                    src={listing.photos[currentPhotoIndex]}
                     alt={listing.title}
                   />
                   {listing.photos.length > 1 && (
                     <>
-                      <button className="photo-nav photo-prev" onClick={prevPhoto}>
-                        ‹
-                      </button>
-                      <button className="photo-nav photo-next" onClick={nextPhoto}>
-                        ›
-                      </button>
+                      <button className="photo-nav photo-prev" onClick={prevPhoto}>‹</button>
+                      <button className="photo-nav photo-next" onClick={nextPhoto}>›</button>
                       <div className="photo-indicator">
                         {currentPhotoIndex + 1} / {listing.photos.length}
                       </div>
@@ -188,7 +237,6 @@ export default function ListingDetail({ user }) {
               </div>
             )}
 
-            {/* Video */}
             {listing.video_url && (
               <div className="listing-video">
                 <video controls>
@@ -197,7 +245,6 @@ export default function ListingDetail({ user }) {
               </div>
             )}
 
-            {/* Description */}
             <div className="listing-description card">
               <h3>{t('listing.detail.description')}</h3>
               <p>{listing.description}</p>
@@ -206,14 +253,12 @@ export default function ListingDetail({ user }) {
 
           {/* Right Column - Info */}
           <div className="listing-info-column">
-            {/* Price & Title */}
             <div className="listing-header card">
               <div className="listing-price luxury-gold">
                 {formatPrice(listing.price, listing.currency)}
               </div>
               <h1 className="listing-title-detail">{listing.title}</h1>
-              
-              {/* Meta */}
+
               <div className="listing-meta-detail">
                 <span className={`badge badge-${badge.color}`}>
                   {badge.icon} {badge.label}
@@ -223,14 +268,12 @@ export default function ListingDetail({ user }) {
                 </span>
               </div>
 
-              {/* Pirate Expiry */}
               {listing.is_ghost && listing.expires_at && (
                 <div className="expiry-notice">
                   ⏱️ {t('listing.detail.expires_in')}: {timeUntilExpiry(listing.expires_at, t)}
                 </div>
               )}
 
-              {/* Stats */}
               <div className="listing-stats">
                 <span>👁️ {listing.views_count} {t('listing.detail.views')}</span>
                 <span>📱 {listing.contacts_count} {t('listing.detail.contacts')}</span>
@@ -238,7 +281,6 @@ export default function ListingDetail({ user }) {
               </div>
             </div>
 
-            {/* Contact */}
             <div className="listing-contact card">
               {listing.is_ghost ? (
                 <div className="contact-ghost">
@@ -248,7 +290,7 @@ export default function ListingDetail({ user }) {
                   <p className="contact-info">{listing.description}</p>
                 </div>
               ) : (
-                <button 
+                <button
                   className="btn btn-primary btn-contact"
                   onClick={handleContactWhatsApp}
                 >
@@ -256,36 +298,28 @@ export default function ListingDetail({ user }) {
                 </button>
               )}
 
-              <button 
-                className="btn btn-secondary"
-                onClick={handleShare}
-              >
+              <button className="btn btn-secondary" onClick={handleShare}>
                 🔗 {t('listing.detail.share')}
               </button>
             </div>
 
-            {/* Location */}
             {listing.exact_location && (
               <div className="listing-location card">
                 <h3>📍 {t('listing.fields.location')}</h3>
                 <p className="location-name">{listing.display_location}</p>
-                <button 
-                  className="btn btn-outline"
-                  onClick={handleOpenMap}
-                >
+                <button className="btn btn-outline" onClick={handleOpenMap}>
                   🗺️ {t('listing.detail.open_maps')}
                 </button>
               </div>
             )}
 
-            {/* Seller Info (if registered) */}
             {listing.user && !listing.is_ghost && (
               <div className="seller-info card">
                 <h3>{t('listing.detail.seller')}</h3>
                 <div className="seller-profile">
                   {listing.user.avatar_url ? (
-                    <img 
-                      src={listing.user.avatar_url} 
+                    <img
+                      src={listing.user.avatar_url}
                       alt={listing.user.display_name}
                       className="seller-avatar"
                     />
@@ -304,7 +338,6 @@ export default function ListingDetail({ user }) {
               </div>
             )}
 
-            {/* Report */}
             <button className="btn-report">
               ⚠️ {t('listing.detail.report')}
             </button>
