@@ -438,3 +438,19 @@
   .seller-premium-actions .btn { flex: 1; text-align: center; }
   .seller-premium-name-row h1 { font-size: 1.4rem; }
 }
+
+/* Fotos del negocio en catálogo */
+.seller-biz-photos { margin-top: 1rem; }
+.seller-biz-title { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.75rem; }
+.seller-biz-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 0.5rem;
+}
+.seller-biz-thumb {
+  width: 100%; aspect-ratio: 1; object-fit: cover;
+  border-radius: var(--radius-md); cursor: pointer;
+  border: 2px solid var(--dark-border);
+  transition: all 0.2s;
+}
+.seller-biz-thumb:hover { border-color: var(--gold); transform: scale(1.03); }
