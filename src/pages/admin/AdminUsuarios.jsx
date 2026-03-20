@@ -16,7 +16,7 @@ export default function AdminUsuarios() {
     try {
       const { data } = await supabase
         .from('users')
-        .select('id, display_name, email, user_type, is_verified, is_banned, created_at, avatar_url, whatsapp')
+        .select('id, display_name, email, user_type, is_verified, is_banned, is_premium, premium_until, created_at, avatar_url, whatsapp')
         .order('created_at', { ascending: false })
       if (data) setUsers(data)
     } catch (error) {
@@ -42,6 +42,19 @@ export default function AdminUsuarios() {
     loadUsers()
   }
 
+  const handleTogglePremium = async (userId, isPremium) => {
+    if (isPremium) {
+      // Desactivar
+      await supabase.from('users').update({ is_premium: false, premium_until: null }).eq('id', userId)
+    } else {
+      // Activar por 1 año
+      const until = new Date()
+      until.setFullYear(until.getFullYear() + 1)
+      await supabase.from('users').update({ is_premium: true, premium_until: until.toISOString() }).eq('id', userId)
+    }
+    loadUsers()
+  }
+
   const filtered = users.filter(u => {
     const matchSearch = u.display_name?.toLowerCase().includes(search.toLowerCase()) ||
       u.email?.toLowerCase().includes(search.toLowerCase())
@@ -50,6 +63,11 @@ export default function AdminUsuarios() {
   })
 
   const typeIcon = (type) => type === 'shop' ? '🏪' : type === 'wholesale' ? '📦' : type === 'admin' ? '🔐' : '👤'
+
+  const premiumExpiry = (until) => {
+    if (!until) return ''
+    return new Date(until).toLocaleDateString()
+  }
 
   return (
     <div className="admin-page">
@@ -88,7 +106,7 @@ export default function AdminUsuarios() {
                 <span>Usuario</span>
                 <span>Tipo</span>
                 <span>Estado</span>
-                <span>Anuncios</span>
+                <span>Premium</span>
                 <span>Registro</span>
                 <span>Acciones</span>
               </div>
@@ -125,7 +143,16 @@ export default function AdminUsuarios() {
                     {user.is_banned && <span className="admin-badge badge-banned">🚫 Baneado</span>}
                   </div>
 
-                  <div className="admin-user-count">—</div>
+                  <div className="admin-premium-cell">
+                    {user.is_premium && user.premium_until && new Date(user.premium_until) > new Date() ? (
+                      <div>
+                        <span className="admin-badge badge-premium">⭐ Premium</span>
+                        <div className="premium-expiry">hasta {premiumExpiry(user.premium_until)}</div>
+                      </div>
+                    ) : (
+                      <span className="admin-badge badge-free">Básico</span>
+                    )}
+                  </div>
 
                   <div className="admin-user-date">
                     {new Date(user.created_at).toLocaleDateString()}
@@ -138,6 +165,13 @@ export default function AdminUsuarios() {
                       title={user.is_verified ? 'Quitar verificación' : 'Verificar'}
                     >
                       {user.is_verified ? '✗' : '✓'}
+                    </button>
+                    <button
+                      className={`btn-small ${user.is_premium && new Date(user.premium_until) > new Date() ? 'btn-danger' : 'btn-premium'}`}
+                      onClick={() => handleTogglePremium(user.id, user.is_premium && new Date(user.premium_until) > new Date())}
+                      title={user.is_premium ? 'Desactivar premium' : 'Activar premium 1 año'}
+                    >
+                      ⭐
                     </button>
                     <button
                       className={`btn-small ${user.is_banned ? 'btn-success' : 'btn-danger'}`}
