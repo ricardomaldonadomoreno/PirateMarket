@@ -16,6 +16,19 @@ export default function Dashboard({ user }) {
   const [profile, setProfile] = useState(null)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
 
+  // Premium shop form
+  const [shopForm, setShopForm] = useState({
+    shop_name: '',
+    shop_bio: '',
+    shop_link: '',
+    shop_hours: '',
+    shop_color: '#B8985F',
+    shop_logo_url: '',
+    shop_banner_url: '',
+  })
+  const [savingShop, setSavingShop] = useState(false)
+  const [shopSaved, setShopSaved] = useState(false)
+
   useEffect(() => {
     if (!user) { navigate('/auth'); return }
     loadProfile()
@@ -26,10 +39,21 @@ export default function Dashboard({ user }) {
     try {
       const { data } = await supabase
         .from('users')
-        .select('display_name, user_type, avatar_url')
+        .select('display_name, user_type, avatar_url, is_premium, premium_until, shop_name, shop_bio, shop_link, shop_hours, shop_color, shop_logo_url, shop_banner_url')
         .eq('id', user.id)
         .single()
-      if (data) setProfile(data)
+      if (data) {
+        setProfile(data)
+        setShopForm({
+          shop_name: data.shop_name || '',
+          shop_bio: data.shop_bio || '',
+          shop_link: data.shop_link || '',
+          shop_hours: data.shop_hours || '',
+          shop_color: data.shop_color || '#B8985F',
+          shop_logo_url: data.shop_logo_url || '',
+          shop_banner_url: data.shop_banner_url || '',
+        })
+      }
     } catch (error) {
       console.error('Error loading profile:', error)
     }
@@ -65,28 +89,19 @@ export default function Dashboard({ user }) {
     try {
       const fileExt = file.name.split('.').pop()
       const newFilePath = `${user.id}.${fileExt}`
-
-      // Eliminar foto anterior si existe
       if (profile?.avatar_url) {
         const oldPath = profile.avatar_url.split('/avatars/')[1]?.split('?')[0]
         if (oldPath) await supabase.storage.from('avatars').remove([oldPath])
       }
-
-      // Subir nueva
       const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(newFilePath, file, { contentType: file.type })
+        .from('avatars').upload(newFilePath, file, { contentType: file.type })
       if (uploadError) throw uploadError
-
       const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(newFilePath)
       const urlWithCache = `${publicUrl}?t=${Date.now()}`
-
       const { error: updateError } = await supabase
         .from('users').update({ avatar_url: urlWithCache }).eq('id', user.id)
       if (updateError) throw updateError
-
       setProfile(prev => ({ ...prev, avatar_url: urlWithCache }))
-      // Limpiar input para permitir seleccionar el mismo archivo
       e.target.value = ''
     } catch (error) {
       console.error('Error uploading avatar:', error)
@@ -104,8 +119,7 @@ export default function Dashboard({ user }) {
         const oldPath = profile.avatar_url.split('/avatars/')[1]?.split('?')[0]
         if (oldPath) await supabase.storage.from('avatars').remove([oldPath])
       }
-      const { error } = await supabase
-        .from('users').update({ avatar_url: null }).eq('id', user.id)
+      const { error } = await supabase.from('users').update({ avatar_url: null }).eq('id', user.id)
       if (error) throw error
       setProfile(prev => ({ ...prev, avatar_url: null }))
     } catch (error) {
@@ -139,78 +153,80 @@ export default function Dashboard({ user }) {
     }
   }
 
+  const handleShopSave = async () => {
+    setSavingShop(true)
+    try {
+      const { error } = await supabase.from('users').update({
+        shop_name: shopForm.shop_name || null,
+        shop_bio: shopForm.shop_bio || null,
+        shop_link: shopForm.shop_link || null,
+        shop_hours: shopForm.shop_hours || null,
+        shop_color: shopForm.shop_color || '#B8985F',
+        shop_logo_url: shopForm.shop_logo_url || null,
+        shop_banner_url: shopForm.shop_banner_url || null,
+      }).eq('id', user.id)
+      if (error) throw error
+      setShopSaved(true)
+      setTimeout(() => setShopSaved(false), 3000)
+      loadProfile()
+    } catch (error) {
+      alert('Error al guardar: ' + error.message)
+    } finally {
+      setSavingShop(false)
+    }
+  }
+
   if (!user) return null
 
   const displayName = profile?.display_name || user.email?.split('@')[0]
   const userType = profile?.user_type || 'person'
   const avatarUrl = profile?.avatar_url
-  const userTypeIcon = userType === 'shop' ? '🏪' : userType === 'wholesale' ? '📦' : '👤'
+  const userTypeIcon = userType === 'shop' ? '🏪' : userType === 'wholesale' ? '📦' : userType === 'admin' ? '🔐' : '👤'
+  const isPremium = profile?.is_premium && profile?.premium_until && new Date(profile.premium_until) > new Date()
+  const isShopOrWholesale = userType === 'shop' || userType === 'wholesale'
 
   return (
     <div className="dashboard">
       <div className="dashboard-container">
-        {/* Header */}
+        {/* Header — sin cambios */}
         <div className="dashboard-header">
           <div className="dashboard-profile">
-            {/* Avatar */}
             <div className="avatar-section">
               <div className="avatar-wrapper">
                 {avatarUrl ? (
                   <img src={avatarUrl} alt={displayName} className="avatar-img" />
                 ) : (
-                  <div className="avatar-placeholder">
-                    {displayName?.charAt(0).toUpperCase()}
-                  </div>
+                  <div className="avatar-placeholder">{displayName?.charAt(0).toUpperCase()}</div>
                 )}
-                {uploadingAvatar && (
-                  <div className="avatar-loading">⏳</div>
-                )}
+                {uploadingAvatar && <div className="avatar-loading">⏳</div>}
               </div>
               <div className="avatar-actions">
-                <button
-                  className="avatar-btn"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploadingAvatar}
-                  title="Cambiar foto"
-                >
+                <button className="avatar-btn" onClick={() => fileInputRef.current?.click()} disabled={uploadingAvatar}>
                   📷 {avatarUrl ? 'Cambiar' : 'Subir foto'}
                 </button>
                 {avatarUrl && (
-                  <button
-                    className="avatar-btn avatar-btn-delete"
-                    onClick={handleAvatarDelete}
-                    disabled={uploadingAvatar}
-                    title="Eliminar foto"
-                  >
-                    🗑️
-                  </button>
+                  <button className="avatar-btn avatar-btn-delete" onClick={handleAvatarDelete} disabled={uploadingAvatar}>🗑️</button>
                 )}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleAvatarUpload}
-                  style={{ display: 'none' }}
-                />
+                <input ref={fileInputRef} type="file" accept="image/*" onChange={handleAvatarUpload} style={{ display: 'none' }} />
               </div>
             </div>
-
-            {/* Name & type */}
             <div>
               <h1 className="serif luxury-gold">{t('dashboard.title')}</h1>
               <p className="dashboard-subtitle">{displayName}</p>
               <span className={`user-type-badge user-type-${userType}`}>
                 {userTypeIcon} {t(`auth.${userType}`)}
               </span>
+              {isPremium && (
+                <span className="premium-badge-dashboard">
+                  ⭐ Premium — hasta {new Date(profile.premium_until).toLocaleDateString()}
+                </span>
+              )}
             </div>
           </div>
-
-          <Link to="/publicar" className="btn btn-primary">
-            + {t('navbar.publish')}
-          </Link>
+          <Link to="/publicar" className="btn btn-primary">+ {t('navbar.publish')}</Link>
         </div>
 
-        {/* Stats */}
+        {/* Stats — sin cambios */}
         <div className="dashboard-stats">
           <div className="stat-card">
             <div className="stat-icon">👁️</div>
@@ -235,7 +251,7 @@ export default function Dashboard({ user }) {
           </div>
         </div>
 
-        {/* Filters */}
+        {/* Filters — sin cambios */}
         <div className="dashboard-filters">
           <button className={`filter-btn ${filter === 'all' ? 'active' : ''}`} onClick={() => setFilter('all')}>{t('dashboard.filters.all')}</button>
           <button className={`filter-btn ${filter === 'active' ? 'active' : ''}`} onClick={() => setFilter('active')}>{t('dashboard.listing_status.active')}</button>
@@ -243,7 +259,7 @@ export default function Dashboard({ user }) {
           <button className={`filter-btn ${filter === 'paused' ? 'active' : ''}`} onClick={() => setFilter('paused')}>{t('dashboard.listing_status.paused')}</button>
         </div>
 
-        {/* Listings */}
+        {/* Listings — sin cambios */}
         <div className="dashboard-listings">
           <h2>{t('dashboard.my_listings')}</h2>
           {loading ? (
@@ -303,6 +319,110 @@ export default function Dashboard({ user }) {
             </div>
           )}
         </div>
+
+        {/* ===== CATÁLOGO PREMIUM — solo shop/wholesale ===== */}
+        {isShopOrWholesale && (
+          <div className="premium-catalog-section">
+            <div className="premium-catalog-header">
+              <div>
+                <h2 className="serif">⭐ Catálogo Premium</h2>
+                <p>Personaliza tu página de catálogo con tu marca x solo 5$ anual</p>
+              </div>
+              {isPremium ? (
+                <span className="premium-active-badge">✓ Activo hasta {new Date(profile.premium_until).toLocaleDateString()}</span>
+              ) : (
+                <span className="premium-inactive-badge">🔒 No activo</span>
+              )}
+            </div>
+
+            {!isPremium ? (
+              <div className="premium-locked">
+                <div className="premium-locked-icon">🔒</div>
+                <h3>Catálogo Premium no activado</h3>
+                <p>Contacta al administrador para activar tu catálogo premium y personalizar tu página de vendedor con tu marca, banner, logo, descripción y más.</p>
+                <a
+                  href="https://api.whatsapp.com/send?phone=+59175109694&text=Hola,%20Soy%20Usuario%20de%20Pirata%20Marketplace%20y%20quiero%20tener%20mi%20catalogo%20premium..%20"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-primary"
+                >
+                  📱 Solicitar activación
+                </a>
+              </div>
+            ) : (
+              <div className="premium-form">
+                <div className="premium-form-preview">
+                  <p className="premium-form-hint">
+                    💡 Estos datos aparecerán en tu página de catálogo en <strong>/vendedor/{user.id}</strong>
+                  </p>
+                </div>
+
+                <div className="premium-form-grid">
+                  <div className="premium-field">
+                    <label>Nombre de tu tienda</label>
+                    <input type="text" className="input" placeholder="Ej: Tienda Maldonado"
+                      value={shopForm.shop_name}
+                      onChange={e => setShopForm(p => ({ ...p, shop_name: e.target.value }))} />
+                  </div>
+
+                  <div className="premium-field">
+                    <label>Color de marca</label>
+                    <div className="color-picker-row">
+                      <input type="color" className="color-input"
+                        value={shopForm.shop_color}
+                        onChange={e => setShopForm(p => ({ ...p, shop_color: e.target.value }))} />
+                      <span className="color-value">{shopForm.shop_color}</span>
+                      <div className="color-preview" style={{ background: shopForm.shop_color }}></div>
+                    </div>
+                  </div>
+
+                  <div className="premium-field full-width">
+                    <label>Descripción / Bio</label>
+                    <textarea className="input textarea" rows={3}
+                      placeholder="Cuéntale a tus clientes sobre tu tienda..."
+                      value={shopForm.shop_bio}
+                      onChange={e => setShopForm(p => ({ ...p, shop_bio: e.target.value }))} />
+                  </div>
+
+                  <div className="premium-field">
+                    <label>Link externo (web, Instagram, etc.)</label>
+                    <input type="url" className="input" placeholder="https://..."
+                      value={shopForm.shop_link}
+                      onChange={e => setShopForm(p => ({ ...p, shop_link: e.target.value }))} />
+                  </div>
+
+                  <div className="premium-field">
+                    <label>Horarios de atención</label>
+                    <input type="text" className="input" placeholder="Ej: Lun-Vie 9am-6pm"
+                      value={shopForm.shop_hours}
+                      onChange={e => setShopForm(p => ({ ...p, shop_hours: e.target.value }))} />
+                  </div>
+
+                  <div className="premium-field">
+                    <label>URL del logo</label>
+                    <input type="url" className="input" placeholder="https://..."
+                      value={shopForm.shop_logo_url}
+                      onChange={e => setShopForm(p => ({ ...p, shop_logo_url: e.target.value }))} />
+                  </div>
+
+                  <div className="premium-field">
+                    <label>URL del banner</label>
+                    <input type="url" className="input" placeholder="https://... (imagen horizontal)"
+                      value={shopForm.shop_banner_url}
+                      onChange={e => setShopForm(p => ({ ...p, shop_banner_url: e.target.value }))} />
+                  </div>
+                </div>
+
+                <div className="premium-form-actions">
+                  {shopSaved && <span className="premium-saved">✓ Guardado correctamente</span>}
+                  <button className="btn btn-primary" onClick={handleShopSave} disabled={savingShop}>
+                    {savingShop ? <><span className="loading"></span> Guardando...</> : '💾 Guardar cambios'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )
