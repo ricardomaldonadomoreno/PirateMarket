@@ -351,3 +351,90 @@
 @media (max-width: 480px) {
   .catalog-grid { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* ============================================
+   HEADER PREMIUM
+   ============================================ */
+.seller-header-premium { margin-bottom: 2rem; }
+
+.seller-banner {
+  width: 100%;
+  height: 200px;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  overflow: hidden;
+  border: 1.5px solid var(--gold);
+  border-bottom: none;
+}
+
+.seller-banner img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+}
+
+.seller-premium-body {
+  padding: 1.75rem;
+  border-radius: var(--radius-lg);
+}
+
+.seller-premium-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.seller-premium-logo {
+  width: 90px; height: 90px; min-width: 90px;
+  border-radius: var(--radius-md);
+  border: 3px solid var(--gold);
+  overflow: hidden;
+  background: var(--dark-border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2.5rem; font-weight: 700;
+  font-family: 'Playfair Display', serif;
+}
+
+.seller-premium-logo img { width: 100%; height: 100%; object-fit: cover; }
+
+.seller-premium-info { flex: 1; min-width: 0; }
+
+.seller-premium-name-row {
+  display: flex; align-items: center; gap: 0.75rem;
+  flex-wrap: wrap; margin-bottom: 0.5rem;
+}
+
+.seller-premium-name-row h1 {
+  font-size: 1.75rem; margin: 0;
+}
+
+.premium-star-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem; font-weight: 700;
+  border: 1.5px solid;
+  white-space: nowrap;
+}
+
+.seller-premium-bio {
+  color: var(--text-muted);
+  font-size: 0.9rem; line-height: 1.6;
+  margin: 0.75rem 0;
+}
+
+.seller-premium-meta {
+  display: flex; gap: 1.25rem; flex-wrap: wrap;
+  font-size: 0.82rem; color: var(--text-muted);
+}
+
+.seller-premium-actions {
+  display: flex; flex-direction: column;
+  gap: 0.5rem; flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .seller-banner { height: 140px; }
+  .seller-premium-top { flex-wrap: wrap; }
+  .seller-premium-actions { flex-direction: row; width: 100%; }
+  .seller-premium-actions .btn { flex: 1; text-align: center; }
+  .seller-premium-name-row h1 { font-size: 1.4rem; }
+}
