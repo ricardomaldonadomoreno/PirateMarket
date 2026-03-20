@@ -1,278 +1,157 @@
-import { useState, useEffect } from 'react'
-import { supabase } from '../../lib/supabase'
-import AdminNavbar from '../../components/AdminNavbar'
-import './AdminUsuarios.css'
+.admin-filters-bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+.admin-filter-btns { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.filter-btn {
+  padding: 0.5rem 1rem;
+  background: var(--dark-border); border: 1.5px solid var(--dark-border);
+  color: var(--text-light); border-radius: var(--radius-full);
+  cursor: pointer; font-size: 0.85rem; font-weight: 600;
+  transition: all 0.2s; font-family: 'Inter', sans-serif;
+}
+.filter-btn:hover { border-color: var(--gold); }
+.filter-btn.active { background: rgba(184,152,95,0.15); border-color: var(--gold); color: var(--gold); }
 
-export default function AdminUsuarios() {
-  const [users, setUsers] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [search, setSearch] = useState('')
-  const [filterType, setFilterType] = useState('all')
-  const [verificationRequests, setVerificationRequests] = useState({})
-  const [docsModal, setDocsModal] = useState(null) // { user, request }
-  const [rejectNote, setRejectNote] = useState('')
-  const [lightboxImg, setLightboxImg] = useState(null)
+.admin-loading { padding: 2rem; text-align: center; color: var(--text-muted); }
+.admin-users-table { display: flex; flex-direction: column; gap: 0; }
 
-  useEffect(() => { loadUsers() }, [])
+.admin-users-header {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 0.75fr 1.25fr;
+  gap: 1rem; padding: 0.75rem 1rem;
+  font-size: 0.75rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.05em;
+  color: var(--text-muted); border-bottom: 1px solid var(--dark-border);
+}
 
-  const loadUsers = async () => {
-    setLoading(true)
-    try {
-      const { data } = await supabase
-        .from('users')
-        .select('id, display_name, email, user_type, is_verified, is_banned, is_premium, premium_until, created_at, avatar_url, whatsapp')
-        .order('created_at', { ascending: false })
-      if (data) {
-        setUsers(data)
-        // cargar solicitudes de verificación para cada usuario
-        const { data: requests } = await supabase
-          .from('verification_requests')
-          .select('*')
-          .in('user_id', data.map(u => u.id))
-          .order('created_at', { ascending: false })
-        if (requests) {
-          const map = {}
-          requests.forEach(r => { if (!map[r.user_id]) map[r.user_id] = r })
-          setVerificationRequests(map)
-        }
-      }
-    } catch (error) { console.error(error) }
-    finally { setLoading(false) }
-  }
+.admin-user-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 0.75fr 1.25fr;
+  gap: 1rem; padding: 0.875rem 1rem;
+  align-items: center; border-bottom: 1px solid var(--dark-border);
+  transition: background 0.2s; font-size: 0.875rem;
+}
+.admin-user-row:hover { background: var(--dark); }
+.admin-user-row.banned { opacity: 0.5; }
 
-  const handleBan = async (userId, isBanned) => {
-    if (!confirm(isBanned ? '¿Desbanear este usuario?' : '¿Banear este usuario?')) return
-    await supabase.from('users').update({ is_banned: !isBanned }).eq('id', userId)
-    loadUsers()
-  }
+.admin-user-info { display: flex; align-items: center; gap: 0.75rem; }
+.admin-user-avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--gold); color: var(--dark);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 0.9rem; flex-shrink: 0; overflow: hidden;
+}
+.admin-user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.admin-user-name { font-weight: 600; color: var(--text-light); }
+.admin-user-email { font-size: 0.75rem; color: var(--text-muted); }
+.admin-user-badges { display: flex; gap: 0.25rem; flex-wrap: wrap; }
+.badge-banned { background: rgba(230,57,70,0.15); color: var(--danger); }
+.admin-user-date { color: var(--text-muted); font-size: 0.8rem; }
+.admin-user-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
 
-  const handleVerify = async (userId, isVerified) => {
-    await supabase.from('users').update({ is_verified: !isVerified }).eq('id', userId)
-    loadUsers()
-  }
+.admin-type-select {
+  background: var(--dark); border: 1px solid var(--dark-border);
+  color: var(--text-light); border-radius: var(--radius-md);
+  padding: 0.3rem 0.5rem; font-size: 0.8rem; cursor: pointer;
+  font-family: 'Inter', sans-serif;
+}
 
-  const handleChangeType = async (userId, newType) => {
-    await supabase.from('users').update({ user_type: newType }).eq('id', userId)
-    loadUsers()
-  }
+/* Premium */
+.admin-premium-cell { display: flex; flex-direction: column; gap: 0.2rem; }
+.premium-expiry { font-size: 0.7rem; color: var(--text-muted); margin-top: 0.2rem; }
 
-  const handleTogglePremium = async (userId, isPremium) => {
-    if (isPremium) {
-      await supabase.from('users').update({ is_premium: false, premium_until: null }).eq('id', userId)
-    } else {
-      const until = new Date()
-      until.setFullYear(until.getFullYear() + 1)
-      await supabase.from('users').update({ is_premium: true, premium_until: until.toISOString() }).eq('id', userId)
-    }
-    loadUsers()
-  }
+.badge-premium {
+  background: rgba(184,152,95,0.2);
+  color: var(--gold);
+  border: 1.5px solid var(--gold);
+  font-size: 0.72rem; padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-full); font-weight: 700;
+  display: inline-flex; align-items: center; gap: 0.2rem;
+}
 
-  const handleApproveVerification = async (requestId, userId) => {
-    await supabase.from('verification_requests').update({ status: 'approved', reviewed_at: new Date().toISOString() }).eq('id', requestId)
-    await supabase.from('users').update({ is_verified: true }).eq('id', userId)
-    setDocsModal(null)
-    loadUsers()
-  }
+.badge-free {
+  background: rgba(255,255,255,0.05);
+  color: var(--text-muted);
+  border: 1px solid var(--dark-border);
+  font-size: 0.72rem; padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-full); font-weight: 600;
+}
 
-  const handleRejectVerification = async (requestId) => {
-    if (!rejectNote.trim()) { alert('Escribe un motivo de rechazo'); return }
-    await supabase.from('verification_requests').update({
-      status: 'rejected', admin_note: rejectNote, reviewed_at: new Date().toISOString()
-    }).eq('id', requestId)
-    setDocsModal(null)
-    setRejectNote('')
-    loadUsers()
-  }
+.btn-premium {
+  background: rgba(184,152,95,0.15);
+  color: var(--gold);
+  border: 1px solid var(--gold);
+}
+.btn-premium:hover { background: var(--gold); color: var(--dark); }
 
-  const filtered = users.filter(u => {
-    const matchSearch = u.display_name?.toLowerCase().includes(search.toLowerCase()) ||
-      u.email?.toLowerCase().includes(search.toLowerCase())
-    const matchType = filterType === 'all' || u.user_type === filterType
-    return matchSearch && matchType
-  })
+@media (max-width: 1024px) {
+  .admin-users-header, .admin-user-row { grid-template-columns: 1fr 1fr; }
+  .admin-users-header span:nth-child(n+3), .admin-user-row > div:nth-child(n+3) { display: none; }
+  .admin-user-actions { display: flex !important; }
+  .admin-user-row > div:last-child { display: flex !important; }
+}
 
-  const typeIcon = (type) => type === 'shop' ? '🏪' : type === 'wholesale' ? '📦' : type === 'admin' ? '🔐' : '👤'
-  const premiumExpiry = (until) => until ? new Date(until).toLocaleDateString() : ''
+/* Verificación en admin */
+.verif-pending-dot { margin-left: 0.4rem; font-size: 0.85rem; cursor: default; }
+.badge-pending { background: rgba(255,183,3,0.15); color: var(--warning); border: 1px solid var(--warning); }
+.badge-rejected { background: rgba(230,57,70,0.15); color: var(--danger); border: 1px solid var(--danger); }
+.btn-docs { background: rgba(99,179,237,0.15); color: #63b3ed; border: 1px solid #63b3ed; }
+.btn-docs:hover { background: #63b3ed; color: white; }
 
-  return (
-    <div className="admin-page">
-      <AdminNavbar />
-      <div className="admin-content">
-        <div className="admin-page-header">
-          <h1 className="serif luxury-gold">Usuarios</h1>
-          <p className="admin-page-sub">{users.length} usuarios registrados</p>
-        </div>
+/* Modal docs */
+.docs-modal-overlay {
+  position: fixed; inset: 0; z-index: 9000;
+  background: rgba(0,0,0,0.7); backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center; padding: 1rem;
+}
+.docs-modal {
+  background: var(--dark-surface); border: 1px solid var(--dark-border);
+  border-radius: var(--radius-lg); width: 100%; max-width: 680px;
+  max-height: 88vh; display: flex; flex-direction: column;
+}
+.docs-modal-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 1.25rem; border-bottom: 1px solid var(--dark-border);
+}
+.docs-modal-header h3 { font-size: 1.1rem; color: var(--gold); margin: 0; }
+.docs-modal-close {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--dark-border); border: none;
+  color: var(--text-light); cursor: pointer; font-size: 0.9rem;
+  display: flex; align-items: center; justify-content: center;
+}
+.docs-modal-close:hover { background: var(--danger); color: white; }
+.docs-modal-body { padding: 1.25rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1.25rem; }
+.docs-section h4 { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.75rem; }
+.docs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 0.5rem; }
+.doc-thumb {
+  width: 100%; aspect-ratio: 1; object-fit: cover;
+  border-radius: var(--radius-md); cursor: pointer;
+  border: 2px solid var(--dark-border); transition: border-color 0.2s;
+}
+.doc-thumb:hover { border-color: var(--gold); }
+.docs-empty { color: var(--text-muted); font-size: 0.85rem; }
+.docs-status-row { display: flex; align-items: center; gap: 0.75rem; font-size: 0.875rem; }
+.docs-actions { display: flex; flex-direction: column; gap: 0.75rem; }
+.docs-reject { display: flex; gap: 0.75rem; }
+.docs-reject .input { flex: 1; }
 
-        <div className="admin-filters-bar">
-          <input type="text" className="input" placeholder="Buscar por nombre o email..."
-            value={search} onChange={e => setSearch(e.target.value)} style={{ maxWidth: '320px' }} />
-          <div className="admin-filter-btns">
-            {['all', 'person', 'shop', 'wholesale', 'admin'].map(type => (
-              <button key={type} className={`filter-btn ${filterType === type ? 'active' : ''}`} onClick={() => setFilterType(type)}>
-                {type === 'all' ? 'Todos' : typeIcon(type) + ' ' + type}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="admin-card">
-          {loading ? <div className="admin-loading">Cargando usuarios...</div> : (
-            <div className="admin-users-table">
-              <div className="admin-users-header">
-                <span>Usuario</span>
-                <span>Tipo</span>
-                <span>Estado</span>
-                <span>Premium</span>
-                <span>Registro</span>
-                <span>Acciones</span>
-              </div>
-              {filtered.map(user => {
-                const vReq = verificationRequests[user.id]
-                const hasPendingDocs = vReq?.status === 'pending'
-                const isPremiumActive = user.is_premium && user.premium_until && new Date(user.premium_until) > new Date()
-
-                return (
-                  <div key={user.id} className={`admin-user-row ${user.is_banned ? 'banned' : ''}`}>
-                    <div className="admin-user-info">
-                      <div className="admin-user-avatar">
-                        {user.avatar_url ? <img src={user.avatar_url} alt={user.display_name} />
-                          : <span>{user.display_name?.charAt(0).toUpperCase()}</span>}
-                      </div>
-                      <div>
-                        <div className="admin-user-name">
-                          {user.display_name}
-                          {hasPendingDocs && <span className="verif-pending-dot" title="Docs pendientes de revisión">📄</span>}
-                        </div>
-                        <div className="admin-user-email">{user.email}</div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <select className="admin-type-select" value={user.user_type} onChange={e => handleChangeType(user.id, e.target.value)}>
-                        <option value="person">👤 Persona</option>
-                        <option value="shop">🏪 Tienda</option>
-                        <option value="wholesale">📦 Mayorista</option>
-                        <option value="admin">🔐 Admin</option>
-                      </select>
-                    </div>
-
-                    <div className="admin-user-badges">
-                      {user.is_verified && <span className="admin-badge badge-verified">✓ Verificado</span>}
-                      {user.is_banned && <span className="admin-badge badge-banned">🚫 Baneado</span>}
-                      {vReq?.status === 'pending' && <span className="admin-badge badge-pending">⏳ Docs</span>}
-                      {vReq?.status === 'rejected' && <span className="admin-badge badge-rejected">✗ Rechazado</span>}
-                    </div>
-
-                    <div className="admin-premium-cell">
-                      {isPremiumActive ? (
-                        <div>
-                          <span className="admin-badge badge-premium">⭐ Premium</span>
-                          <div className="premium-expiry">hasta {premiumExpiry(user.premium_until)}</div>
-                        </div>
-                      ) : <span className="admin-badge badge-free">Básico</span>}
-                    </div>
-
-                    <div className="admin-user-date">{new Date(user.created_at).toLocaleDateString()}</div>
-
-                    <div className="admin-user-actions">
-                      <button className={`btn-small ${user.is_verified ? 'btn-danger' : 'btn-success'}`}
-                        onClick={() => handleVerify(user.id, user.is_verified)}
-                        title={user.is_verified ? 'Quitar verificación' : 'Verificar'}>
-                        {user.is_verified ? '✗' : '✓'}
-                      </button>
-                      {vReq && (
-                        <button className="btn-small btn-docs"
-                          onClick={() => { setDocsModal({ user, request: vReq }); setRejectNote('') }}
-                          title="Ver documentos">
-                          📄
-                        </button>
-                      )}
-                      <button className={`btn-small ${isPremiumActive ? 'btn-danger' : 'btn-premium'}`}
-                        onClick={() => handleTogglePremium(user.id, isPremiumActive)}
-                        title={isPremiumActive ? 'Desactivar premium' : 'Activar premium 1 año'}>
-                        ⭐
-                      </button>
-                      <button className={`btn-small ${user.is_banned ? 'btn-success' : 'btn-danger'}`}
-                        onClick={() => handleBan(user.id, user.is_banned)}>
-                        {user.is_banned ? 'Desbanear' : 'Banear'}
-                      </button>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Modal de documentos */}
-      {docsModal && (
-        <div className="docs-modal-overlay" onClick={() => setDocsModal(null)}>
-          <div className="docs-modal" onClick={e => e.stopPropagation()}>
-            <div className="docs-modal-header">
-              <h3>📄 Documentos de {docsModal.user.display_name}</h3>
-              <button className="docs-modal-close" onClick={() => setDocsModal(null)}>✕</button>
-            </div>
-
-            <div className="docs-modal-body">
-              {/* Docs de identidad — solo visibles aquí */}
-              <div className="docs-section">
-                <h4>🪪 Identidad (privado)</h4>
-                <div className="docs-grid">
-                  {(docsModal.request.identity_docs || []).map((url, i) => (
-                    <img key={i} src={url} alt={`identity ${i}`} className="doc-thumb"
-                      onClick={() => setLightboxImg(url)} />
-                  ))}
-                  {(!docsModal.request.identity_docs?.length) && <p className="docs-empty">Sin fotos</p>}
-                </div>
-              </div>
-
-              {/* Docs del negocio */}
-              {docsModal.request.business_docs?.length > 0 && (
-                <div className="docs-section">
-                  <h4>🏪 Negocio / Certificaciones</h4>
-                  <div className="docs-grid">
-                    {docsModal.request.business_docs.map((url, i) => (
-                      <img key={i} src={url} alt={`business ${i}`} className="doc-thumb"
-                        onClick={() => setLightboxImg(url)} />
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div className="docs-status-row">
-                <span>Estado: </span>
-                <span className={`admin-badge ${docsModal.request.status === 'pending' ? 'badge-pending' : docsModal.request.status === 'approved' ? 'badge-verified' : 'badge-rejected'}`}>
-                  {docsModal.request.status}
-                </span>
-              </div>
-
-              {docsModal.request.status === 'pending' && (
-                <div className="docs-actions">
-                  <button className="btn btn-primary" onClick={() => handleApproveVerification(docsModal.request.id, docsModal.user.id)}>
-                    ✓ Aprobar verificación
-                  </button>
-                  <div className="docs-reject">
-                    <input type="text" className="input" placeholder="Motivo del rechazo..."
-                      value={rejectNote} onChange={e => setRejectNote(e.target.value)} />
-                    <button className="btn btn-secondary" onClick={() => handleRejectVerification(docsModal.request.id)}>
-                      ✗ Rechazar
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Lightbox de doc */}
-      {lightboxImg && (
-        <div className="docs-lightbox" onClick={() => setLightboxImg(null)}>
-          <img src={lightboxImg} alt="doc" />
-          <button onClick={() => setLightboxImg(null)}>✕</button>
-        </div>
-      )}
-    </div>
-  )
+/* Lightbox doc */
+.docs-lightbox {
+  position: fixed; inset: 0; z-index: 10000;
+  background: rgba(0,0,0,0.95); display: flex;
+  align-items: center; justify-content: center;
+  cursor: pointer;
+}
+.docs-lightbox img { max-width: 90vw; max-height: 90vh; object-fit: contain; border-radius: var(--radius-md); }
+.docs-lightbox button {
+  position: fixed; top: 1rem; right: 1rem;
+  width: 40px; height: 40px; border-radius: 50%;
+  background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+  color: white; cursor: pointer; font-size: 1rem;
+  display: flex; align-items: center; justify-content: center;
 }
