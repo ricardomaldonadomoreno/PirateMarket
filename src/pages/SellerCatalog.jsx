@@ -1,4 +1,3 @@
-//-- sellercatalog--
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -39,6 +38,15 @@ export default function SellerCatalog() {
         .eq('id', userId)
         .single()
       if (sellerData) setSeller(sellerData)
+
+      // Cargar fotos del negocio si está verificado
+      const { data: verifData } = await supabase
+        .from('verification_requests')
+        .select('business_docs')
+        .eq('user_id', userId)
+        .eq('status', 'approved')
+        .single()
+      if (sellerData && verifData) sellerData.business_docs = verifData.business_docs || []
 
       const { data: listingsData } = await supabase
         .from('listings')
@@ -177,10 +185,23 @@ export default function SellerCatalog() {
                     {!seller.is_verified && <span className="seller-cert-pending">Pendiente de verificación</span>}
                   </div>
                   {seller.is_verified ? (
-                    <div className="seller-cert-grid">
-                      <div className="seller-cert-item"><span>✅</span><span>Identidad verificada</span></div>
-                      <div className="seller-cert-item"><span>✅</span><span>Negocio registrado</span></div>
-                    </div>
+                    <>
+                      <div className="seller-cert-grid">
+                        <div className="seller-cert-item"><span>✅</span><span>Identidad verificada</span></div>
+                        <div className="seller-cert-item"><span>✅</span><span>Negocio registrado</span></div>
+                      </div>
+                      {seller.business_docs?.length > 0 && (
+                        <div className="seller-biz-photos">
+                          <p className="seller-biz-title">📸 Fotos del negocio</p>
+                          <div className="seller-biz-grid">
+                            {seller.business_docs.map((url, i) => (
+                              <img key={i} src={url} alt={`negocio ${i}`} className="seller-biz-thumb"
+                                onClick={() => openLightbox(seller.business_docs, i)} />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </>
                   ) : (
                     <p className="seller-cert-empty">Este vendedor aún no ha completado el proceso de verificación.</p>
                   )}
@@ -228,10 +249,23 @@ export default function SellerCatalog() {
                   {!seller.is_verified && <span className="seller-cert-pending">Pendiente de verificación</span>}
                 </div>
                 {seller.is_verified ? (
-                  <div className="seller-cert-grid">
-                    <div className="seller-cert-item"><span>✅</span><span>Identidad verificada</span></div>
-                    <div className="seller-cert-item"><span>✅</span><span>Negocio registrado</span></div>
-                  </div>
+                  <>
+                    <div className="seller-cert-grid">
+                      <div className="seller-cert-item"><span>✅</span><span>Identidad verificada</span></div>
+                      <div className="seller-cert-item"><span>✅</span><span>Negocio registrado</span></div>
+                    </div>
+                    {seller.business_docs?.length > 0 && (
+                      <div className="seller-biz-photos">
+                        <p className="seller-biz-title">📸 Fotos del negocio</p>
+                        <div className="seller-biz-grid">
+                          {seller.business_docs.map((url, i) => (
+                            <img key={i} src={url} alt={`negocio ${i}`} className="seller-biz-thumb"
+                              onClick={() => openLightbox(seller.business_docs, i)} />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <p className="seller-cert-empty">Este vendedor aún no ha completado el proceso de verificación.</p>
                 )}
