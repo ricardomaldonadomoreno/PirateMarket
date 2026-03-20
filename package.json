@@ -21,7 +21,9 @@
     "i18next-http-backend": "^2.5.0",
     "date-fns": "^3.3.1",
     "mapbox-gl": "^3.1.2",
-    "react-dropzone": "^14.2.3"
+    "react-dropzone": "^14.2.3",
+    "leaflet": "^1.9.4",
+    "react-leaflet": "^4.2.1"
   },
   "devDependencies": {
     "@types/react": "^18.2.55",
