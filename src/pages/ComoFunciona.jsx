@@ -1,41 +1,11 @@
 import { Link } from 'react-router-dom'
 import './ComoFunciona.css'
 
-const LANGUAGES = [
-  { code: 'en', label: '🇺🇸 English' },
-  { code: 'pt', label: '🇧🇷 Português' },
-  { code: 'ar', label: '🇸🇦 العربية' },
-  { code: 'zh-CN', label: '🇨🇳 中文' },
-  { code: 'fr', label: '🇫🇷 Français' },
-  { code: 'de', label: '🇩🇪 Deutsch' },
-]
-
 export default function ComoFunciona() {
-
-  const translatePage = (langCode) => {
-    const url = `https://translate.google.com/translate?sl=es&tl=${langCode}&u=${encodeURIComponent(window.location.href)}`
-    window.open(url, '_blank')
-  }
 
   return (
     <div className="como-funciona">
       <div className="cf-container">
-
-        {/* Traducir */}
-        <div className="cf-translate">
-          <span>🌍 Traducir esta página:</span>
-          <div className="cf-translate-btns">
-            {LANGUAGES.map(lang => (
-              <button
-                key={lang.code}
-                className="cf-translate-btn"
-                onClick={() => translatePage(lang.code)}
-              >
-                {lang.label}
-              </button>
-            ))}
-          </div>
-        </div>
 
         {/* Hero */}
         <div className="cf-hero">
