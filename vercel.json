@@ -5,13 +5,6 @@
   "rewrites": [
     {
       "source": "/ficha/:slug",
-      "has": [
-        {
-          "type": "header",
-          "key": "user-agent",
-          "value": "(facebook|whatsapp|twitter|telegram|linkedin|discord|bot|crawler|spider)"
-        }
-      ],
       "destination": "/api/og?slug=:slug"
     },
     {
