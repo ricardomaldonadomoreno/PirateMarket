@@ -2,13 +2,6 @@
   "routes": [
     {
       "src": "/ficha/(.*)",
-      "has": [
-        {
-          "type": "header",
-          "key": "user-agent",
-          "value": "(facebookexternalhit|facebot|twitterbot|whatsapp|telegrambot|linkedinbot|discordbot|slackbot|googlebot|bingbot|bot|crawler|spider)"
-        }
-      ],
       "dest": "/api/og?slug=$1"
     },
     {
