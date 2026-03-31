@@ -9,16 +9,10 @@ export default async function handler(req, res) {
 
   const userAgent = req.headers['user-agent'] || ''
 
-  // Regex más robusto para detectar crawlers
   const isCrawler =
-    /bot|crawler|spider|crawling|facebook|whatsapp|telegram|twitter|linkedin|discord|slack|google|bing|preview|meta|opengraph|iframely|embedly|pinterest|vkshare|quora|reddit/i.test(
+    /bot|crawler|spider|facebook|whatsapp|telegram|twitter|linkedin|discord|slack|google|bing|preview|meta|opengraph/i.test(
       userAgent
     )
-
-  // Usuarios normales → dejar que React maneje la ruta
-  if (!isCrawler) {
-    return res.status(404).end()
-  }
 
   try {
     const supabaseUrl =
@@ -29,7 +23,6 @@ export default async function handler(req, res) {
 
     const supabase = createClient(supabaseUrl, supabaseKey)
 
-    // 🔥 Buscar listing (más robusto)
     const { data: listing, error } = await supabase
       .from('listings')
       .select('title, description, price, photos, slug, display_location')
@@ -37,23 +30,19 @@ export default async function handler(req, res) {
       .eq('status', 'active')
       .maybeSingle()
 
-    if (error) {
-      console.error("Supabase error:", error)
-    }
-
     const siteUrl = 'https://pirate-market.vercel.app'
     const pageUrl = `${siteUrl}/ficha/${slug}`
 
-    // 🔥 Asegurar imagen pública absoluta
+    // Usuarios normales → redirigir a React
+    if (!isCrawler) {
+      res.setHeader('Location', pageUrl)
+      return res.status(302).end()
+    }
+
     let imageUrl = `${siteUrl}/logo.png`
 
     if (listing?.photos?.length > 0) {
       imageUrl = listing.photos[0]
-
-      // Si la imagen no es absoluta, convertirla
-      if (!imageUrl.startsWith('http')) {
-        imageUrl = `${siteUrl}${imageUrl}`
-      }
     }
 
     const price = listing
@@ -83,15 +72,11 @@ export default async function handler(req, res) {
 
 <title>${e(title)}</title>
 
-<meta name="description" content="${e(description)}" />
-
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content="Pirata Market" />
 <meta property="og:title" content="${e(title)}" />
 <meta property="og:description" content="${e(description)}" />
 <meta property="og:image" content="${imageUrl}" />
-<meta property="og:image:secure_url" content="${imageUrl}" />
-<meta property="og:image:type" content="image/jpeg" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
 <meta property="og:url" content="${pageUrl}" />
@@ -102,14 +87,7 @@ export default async function handler(req, res) {
 <meta name="twitter:image" content="${imageUrl}" />
 
 </head>
-
-<body>
-
-<script>
-window.location.href = "${pageUrl}";
-</script>
-
-</body>
+<body></body>
 </html>`
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8')
@@ -119,6 +97,6 @@ window.location.href = "${pageUrl}";
 
   } catch (err) {
     console.error('OG error:', err)
-    return res.status(404).end()
+    return res.status(500).end()
   }
 }
