@@ -1,4 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
+import fs from 'fs'
+import path from 'path'
 
 export default async function handler(req, res) {
   const { slug } = req.query
@@ -14,6 +16,19 @@ export default async function handler(req, res) {
       userAgent
     )
 
+  // 👤 Usuario normal → servir React index.html
+  if (!isCrawler) {
+    try {
+      const filePath = path.join(process.cwd(), 'dist', 'index.html')
+      const html = fs.readFileSync(filePath, 'utf8')
+
+      res.setHeader('Content-Type', 'text/html')
+      return res.status(200).send(html)
+    } catch (err) {
+      return res.status(404).end()
+    }
+  }
+
   try {
     const supabaseUrl =
       process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
@@ -23,7 +38,7 @@ export default async function handler(req, res) {
 
     const supabase = createClient(supabaseUrl, supabaseKey)
 
-    const { data: listing, error } = await supabase
+    const { data: listing } = await supabase
       .from('listings')
       .select('title, description, price, photos, slug, display_location')
       .eq('slug', slug)
@@ -32,12 +47,6 @@ export default async function handler(req, res) {
 
     const siteUrl = 'https://pirate-market.vercel.app'
     const pageUrl = `${siteUrl}/ficha/${slug}`
-
-    // Usuarios normales → redirigir a React
-    if (!isCrawler) {
-      res.setHeader('Location', pageUrl)
-      return res.status(302).end()
-    }
 
     let imageUrl = `${siteUrl}/logo.png`
 
@@ -57,46 +66,33 @@ export default async function handler(req, res) {
       ? listing.description.substring(0, 150).replace(/\n/g, ' ') + '...'
       : 'Pirata Market - Comercio sin intermediarios'
 
-    const e = (str) =>
-      String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-
-    const html = `<!DOCTYPE html>
-<html lang="es">
+    const html = `
+<!DOCTYPE html>
+<html>
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="utf-8"/>
 
-<title>${e(title)}</title>
-
-<meta property="og:type" content="website" />
-<meta property="og:site_name" content="Pirata Market" />
-<meta property="og:title" content="${e(title)}" />
-<meta property="og:description" content="${e(description)}" />
+<meta property="og:title" content="${title}" />
+<meta property="og:description" content="${description}" />
 <meta property="og:image" content="${imageUrl}" />
-<meta property="og:image:width" content="1200" />
-<meta property="og:image:height" content="630" />
 <meta property="og:url" content="${pageUrl}" />
+<meta property="og:type" content="website" />
 
 <meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="${e(title)}" />
-<meta name="twitter:description" content="${e(description)}" />
+<meta name="twitter:title" content="${title}" />
+<meta name="twitter:description" content="${description}" />
 <meta name="twitter:image" content="${imageUrl}" />
 
 </head>
 <body></body>
-</html>`
+</html>
+`
 
-    res.setHeader('Content-Type', 'text/html; charset=utf-8')
-    res.setHeader('Cache-Control', 'public, max-age=3600')
-
+    res.setHeader('Content-Type', 'text/html')
     return res.status(200).send(html)
 
   } catch (err) {
-    console.error('OG error:', err)
+    console.error(err)
     return res.status(500).end()
   }
 }
