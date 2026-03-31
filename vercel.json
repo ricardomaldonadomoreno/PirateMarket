@@ -4,15 +4,15 @@
   "framework": "vite",
   "routes": [
     {
-      "src": "/api/og",
+      "src": "^/api/og$",
       "dest": "/api/og.js"
     },
     {
-      "src": "/ficha/(.*)",
-      "dest": "/api/og?slug=$1"
+      "src": "^/ficha/(.*)",
+      "dest": "/index.html"
     },
     {
-      "src": "/(.*)",
+      "src": "^(.*)$",
       "dest": "/index.html"
     }
   ]
