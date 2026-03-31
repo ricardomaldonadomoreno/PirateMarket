@@ -1,19 +1,15 @@
 {
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
-  "framework": "vite",
-  "rewrites": [
+  "routes": [
     {
-      "source": "/ficha/:slug",
-      "destination": "/api/og?slug=:slug"
+      "src": "/ficha/(.*)",
+      "dest": "/api/og?slug=$1"
     },
     {
-      "source": "/api/og",
-      "destination": "/api/og.js"
+      "handle": "filesystem"
     },
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ]
 }
