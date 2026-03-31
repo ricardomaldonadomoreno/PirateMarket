@@ -13,7 +13,7 @@ export default async function handler(req, res) {
 
   // Usuarios normales: redirigir directamente a React
   if (!isCrawler) {
-    res.setHeader('Location', `/ficha/${slug}`)
+    res.setHeader('Location', `/`)
     return res.status(302).end()
   }
 
