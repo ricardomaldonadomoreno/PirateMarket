@@ -1,19 +1,22 @@
 {
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
-  "framework": "vite",
-  "rewrites": [
+  "routes": [
     {
-      "source": "/ficha/:slug",
-      "destination": "/api/og?slug=:slug"
+      "src": "/ficha/(.*)",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(facebookexternalhit|facebot|twitterbot|whatsapp|telegrambot|linkedinbot|discordbot|slackbot|googlebot|bingbot|bot|crawler|spider)"
+        }
+      ],
+      "dest": "/api/og?slug=$1"
     },
     {
-      "source": "/api/og",
-      "destination": "/api/og.js"
+      "handle": "filesystem"
     },
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ]
 }
