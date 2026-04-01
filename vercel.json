@@ -1,15 +1,8 @@
 {
-  "routes": [
+  "rewrites": [
     {
-      "src": "/ficha/(.*)",
-      "dest": "/api/og?slug=$1"
-    },
-    {
-      "handle": "filesystem"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/ficha/:slug",
+      "destination": "/api/og?slug=:slug"
     }
   ]
 }
