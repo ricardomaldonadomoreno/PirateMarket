@@ -56,7 +56,7 @@ export default async function handler(req, res) {
       console.error('Supabase error:', error)
     }
 
-    const siteUrl = 'https://pirata-market.vercel.app'
+    const siteUrl = 'https://pirate-market.vercel.app'
     const pageUrl = `${siteUrl}/ficha/${slug}`
 
     // Valores por defecto si no se encuentra el listing
