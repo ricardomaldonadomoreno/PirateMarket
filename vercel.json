@@ -2,7 +2,11 @@
   "rewrites": [
     {
       "source": "/ficha/:slug",
-      "destination": "api/og/[slug].js"
+      "destination": "/api/og/[slug].js"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
