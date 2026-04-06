@@ -1,5 +1,4 @@
 import { createClient } from '@supabase/supabase-js'
-import sharp from 'sharp'
 
 export default async function handler(req, res) {
   const { slug, img } = req.query
@@ -16,7 +15,7 @@ export default async function handler(req, res) {
     .eq('slug', slug)
     .single()
 
-  const photo = listing?.photos?.[0] || `${siteUrl}/logo.png`
+  const photo = listing?.photos?.[0] || null
   const title = listing ? `${listing.title} - BOB ${listing.price}` : 'Pirata Market'
   const description = listing?.description || ''
   const pageUrl = `${siteUrl}/ficha/${slug}`
@@ -26,9 +25,28 @@ export default async function handler(req, res) {
     const titleSafe = title.slice(0, 45).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     const descSafe = description.slice(0, 80).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
+    // Descargar foto y convertir a base64
+    let photoBase64 = ''
+    let photoMime = 'image/jpeg'
+    if (photo) {
+      try {
+        const response = await fetch(photo)
+        const buffer = await response.arrayBuffer()
+        const contentType = response.headers.get('content-type') || 'image/jpeg'
+        photoMime = contentType.split(';')[0]
+        photoBase64 = Buffer.from(buffer).toString('base64')
+      } catch (e) {
+        photoBase64 = ''
+      }
+    }
+
+    const imageTag = photoBase64
+      ? `<image href="data:${photoMime};base64,${photoBase64}" x="0" y="0" width="1200" height="630" preserveAspectRatio="xMidYMid slice" opacity="0.55"/>`
+      : `<rect width="1200" height="630" fill="#222222"/>`
+
     const svg = `<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   <rect width="1200" height="630" fill="#111111"/>
-  <image href="${photo}" x="0" y="0" width="1200" height="630" preserveAspectRatio="xMidYMid slice" opacity="0.55"/>
+  ${imageTag}
   <defs>
     <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#000000" stop-opacity="0"/>
@@ -43,11 +61,9 @@ export default async function handler(req, res) {
   <text x="1160" y="50" font-family="Arial, sans-serif" font-size="22" fill="#ffffff" opacity="0.8" text-anchor="end">pirate-market.vercel.app</text>
 </svg>`
 
-    const png = await sharp(Buffer.from(svg)).png().toBuffer()
-
-    res.setHeader('Content-Type', 'image/png')
+    res.setHeader('Content-Type', 'image/svg+xml')
     res.setHeader('Cache-Control', 's-maxage=3600')
-    return res.status(200).send(png)
+    return res.status(200).send(svg)
   }
 
   const html = `<!DOCTYPE html>
