@@ -461,7 +461,7 @@ export default function CreateListing() {
                 {showSaleZone && (
                   <div className="sale-zone-controls">
                     <label>Radio de entrega: <strong>{saleZoneRadius} km</strong></label>
-                    <input type="range" min="0.5" max="50" step="0.5"
+                    <input type="range" min="0.2" max="50" step="0.1"
                       value={saleZoneRadius}
                       onChange={e => handleRadiusChange(parseFloat(e.target.value))}
                       className="zone-slider" />
