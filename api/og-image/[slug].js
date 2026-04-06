@@ -1,11 +1,7 @@
-import { ImageResponse } from '@vercel/og'
 import { createClient } from '@supabase/supabase-js'
 
-export const config = { runtime: 'edge' }
-
-export default async function handler(req) {
-  const { searchParams } = new URL(req.url)
-  const slug = req.url.split('/api/og-image/')[1]?.split('?')[0]
+export default async function handler(req, res) {
+  const { slug } = req.query
 
   const supabase = createClient(
     process.env.SUPABASE_URL,
@@ -20,112 +16,44 @@ export default async function handler(req) {
 
   const siteUrl = 'https://pirate-market.vercel.app'
   const photo = listing?.photos?.[0] || `${siteUrl}/logo.png`
-  const title = listing ? `${listing.title} - BOB ${listing.price}` : 'Pirata Market'
+  const title = listing
+    ? `${listing.title} - BOB ${listing.price}`
+    : 'Pirata Market'
   const description = listing?.description || ''
 
-  return new ImageResponse(
-    (
-      <div
-        style={{
-          width: '1200px',
-          height: '630px',
-          display: 'flex',
-          flexDirection: 'column',
-          position: 'relative',
-          fontFamily: 'sans-serif',
-          overflow: 'hidden',
-          backgroundColor: '#111',
-        }}
-      >
-        {/* Foto de fondo */}
-        <img
-          src={photo}
-          style={{
-            position: 'absolute',
-            top: 0, left: 0,
-            width: '100%', height: '100%',
-            objectFit: 'cover',
-            opacity: 0.6,
-          }}
-        />
+  // Generar SVG como imagen
+  const svg = `
+<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <!-- Fondo negro -->
+  <rect width="1200" height="630" fill="#111111"/>
+  
+  <!-- Foto del anuncio como fondo -->
+  <image href="${photo}" x="0" y="0" width="1200" height="630" preserveAspectRatio="xMidYMid slice" opacity="0.55"/>
+  
+  <!-- Degradado inferior -->
+  <defs>
+    <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.92"/>
+    </linearGradient>
+  </defs>
+  <rect y="200" width="1200" height="430" fill="url(#grad)"/>
 
-        {/* Overlay degradado */}
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 0, left: 0, right: 0,
-            height: '60%',
-            background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 100%)',
-          }}
-        />
+  <!-- Badge naranja -->
+  <rect x="40" y="390" width="220" height="55" rx="8" fill="#F5A623"/>
+  <text x="150" y="425" font-family="Arial, sans-serif" font-size="26" font-weight="bold" fill="#000000" text-anchor="middle">Ver anuncio →</text>
 
-        {/* Badge "Read More" estilo imagen 2 */}
-        <div
-          style={{
-            position: 'absolute',
-            bottom: '160px',
-            left: '40px',
-            background: '#F5A623',
-            color: '#000',
-            fontWeight: 'bold',
-            fontSize: '28px',
-            padding: '10px 28px',
-            borderRadius: '8px',
-          }}
-        >
-          Ver anuncio →
-        </div>
+  <!-- Título -->
+  <text x="40" y="510" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="#ffffff">${title.slice(0, 40)}</text>
 
-        {/* Título */}
-        <div
-          style={{
-            position: 'absolute',
-            bottom: '80px',
-            left: '40px',
-            right: '40px',
-            color: 'white',
-            fontSize: '52px',
-            fontWeight: 'bold',
-            lineHeight: 1.2,
-            textShadow: '0 2px 8px rgba(0,0,0,0.8)',
-          }}
-        >
-          {title}
-        </div>
+  <!-- Descripción -->
+  <text x="40" y="570" font-family="Arial, sans-serif" font-size="26" fill="#cccccc">${description.slice(0, 70)}</text>
 
-        {/* Descripción */}
-        <div
-          style={{
-            position: 'absolute',
-            bottom: '28px',
-            left: '40px',
-            right: '40px',
-            color: '#ccc',
-            fontSize: '28px',
-            overflow: 'hidden',
-            whiteSpace: 'nowrap',
-            textOverflow: 'ellipsis',
-          }}
-        >
-          {description.slice(0, 80)}
-        </div>
+  <!-- Branding -->
+  <text x="1160" y="50" font-family="Arial, sans-serif" font-size="22" fill="#ffffff" opacity="0.8" text-anchor="end">🏴‍☠️ pirate-market.vercel.app</text>
+</svg>`
 
-        {/* Logo/branding */}
-        <div
-          style={{
-            position: 'absolute',
-            top: '28px',
-            right: '40px',
-            color: 'white',
-            fontSize: '24px',
-            fontWeight: 'bold',
-            opacity: 0.8,
-          }}
-        >
-          🏴‍☠️ pirate-market.vercel.app
-        </div>
-      </div>
-    ),
-    { width: 1200, height: 630 }
-  )
+  res.setHeader('Content-Type', 'image/svg+xml')
+  res.setHeader('Cache-Control', 's-maxage=3600')
+  res.status(200).send(svg)
 }
