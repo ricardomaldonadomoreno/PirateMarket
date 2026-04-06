@@ -466,7 +466,7 @@ export default function CreateListing() {
                       onChange={e => handleRadiusChange(parseFloat(e.target.value))}
                       className="zone-slider" />
                     <div className="zone-slider-labels">
-                      <span>500m</span><span>25km</span><span>50km</span>
+                      <span>200m</span><span>25km</span><span>50km</span>
                     </div>
                   </div>
                 )}
