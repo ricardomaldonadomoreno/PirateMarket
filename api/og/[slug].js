@@ -22,7 +22,7 @@ export default async function handler(req, res) {
   const pageUrl = `${siteUrl}/ficha/${slug}`
   const imageUrl = `${siteUrl}/api/og/${slug}?img=1`
 
-  // Si viene ?img=1 devuelve la imagen PNG con diseño
+  // Si viene ?img=1 devuelve la imagen PNG diseñada
   if (img === '1') {
     return new ImageResponse(
       (
@@ -76,8 +76,12 @@ export default async function handler(req, res) {
     )
   }
 
-  // Devuelve HTML con metatags para bots
-  const html = `<!DOCTYPE html>
+  const userAgent = req.headers['user-agent'] || ''
+  const isBot = /facebookexternalhit|Twitterbot|WhatsApp|LinkedInBot|Slackbot|TelegramBot|Discordbot|bot|crawler|spider/i.test(userAgent)
+
+  // Si es bot devuelve HTML con metatags
+  if (isBot) {
+    const html = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8" />
@@ -97,8 +101,16 @@ export default async function handler(req, res) {
 </head>
 <body></body>
 </html>`
+    res.setHeader('Content-Type', 'text/html')
+    res.setHeader('Cache-Control', 's-maxage=3600')
+    return res.status(200).send(html)
+  }
 
+  // Si es usuario normal devuelve el index.html de React
+  const fs = await import('fs')
+  const path = await import('path')
+  const indexPath = path.join(process.cwd(), 'index.html')
+  const indexHtml = fs.readFileSync(indexPath, 'utf8')
   res.setHeader('Content-Type', 'text/html')
-  res.setHeader('Cache-Control', 's-maxage=3600')
-  res.status(200).send(html)
+  return res.status(200).send(indexHtml)
 }
