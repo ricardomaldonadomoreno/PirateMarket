@@ -179,7 +179,7 @@ export default function Home() {
               <label style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
                 Radio: <strong>{zoneRadius} km</strong>
               </label>
-              <input type="range" min="0.5" max="50" step="0.5"
+              <input type="range" min="0.2" max="50" step="0.5"
                 value={zoneRadius} className="zone-slider"
                 onChange={e => {
                   const r = parseFloat(e.target.value)
