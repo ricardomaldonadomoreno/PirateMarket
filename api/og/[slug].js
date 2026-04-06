@@ -80,7 +80,7 @@ export default async function handler(req, res) {
   const isBot = /facebookexternalhit|Twitterbot|WhatsApp|LinkedInBot|Slackbot|TelegramBot|Discordbot|bot|crawler|spider/i.test(userAgent)
 
   if (!isBot) {
-    return res.redirect(302, pageUrl)
+    return res.redirect(302, `${siteUrl}/?ficha=${slug}`)
   }
 
   const imageUrl = `${siteUrl}/api/og/${slug}?img=1`
