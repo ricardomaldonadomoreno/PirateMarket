@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/api/og/:slug",
+      "destination": "/api/og/[slug].js"
+    },
+    {
       "source": "/ficha/:slug",
       "destination": "/api/og/[slug].js",
       "has": [
