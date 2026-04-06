@@ -25,7 +25,7 @@ export default async function handler(req, res) {
     .single()
 
   const pageUrl = `${siteUrl}/ficha/${slug}`
-  const image = listing?.photos?.[0] || `${siteUrl}/logo.png`
+  const image = `${siteUrl}/api/og-image/${slug}`
   const title = listing
     ? `${listing.title} - BOB ${listing.price}`
     : 'Pirata Market'
