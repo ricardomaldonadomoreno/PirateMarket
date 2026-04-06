@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import sharp from 'sharp'
 
 export default async function handler(req, res) {
   const { slug, img } = req.query
@@ -21,7 +22,6 @@ export default async function handler(req, res) {
   const pageUrl = `${siteUrl}/ficha/${slug}`
   const imageUrl = `${siteUrl}/api/og/${slug}?img=1`
 
-  // Si viene ?img=1 devuelve SVG como imagen
   if (img === '1') {
     const titleSafe = title.slice(0, 45).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     const descSafe = description.slice(0, 80).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -43,12 +43,13 @@ export default async function handler(req, res) {
   <text x="1160" y="50" font-family="Arial, sans-serif" font-size="22" fill="#ffffff" opacity="0.8" text-anchor="end">pirate-market.vercel.app</text>
 </svg>`
 
-    res.setHeader('Content-Type', 'image/svg+xml')
+    const png = await sharp(Buffer.from(svg)).png().toBuffer()
+
+    res.setHeader('Content-Type', 'image/png')
     res.setHeader('Cache-Control', 's-maxage=3600')
-    return res.status(200).send(svg)
+    return res.status(200).send(png)
   }
 
-  // Devuelve HTML con metatags para bots
   const html = `<!DOCTYPE html>
 <html>
 <head>
