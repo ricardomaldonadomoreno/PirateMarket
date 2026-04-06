@@ -1,4 +1,3 @@
-import { ImageResponse } from '@vercel/og'
 import { createClient } from '@supabase/supabase-js'
 
 export default async function handler(req, res) {
@@ -22,66 +21,35 @@ export default async function handler(req, res) {
   const pageUrl = `${siteUrl}/ficha/${slug}`
   const imageUrl = `${siteUrl}/api/og/${slug}?img=1`
 
-  // Si viene ?img=1 devuelve la imagen PNG diseñada
+  // Si viene ?img=1 devuelve SVG como imagen
   if (img === '1') {
-    return new ImageResponse(
-      (
-        <div style={{
-          width: '1200px', height: '630px',
-          display: 'flex', position: 'relative',
-          backgroundColor: '#111', overflow: 'hidden',
-        }}>
-          <img src={photo} style={{
-            position: 'absolute', top: 0, left: 0,
-            width: '100%', height: '100%',
-            objectFit: 'cover', opacity: 0.6,
-          }} />
-          <div style={{
-            position: 'absolute', bottom: 0, left: 0, right: 0,
-            height: '65%', display: 'flex',
-            background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, transparent 100%)',
-          }} />
-          <div style={{
-            position: 'absolute', bottom: '160px', left: '40px',
-            background: '#F5A623', color: '#000',
-            fontWeight: 'bold', fontSize: '28px',
-            padding: '10px 28px', borderRadius: '8px', display: 'flex',
-          }}>
-            Ver anuncio →
-          </div>
-          <div style={{
-            position: 'absolute', bottom: '75px',
-            left: '40px', right: '40px',
-            color: 'white', fontSize: '50px', fontWeight: 'bold',
-            display: 'flex',
-          }}>
-            {title.slice(0, 45)}
-          </div>
-          <div style={{
-            position: 'absolute', bottom: '28px',
-            left: '40px', right: '40px',
-            color: '#ccc', fontSize: '26px', display: 'flex',
-          }}>
-            {description.slice(0, 80)}
-          </div>
-          <div style={{
-            position: 'absolute', top: '28px', right: '40px',
-            color: 'white', fontSize: '22px', opacity: 0.8, display: 'flex',
-          }}>
-            🏴‍☠️ pirate-market.vercel.app
-          </div>
-        </div>
-      ),
-      { width: 1200, height: 630 }
-    )
+    const titleSafe = title.slice(0, 45).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    const descSafe = description.slice(0, 80).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
+    const svg = `<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <rect width="1200" height="630" fill="#111111"/>
+  <image href="${photo}" x="0" y="0" width="1200" height="630" preserveAspectRatio="xMidYMid slice" opacity="0.55"/>
+  <defs>
+    <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.92"/>
+    </linearGradient>
+  </defs>
+  <rect y="200" width="1200" height="430" fill="url(#grad)"/>
+  <rect x="40" y="390" width="220" height="55" rx="8" fill="#F5A623"/>
+  <text x="150" y="425" font-family="Arial, sans-serif" font-size="26" font-weight="bold" fill="#000000" text-anchor="middle">Ver anuncio</text>
+  <text x="40" y="510" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="#ffffff">${titleSafe}</text>
+  <text x="40" y="570" font-family="Arial, sans-serif" font-size="26" fill="#cccccc">${descSafe}</text>
+  <text x="1160" y="50" font-family="Arial, sans-serif" font-size="22" fill="#ffffff" opacity="0.8" text-anchor="end">pirate-market.vercel.app</text>
+</svg>`
+
+    res.setHeader('Content-Type', 'image/svg+xml')
+    res.setHeader('Cache-Control', 's-maxage=3600')
+    return res.status(200).send(svg)
   }
 
-  const userAgent = req.headers['user-agent'] || ''
-  const isBot = /facebookexternalhit|Twitterbot|WhatsApp|LinkedInBot|Slackbot|TelegramBot|Discordbot|bot|crawler|spider/i.test(userAgent)
-
-  // Si es bot devuelve HTML con metatags
-  if (isBot) {
-    const html = `<!DOCTYPE html>
+  // Devuelve HTML con metatags para bots
+  const html = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8" />
@@ -101,16 +69,8 @@ export default async function handler(req, res) {
 </head>
 <body></body>
 </html>`
-    res.setHeader('Content-Type', 'text/html')
-    res.setHeader('Cache-Control', 's-maxage=3600')
-    return res.status(200).send(html)
-  }
 
-  // Si es usuario normal devuelve el index.html de React
-  const fs = await import('fs')
-  const path = await import('path')
-  const indexPath = path.join(process.cwd(), 'index.html')
-  const indexHtml = fs.readFileSync(indexPath, 'utf8')
   res.setHeader('Content-Type', 'text/html')
-  return res.status(200).send(indexHtml)
+  res.setHeader('Cache-Control', 's-maxage=3600')
+  res.status(200).send(html)
 }
