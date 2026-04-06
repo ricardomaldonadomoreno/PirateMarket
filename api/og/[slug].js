@@ -20,6 +20,7 @@ export default async function handler(req, res) {
   const title = listing ? `${listing.title} - BOB ${listing.price}` : 'Pirata Market'
   const description = listing?.description || ''
   const pageUrl = `${siteUrl}/ficha/${slug}`
+  const imageUrl = `${siteUrl}/api/og/${slug}?img=1`
 
   // Si viene ?img=1 devuelve la imagen PNG con diseño
   if (img === '1') {
@@ -75,16 +76,7 @@ export default async function handler(req, res) {
     )
   }
 
-  // Si es bot devuelve HTML con metatags
-  const userAgent = req.headers['user-agent'] || ''
-  const isBot = /facebookexternalhit|Twitterbot|WhatsApp|LinkedInBot|Slackbot|TelegramBot|Discordbot|bot|crawler|spider/i.test(userAgent)
-
-  if (!isBot) {
-    return res.redirect(302, `${siteUrl}/?ficha=${slug}`)
-  }
-
-  const imageUrl = `${siteUrl}/api/og/${slug}?img=1`
-
+  // Devuelve HTML con metatags para bots
   const html = `<!DOCTYPE html>
 <html>
 <head>
