@@ -2,7 +2,14 @@
   "rewrites": [
     {
       "source": "/ficha/:slug",
-      "destination": "/api/og/[slug].js"
+      "destination": "/api/og/[slug].js",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i).*(facebookexternalhit|whatsapp|twitterbot|linkedinbot|slackbot|telegrambot|discordbot|bot|crawler|spider).*"
+        }
+      ]
     },
     {
       "source": "/(.*)",
