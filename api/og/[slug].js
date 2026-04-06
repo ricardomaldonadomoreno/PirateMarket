@@ -1,15 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
 
 export default async function handler(req, res) {
-  const userAgent = req.headers['user-agent'] || ''
-  const isBot = /facebookexternalhit|Twitterbot|WhatsApp|LinkedInBot|Slackbot|TelegramBot|Discordbot|bot|crawler|spider/i.test(userAgent)
-  const { slug } = req.query
+  const { slug, img } = req.query
   const siteUrl = 'https://pirate-market.vercel.app'
-
-  if (!isBot) {
-    res.redirect(302, `${siteUrl}/ficha/${slug}`)
-    return
-  }
 
   const supabase = createClient(
     process.env.SUPABASE_URL,
@@ -26,7 +19,39 @@ export default async function handler(req, res) {
   const title = listing ? `${listing.title} - BOB ${listing.price}` : 'Pirata Market'
   const description = listing?.description || ''
   const pageUrl = `${siteUrl}/ficha/${slug}`
-  const imageUrl = `${siteUrl}/api/og-image/${slug}`
+
+  // Si viene ?img=1 devuelve el SVG directamente
+  if (img === '1') {
+    const svg = `<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <rect width="1200" height="630" fill="#111111"/>
+  <image href="${photo}" x="0" y="0" width="1200" height="630" preserveAspectRatio="xMidYMid slice" opacity="0.55"/>
+  <defs>
+    <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.92"/>
+    </linearGradient>
+  </defs>
+  <rect y="200" width="1200" height="430" fill="url(#grad)"/>
+  <rect x="40" y="390" width="220" height="55" rx="8" fill="#F5A623"/>
+  <text x="150" y="425" font-family="Arial, sans-serif" font-size="26" font-weight="bold" fill="#000000" text-anchor="middle">Ver anuncio</text>
+  <text x="40" y="510" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="#ffffff">${title.slice(0, 40)}</text>
+  <text x="40" y="570" font-family="Arial, sans-serif" font-size="26" fill="#cccccc">${description.slice(0, 70)}</text>
+  <text x="1160" y="50" font-family="Arial, sans-serif" font-size="22" fill="#ffffff" opacity="0.8" text-anchor="end">pirate-market.vercel.app</text>
+</svg>`
+    res.setHeader('Content-Type', 'image/svg+xml')
+    res.setHeader('Cache-Control', 's-maxage=3600')
+    return res.status(200).send(svg)
+  }
+
+  // Si es bot devuelve el HTML con metatags
+  const userAgent = req.headers['user-agent'] || ''
+  const isBot = /facebookexternalhit|Twitterbot|WhatsApp|LinkedInBot|Slackbot|TelegramBot|Discordbot|bot|crawler|spider/i.test(userAgent)
+
+  if (!isBot) {
+    return res.redirect(302, pageUrl)
+  }
+
+  const imageUrl = `${siteUrl}/api/og/${slug}?img=1`
 
   const html = `<!DOCTYPE html>
 <html>
