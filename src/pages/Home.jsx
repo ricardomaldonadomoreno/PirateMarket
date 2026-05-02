@@ -249,16 +249,6 @@ export default function Home() {
           value={filters.search}
           onChange={e => handleFilterChange('search', e.target.value)} />
         
-      <div className="mobile-mundial-banner">
-        <button
-          className="ventas-tv-btn mundial-btn"
-          onClick={() => navigate('/mundial2026')}
-        >
-          ⚽ Intercambio Mundial 2026
-          <span className="ventas-tv-badge">HOT</span>
-        </button>
-      </div>
-        
         <button className={`mobile-filter-btn ${activeFiltersCount > 0 ? 'has-filters' : ''}`}
           onClick={() => setShowDrawer(true)}>
           ⚙️ Filtros
@@ -268,6 +258,16 @@ export default function Home() {
         </button>
       </div>
 
+        <div className="mobile-mundial-banner">
+        <button
+          className="ventas-tv-btn mundial-btn"
+          onClick={() => navigate('/mundial2026')}
+        >
+          ⚽ Intercambio Mundial 2026
+          <span className="ventas-tv-badge">HOT</span>
+        </button>
+      </div>
+        
       {/* MÓVIL: chips de categorías */}
       <div className="mobile-categories-bar">
         <button className={`cat-chip ${!filters.category ? 'active' : ''}`}
