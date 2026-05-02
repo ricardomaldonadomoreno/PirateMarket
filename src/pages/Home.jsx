@@ -248,6 +248,17 @@ export default function Home() {
           placeholder={t('home.title')}
           value={filters.search}
           onChange={e => handleFilterChange('search', e.target.value)} />
+        
+      <div className="mobile-mundial-banner">
+        <button
+          className="ventas-tv-btn mundial-btn"
+          onClick={() => navigate('/mundial2026')}
+        >
+          ⚽ Intercambio Mundial 2026
+          <span className="ventas-tv-badge">HOT</span>
+        </button>
+      </div>
+        
         <button className={`mobile-filter-btn ${activeFiltersCount > 0 ? 'has-filters' : ''}`}
           onClick={() => setShowDrawer(true)}>
           ⚙️ Filtros
