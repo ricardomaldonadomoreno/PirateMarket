@@ -383,3 +383,23 @@
   .mundial-btn:hover {
     background: rgba(0, 200, 83, 0.25);
 }
+
+/* Banner Mundial SOLO móvil */
+.mobile-mundial-banner {
+  display: none;
+  padding: 0.5rem 1rem;
+  background: var(--dark-surface);
+  border-bottom: 1px solid var(--dark-border);
+}
+
+/* Activar en móvil */
+@media (max-width: 768px) {
+  .mobile-mundial-banner {
+    display: block;
+  }
+
+  .mobile-mundial-banner .ventas-tv-btn {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
