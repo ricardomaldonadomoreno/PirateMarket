@@ -199,6 +199,16 @@ export default function Home() {
       </div>
 
       <div className="filter-section">
+        <button
+          className="ventas-tv-btn mundial-btn"
+          onClick={() => { navigate('/mundial2026'); setShowDrawer(false) }}
+        >
+          ⚽ Intercambio Mundial 2026
+          <span className="ventas-tv-badge">HOT</span>
+        </button>
+      </div>
+
+      <div className="filter-section">
         <h4 className="filter-subtitle">{t('home.filters.categories')}</h4>
         <div className="category-list">
           <button className={`category-item ${!filters.category ? 'active' : ''}`}
