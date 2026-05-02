@@ -373,3 +373,13 @@
   .listings-grid { grid-template-columns: repeat(2, 1fr); }
   .mobile-categories-bar { top: 104px; }
 }
+
+  .mundial-btn {
+    background: linear-gradient(135deg, rgba(0, 200, 83, 0.15), rgba(0, 200, 83, 0.05));
+    border-color: #00c853;
+    color: #00e676;
+}
+
+  .mundial-btn:hover {
+    background: rgba(0, 200, 83, 0.25);
+}
