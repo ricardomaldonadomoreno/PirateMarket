@@ -1,0 +1,26 @@
+{
+  "buildCommand": "vite build --config apps/pirata-market/vite.config.js",
+  "outputDirectory": "apps/pirata-market/dist",
+  "installCommand": "npm install",
+  "rewrites": [
+    {
+      "source": "/api/og/:slug",
+      "destination": "/api/og/[slug].js"
+    },
+    {
+      "source": "/ficha/:slug",
+      "destination": "/api/og/[slug].js",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i).*(facebookexternalhit|whatsapp|twitterbot|linkedinbot|slackbot|telegrambot|discordbot|bot|crawler|spider).*"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
