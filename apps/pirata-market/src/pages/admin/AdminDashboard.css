@@ -1,0 +1,121 @@
+.admin-page {
+  min-height: 100vh;
+  background: var(--dark);
+}
+
+.admin-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+.admin-page-header {
+  margin-bottom: 2rem;
+}
+
+.admin-page-header h1 { font-size: 2.5rem; margin-bottom: 0.25rem; }
+.admin-page-sub { color: var(--text-muted); font-size: 0.95rem; }
+
+/* Stats */
+.admin-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.admin-stat-card {
+  background: var(--dark-surface);
+  border: 1px solid var(--dark-border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: all 0.2s;
+}
+
+.admin-stat-card:hover { transform: translateY(-2px); border-color: var(--gold); }
+.stat-success { border-left: 3px solid var(--success); }
+.stat-warning { border-left: 3px solid var(--warning); }
+.stat-danger { border-left: 3px solid var(--danger); }
+.stat-gold { border-left: 3px solid var(--gold); }
+
+.admin-stat-icon { font-size: 1.75rem; }
+.admin-stat-value { font-size: 1.75rem; font-weight: 700; color: var(--gold); font-family: 'Playfair Display', serif; line-height: 1; }
+.admin-stat-label { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem; }
+
+/* Grid */
+.admin-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+/* Cards */
+.admin-card {
+  background: var(--dark-surface);
+  border: 1px solid var(--dark-border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+}
+
+.admin-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+}
+
+.admin-card-header h2 { font-size: 1.1rem; color: var(--gold); }
+.admin-link { font-size: 0.85rem; color: var(--gold); text-decoration: none; }
+.admin-link:hover { text-decoration: underline; }
+
+/* Table */
+.admin-table { display: flex; flex-direction: column; gap: 0.5rem; }
+.admin-table-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  background: var(--dark);
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+}
+.admin-table-title { flex: 1; color: var(--text-light); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.admin-table-meta { color: var(--text-muted); font-size: 0.8rem; }
+
+.admin-badge { font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: var(--radius-full); }
+.badge-pirate { background: rgba(184,152,95,0.15); color: var(--gold); }
+.badge-verified { background: rgba(6,214,160,0.15); color: var(--success); }
+
+.admin-status { font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: var(--radius-full); font-weight: 600; }
+.status-active { background: rgba(6,214,160,0.15); color: var(--success); }
+.status-paused { background: rgba(255,183,3,0.15); color: var(--warning); }
+.status-sold { background: rgba(184,152,95,0.15); color: var(--gold); }
+.status-deleted { background: rgba(230,57,70,0.15); color: var(--danger); }
+
+/* Categories */
+.admin-cat-form {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.admin-cat-list { display: flex; flex-direction: column; gap: 0.35rem; max-height: 300px; overflow-y: auto; }
+.admin-cat-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0.5rem 0.75rem;
+  background: var(--dark); border-radius: var(--radius-md);
+  font-size: 0.875rem;
+}
+.admin-cat-item.inactive { opacity: 0.45; }
+
+.btn-small { padding: 0.25rem 0.65rem; border-radius: var(--radius-full); font-size: 0.75rem; font-weight: 600; cursor: pointer; border: none; }
+.btn-danger { background: rgba(230,57,70,0.15); color: var(--danger); }
+.btn-danger:hover { background: var(--danger); color: white; }
+.btn-success { background: rgba(6,214,160,0.15); color: var(--success); }
+.btn-success:hover { background: var(--success); color: var(--dark); }
+
+@media (max-width: 1024px) { .admin-grid-2 { grid-template-columns: 1fr; } }
+@media (max-width: 768px) { .admin-content { padding: 1rem; } .admin-stats-grid { grid-template-columns: repeat(2, 1fr); } }

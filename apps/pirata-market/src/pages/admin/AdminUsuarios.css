@@ -1,0 +1,157 @@
+.admin-filters-bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+.admin-filter-btns { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.filter-btn {
+  padding: 0.5rem 1rem;
+  background: var(--dark-border); border: 1.5px solid var(--dark-border);
+  color: var(--text-light); border-radius: var(--radius-full);
+  cursor: pointer; font-size: 0.85rem; font-weight: 600;
+  transition: all 0.2s; font-family: 'Inter', sans-serif;
+}
+.filter-btn:hover { border-color: var(--gold); }
+.filter-btn.active { background: rgba(184,152,95,0.15); border-color: var(--gold); color: var(--gold); }
+
+.admin-loading { padding: 2rem; text-align: center; color: var(--text-muted); }
+.admin-users-table { display: flex; flex-direction: column; gap: 0; }
+
+.admin-users-header {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 0.75fr 1.25fr;
+  gap: 1rem; padding: 0.75rem 1rem;
+  font-size: 0.75rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.05em;
+  color: var(--text-muted); border-bottom: 1px solid var(--dark-border);
+}
+
+.admin-user-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 0.75fr 1.25fr;
+  gap: 1rem; padding: 0.875rem 1rem;
+  align-items: center; border-bottom: 1px solid var(--dark-border);
+  transition: background 0.2s; font-size: 0.875rem;
+}
+.admin-user-row:hover { background: var(--dark); }
+.admin-user-row.banned { opacity: 0.5; }
+
+.admin-user-info { display: flex; align-items: center; gap: 0.75rem; }
+.admin-user-avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--gold); color: var(--dark);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 0.9rem; flex-shrink: 0; overflow: hidden;
+}
+.admin-user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.admin-user-name { font-weight: 600; color: var(--text-light); }
+.admin-user-email { font-size: 0.75rem; color: var(--text-muted); }
+.admin-user-badges { display: flex; gap: 0.25rem; flex-wrap: wrap; }
+.badge-banned { background: rgba(230,57,70,0.15); color: var(--danger); }
+.admin-user-date { color: var(--text-muted); font-size: 0.8rem; }
+.admin-user-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+
+.admin-type-select {
+  background: var(--dark); border: 1px solid var(--dark-border);
+  color: var(--text-light); border-radius: var(--radius-md);
+  padding: 0.3rem 0.5rem; font-size: 0.8rem; cursor: pointer;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Premium */
+.admin-premium-cell { display: flex; flex-direction: column; gap: 0.2rem; }
+.premium-expiry { font-size: 0.7rem; color: var(--text-muted); margin-top: 0.2rem; }
+
+.badge-premium {
+  background: rgba(184,152,95,0.2);
+  color: var(--gold);
+  border: 1.5px solid var(--gold);
+  font-size: 0.72rem; padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-full); font-weight: 700;
+  display: inline-flex; align-items: center; gap: 0.2rem;
+}
+
+.badge-free {
+  background: rgba(255,255,255,0.05);
+  color: var(--text-muted);
+  border: 1px solid var(--dark-border);
+  font-size: 0.72rem; padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-full); font-weight: 600;
+}
+
+.btn-premium {
+  background: rgba(184,152,95,0.15);
+  color: var(--gold);
+  border: 1px solid var(--gold);
+}
+.btn-premium:hover { background: var(--gold); color: var(--dark); }
+
+@media (max-width: 1024px) {
+  .admin-users-header, .admin-user-row { grid-template-columns: 1fr 1fr; }
+  .admin-users-header span:nth-child(n+3), .admin-user-row > div:nth-child(n+3) { display: none; }
+  .admin-user-actions { display: flex !important; }
+  .admin-user-row > div:last-child { display: flex !important; }
+}
+
+/* Verificación en admin */
+.verif-pending-dot { margin-left: 0.4rem; font-size: 0.85rem; cursor: default; }
+.badge-pending { background: rgba(255,183,3,0.15); color: var(--warning); border: 1px solid var(--warning); }
+.badge-rejected { background: rgba(230,57,70,0.15); color: var(--danger); border: 1px solid var(--danger); }
+.btn-docs { background: rgba(99,179,237,0.15); color: #63b3ed; border: 1px solid #63b3ed; }
+.btn-docs:hover { background: #63b3ed; color: white; }
+
+/* Modal docs */
+.docs-modal-overlay {
+  position: fixed; inset: 0; z-index: 9000;
+  background: rgba(0,0,0,0.7); backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center; padding: 1rem;
+}
+.docs-modal {
+  background: var(--dark-surface); border: 1px solid var(--dark-border);
+  border-radius: var(--radius-lg); width: 100%; max-width: 680px;
+  max-height: 88vh; display: flex; flex-direction: column;
+}
+.docs-modal-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 1.25rem; border-bottom: 1px solid var(--dark-border);
+}
+.docs-modal-header h3 { font-size: 1.1rem; color: var(--gold); margin: 0; }
+.docs-modal-close {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--dark-border); border: none;
+  color: var(--text-light); cursor: pointer; font-size: 0.9rem;
+  display: flex; align-items: center; justify-content: center;
+}
+.docs-modal-close:hover { background: var(--danger); color: white; }
+.docs-modal-body { padding: 1.25rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1.25rem; }
+.docs-section h4 { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.75rem; }
+.docs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 0.5rem; }
+.doc-thumb {
+  width: 100%; aspect-ratio: 1; object-fit: cover;
+  border-radius: var(--radius-md); cursor: pointer;
+  border: 2px solid var(--dark-border); transition: border-color 0.2s;
+}
+.doc-thumb:hover { border-color: var(--gold); }
+.docs-empty { color: var(--text-muted); font-size: 0.85rem; }
+.docs-status-row { display: flex; align-items: center; gap: 0.75rem; font-size: 0.875rem; }
+.docs-actions { display: flex; flex-direction: column; gap: 0.75rem; }
+.docs-reject { display: flex; gap: 0.75rem; }
+.docs-reject .input { flex: 1; }
+
+/* Lightbox doc */
+.docs-lightbox {
+  position: fixed; inset: 0; z-index: 10000;
+  background: rgba(0,0,0,0.95); display: flex;
+  align-items: center; justify-content: center;
+  cursor: pointer;
+}
+.docs-lightbox img { max-width: 90vw; max-height: 90vh; object-fit: contain; border-radius: var(--radius-md); }
+.docs-lightbox button {
+  position: fixed; top: 1rem; right: 1rem;
+  width: 40px; height: 40px; border-radius: 50%;
+  background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+  color: white; cursor: pointer; font-size: 1rem;
+  display: flex; align-items: center; justify-content: center;
+}
