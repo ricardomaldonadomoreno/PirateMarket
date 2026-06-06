@@ -1,0 +1,45 @@
+{
+  "brand": {
+    "name": "TRAFICANTE",
+    "tagline": "Shipping without middlemen",
+    "by": "A Pirata Marketplace service"
+  },
+  "navbar": {
+    "send": "Send a package",
+    "travel": "Post a trip",
+    "login": "Sign in",
+    "logout": "Sign out",
+    "dashboard": "My Panel"
+  },
+  "home": {
+    "hero_title": "Travelers who carry your goods",
+    "hero_subtitle": "We connect people already traveling with people who need to send things. No couriers, no bureaucracy, real guarantees.",
+    "btn_send": "I want to send something",
+    "btn_travel": "I have a trip",
+    "search_title": "Where do you need to send?",
+    "origin": "Origin city",
+    "destination": "Destination city",
+    "date": "Estimated date",
+    "btn_search": "Find carriers",
+    "how_title": "How does it work?",
+    "step1_title": "Traveler posts their route",
+    "step1_desc": "Sets origin, destination, date and available space. Receives packages at their verified address.",
+    "step2_title": "You find and request",
+    "step2_desc": "Search by route and date, check the traveler's profile and level, send your request with package photos.",
+    "step3_title": "Secure delivery with QR",
+    "step3_desc": "Receiver scans QR on arrival. Payment releases automatically. Everything recorded.",
+    "levels_title": "Trust levels",
+    "level_basic": "Basic",
+    "level_basic_desc": "Verified identity and address. Ideal for low-value packages.",
+    "level_mid": "Mid",
+    "level_mid_desc": "Adds item guarantee and escrow. Can purchase on request.",
+    "level_pro": "PRO",
+    "level_pro_desc": "Enabled office or home address. Frequent routes. Medium-high value packages.",
+    "level_elite": "Elite",
+    "level_elite_desc": "Verified address in two countries. Maximum trust. Logistics agent.",
+    "guarantee_title": "Your money always protected",
+    "guarantee_desc": "Payment stays in escrow until the receiver confirms delivery. Nobody can keep your money.",
+    "legal_note": "Each traveler is responsible for complying with customs legislation in the destination country. Traficante does not promote or take responsibility for the transport of illegal items.",
+    "travelers_title": "Travelers available now"
+  }
+}
