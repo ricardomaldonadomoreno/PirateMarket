@@ -15,7 +15,7 @@ import SellerCatalog from './pages/SellerCatalog'
 import Legal from './pages/Legal'
 
 // Pages — Traficante
-import TraficantHome from '../../traficante-app/src/pages/Home'
+import TraficanteHome from '../../traficante-app/src/pages/Home'
 import TraficanteBuscar from '../../traficante-app/src/pages/Buscar'
 import TraficantePublicarViaje from '../../traficante-app/src/pages/PublicarViaje'
 import TraficanteDashboard from '../../traficante-app/src/pages/Dashboard'
@@ -55,7 +55,7 @@ function App() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: '#333333' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: '#2B2B2B' }}>
         <div className="loading" style={{ width: '40px', height: '40px' }}></div>
       </div>
     )
@@ -83,7 +83,7 @@ function App() {
         <Route path="/admin/reportes" element={<AdminRoute><AdminReportes /></AdminRoute>} />
 
         {/* ── TRAFICANTE ── */}
-        <Route path="/traficante" element={<><TraficanteNavbar user={user} /><TraficantHome user={user} /></>} />
+        <Route path="/traficante" element={<><TraficanteNavbar user={user} /><TraficanteHome user={user} /></>} />
         <Route path="/traficante/buscar" element={<><TraficanteNavbar user={user} /><TraficanteBuscar user={user} /></>} />
         <Route path="/traficante/publicar-viaje" element={<><TraficanteNavbar user={user} /><TraficantePublicarViaje user={user} /></>} />
         <Route path="/traficante/viaje/:id" element={<><TraficanteNavbar user={user} /><TraficanteViajeDetalle user={user} /></>} />
