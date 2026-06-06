@@ -19,8 +19,8 @@ export default function TraficanteNavbar({ user }) {
         <Link to="/traficante" className="navbar-logo">
           <span className="traficante-logo-icon">🚐</span>
           <div className="logo-text">
-            <span className="logo-brand traficante-gold">traficante</span>
-            <span className="logo-suffix traficante-by">by pirata</span>
+            <span className="logo-brand traficante-gold">Traficante App</span>
+            <span className="logo-suffix traficante-by">by Buses</span>
           </div>
         </Link>
 
