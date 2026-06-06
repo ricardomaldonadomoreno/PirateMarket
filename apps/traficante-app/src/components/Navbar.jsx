@@ -17,10 +17,10 @@ export default function TraficanteNavbar({ user }) {
     <nav className="navbar traficante-navbar">
       <div className="navbar-container">
         <Link to="/traficante" className="navbar-logo">
-          <span className="traficante-logo-icon">🚐</span>
+          <img src="/traficante/logoPNG.png" alt="Traficante" className="logo-icon" />
           <div className="logo-text">
-            <span className="logo-brand traficante-gold">Traficante App</span>
-            <span className="logo-suffix traficante-by">by Buses</span>
+            <span className="logo-brand traficante-gold">traficante</span>
+            <span className="logo-suffix traficante-by">by buses app</span>
           </div>
         </Link>
 
@@ -31,7 +31,7 @@ export default function TraficanteNavbar({ user }) {
             {t('navbar.travel')}
           </Link>
 
-          <Link to="/traficante/buscar" className="btn btn-primary">
+          <Link to="/traficante/buscar" className="btn btn-primary t-btn-primary">
             {t('navbar.send')}
           </Link>
 
