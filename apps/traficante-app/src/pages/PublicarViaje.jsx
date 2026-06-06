@@ -323,18 +323,49 @@ export default function PublicarViaje({ user }) {
                       onChange={e => setArrivalDate(e.target.value)}
                     />
                   </div>
-                )}
+                )}     
                 {type === 'compactador' && (
                   <div className="pv-field">
                     <label>Fecha límite para recibir paquetes</label>
                     <input className="input" type="date"
                       value={deadlineDate}
                       onChange={e => setDeadlineDate(e.target.value)}
-                    />
-                  </div>
-                )}
-              </div>
+                {/* ── HORARIOS (solo compactador) ── */}
+{type === 'compactador' && (
+  <div className="pv-schedule">
+    <label className="pv-sublabel">📅 Días y horarios de atención</label>
+    <div className="pv-days-grid">
+      {['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'].map((day, i) => (
+        <div key={day} className={`pv-day-row ${schedule[i]?.active ? 'active' : ''}`}>
+          <button
+            type="button"
+            className={`pv-chip ${schedule[i]?.active ? 'active' : ''}`}
+            onClick={() => toggleDay(i)}
+          >
+            {day}
+          </button>
+          {schedule[i]?.active && (
+            <div className="pv-day-hours">
+              <input
+                className="input pv-time-input"
+                type="time"
+                value={schedule[i]?.open || '08:00'}
+                onChange={e => updateDayHours(i, 'open', e.target.value)}
+              />
+              <span>—</span>
+              <input
+                className="input pv-time-input"
+                type="time"
+                value={schedule[i]?.close || '18:00'}
+                onChange={e => updateDayHours(i, 'close', e.target.value)}
+              />
             </div>
+          )}
+        </div>
+      ))}
+    </div>
+  </div>
+)}
 
             {/* ── TRANSPORTE (solo viajero) ── */}
             {type === 'viajero' && (
