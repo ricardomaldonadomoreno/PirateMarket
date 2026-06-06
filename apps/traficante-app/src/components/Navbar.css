@@ -1,0 +1,51 @@
+/* Hereda todo de globals.css de pirata-market */
+/* Solo overrides específicos de Traficante */
+
+:root {
+  --traficante-gold: #E07B39;
+  --traficante-gold-light: #F08C4A;
+  --traficante-gold-dark: #C96A28;
+}
+
+.traficante-navbar {
+  border-bottom-color: rgba(224, 123, 57, 0.2);
+}
+
+.traficante-navbar .navbar-logo:hover {
+  opacity: 0.85;
+}
+
+.traficante-gold {
+  color: var(--traficante-gold) !important;
+  font-family: 'Playfair Display', serif;
+}
+
+.traficante-by {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.traficante-logo-icon {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.traficante-btn-outline {
+  border-color: var(--traficante-gold) !important;
+  color: var(--traficante-gold) !important;
+}
+
+.traficante-btn-outline:hover {
+  background: var(--traficante-gold) !important;
+  color: var(--dark) !important;
+}
+
+.btn-primary.traficante-btn {
+  background: var(--traficante-gold);
+}
+
+.btn-primary.traficante-btn:hover {
+  background: var(--traficante-gold-light);
+}
