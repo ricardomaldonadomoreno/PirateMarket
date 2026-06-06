@@ -1,0 +1,328 @@
+/* ── Variables Traficante ── */
+:root {
+  --t-gold: #E07B39;
+  --t-gold-light: #F08C4A;
+  --t-gold-glow: rgba(224, 123, 57, 0.15);
+}
+
+.traficante-home {
+  min-height: 100vh;
+  background: var(--dark);
+}
+
+/* ── HERO ── */
+.t-hero {
+  position: relative;
+  padding: 7rem 0 5rem;
+  overflow: hidden;
+  text-align: center;
+}
+
+.t-hero-glow {
+  position: absolute;
+  top: -100px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, var(--t-gold-glow) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.t-hero .container {
+  position: relative;
+  z-index: 1;
+}
+
+.t-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 1rem;
+  border: 1px solid rgba(224, 123, 57, 0.3);
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+  color: var(--t-gold);
+  margin-bottom: 1.5rem;
+  background: rgba(224, 123, 57, 0.08);
+}
+
+.t-hero-title {
+  font-size: clamp(2.2rem, 5vw, 4rem);
+  font-family: 'Playfair Display', serif;
+  color: var(--text-light);
+  max-width: 800px;
+  margin: 0 auto 1.5rem;
+  line-height: 1.15;
+}
+
+.t-hero-title span {
+  color: var(--t-gold);
+}
+
+.t-hero-subtitle {
+  font-size: clamp(1rem, 2vw, 1.2rem);
+  color: var(--text-muted);
+  max-width: 600px;
+  margin: 0 auto 2.5rem;
+  line-height: 1.7;
+}
+
+.t-hero-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.t-btn-primary {
+  background: var(--t-gold) !important;
+  color: var(--dark) !important;
+}
+
+.t-btn-primary:hover:not(:disabled) {
+  background: var(--t-gold-light) !important;
+  transform: translateY(-2px);
+}
+
+.t-btn-outline {
+  border-color: var(--t-gold) !important;
+  color: var(--t-gold) !important;
+}
+
+.t-btn-outline:hover:not(:disabled) {
+  background: var(--t-gold) !important;
+  color: var(--dark) !important;
+}
+
+/* ── BUSCADOR ── */
+.t-search-section {
+  padding: 3rem 0;
+}
+
+.t-search-card {
+  background: var(--dark-surface);
+  border: 1px solid var(--dark-border);
+  border-radius: var(--radius-lg);
+  padding: 2.5rem;
+}
+
+.t-section-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  color: var(--text-light);
+  margin-bottom: 1.5rem;
+}
+
+.t-search-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.t-search-fields {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr 1fr;
+  gap: 1rem;
+  align-items: end;
+}
+
+.t-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.t-field label {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.t-field-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--t-gold);
+  font-size: 1.5rem;
+  padding-bottom: 0.2rem;
+}
+
+.t-search-btn {
+  align-self: flex-start;
+  padding: 0.875rem 2.5rem;
+}
+
+/* ── CÓMO FUNCIONA ── */
+.t-how-section {
+  padding: 5rem 0;
+}
+
+.t-steps-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-top: 2.5rem;
+}
+
+.t-step-card {
+  text-align: center;
+  padding: 2.5rem 2rem;
+  position: relative;
+}
+
+.t-step-number {
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  width: 36px;
+  height: 36px;
+  background: var(--t-gold);
+  color: var(--dark);
+  border-radius: var(--radius-sm) 0 var(--radius-sm) 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.t-step-icon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.t-step-card h3 {
+  font-size: 1.1rem;
+  color: var(--text-light);
+  margin-bottom: 0.75rem;
+}
+
+.t-step-card p {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+/* ── NIVELES ── */
+.t-levels-section {
+  padding: 5rem 0;
+  background: var(--dark-surface);
+}
+
+.t-levels-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  margin-top: 2.5rem;
+}
+
+.t-level-card {
+  text-align: center;
+  padding: 2rem 1.5rem;
+}
+
+.t-level-icon {
+  font-size: 2rem;
+  margin-bottom: 0.75rem;
+}
+
+.t-level-card h4 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  font-family: 'Inter', sans-serif;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.t-level-card p {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+/* ── GARANTÍA ── */
+.t-guarantee-section {
+  padding: 4rem 0;
+}
+
+.t-guarantee-card {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  background: linear-gradient(135deg, rgba(224, 123, 57, 0.08), rgba(224, 123, 57, 0.03));
+  border: 1px solid rgba(224, 123, 57, 0.25);
+  border-radius: var(--radius-lg);
+  padding: 2.5rem;
+}
+
+.t-guarantee-icon {
+  font-size: 3rem;
+  flex-shrink: 0;
+}
+
+.t-guarantee-card h3 {
+  font-size: 1.4rem;
+  color: var(--text-light);
+  margin-bottom: 0.5rem;
+}
+
+.t-guarantee-card p {
+  color: var(--text-muted);
+  line-height: 1.7;
+}
+
+/* ── AVISO LEGAL ── */
+.t-legal-section {
+  padding: 2rem 0 4rem;
+}
+
+.t-legal-text {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  border: 1px solid var(--dark-border);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.5rem;
+  text-align: center;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 1024px) {
+  .t-levels-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .t-hero {
+    padding: 5rem 0 3rem;
+  }
+
+  .t-steps-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .t-levels-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .t-search-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .t-field-arrow {
+    display: none;
+  }
+
+  .t-guarantee-card {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .t-search-btn {
+    width: 100%;
+  }
+}
