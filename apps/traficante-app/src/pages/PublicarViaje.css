@@ -230,3 +230,31 @@
   .pv-type-grid { grid-template-columns: 1fr 1fr; }
   .pv-gps-row { flex-direction: column; align-items: flex-start; }
 }
+
+.pv-schedule {
+  margin-top: 1rem;
+}
+
+.pv-days-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.pv-day-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.pv-day-hours {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pv-time-input {
+  width: 120px !important;
+  padding: 0.4rem 0.75rem !important;
+  font-size: 0.85rem !important;
+}
