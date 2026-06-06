@@ -15,6 +15,21 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 })
 
+const [schedule, setSchedule] = useState(
+  Array(7).fill(null).map(() => ({ active: false, open: '08:00', close: '18:00' }))
+)
+
+const toggleDay = (i) => {
+  setSchedule(prev => prev.map((d, idx) =>
+    idx === i ? { ...d, active: !d.active } : d
+  ))
+}
+
+const updateDayHours = (i, field, value) => {
+  setSchedule(prev => prev.map((d, idx) =>
+    idx === i ? { ...d, [field]: value } : d
+  ))
+}
 const CURRENCIES = ['BOB', 'USD', 'BRL', 'ARS', 'PEN', 'CLP', 'PYG']
 const PACKAGE_TYPES = ['documentos', 'ropa', 'electronica', 'alimentos', 'cosmeticos', 'libros', 'juguetes', 'otro']
 const PACKAGE_SIZES = ['sobre', 'pequeño', 'mediano', 'grande']
@@ -100,6 +115,8 @@ export default function PublicarViaje({ user }) {
       setError('Completa origen, destino y fecha de salida')
       return
     }
+
+    schedule: type === 'compactador' ? schedule : null,
 
     setLoading(true)
     setError('')
