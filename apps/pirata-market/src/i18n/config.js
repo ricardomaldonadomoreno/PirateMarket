@@ -2,19 +2,23 @@ import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
 import LanguageDetector from 'i18next-browser-languagedetector'
 
-// Import translations
+// Pirata Market translations
 import es from '../locales/es.json'
 import en from '../locales/en.json'
 import pt from '../locales/pt.json'
 import ar from '../locales/ar.json'
 import zh from '../locales/zh.json'
 
+// Traficante translations
+import trafEs from '../../../traficante-app/src/locales/es.json'
+import trafEn from '../../../traficante-app/src/locales/en.json'
+
 const resources = {
-  es: { translation: es },
-  en: { translation: en },
-  pt: { translation: pt },
-  ar: { translation: ar },
-  zh: { translation: zh }
+  es: { translation: es, traficante: trafEs },
+  en: { translation: en, traficante: trafEn },
+  pt: { translation: pt, traficante: trafEs },
+  ar: { translation: ar, traficante: trafEs },
+  zh: { translation: zh, traficante: trafEs }
 }
 
 i18n
