@@ -1,0 +1,45 @@
+{
+  "brand": {
+    "name": "TRAFICANTE",
+    "tagline": "Envíos sin intermediarios",
+    "by": "Un servicio de Pirata Marketplace"
+  },
+  "navbar": {
+    "send": "Enviar paquete",
+    "travel": "Publicar viaje",
+    "login": "Ingresar",
+    "logout": "Salir",
+    "dashboard": "Mi Panel"
+  },
+  "home": {
+    "hero_title": "Viajeros que transportan tu mercadería",
+    "hero_subtitle": "Conectamos a personas que ya viajan con personas que necesitan enviar. Sin couriers, sin burocracia, con garantías reales.",
+    "btn_send": "Quiero enviar algo",
+    "btn_travel": "Tengo un viaje",
+    "search_title": "¿A dónde necesitas enviar?",
+    "origin": "Ciudad de origen",
+    "destination": "Ciudad de destino",
+    "date": "Fecha estimada",
+    "btn_search": "Buscar transportadores",
+    "how_title": "¿Cómo funciona?",
+    "step1_title": "El viajero publica su ruta",
+    "step1_desc": "Define origen, destino, fecha y espacio disponible. Recibe paquetes en su domicilio verificado.",
+    "step2_title": "Tú encuentras y solicitas",
+    "step2_desc": "Busca por ruta y fecha, revisa el perfil y nivel del viajero, y envía tu solicitud con fotos del paquete.",
+    "step3_title": "Entrega segura con QR",
+    "step3_desc": "El receptor escanea el QR al recibir. El pago se libera automáticamente. Todo registrado.",
+    "levels_title": "Niveles de confianza",
+    "level_basic": "Básico",
+    "level_basic_desc": "Identidad y dirección verificadas. Ideal para paquetes de bajo valor.",
+    "level_mid": "Medio",
+    "level_mid_desc": "Agrega garantía por artículo y escrow. Puede comprar por encargo.",
+    "level_pro": "PRO",
+    "level_pro_desc": "Oficina o domicilio habilitado. Rutas frecuentes. Paquetes de valor medio-alto.",
+    "level_elite": "Elite",
+    "level_elite_desc": "Dirección verificada en dos países. Máxima confianza. Agente de logística.",
+    "guarantee_title": "Tu dinero siempre protegido",
+    "guarantee_desc": "El pago queda en escrow hasta que el receptor confirma la entrega. Nadie puede quedarse con tu dinero.",
+    "legal_note": "Cada viajero es responsable de cumplir la legislación aduanera del país de destino. Traficante no fomenta ni se hace responsable por el transporte de artículos ilegales.",
+    "travelers_title": "Viajeros disponibles ahora"
+  }
+}
