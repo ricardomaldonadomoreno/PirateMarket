@@ -6,7 +6,6 @@ import { supabase } from '../../../pirata-market/src/lib/supabase'
 import 'leaflet/dist/leaflet.css'
 import './PublicarViaje.css'
 
-// Fix leaflet marker icon
 import L from 'leaflet'
 delete L.Icon.Default.prototype._getIconUrl
 L.Icon.Default.mergeOptions({
@@ -15,21 +14,6 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 })
 
-const [schedule, setSchedule] = useState(
-  Array(7).fill(null).map(() => ({ active: false, open: '08:00', close: '18:00' }))
-)
-
-const toggleDay = (i) => {
-  setSchedule(prev => prev.map((d, idx) =>
-    idx === i ? { ...d, active: !d.active } : d
-  ))
-}
-
-const updateDayHours = (i, field, value) => {
-  setSchedule(prev => prev.map((d, idx) =>
-    idx === i ? { ...d, [field]: value } : d
-  ))
-}
 const CURRENCIES = ['BOB', 'USD', 'BRL', 'ARS', 'PEN', 'CLP', 'PYG']
 const PACKAGE_TYPES = ['documentos', 'ropa', 'electronica', 'alimentos', 'cosmeticos', 'libros', 'juguetes', 'otro']
 const PACKAGE_SIZES = ['sobre', 'pequeño', 'mediano', 'grande']
@@ -40,6 +24,7 @@ const TRANSPORT_MODES = [
   { value: 'tren',  label: '🚂 Tren' },
   { value: 'otro',  label: '📦 Otro' },
 ]
+const DAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
 
 function MapPicker({ onSelect }) {
   useMapEvents({
@@ -56,7 +41,7 @@ export default function PublicarViaje({ user }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  // Tipo de servicio
+  // Tipo
   const [type, setType] = useState('viajero')
 
   // Origen
@@ -75,6 +60,11 @@ export default function PublicarViaje({ user }) {
   const [departureDate, setDepartureDate] = useState('')
   const [arrivalDate, setArrivalDate] = useState('')
   const [deadlineDate, setDeadlineDate] = useState('')
+
+  // Horario compactador
+  const [schedule, setSchedule] = useState(
+    Array(7).fill(null).map(() => ({ active: false, open: '08:00', close: '18:00' }))
+  )
 
   // Capacidad
   const [maxWeight, setMaxWeight] = useState('')
@@ -101,6 +91,18 @@ export default function PublicarViaje({ user }) {
     )
   }
 
+  const toggleDay = (i) => {
+    setSchedule(prev => prev.map((d, idx) =>
+      idx === i ? { ...d, active: !d.active } : d
+    ))
+  }
+
+  const updateDayHours = (i, field, value) => {
+    setSchedule(prev => prev.map((d, idx) =>
+      idx === i ? { ...d, [field]: value } : d
+    ))
+  }
+
   const getGPS = (setCoords) => {
     if (!navigator.geolocation) return
     navigator.geolocation.getCurrentPosition(pos => {
@@ -115,8 +117,6 @@ export default function PublicarViaje({ user }) {
       setError('Completa origen, destino y fecha de salida')
       return
     }
-
-    schedule: type === 'compactador' ? schedule : null,
 
     setLoading(true)
     setError('')
@@ -141,6 +141,7 @@ export default function PublicarViaje({ user }) {
         departure_date: departureDate,
         arrival_date: arrivalDate || null,
         deadline_date: type === 'compactador' ? deadlineDate || null : null,
+        schedule: type === 'compactador' ? schedule : null,
 
         max_weight_kg: maxWeight ? parseFloat(maxWeight) : null,
         package_sizes: selectedSizes,
@@ -340,49 +341,55 @@ export default function PublicarViaje({ user }) {
                       onChange={e => setArrivalDate(e.target.value)}
                     />
                   </div>
-                )}     
+                )}
                 {type === 'compactador' && (
                   <div className="pv-field">
                     <label>Fecha límite para recibir paquetes</label>
                     <input className="input" type="date"
                       value={deadlineDate}
                       onChange={e => setDeadlineDate(e.target.value)}
-                {/* ── HORARIOS (solo compactador) ── */}
-{type === 'compactador' && (
-  <div className="pv-schedule">
-    <label className="pv-sublabel">📅 Días y horarios de atención</label>
-    <div className="pv-days-grid">
-      {['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'].map((day, i) => (
-        <div key={day} className={`pv-day-row ${schedule[i]?.active ? 'active' : ''}`}>
-          <button
-            type="button"
-            className={`pv-chip ${schedule[i]?.active ? 'active' : ''}`}
-            onClick={() => toggleDay(i)}
-          >
-            {day}
-          </button>
-          {schedule[i]?.active && (
-            <div className="pv-day-hours">
-              <input
-                className="input pv-time-input"
-                type="time"
-                value={schedule[i]?.open || '08:00'}
-                onChange={e => updateDayHours(i, 'open', e.target.value)}
-              />
-              <span>—</span>
-              <input
-                className="input pv-time-input"
-                type="time"
-                value={schedule[i]?.close || '18:00'}
-                onChange={e => updateDayHours(i, 'close', e.target.value)}
-              />
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* ── HORARIO (solo compactador) ── */}
+              {type === 'compactador' && (
+                <div className="pv-schedule">
+                  <label className="pv-sublabel">🕐 Días y horarios de atención</label>
+                  <div className="pv-days-grid">
+                    {DAYS.map((day, i) => (
+                      <div key={day} className="pv-day-row">
+                        <button
+                          type="button"
+                          className={`pv-chip pv-day-chip ${schedule[i].active ? 'active' : ''}`}
+                          onClick={() => toggleDay(i)}
+                        >
+                          {day}
+                        </button>
+                        {schedule[i].active && (
+                          <div className="pv-day-hours">
+                            <input
+                              className="input pv-time-input"
+                              type="time"
+                              value={schedule[i].open}
+                              onChange={e => updateDayHours(i, 'open', e.target.value)}
+                            />
+                            <span className="pv-time-sep">—</span>
+                            <input
+                              className="input pv-time-input"
+                              type="time"
+                              value={schedule[i].close}
+                              onChange={e => updateDayHours(i, 'close', e.target.value)}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-          )}
-        </div>
-      ))}
-    </div>
-  </div>
-)}
 
             {/* ── TRANSPORTE (solo viajero) ── */}
             {type === 'viajero' && (
@@ -417,7 +424,7 @@ export default function PublicarViaje({ user }) {
                 </div>
                 {type === 'compactador' && (
                   <div className="pv-field">
-                    <label>Unidades máximas (sobres/paquetes)</label>
+                    <label>Unidades máximas</label>
                     <input className="input" type="number" min="1"
                       placeholder="Ej: 20"
                       value={maxUnits}
@@ -426,8 +433,7 @@ export default function PublicarViaje({ user }) {
                   </div>
                 )}
               </div>
-
-              <label className="pv-sublabel">Tamaños que aceptas</label>
+              <label className="pv-sublabel" style={{ marginTop: '1rem' }}>Tamaños que aceptas</label>
               <div className="pv-chips">
                 {PACKAGE_SIZES.map(s => (
                   <button key={s} type="button"
@@ -445,23 +451,23 @@ export default function PublicarViaje({ user }) {
               <h3>📋 Tipos de paquetes</h3>
               <label className="pv-sublabel">✅ Acepto</label>
               <div className="pv-chips">
-                {PACKAGE_TYPES.map(t => (
-                  <button key={t} type="button"
-                    className={`pv-chip pv-chip-accept ${acceptedTypes.includes(t) ? 'active' : ''}`}
-                    onClick={() => toggleItem(acceptedTypes, setAcceptedTypes, t)}
+                {PACKAGE_TYPES.map(pt => (
+                  <button key={pt} type="button"
+                    className={`pv-chip pv-chip-accept ${acceptedTypes.includes(pt) ? 'active' : ''}`}
+                    onClick={() => toggleItem(acceptedTypes, setAcceptedTypes, pt)}
                   >
-                    {t}
+                    {pt}
                   </button>
                 ))}
               </div>
-              <label className="pv-sublabel mt-2">❌ No acepto</label>
+              <label className="pv-sublabel" style={{ marginTop: '1rem' }}>❌ No acepto</label>
               <div className="pv-chips">
-                {PACKAGE_TYPES.map(t => (
-                  <button key={t} type="button"
-                    className={`pv-chip pv-chip-reject ${rejectedTypes.includes(t) ? 'active' : ''}`}
-                    onClick={() => toggleItem(rejectedTypes, setRejectedTypes, t)}
+                {PACKAGE_TYPES.map(pt => (
+                  <button key={pt} type="button"
+                    className={`pv-chip pv-chip-reject ${rejectedTypes.includes(pt) ? 'active' : ''}`}
+                    onClick={() => toggleItem(rejectedTypes, setRejectedTypes, pt)}
                   >
-                    {t}
+                    {pt}
                   </button>
                 ))}
               </div>
@@ -516,19 +522,15 @@ export default function PublicarViaje({ user }) {
               <h3>📝 Descripción</h3>
               <textarea
                 className="input textarea"
-                placeholder="Describe tu servicio, condiciones especiales, restricciones o cualquier detalle útil para el remitente..."
+                placeholder="Describe tu servicio, condiciones especiales, restricciones o cualquier detalle útil..."
                 value={description}
                 onChange={e => setDescription(e.target.value)}
                 rows={4}
               />
             </div>
 
-            {/* ── ERROR ── */}
-            {error && (
-              <div className="pv-error">⚠️ {error}</div>
-            )}
+            {error && <div className="pv-error">⚠️ {error}</div>}
 
-            {/* ── SUBMIT ── */}
             <div className="pv-actions">
               <button type="button" className="btn btn-secondary"
                 onClick={() => navigate('/traficante')}>
