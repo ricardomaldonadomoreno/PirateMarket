@@ -30,17 +30,11 @@
   font-size: 0.95rem;
 }
 
-.pv-form {
-  padding: 0;
-}
+.pv-form { padding: 0; }
 
 .pv-section {
   padding: 1.75rem 2.5rem;
   border-bottom: 1px solid var(--dark-border);
-}
-
-.pv-section:last-child {
-  border-bottom: none;
 }
 
 .pv-section h3 {
@@ -100,9 +94,7 @@
   border-radius: var(--radius-full);
 }
 
-.pv-map {
-  margin-top: 1rem;
-}
+.pv-map { margin-top: 1rem; }
 
 .pv-map-hint {
   font-size: 0.8rem;
@@ -133,33 +125,20 @@
 }
 
 .pv-type-btn:hover {
-  border-color: var(--traficante-gold, #E07B39);
+  border-color: #E07B39;
   color: var(--text-light);
 }
 
 .pv-type-btn.active {
-  border-color: var(--traficante-gold, #E07B39);
+  border-color: #E07B39;
   background: rgba(224, 123, 57, 0.08);
   color: var(--text-light);
 }
 
-.pv-type-btn.active strong {
-  color: #E07B39;
-}
-
-.pv-type-icon {
-  font-size: 2rem;
-}
-
-.pv-type-btn strong {
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.pv-type-btn small {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-}
+.pv-type-btn.active strong { color: #E07B39; }
+.pv-type-icon { font-size: 2rem; }
+.pv-type-btn strong { font-size: 1rem; font-weight: 600; }
+.pv-type-btn small { font-size: 0.8rem; color: var(--text-muted); }
 
 /* ── CHIPS ── */
 .pv-chips {
@@ -180,10 +159,7 @@
   transition: all 0.2s ease;
 }
 
-.pv-chip:hover {
-  border-color: #E07B39;
-  color: var(--text-light);
-}
+.pv-chip:hover { border-color: #E07B39; color: var(--text-light); }
 
 .pv-chip.active {
   background: rgba(224, 123, 57, 0.15);
@@ -204,9 +180,58 @@
   color: var(--danger);
 }
 
+/* ── HORARIO COMPACTADOR ── */
+.pv-schedule {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--dark-border);
+}
+
+.pv-days-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+}
+
+.pv-day-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-height: 40px;
+}
+
+.pv-day-chip {
+  min-width: 56px;
+  text-align: center;
+}
+
+.pv-day-hours {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateX(-8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.pv-time-sep {
+  color: var(--text-muted);
+  font-size: 1rem;
+}
+
+.pv-time-input {
+  width: 110px !important;
+  padding: 0.4rem 0.75rem !important;
+  font-size: 0.85rem !important;
+}
+
 /* ── ERROR & ACTIONS ── */
 .pv-error {
-  margin: 0 2.5rem;
+  margin: 0 2.5rem 1rem;
   padding: 1rem 1.25rem;
   background: rgba(230, 57, 70, 0.1);
   border: 1px solid rgba(230, 57, 70, 0.3);
@@ -223,38 +248,13 @@
   border-top: 1px solid var(--dark-border);
 }
 
+/* ── RESPONSIVE ── */
 @media (max-width: 768px) {
   .pv-section { padding: 1.25rem 1rem; }
   .pv-header { padding: 1.5rem 1rem; }
-  .pv-actions { padding: 1.25rem 1rem; }
+  .pv-actions { padding: 1.25rem 1rem; flex-direction: column; }
   .pv-type-grid { grid-template-columns: 1fr 1fr; }
   .pv-gps-row { flex-direction: column; align-items: flex-start; }
-}
-
-.pv-schedule {
-  margin-top: 1rem;
-}
-
-.pv-days-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.pv-day-row {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.pv-day-hours {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.pv-time-input {
-  width: 120px !important;
-  padding: 0.4rem 0.75rem !important;
-  font-size: 0.85rem !important;
+  .pv-day-row { flex-wrap: wrap; }
+  .pv-time-input { width: 90px !important; }
 }
