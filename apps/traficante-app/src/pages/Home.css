@@ -57,10 +57,6 @@
   line-height: 1.15;
 }
 
-.t-hero-title span {
-  color: var(--t-gold);
-}
-
 .t-hero-subtitle {
   font-size: clamp(1rem, 2vw, 1.2rem);
   color: var(--text-muted);
@@ -94,6 +90,128 @@
 .t-btn-outline:hover:not(:disabled) {
   background: var(--t-gold) !important;
   color: var(--dark) !important;
+}
+
+.t-btn-ghost {
+  background: transparent !important;
+  border: 1px solid var(--dark-border) !important;
+  color: var(--text-muted) !important;
+}
+
+.t-btn-ghost:hover:not(:disabled) {
+  border-color: var(--t-gold) !important;
+  color: var(--t-gold) !important;
+}
+
+/* ── GANA DINERO ── */
+.t-earn-section {
+  padding: 5rem 0;
+  background: var(--dark-surface);
+}
+
+.t-earn-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.t-earn-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 1rem;
+  border: 1px solid rgba(224, 123, 57, 0.3);
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+  color: var(--t-gold);
+  margin-bottom: 1rem;
+  background: rgba(224, 123, 57, 0.08);
+}
+
+.t-earn-subtitle {
+  font-size: 1rem;
+  color: var(--text-muted);
+  max-width: 560px;
+  margin: 0 auto;
+  line-height: 1.7;
+}
+
+.t-earn-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.t-earn-card {
+  text-align: center;
+  padding: 2.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.t-earn-card:hover {
+  border-color: rgba(224, 123, 57, 0.4);
+  transform: translateY(-4px);
+}
+
+.t-earn-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.t-earn-card h3 {
+  font-size: 1.2rem;
+  color: var(--text-light);
+  font-family: 'Playfair Display', serif;
+}
+
+.t-earn-card p {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  flex: 1;
+}
+
+.t-earn-btn {
+  margin-top: 0.5rem;
+  font-size: 0.85rem !important;
+  padding: 0.6rem 1.25rem !important;
+}
+
+.t-earn-cta {
+  border-top: 1px solid var(--dark-border);
+  padding-top: 2rem;
+}
+
+.t-earn-cta-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  max-width: 680px;
+  margin: 0 auto;
+  background: rgba(224, 123, 57, 0.06);
+  border: 1px solid rgba(224, 123, 57, 0.15);
+  border-radius: var(--radius-md);
+  padding: 1.25rem 2rem;
+}
+
+.t-earn-cta-text span {
+  font-size: 1.8rem;
+  flex-shrink: 0;
+}
+
+.t-earn-cta-text p {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.t-earn-cta-text strong {
+  color: var(--t-gold);
 }
 
 /* ── BUSCADOR ── */
@@ -274,6 +392,39 @@
   line-height: 1.7;
 }
 
+/* ── REGISTRO CTA ── */
+.t-register-section {
+  padding: 4rem 0;
+  background: var(--dark-surface);
+}
+
+.t-register-card {
+  text-align: center;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.t-register-card h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  color: var(--text-light);
+  margin-bottom: 0.75rem;
+}
+
+.t-register-card p {
+  color: var(--text-muted);
+  font-size: 1rem;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+}
+
+.t-register-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
 /* ── AVISO LEGAL ── */
 .t-legal-section {
   padding: 2rem 0 4rem;
@@ -291,38 +442,19 @@
 
 /* ── RESPONSIVE ── */
 @media (max-width: 1024px) {
-  .t-levels-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
+  .t-levels-grid { grid-template-columns: repeat(2, 1fr); }
+  .t-earn-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (max-width: 768px) {
-  .t-hero {
-    padding: 5rem 0 3rem;
-  }
-
-  .t-steps-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .t-levels-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .t-search-fields {
-    grid-template-columns: 1fr;
-  }
-
-  .t-field-arrow {
-    display: none;
-  }
-
-  .t-guarantee-card {
-    flex-direction: column;
-    text-align: center;
-  }
-
-  .t-search-btn {
-    width: 100%;
-  }
+  .t-hero { padding: 5rem 0 3rem; }
+  .t-steps-grid { grid-template-columns: 1fr; }
+  .t-earn-grid { grid-template-columns: 1fr; }
+  .t-levels-grid { grid-template-columns: repeat(2, 1fr); }
+  .t-search-fields { grid-template-columns: 1fr; }
+  .t-field-arrow { display: none; }
+  .t-guarantee-card { flex-direction: column; text-align: center; }
+  .t-search-btn { width: 100%; }
+  .t-earn-cta-text { flex-direction: column; text-align: center; }
+  .t-register-actions { flex-direction: column; align-items: center; }
 }
