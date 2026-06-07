@@ -30,8 +30,8 @@ import AdminAnuncios from './pages/admin/AdminAnuncios'
 import AdminReportes from './pages/admin/AdminReportes'
 
 // Admin — Traficante
-import TraficanteAdminLogin from '../../traficante-app/src/pages/admin/AdminLogin'
-import TraficanteAdminDashboard from '../../traficante-app/src/pages/admin/AdminDashboard'
+import TraficanteAdminLogin from '../../traficante-app/src/pages/AdminLogin'
+import TraficanteAdminDashboard from '../../traficante-app/src/pages/AdminDashboard'
 
 // Components
 import Navbar from './components/Navbar'
@@ -40,15 +40,28 @@ import AdminRoute from './components/AdminRoute'
 
 function App() {
   const [user, setUser] = useState(null)
+  const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
+
+  const loadProfile = async (userId) => {
+    if (!userId) return setProfile(null)
+    const { data } = await supabase
+      .from('users')
+      .select('display_name, avatar_url, user_type, is_premium, premium_until')
+      .eq('id', userId)
+      .single()
+    setProfile(data || null)
+  }
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
+      loadProfile(session?.user?.id ?? null)
       setLoading(false)
     })
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
+      loadProfile(session?.user?.id ?? null)
     })
     return () => subscription.unsubscribe()
   }, [])
@@ -65,15 +78,15 @@ function App() {
     <Router>
       <Routes>
         {/* ── PIRATA MARKET ── */}
-        <Route path="/" element={<><Navbar user={user} /><Home /></>} />
-        <Route path="/ficha/:slug" element={<><Navbar user={user} /><ListingDetail user={user} /></>} />
-        <Route path="/publicar" element={<><Navbar user={user} /><CreateListing user={user} /></>} />
-        <Route path="/dashboard" element={<><Navbar user={user} /><Dashboard user={user} /></>} />
-        <Route path="/auth" element={<><Navbar user={user} /><Auth /></>} />
-        <Route path="/ventas-tv" element={<><Navbar user={user} /><VentasTV /></>} />
-        <Route path="/como-funciona" element={<><Navbar user={user} /><ComoFunciona /></>} />
-        <Route path="/vendedor/:userId" element={<><Navbar user={user} /><SellerCatalog /></>} />
-        <Route path="/legal" element={<><Navbar user={user} /><Legal /></>} />
+        <Route path="/" element={<><Navbar user={user} profile={profile} /><Home /></>} />
+        <Route path="/ficha/:slug" element={<><Navbar user={user} profile={profile} /><ListingDetail user={user} /></>} />
+        <Route path="/publicar" element={<><Navbar user={user} profile={profile} /><CreateListing user={user} /></>} />
+        <Route path="/dashboard" element={<><Navbar user={user} profile={profile} /><Dashboard user={user} onProfileUpdate={setProfile} /></>} />
+        <Route path="/auth" element={<><Navbar user={user} profile={profile} /><Auth /></>} />
+        <Route path="/ventas-tv" element={<><Navbar user={user} profile={profile} /><VentasTV /></>} />
+        <Route path="/como-funciona" element={<><Navbar user={user} profile={profile} /><ComoFunciona /></>} />
+        <Route path="/vendedor/:userId" element={<><Navbar user={user} profile={profile} /><SellerCatalog /></>} />
+        <Route path="/legal" element={<><Navbar user={user} profile={profile} /><Legal /></>} />
 
         {/* ── ADMIN PIRATA MARKET ── */}
         <Route path="/admin" element={<AdminLogin />} />
@@ -83,12 +96,12 @@ function App() {
         <Route path="/admin/reportes" element={<AdminRoute><AdminReportes /></AdminRoute>} />
 
         {/* ── TRAFICANTE ── */}
-        <Route path="/traficante" element={<><TraficanteNavbar user={user} /><TraficanteHome user={user} /></>} />
-        <Route path="/traficante/buscar" element={<><TraficanteNavbar user={user} /><TraficanteBuscar user={user} /></>} />
-        <Route path="/traficante/publicar-viaje" element={<><TraficanteNavbar user={user} /><TraficantePublicarViaje user={user} /></>} />
-        <Route path="/traficante/viaje/:id" element={<><TraficanteNavbar user={user} /><TraficanteViajeDetalle user={user} /></>} />
-        <Route path="/traficante/solicitud/:id" element={<><TraficanteNavbar user={user} /><TraficanteSolicitud user={user} /></>} />
-        <Route path="/traficante/dashboard" element={<><TraficanteNavbar user={user} /><TraficanteDashboard user={user} /></>} />
+        <Route path="/traficante" element={<><TraficanteNavbar user={user} profile={profile} /><TraficanteHome user={user} /></>} />
+        <Route path="/traficante/buscar" element={<><TraficanteNavbar user={user} profile={profile} /><TraficanteBuscar user={user} /></>} />
+        <Route path="/traficante/publicar-viaje" element={<><TraficanteNavbar user={user} profile={profile} /><TraficantePublicarViaje user={user} /></>} />
+        <Route path="/traficante/viaje/:id" element={<><TraficanteNavbar user={user} profile={profile} /><TraficanteViajeDetalle user={user} /></>} />
+        <Route path="/traficante/solicitud/:id" element={<><TraficanteNavbar user={user} profile={profile} /><TraficanteSolicitud user={user} /></>} />
+        <Route path="/traficante/dashboard" element={<><TraficanteNavbar user={user} profile={profile} /><TraficanteDashboard user={user} /></>} />
 
         {/* ── ADMIN TRAFICANTE ── */}
         <Route path="/traficante/admin" element={<TraficanteAdminLogin />} />
