@@ -490,94 +490,88 @@ export default function MiCuenta({ user, onProfileUpdate }) {
               </div>
             )}
 
-            {/* ══ VERIFICACIÓN ══ */}
+{/* ══ VERIFICACIÓN ══ */}
             {activeSection === 'verificacion' && (
-  <div className="mc-section">
-    <div className="mc-section-header">
-      <h2>🔒 Verificación de identidad</h2>
-      <p>Aumenta la confianza de los remitentes verificando tu identidad.</p>
-    </div>
+              <div className="mc-section">
+                <div className="mc-section-header">
+                  <h2>🔒 Verificación de identidad</h2>
+                  <p>Aumenta la confianza de los remitentes verificando tu identidad.</p>
+                </div>
 
-    <div className="mc-notice info">
-      ℹ️ Los documentos que subas deben mostrar <strong>exactamente la misma dirección y nombre</strong> que declaraste en "Mi dirección". Nuestro equipo revisará y verificará en un plazo de 24-48 horas.
-    </div>
+                <div className="mc-notice info">
+                  ℹ️ Los documentos deben mostrar <strong>exactamente la misma dirección y nombre</strong> que declaraste en "Mi dirección". Nuestro equipo revisará en 24-48 horas.
+                </div>
 
-    <div className="mc-verif-list">
+                <div className="mc-verif-list">
+                  <div className="mc-verif-item">
+                    <div className="mc-verif-icon">🪪</div>
+                    <div className="mc-verif-info">
+                      <div className="mc-verif-label">Documento de identidad</div>
+                      <div className="mc-verif-desc">Carnet de identidad, cédula o pasaporte vigente — foto frontal y dorsal.</div>
+                    </div>
+                    <div className={`mc-verif-status ${profile?.traficante_identity_verified ? 'verified' : 'pending'}`}>
+                      {profile?.traficante_identity_verified ? '✅ Verificado' : '⏳ Pendiente'}
+                    </div>
+                  </div>
 
-      {/* ── 1. Identidad ── */}
-      <div className="mc-verif-item">
-        <div className="mc-verif-icon">🪪</div>
-        <div className="mc-verif-info">
-          <div className="mc-verif-label">Documento de identidad</div>
-          <div className="mc-verif-desc">Carnet de identidad, cédula o pasaporte vigente — foto frontal y dorsal. El nombre debe coincidir exactamente.</div>
-        </div>
-        <div className={`mc-verif-status ${profile?.traficante_identity_verified ? 'verified' : 'pending'}`}>
-          {profile?.traficante_identity_verified ? '✅ Verificado' : '⏳ Pendiente'}
-        </div>
-      </div>
+                  <div className="mc-verif-item">
+                    <div className="mc-verif-icon">📄</div>
+                    <div className="mc-verif-info">
+                      <div className="mc-verif-label">Comprobante de domicilio</div>
+                      <div className="mc-verif-desc">Factura de servicio básico: agua, luz, teléfono, internet o cable. Debe mostrar tu nombre y dirección declarada.</div>
+                    </div>
+                    <div className={`mc-verif-status ${profile?.traficante_address_verified ? 'verified' : 'pending'}`}>
+                      {profile?.traficante_address_verified ? '✅ Verificado' : '⏳ Pendiente'}
+                    </div>
+                  </div>
 
-      {/* ── 2. Comprobante de domicilio ── */}
-      <div className="mc-verif-item">
-        <div className="mc-verif-icon">📄</div>
-        <div className="mc-verif-info">
-          <div className="mc-verif-label">Comprobante de domicilio</div>
-          <div className="mc-verif-desc">Factura de servicio básico: agua, luz, teléfono, internet o cable. Debe mostrar tu nombre y dirección declarada.</div>
-        </div>
-        <div className={`mc-verif-status ${profile?.traficante_address_verified ? 'verified' : 'pending'}`}>
-          {profile?.traficante_address_verified ? '✅ Verificado' : '⏳ Pendiente'}
-        </div>
-      </div>
+                  <div className="mc-verif-item">
+                    <div className="mc-verif-icon">🏦</div>
+                    <div className="mc-verif-info">
+                      <div className="mc-verif-label">Extracto bancario <span className="mc-optional-badge">Opcional</span></div>
+                      <div className="mc-verif-desc">Extracto reciente que muestre tu nombre y dirección. Refuerza tu confiabilidad para envíos de mayor valor.</div>
+                    </div>
+                    <div className={`mc-verif-status ${profile?.traficante_bank_verified ? 'verified' : 'pending'}`}>
+                      {profile?.traficante_bank_verified ? '✅ Verificado' : '⏳ Pendiente'}
+                    </div>
+                  </div>
 
-      {/* ── 3. Extracto bancario ── */}
-      <div className="mc-verif-item">
-        <div className="mc-verif-icon">🏦</div>
-        <div className="mc-verif-info">
-          <div className="mc-verif-label">Extracto bancario <span className="mc-optional-badge">Opcional</span></div>
-          <div className="mc-verif-desc">Extracto de cuenta bancaria reciente que muestre tu nombre y dirección. Refuerza tu confiabilidad para envíos de mayor valor.</div>
-        </div>
-        <div className={`mc-verif-status ${profile?.traficante_bank_verified ? 'verified' : 'pending'}`}>
-          {profile?.traficante_bank_verified ? '✅ Verificado' : '⏳ Pendiente'}
-        </div>
-      </div>
+                  <div className="mc-verif-item">
+                    <div className="mc-verif-icon">📱</div>
+                    <div className="mc-verif-info">
+                      <div className="mc-verif-label">Verificación de WhatsApp</div>
+                      <div className="mc-verif-desc">Confirma que el número registrado es tuyo y está activo.</div>
+                    </div>
+                    <div className={`mc-verif-status ${profile?.traficante_phone_locked ? 'verified' : 'pending'}`}>
+                      {profile?.traficante_phone_locked ? '✅ Verificado' : '⏳ Pendiente'}
+                    </div>
+                  </div>
+                </div>
 
-      {/* ── 4. WhatsApp ── */}
-      <div className="mc-verif-item">
-        <div className="mc-verif-icon">📱</div>
-        <div className="mc-verif-info">
-          <div className="mc-verif-label">Verificación de WhatsApp</div>
-          <div className="mc-verif-desc">Confirma que el número registrado es tuyo y está activo. Los remitentes podrán contactarte directamente.</div>
-        </div>
-        <div className={`mc-verif-status ${profile?.traficante_phone_locked ? 'verified' : 'pending'}`}>
-          {profile?.traficante_phone_locked ? '✅ Verificado' : '⏳ Pendiente'}
-        </div>
-      </div>
+                <div className="mc-verif-upload">
+                  <h3>📤 ¿Cómo verificar mi cuenta?</h3>
+                  <p>El proceso es manual y lo realiza nuestro equipo desde el backoffice. Sigue estos pasos:</p>
+                  <div className="mc-verif-steps">
+                    <div className="mc-verif-step">
+                      <div className="mc-verif-step-num">1</div>
+                      <div>Guarda tu <strong>dirección principal</strong> en la sección "Mi dirección"</div>
+                    </div>
+                    <div className="mc-verif-step">
+                      <div className="mc-verif-step-num">2</div>
+                      <div>Fija tu <strong>nombre completo y teléfono</strong> en "Información personal"</div>
+                    </div>
+                    <div className="mc-verif-step">
+                      <div className="mc-verif-step-num">3</div>
+                      <div>Contacta a soporte por WhatsApp con tu correo registrado — el equipo revisará y actualizará tu estado</div>
+                    </div>
+                  </div>
+                  <div className="mc-notice info" style={{ marginTop: '1rem', marginBottom: 0 }}>
+                    ℹ️ La verificación toma entre 24 y 48 horas hábiles. Una vez aprobada, tu perfil mostrará el sello verificado.
+                  </div>
+                </div>
 
-    </div>
-
-{/* ── ENVÍO DE DOCUMENTOS ── */}
-<div className="mc-verif-upload">
-  <h3>📤 ¿Cómo verificar mi cuenta?</h3>
-  <p>El proceso es manual y lo realiza nuestro equipo. Sigue estos pasos:</p>
-
-  <div className="mc-verif-steps">
-    <div className="mc-verif-step">
-      <div className="mc-verif-step-num">1</div>
-      <div>Asegúrate de tener tu <strong>dirección principal guardada</strong> en la sección "Mi dirección"</div>
-    </div>
-    <div className="mc-verif-step">
-      <div className="mc-verif-step-num">2</div>
-      <div>Asegúrate de tener tu <strong>nombre completo y teléfono fijados</strong> en "Información personal"</div>
-    </div>
-    <div className="mc-verif-step">
-      <div className="mc-verif-step-num">3</div>
-      <div>Contacta a soporte por WhatsApp indicando tu correo registrado — nuestro equipo revisará tu perfil y actualizará tu estado</div>
-    </div>
-  </div>
-
-  <div className="mc-notice info" style={{ marginTop: '1rem', marginBottom: 0 }}>
-    ℹ️ La verificación puede tomar entre 24 y 48 horas hábiles. Una vez aprobada, tu perfil mostrará el sello de verificado visible para todos los remitentes.
-  </div>
-</div>
+              </div>
+            )}
 
             {/* ══ RESEÑAS ══ */}
             {activeSection === 'resenas' && (
