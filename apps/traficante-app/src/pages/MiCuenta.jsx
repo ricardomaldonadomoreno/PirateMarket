@@ -554,40 +554,30 @@ export default function MiCuenta({ user, onProfileUpdate }) {
 
     </div>
 
-    {/* ── ENVÍO DE DOCUMENTOS ── */}
-    <div className="mc-verif-upload">
-      <h3>📤 Enviar documentos para verificación</h3>
-      <p>Adjunta todos los documentos en un solo correo. Nuestro equipo los revisará y actualizará tu estado en 24-48 horas.</p>
+{/* ── ENVÍO DE DOCUMENTOS ── */}
+<div className="mc-verif-upload">
+  <h3>📤 ¿Cómo verificar mi cuenta?</h3>
+  <p>El proceso es manual y lo realiza nuestro equipo. Sigue estos pasos:</p>
 
-      <div className="mc-verif-steps">
-        <div className="mc-verif-step">
-          <div className="mc-verif-step-num">1</div>
-          <div>Asegúrate de tener tu <strong>dirección principal guardada</strong> en la sección "Mi dirección"</div>
-        </div>
-        <div className="mc-verif-step">
-          <div className="mc-verif-step-num">2</div>
-          <div>Prepara fotos claras y legibles de todos tus documentos</div>
-        </div>
-        <div className="mc-verif-step">
-          <div className="mc-verif-step-num">3</div>
-          <div>Envía todo al correo de verificación con tu correo registrado en el asunto</div>
-        </div>
-      </div>
-
-      
-        href={`mailto:verificacion@busesapp.com?subject=Verificación de identidad — ${user.email}&body=Adjunto mis documentos para verificación de identidad en Traficante App.%0A%0ACorreo registrado: ${user.email}%0ANombre: ${profile?.traficante_full_name || ''}%0ADirección: ${profile?.traficante_address_text || ''}, ${profile?.traficante_address_city || ''}`}
-        className="btn btn-primary t-btn-primary mc-verif-mailto"
-      >
-        📧 Abrir correo de verificación
-      </a>
-
-      <p className="mc-verif-note">
-        También puedes escribir directamente a <strong>verificacion@busesapp.com</strong>
-      </p>
+  <div className="mc-verif-steps">
+    <div className="mc-verif-step">
+      <div className="mc-verif-step-num">1</div>
+      <div>Asegúrate de tener tu <strong>dirección principal guardada</strong> en la sección "Mi dirección"</div>
     </div>
-
+    <div className="mc-verif-step">
+      <div className="mc-verif-step-num">2</div>
+      <div>Asegúrate de tener tu <strong>nombre completo y teléfono fijados</strong> en "Información personal"</div>
+    </div>
+    <div className="mc-verif-step">
+      <div className="mc-verif-step-num">3</div>
+      <div>Contacta a soporte por WhatsApp indicando tu correo registrado — nuestro equipo revisará tu perfil y actualizará tu estado</div>
+    </div>
   </div>
-)}
+
+  <div className="mc-notice info" style={{ marginTop: '1rem', marginBottom: 0 }}>
+    ℹ️ La verificación puede tomar entre 24 y 48 horas hábiles. Una vez aprobada, tu perfil mostrará el sello de verificado visible para todos los remitentes.
+  </div>
+</div>
 
             {/* ══ RESEÑAS ══ */}
             {activeSection === 'resenas' && (
