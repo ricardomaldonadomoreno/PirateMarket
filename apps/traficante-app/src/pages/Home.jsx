@@ -16,6 +16,30 @@ const HOW_STEPS = [
   { icon: '📲', key: 'step3' },
 ]
 
+const EARN_PROFILES = [
+  {
+    icon: '🧳',
+    title: 'Viajero',
+    desc: 'Tienes un viaje programado y espacio libre en tu maleta. Cada paquete que llevas es dinero extra sin esfuerzo adicional.',
+    cta: 'Publicar mi viaje',
+    route: '/traficante/publicar-viaje'
+  },
+  {
+    icon: '📦',
+    title: 'Compactador',
+    desc: 'Recibes paquetes en tu domicilio, los consolidas en una caja y los envías. Sin viajar, desde tu casa, con horarios propios.',
+    cta: 'Ser compactador',
+    route: '/traficante/publicar-viaje'
+  },
+  {
+    icon: '🚗',
+    title: 'Fletero',
+    desc: 'Tienes vehículo y viajas entre ciudades. Llena tu auto o camioneta con carga y convierte cada viaje en un negocio.',
+    cta: 'Ofrecer mi vehículo',
+    route: '/traficante/publicar-viaje'
+  },
+]
+
 export default function TraficanteHome({ user }) {
   const { t } = useTranslation('traficante')
   const navigate = useNavigate()
@@ -61,9 +85,52 @@ export default function TraficanteHome({ user }) {
             >
               ✈️ {t('home.btn_travel')}
             </button>
+            {!user && (
+              <button
+                className="btn btn-ghost t-btn-ghost"
+                onClick={() => navigate('/auth')}
+              >
+                👤 Crear cuenta gratis
+              </button>
+            )}
           </div>
         </div>
         <div className="t-hero-glow" />
+      </section>
+
+      {/* ── GANA DINERO ── */}
+      <section className="t-earn-section">
+        <div className="container">
+          <div className="t-earn-header">
+            <div className="t-earn-badge">💰 Para transportadores</div>
+            <h2 className="t-section-title">¿Viajas seguido? Cada viaje puede generarte ingresos</h2>
+            <p className="t-earn-subtitle">
+              Convierte tus viajes, tu vehículo o tu domicilio en una fuente de ingresos.
+              Sin jefes, sin horarios fijos, sin inversión inicial.
+            </p>
+          </div>
+          <div className="t-earn-grid">
+            {EARN_PROFILES.map((profile) => (
+              <div key={profile.title} className="t-earn-card card">
+                <div className="t-earn-icon">{profile.icon}</div>
+                <h3>{profile.title}</h3>
+                <p>{profile.desc}</p>
+                <button
+                  className="btn btn-outline t-btn-outline t-earn-btn"
+                  onClick={() => navigate(user ? profile.route : '/auth')}
+                >
+                  {user ? profile.cta : '→ Registrarme y empezar'}
+                </button>
+              </div>
+            ))}
+          </div>
+          <div className="t-earn-cta">
+            <div className="t-earn-cta-text">
+              <span>🏴‍☠️</span>
+              <p>Somos competencia directa de las empresas de paquetería. La diferencia: <strong>el dinero va a las personas, no a las corporaciones.</strong></p>
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* ── BUSCADOR ── */}
@@ -159,6 +226,32 @@ export default function TraficanteHome({ user }) {
           </div>
         </div>
       </section>
+
+      {/* ── REGISTRO CTA ── */}
+      {!user && (
+        <section className="t-register-section">
+          <div className="container">
+            <div className="t-register-card">
+              <h2>¿Listo para empezar?</h2>
+              <p>Crea tu cuenta gratis y empieza a enviar o a ganar dinero hoy mismo.</p>
+              <div className="t-register-actions">
+                <button
+                  className="btn btn-primary t-btn-primary"
+                  onClick={() => navigate('/auth')}
+                >
+                  🚀 Crear cuenta gratis
+                </button>
+                <button
+                  className="btn btn-outline t-btn-outline"
+                  onClick={() => navigate('/traficante/buscar')}
+                >
+                  🔍 Buscar transportadores
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ── AVISO LEGAL ── */}
       <section className="t-legal-section">
