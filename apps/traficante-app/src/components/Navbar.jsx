@@ -37,7 +37,7 @@ export default function TraficanteNavbar({ user, profile }) {
 
           {user ? (
             <>
-              <Link to="/traficante/dashboard" className="navbar-avatar-btn">
+              <Link to="/traficante/mi-cuenta" className="navbar-avatar-btn">
                 {profile?.avatar_url
                   ? <img src={profile.avatar_url} alt="perfil" className="navbar-avatar-img" />
                   : <div className="navbar-avatar-placeholder">
