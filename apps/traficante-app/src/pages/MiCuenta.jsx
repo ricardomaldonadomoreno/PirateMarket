@@ -492,41 +492,102 @@ export default function MiCuenta({ user, onProfileUpdate }) {
 
             {/* ══ VERIFICACIÓN ══ */}
             {activeSection === 'verificacion' && (
-              <div className="mc-section">
-                <div className="mc-section-header">
-                  <h2>🔒 Verificación de identidad</h2>
-                  <p>Aumenta la confianza de los remitentes verificando tu identidad.</p>
-                </div>
+  <div className="mc-section">
+    <div className="mc-section-header">
+      <h2>🔒 Verificación de identidad</h2>
+      <p>Aumenta la confianza de los remitentes verificando tu identidad.</p>
+    </div>
 
-                <div className="mc-notice info">
-                  ℹ️ Los documentos que subas deben mostrar <strong>exactamente la misma dirección</strong> que declaraste en "Mi dirección". Nuestro equipo revisará y verificará en un plazo de 24-48 horas.
-                </div>
+    <div className="mc-notice info">
+      ℹ️ Los documentos que subas deben mostrar <strong>exactamente la misma dirección y nombre</strong> que declaraste en "Mi dirección". Nuestro equipo revisará y verificará en un plazo de 24-48 horas.
+    </div>
 
-                <div className="mc-verif-list">
-                  {[
-                    { key: 'identity', icon: '🪪', label: 'Documento de identidad', desc: 'CI, pasaporte o carnet vigente — foto frontal y dorsal', verified: false },
-                    { key: 'address',  icon: '📄', label: 'Comprobante de domicilio', desc: 'Factura de servicio o documento con tu dirección declarada', verified: !!profile?.traficante_address_locked },
-                    { key: 'phone',    icon: '📱', label: 'Verificación de WhatsApp', desc: 'Recibirás un código al número registrado', verified: !!profile?.traficante_phone_locked },
-                    { key: 'travel',   icon: '✈️', label: 'Comprobante de viaje', desc: 'Pasaje, itinerario o reserva del viaje a declarar', verified: false },
-                  ].map(item => (
-                    <div key={item.key} className="mc-verif-item">
-                      <div className="mc-verif-icon">{item.icon}</div>
-                      <div className="mc-verif-info">
-                        <div className="mc-verif-label">{item.label}</div>
-                        <div className="mc-verif-desc">{item.desc}</div>
-                      </div>
-                      <div className={`mc-verif-status ${item.verified ? 'verified' : 'pending'}`}>
-                        {item.verified ? '✅ Verificado' : '⏳ Pendiente'}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+    <div className="mc-verif-list">
 
-                <div className="mc-notice warning" style={{ marginTop: '2rem' }}>
-                  📧 Para solicitar verificación, envía tus documentos a <strong>verificacion@busesapp.com</strong> junto con tu correo registrado. Nuestro equipo los revisará y actualizará tu estado.
-                </div>
-              </div>
-            )}
+      {/* ── 1. Identidad ── */}
+      <div className="mc-verif-item">
+        <div className="mc-verif-icon">🪪</div>
+        <div className="mc-verif-info">
+          <div className="mc-verif-label">Documento de identidad</div>
+          <div className="mc-verif-desc">Carnet de identidad, cédula o pasaporte vigente — foto frontal y dorsal. El nombre debe coincidir exactamente.</div>
+        </div>
+        <div className={`mc-verif-status ${profile?.traficante_identity_verified ? 'verified' : 'pending'}`}>
+          {profile?.traficante_identity_verified ? '✅ Verificado' : '⏳ Pendiente'}
+        </div>
+      </div>
+
+      {/* ── 2. Comprobante de domicilio ── */}
+      <div className="mc-verif-item">
+        <div className="mc-verif-icon">📄</div>
+        <div className="mc-verif-info">
+          <div className="mc-verif-label">Comprobante de domicilio</div>
+          <div className="mc-verif-desc">Factura de servicio básico: agua, luz, teléfono, internet o cable. Debe mostrar tu nombre y dirección declarada.</div>
+        </div>
+        <div className={`mc-verif-status ${profile?.traficante_address_verified ? 'verified' : 'pending'}`}>
+          {profile?.traficante_address_verified ? '✅ Verificado' : '⏳ Pendiente'}
+        </div>
+      </div>
+
+      {/* ── 3. Extracto bancario ── */}
+      <div className="mc-verif-item">
+        <div className="mc-verif-icon">🏦</div>
+        <div className="mc-verif-info">
+          <div className="mc-verif-label">Extracto bancario <span className="mc-optional-badge">Opcional</span></div>
+          <div className="mc-verif-desc">Extracto de cuenta bancaria reciente que muestre tu nombre y dirección. Refuerza tu confiabilidad para envíos de mayor valor.</div>
+        </div>
+        <div className={`mc-verif-status ${profile?.traficante_bank_verified ? 'verified' : 'pending'}`}>
+          {profile?.traficante_bank_verified ? '✅ Verificado' : '⏳ Pendiente'}
+        </div>
+      </div>
+
+      {/* ── 4. WhatsApp ── */}
+      <div className="mc-verif-item">
+        <div className="mc-verif-icon">📱</div>
+        <div className="mc-verif-info">
+          <div className="mc-verif-label">Verificación de WhatsApp</div>
+          <div className="mc-verif-desc">Confirma que el número registrado es tuyo y está activo. Los remitentes podrán contactarte directamente.</div>
+        </div>
+        <div className={`mc-verif-status ${profile?.traficante_phone_locked ? 'verified' : 'pending'}`}>
+          {profile?.traficante_phone_locked ? '✅ Verificado' : '⏳ Pendiente'}
+        </div>
+      </div>
+
+    </div>
+
+    {/* ── ENVÍO DE DOCUMENTOS ── */}
+    <div className="mc-verif-upload">
+      <h3>📤 Enviar documentos para verificación</h3>
+      <p>Adjunta todos los documentos en un solo correo. Nuestro equipo los revisará y actualizará tu estado en 24-48 horas.</p>
+
+      <div className="mc-verif-steps">
+        <div className="mc-verif-step">
+          <div className="mc-verif-step-num">1</div>
+          <div>Asegúrate de tener tu <strong>dirección principal guardada</strong> en la sección "Mi dirección"</div>
+        </div>
+        <div className="mc-verif-step">
+          <div className="mc-verif-step-num">2</div>
+          <div>Prepara fotos claras y legibles de todos tus documentos</div>
+        </div>
+        <div className="mc-verif-step">
+          <div className="mc-verif-step-num">3</div>
+          <div>Envía todo al correo de verificación con tu correo registrado en el asunto</div>
+        </div>
+      </div>
+
+      
+        href={`mailto:verificacion@busesapp.com?subject=Verificación de identidad — ${user.email}&body=Adjunto mis documentos para verificación de identidad en Traficante App.%0A%0ACorreo registrado: ${user.email}%0ANombre: ${profile?.traficante_full_name || ''}%0ADirección: ${profile?.traficante_address_text || ''}, ${profile?.traficante_address_city || ''}`}
+        className="btn btn-primary t-btn-primary mc-verif-mailto"
+      >
+        📧 Abrir correo de verificación
+      </a>
+
+      <p className="mc-verif-note">
+        También puedes escribir directamente a <strong>verificacion@busesapp.com</strong>
+      </p>
+    </div>
+
+  </div>
+)}
 
             {/* ══ RESEÑAS ══ */}
             {activeSection === 'resenas' && (
