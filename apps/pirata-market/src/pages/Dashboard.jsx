@@ -99,6 +99,7 @@ export default function Dashboard({ user }) {
       const urlWithCache = `${publicUrl}?t=${Date.now()}`
       await supabase.from('users').update({ avatar_url: urlWithCache }).eq('id', user.id)
       setProfile(prev => ({ ...prev, avatar_url: urlWithCache }))
+      if (onProfileUpdate) onProfileUpdate(prev => ({ ...prev, avatar_url: urlWithCache }))
       e.target.value = ''
     } catch (error) { alert('Error al subir la foto: ' + error.message) }
     finally { setUploadingAvatar(false) }
@@ -114,6 +115,7 @@ export default function Dashboard({ user }) {
       }
       await supabase.from('users').update({ avatar_url: null }).eq('id', user.id)
       setProfile(prev => ({ ...prev, avatar_url: null }))
+      if (onProfileUpdate) onProfileUpdate(prev => ({ ...prev, avatar_url: null }))
     } catch (error) { alert('Error al eliminar la foto') }
     finally { setUploadingAvatar(false) }
   }
