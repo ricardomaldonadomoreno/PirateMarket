@@ -49,3 +49,16 @@
 .btn-primary.traficante-btn:hover {
   background: var(--traficante-gold-light);
 }
+
+/* ── AVATAR ── */
+.traficante-navbar .navbar-avatar-btn {
+  border-color: rgba(224, 123, 57, 0.3);
+}
+
+.traficante-navbar .navbar-avatar-btn:hover {
+  border-color: var(--traficante-gold);
+}
+
+.traficante-navbar .navbar-avatar-placeholder {
+  color: var(--traficante-gold);
+}
