@@ -30,8 +30,8 @@ import AdminAnuncios from './pages/admin/AdminAnuncios'
 import AdminReportes from './pages/admin/AdminReportes'
 
 // Admin — Traficante
-import TraficanteAdminLogin from '../../traficante-app/src/pages/AdminLogin'
-import TraficanteAdminDashboard from '../../traficante-app/src/pages/AdminDashboard'
+import TraficanteAdminLogin from '../../traficante-app/src/pages/admin/AdminLogin'
+import TraficanteAdminDashboard from '../../traficante-app/src/pages/admin/AdminDashboard'
 
 // Components
 import Navbar from './components/Navbar'
