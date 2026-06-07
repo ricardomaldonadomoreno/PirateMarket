@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 import LanguageSelector from './LanguageSelector'
 import './Navbar.css'
 
-export default function Navbar({ user }) {
+export default function Navbar({ user, profile }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
 
@@ -17,7 +17,7 @@ export default function Navbar({ user }) {
     <nav className="navbar">
       <div className="navbar-container">
         <Link to="/" className="navbar-logo">
-          <img src="/logo - ico.png" alt="Pirata Market" className="logo-icon" />
+          <img src="/logo-ico.png" alt="Pirata Market" className="logo-icon" />
           <div className="logo-text">
             <span className="logo-brand luxury-gold">pirata</span>
             <span className="logo-suffix">market</span>
@@ -26,15 +26,20 @@ export default function Navbar({ user }) {
 
         <div className="navbar-actions">
           <LanguageSelector />
-          
+
           <Link to="/publicar" className="btn btn-primary">
             {t('navbar.publish')}
           </Link>
 
           {user ? (
             <>
-              <Link to="/dashboard" className="btn-icon">
-                👤
+              <Link to="/dashboard" className="navbar-avatar-btn">
+                {profile?.avatar_url
+                  ? <img src={profile.avatar_url} alt="perfil" className="navbar-avatar-img" />
+                  : <div className="navbar-avatar-placeholder">
+                      {(profile?.display_name || user.email)?.charAt(0).toUpperCase()}
+                    </div>
+                }
               </Link>
               <button onClick={handleLogout} className="btn btn-ghost">
                 {t('navbar.logout')}
