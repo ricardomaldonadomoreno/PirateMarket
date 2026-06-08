@@ -639,3 +639,33 @@
 }
 
 .mc-verif-note strong { color: var(--text-light); }
+
+/* ── VERIFICACIÓN UPLOAD ── */
+.mc-verif-upload-box {
+  margin-top: 0.75rem;
+}
+
+.mc-optional-badge {
+  font-size: 0.7rem;
+  background: rgba(136, 136, 136, 0.1);
+  color: var(--text-muted);
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  margin-left: 0.5rem;
+}
+
+.btn-small {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.8rem;
+}
+
+.btn-full {
+  width: 100%;
+  justify-content: center;
+}
+
+.mc-saved-msg {
+  color: var(--success);
+  font-size: 0.85rem;
+  margin-right: 1rem;
+}
