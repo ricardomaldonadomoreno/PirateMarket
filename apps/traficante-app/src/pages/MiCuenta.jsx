@@ -69,10 +69,19 @@ export default function MiCuenta({ user, onProfileUpdate }) {
   const [addressText, setAddressText] = useState('')
   const [addressCoords, setAddressCoords] = useState(null)
 
+  // Verificación
+  const [verificationRequest, setVerificationRequest] = useState(null)
+  const [uploadingDocs, setUploadingDocs] = useState(false)
+  const [identityFiles, setIdentityFiles] = useState([])
+  const [addressFiles, setAddressFiles] = useState([])
+  const [bankFiles, setBankFiles] = useState([])
+  const [verifSaved, setVerifSaved] = useState(false)
+
   useEffect(() => {
     if (!user) return navigate('/auth')
     loadProfile()
     loadReviews()
+    loadVerification()
   }, [user])
 
   const loadProfile = async () => {
@@ -80,12 +89,13 @@ export default function MiCuenta({ user, onProfileUpdate }) {
     const { data } = await supabase
       .from('users')
       .select(`
-        display_name, avatar_url,
+        display_name, avatar_url, is_verified,
         traficante_full_name, traficante_phone,
         traficante_address_city, traficante_address_text,
         traficante_address_lat, traficante_address_lng,
         traficante_address_locked, traficante_phone_locked,
-        traficante_bio, traficante_frequent_routes
+        traficante_bio, traficante_frequent_routes,
+        traficante_identity_verified, traficante_address_verified, traficante_bank_verified
       `)
       .eq('id', user.id)
       .single()
@@ -116,6 +126,17 @@ export default function MiCuenta({ user, onProfileUpdate }) {
       .eq('reviewed_id', user.id)
       .order('created_at', { ascending: false })
     setReviews(data || [])
+  }
+
+  const loadVerification = async () => {
+    const { data } = await supabase
+      .from('verification_requests')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single()
+    if (data) setVerificationRequest(data)
   }
 
   // ── AVATAR ──
@@ -206,6 +227,62 @@ export default function MiCuenta({ user, onProfileUpdate }) {
     setTimeout(() => setSaved(''), 3000)
   }
 
+  // ── VERIFICACIÓN ──
+  const uploadDocFiles = async (files, folder) => {
+    const urls = []
+    for (const file of files) {
+      const fileExt = file.name.split('.').pop()
+      const path = `${user.id}/${folder}/${Date.now()}.${fileExt}`
+      const { error } = await supabase.storage
+        .from('verification-docs')
+        .upload(path, file, { contentType: file.type })
+      if (error) throw error
+      const { data: { publicUrl } } = supabase.storage
+        .from('verification-docs')
+        .getPublicUrl(path)
+      urls.push(publicUrl)
+    }
+    return urls
+  }
+
+  const handleSubmitVerification = async () => {
+    if (identityFiles.length === 0 && addressFiles.length === 0 && bankFiles.length === 0) {
+      setError('Sube al menos un documento para verificar')
+      return
+    }
+    setUploadingDocs(true)
+    setError('')
+    try {
+      const identityUrls = await uploadDocFiles(identityFiles, 'identity')
+      const addressUrls = await uploadDocFiles(addressFiles, 'address')
+      const bankUrls = await uploadDocFiles(bankFiles, 'bank')
+
+      const payload = {
+        user_id: user.id,
+        status: 'pending',
+        identity_docs: identityUrls,
+        business_docs: [...addressUrls, ...bankUrls], // Reutilizamos business_docs para Traficante
+      }
+
+      if (verificationRequest) {
+        await supabase.from('verification_requests').update(payload).eq('id', verificationRequest.id)
+      } else {
+        await supabase.from('verification_requests').insert([payload])
+      }
+
+      setVerifSaved(true)
+      setIdentityFiles([])
+      setAddressFiles([])
+      setBankFiles([])
+      setTimeout(() => setVerifSaved(false), 4000)
+      loadVerification()
+    } catch (err) {
+      setError('Error al enviar documentos: ' + err.message)
+    } finally {
+      setUploadingDocs(false)
+    }
+  }
+
   const getGPS = () => {
     if (!navigator.geolocation) return
     navigator.geolocation.getCurrentPosition(pos => {
@@ -219,8 +296,8 @@ export default function MiCuenta({ user, onProfileUpdate }) {
 
   const trafProfile = profile ? {
     level: 'basico', // viene de traficante_profiles
-    identity_verified: false,
-    address_verified: !!profile.traficante_address_locked,
+    identity_verified: !!profile.traficante_identity_verified,
+    address_verified: !!profile.traficante_address_verified,
   } : null
 
   if (loading) return (
@@ -352,45 +429,35 @@ export default function MiCuenta({ user, onProfileUpdate }) {
                     ? <div className="mc-locked-field">{profile.traficante_phone || '—'}</div>
                     : <input className="input" value={phone}
                         onChange={e => setPhone(e.target.value)}
-                        placeholder="Ej: +591 70000000" />
+                        placeholder="+591 7XXXXXXX" />
                   }
                 </div>
 
-                {!profile?.traficante_phone_locked && (fullName || phone) && (
-                  <div className="mc-notice warning">
-                    ⚠️ Al guardar el nombre real y teléfono, estos datos quedarán fijos. Solo soporte podrá modificarlos.
-                  </div>
-                )}
-
                 {/* Bio */}
                 <div className="mc-field-group">
-                  <label className="mc-label">Bio pública</label>
-                  <p className="mc-hint">Cuéntale a los remitentes quién eres y por qué pueden confiar en ti.</p>
-                  <textarea className="input textarea" value={bio}
+                  <label className="mc-label">Bio / Descripción</label>
+                  <p className="mc-hint">Cuéntale a los usuarios sobre tu experiencia como transportador.</p>
+                  <textarea className="input textarea" rows={4} value={bio}
                     onChange={e => setBio(e.target.value)}
-                    placeholder="Ej: Viajo frecuentemente entre Santa Cruz y São Paulo. Soy responsable y puntual..."
-                    rows={3} />
+                    placeholder="Ej: Viajo semanalmente entre Santa Cruz y La Paz..." />
                 </div>
 
-                {/* Rutas frecuentes */}
+                {/* Rutas */}
                 <div className="mc-field-group">
                   <label className="mc-label">Rutas frecuentes</label>
-                  <p className="mc-hint">Indica las rutas que haces regularmente para que los remitentes te encuentren más fácil.</p>
+                  <p className="mc-hint">Ej: Santa Cruz ↔ La Paz, Santa Cruz ↔ Puerto Suárez.</p>
                   <input className="input" value={frequentRoutes}
                     onChange={e => setFrequentRoutes(e.target.value)}
-                    placeholder="Ej: SCZ → SP, SCZ → BsAs" />
+                    placeholder="Ej: Santa Cruz - Cochabamba" />
                 </div>
 
-                {error && <div className="mc-error">⚠️ {error}</div>}
-                {saved === 'personal' && <div className="mc-success">✅ Datos guardados correctamente</div>}
-                {saved === 'fixed' && <div className="mc-success">✅ Nombre y teléfono guardados y fijados</div>}
-
                 <div className="mc-actions">
-                  <button className="btn btn-primary t-btn-primary" onClick={savePersonal} disabled={saving}>
-                    {saving ? <span className="loading" style={{ width: 16, height: 16 }} /> : '💾 Guardar cambios'}
+                  {saved === 'personal' && <span className="mc-saved-msg">✓ Guardado</span>}
+                  <button className="btn btn-primary" onClick={savePersonal} disabled={saving}>
+                    {saving ? 'Guardando...' : 'Guardar cambios'}
                   </button>
-                  {!profile?.traficante_phone_locked && (fullName || phone) && (
-                    <button className="btn btn-outline t-btn-outline" onClick={saveFixed} disabled={saving}>
+                  {!profile?.traficante_phone_locked && (
+                    <button className="btn btn-secondary" onClick={saveFixed} disabled={saving || !fullName || !phone} style={{ marginLeft: '1rem' }}>
                       🔒 Fijar nombre y teléfono
                     </button>
                   )}
@@ -398,27 +465,23 @@ export default function MiCuenta({ user, onProfileUpdate }) {
               </div>
             )}
 
-            {/* ══ DIRECCIÓN ══ */}
+            {/* ══ MI DIRECCIÓN ══ */}
             {activeSection === 'direccion' && (
               <div className="mc-section">
                 <div className="mc-section-header">
-                  <h2>📍 Mi dirección principal</h2>
-                  <p>Tu punto oficial de recepción y entrega de paquetes.</p>
-                </div>
-
-                <div className="mc-notice warning">
-                  ⚠️ <strong>Lee antes de guardar:</strong> Una vez confirmada, tu dirección principal quedará fija y no podrá editarse. Debe coincidir exactamente con tu documento de identidad y será verificada por nuestro equipo. Esta dirección es el punto oficial donde los remitentes llevarán sus paquetes.
+                  <h2>📍 Mi dirección</h2>
+                  <p>Tu ubicación base para recibir o entregar paquetes.</p>
                 </div>
 
                 {profile?.traficante_address_locked ? (
                   <div className="mc-locked-address">
-                    <div className="mc-locked-address-icon">📍</div>
-                    <div>
+                    <div className="mc-locked-address-icon">🏠</div>
+                    <div className="mc-locked-address-info">
                       <div className="mc-locked-address-city">{profile.traficante_address_city}</div>
                       <div className="mc-locked-address-text">{profile.traficante_address_text}</div>
-                      {addressCoords && (
+                      {profile.traficante_address_lat && (
                         <div className="mc-locked-address-coords">
-                          📡 {addressCoords.lat.toFixed(5)}, {addressCoords.lng.toFixed(5)}
+                          📍 {profile.traficante_address_lat.toFixed(4)}, {profile.traficante_address_lng.toFixed(4)}
                         </div>
                       )}
                     </div>
@@ -426,63 +489,60 @@ export default function MiCuenta({ user, onProfileUpdate }) {
                   </div>
                 ) : (
                   <>
-                    <div className="mc-field-group">
-                      <label className="mc-label">Ciudad *</label>
-                      <input className="input" value={addressCity}
-                        onChange={e => setAddressCity(e.target.value)}
-                        placeholder="Ej: Santa Cruz de la Sierra, Bolivia" />
+                    <div className="mc-notice warning">
+                      ⚠️ Una vez guardada tu dirección, se bloqueará para verificación. Solo podrás cambiarla contactando a soporte.
                     </div>
 
                     <div className="mc-field-group">
-                      <label className="mc-label">Dirección exacta *</label>
-                      <p className="mc-hint">Incluye calle, número, barrio o referencia. Debe coincidir con tus documentos.</p>
+                      <label className="mc-label">Ciudad</label>
+                      <input className="input" value={addressCity}
+                        onChange={e => setAddressCity(e.target.value)}
+                        placeholder="Ej: Santa Cruz de la Sierra" />
+                    </div>
+
+                    <div className="mc-field-group">
+                      <label className="mc-label">Dirección exacta</label>
                       <input className="input" value={addressText}
                         onChange={e => setAddressText(e.target.value)}
-                        placeholder="Ej: Av. Roca y Coronado #450, Villa 1ro de Mayo" />
+                        placeholder="Ej: Av. Bush, Calle 4, Edificio..." />
                     </div>
 
                     <div className="mc-field-group">
                       <label className="mc-label">Ubicación GPS</label>
-                      <p className="mc-hint">Marca tu punto exacto en el mapa para que los remitentes te encuentren fácilmente.</p>
                       <div className="mc-gps-row">
-                        <button type="button" className="btn btn-secondary" onClick={getGPS}>
-                          📡 Usar mi ubicación actual
-                        </button>
-                        <button type="button" className="btn btn-secondary"
-                          onClick={() => setShowMap(!showMap)}>
-                          🗺️ {showMap ? 'Cerrar mapa' : 'Pinchar en mapa'}
+                        <button className="btn btn-secondary" onClick={getGPS}>
+                          📍 Obtener ubicación actual
                         </button>
                         {addressCoords && (
                           <span className="mc-coords-badge">
-                            ✅ {addressCoords.lat.toFixed(5)}, {addressCoords.lng.toFixed(5)}
+                            {addressCoords.lat.toFixed(5)}, {addressCoords.lng.toFixed(5)}
                           </span>
                         )}
+                        <button className="btn btn-ghost" onClick={() => setShowMap(!showMap)}>
+                          {showMap ? 'Ocultar mapa' : '📍 Seleccionar en mapa'}
+                        </button>
                       </div>
-                      {showMap && (
+
+                      {(showMap || addressCoords) && (
                         <div className="mc-map">
                           <MapContainer
-                            center={addressCoords || [-17.8, -63.18]} zoom={13}
-                            style={{ height: '280px', borderRadius: '12px' }}
+                            center={addressCoords || { lat: -17.7833, lng: -63.1821 }}
+                            zoom={13}
+                            style={{ height: '300px', borderRadius: '12px' }}
                           >
                             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                            <MapPicker onSelect={(coords) => { setAddressCoords(coords); setShowMap(false) }} />
+                            <MapPicker onSelect={setAddressCoords} />
                             {addressCoords && <Marker position={[addressCoords.lat, addressCoords.lng]} />}
                           </MapContainer>
-                          <p className="mc-map-hint">Haz clic en el mapa para marcar el punto exacto</p>
+                          <p className="mc-map-hint">Haz clic en el mapa para ajustar tu ubicación exacta.</p>
                         </div>
                       )}
                     </div>
 
-                    <div className="mc-notice danger">
-                      🔒 Al guardar tu dirección quedará fija. Para cualquier cambio posterior deberás contactar a soporte con documentación válida.
-                    </div>
-
-                    {error && <div className="mc-error">⚠️ {error}</div>}
-                    {saved === 'address' && <div className="mc-success">✅ Dirección guardada y fijada correctamente</div>}
-
                     <div className="mc-actions">
-                      <button className="btn btn-primary t-btn-primary" onClick={saveAddress} disabled={saving}>
-                        {saving ? <span className="loading" style={{ width: 16, height: 16 }} /> : '🔒 Confirmar y fijar dirección'}
+                      {saved === 'address' && <span className="mc-saved-msg">✓ Dirección guardada</span>}
+                      <button className="btn btn-primary" onClick={saveAddress} disabled={saving || !addressCity || !addressText}>
+                        {saving ? 'Guardando...' : '🔒 Guardar y fijar dirección'}
                       </button>
                     </div>
                   </>
@@ -490,57 +550,91 @@ export default function MiCuenta({ user, onProfileUpdate }) {
               </div>
             )}
 
-{/* ══ VERIFICACIÓN ══ */}
+            {/* ══ VERIFICACIÓN ══ */}
             {activeSection === 'verificacion' && (
               <div className="mc-section">
                 <div className="mc-section-header">
-                  <h2>🔒 Verificación de identidad</h2>
-                  <p>Aumenta la confianza de los remitentes verificando tu identidad.</p>
+                  <h2>🔒 Verificación de cuenta</h2>
+                  <p>Completa las verificaciones para subir de nivel y generar más confianza.</p>
                 </div>
 
+                {error && <div className="mc-notice danger">⚠️ {error}</div>}
+                {verifSaved && <div className="mc-notice info">✅ Documentos enviados con éxito. Nuestro equipo los revisará pronto.</div>}
+
                 <div className="mc-notice info">
-                  ℹ️ Los documentos deben mostrar <strong>exactamente la misma dirección y nombre</strong> que declaraste en "Mi dirección". Nuestro equipo revisará en 24-48 horas.
+                  ℹ️ Los documentos deben mostrar <strong>exactamente la misma dirección y nombre</strong> que declaraste. Nuestro equipo revisará en 24-48 horas.
                 </div>
 
                 <div className="mc-verif-list">
+                  {/* Identidad */}
                   <div className="mc-verif-item">
                     <div className="mc-verif-icon">🪪</div>
                     <div className="mc-verif-info">
                       <div className="mc-verif-label">Documento de identidad</div>
-                      <div className="mc-verif-desc">Carnet de identidad, cédula o pasaporte vigente — foto frontal y dorsal.</div>
+                      <div className="mc-verif-desc">Carnet de identidad o pasaporte vigente — foto frontal y dorsal.</div>
+                      {!profile?.traficante_identity_verified && (
+                        <div className="mc-verif-upload-box">
+                          <input type="file" accept="image/*" multiple id="ident-input" style={{ display: 'none' }}
+                            onChange={e => setIdentityFiles(Array.from(e.target.files))} />
+                          <label htmlFor="ident-input" className="btn btn-secondary btn-small">
+                            📷 {identityFiles.length > 0 ? `${identityFiles.length} fotos seleccionadas` : 'Seleccionar fotos'}
+                          </label>
+                        </div>
+                      )}
                     </div>
                     <div className={`mc-verif-status ${profile?.traficante_identity_verified ? 'verified' : 'pending'}`}>
                       {profile?.traficante_identity_verified ? '✅ Verificado' : '⏳ Pendiente'}
                     </div>
                   </div>
 
+                  {/* Domicilio */}
                   <div className="mc-verif-item">
                     <div className="mc-verif-icon">📄</div>
                     <div className="mc-verif-info">
                       <div className="mc-verif-label">Comprobante de domicilio</div>
-                      <div className="mc-verif-desc">Factura de servicio básico: agua, luz, teléfono, internet o cable. Debe mostrar tu nombre y dirección declarada.</div>
+                      <div className="mc-verif-desc">Factura de servicio básico que muestre tu nombre y dirección.</div>
+                      {!profile?.traficante_address_verified && (
+                        <div className="mc-verif-upload-box">
+                          <input type="file" accept="image/*" multiple id="addr-input" style={{ display: 'none' }}
+                            onChange={e => setAddressFiles(Array.from(e.target.files))} />
+                          <label htmlFor="addr-input" className="btn btn-secondary btn-small">
+                            📷 {addressFiles.length > 0 ? `${addressFiles.length} fotos seleccionadas` : 'Seleccionar fotos'}
+                          </label>
+                        </div>
+                      )}
                     </div>
                     <div className={`mc-verif-status ${profile?.traficante_address_verified ? 'verified' : 'pending'}`}>
                       {profile?.traficante_address_verified ? '✅ Verificado' : '⏳ Pendiente'}
                     </div>
                   </div>
 
+                  {/* Banco */}
                   <div className="mc-verif-item">
                     <div className="mc-verif-icon">🏦</div>
                     <div className="mc-verif-info">
                       <div className="mc-verif-label">Extracto bancario <span className="mc-optional-badge">Opcional</span></div>
-                      <div className="mc-verif-desc">Extracto reciente que muestre tu nombre y dirección. Refuerza tu confiabilidad para envíos de mayor valor.</div>
+                      <div className="mc-verif-desc">Extracto reciente que muestre tu nombre y dirección.</div>
+                      {!profile?.traficante_bank_verified && (
+                        <div className="mc-verif-upload-box">
+                          <input type="file" accept="image/*" multiple id="bank-input" style={{ display: 'none' }}
+                            onChange={e => setBankFiles(Array.from(e.target.files))} />
+                          <label htmlFor="bank-input" className="btn btn-secondary btn-small">
+                            📷 {bankFiles.length > 0 ? `${bankFiles.length} fotos seleccionadas` : 'Seleccionar fotos'}
+                          </label>
+                        </div>
+                      )}
                     </div>
                     <div className={`mc-verif-status ${profile?.traficante_bank_verified ? 'verified' : 'pending'}`}>
                       {profile?.traficante_bank_verified ? '✅ Verificado' : '⏳ Pendiente'}
                     </div>
                   </div>
 
+                  {/* WhatsApp */}
                   <div className="mc-verif-item">
                     <div className="mc-verif-icon">📱</div>
                     <div className="mc-verif-info">
                       <div className="mc-verif-label">Verificación de WhatsApp</div>
-                      <div className="mc-verif-desc">Confirma que el número registrado es tuyo y está activo.</div>
+                      <div className="mc-verif-desc">Confirma que tu número está activo.</div>
                     </div>
                     <div className={`mc-verif-status ${profile?.traficante_phone_locked ? 'verified' : 'pending'}`}>
                       {profile?.traficante_phone_locked ? '✅ Verificado' : '⏳ Pendiente'}
@@ -548,25 +642,28 @@ export default function MiCuenta({ user, onProfileUpdate }) {
                   </div>
                 </div>
 
-                <div className="mc-verif-upload">
+                <div className="mc-verif-actions" style={{ marginTop: '2rem' }}>
+                  <button className="btn btn-primary btn-full" onClick={handleSubmitVerification} disabled={uploadingDocs || (identityFiles.length === 0 && addressFiles.length === 0 && bankFiles.length === 0)}>
+                    {uploadingDocs ? '📤 Subiendo documentos...' : '📤 Enviar documentos para revisión'}
+                  </button>
+                </div>
+
+                <div className="mc-verif-upload" style={{ marginTop: '3rem' }}>
                   <h3>📤 ¿Cómo verificar mi cuenta?</h3>
-                  <p>El proceso es manual y lo realiza nuestro equipo desde el backoffice. Sigue estos pasos:</p>
+                  <p>El proceso es manual y lo realiza nuestro equipo. Una vez que subas los documentos, los revisaremos en un plazo de 24-48 horas.</p>
                   <div className="mc-verif-steps">
                     <div className="mc-verif-step">
                       <div className="mc-verif-step-num">1</div>
-                      <div>Guarda tu <strong>dirección principal</strong> en la sección "Mi dirección"</div>
+                      <div>Sube fotos claras de tus documentos en los botones de arriba.</div>
                     </div>
                     <div className="mc-verif-step">
                       <div className="mc-verif-step-num">2</div>
-                      <div>Fija tu <strong>nombre completo y teléfono</strong> en "Información personal"</div>
+                      <div>Asegúrate de haber fijado tu <strong>nombre real</strong> y <strong>dirección</strong>.</div>
                     </div>
                     <div className="mc-verif-step">
                       <div className="mc-verif-step-num">3</div>
-                      <div>Contacta a soporte por WhatsApp con tu correo registrado — el equipo revisará y actualizará tu estado</div>
+                      <div>Haz clic en el botón de enviar para que el equipo de soporte los revise.</div>
                     </div>
-                  </div>
-                  <div className="mc-notice info" style={{ marginTop: '1rem', marginBottom: 0 }}>
-                    ℹ️ La verificación toma entre 24 y 48 horas hábiles. Una vez aprobada, tu perfil mostrará el sello verificado.
                   </div>
                 </div>
 
