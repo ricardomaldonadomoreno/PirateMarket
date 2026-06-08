@@ -246,8 +246,16 @@ export default function MiCuenta({ user, onProfileUpdate }) {
   }
 
   const handleSubmitVerification = async () => {
-    if (identityFiles.length === 0 && addressFiles.length === 0 && bankFiles.length === 0) {
-      setError('Sube al menos un documento para verificar')
+    if (identityFiles.length !== 2) {
+      setError('Debes subir exactamente 2 fotos de identidad (anverso y reverso)')
+      return
+    }
+    if (addressFiles.length === 0) {
+      setError('Debes subir el comprobante de domicilio')
+      return
+    }
+    if (bankFiles.length === 0) {
+      setError('Debes subir el extracto bancario')
       return
     }
     setUploadingDocs(true)
@@ -570,14 +578,14 @@ export default function MiCuenta({ user, onProfileUpdate }) {
                   <div className="mc-verif-item">
                     <div className="mc-verif-icon">🪪</div>
                     <div className="mc-verif-info">
-                      <div className="mc-verif-label">Documento de identidad</div>
-                      <div className="mc-verif-desc">Carnet de identidad o pasaporte vigente — foto frontal y dorsal.</div>
+                      <div className="mc-verif-label">Documento de identidad <span className="mc-required-badge">Obligatorio</span></div>
+                      <div className="mc-verif-desc">Carnet de identidad o pasaporte vigente — foto frontal y dorsal (2 fotos).</div>
                       {!profile?.traficante_identity_verified && (
                         <div className="mc-verif-upload-box">
                           <input type="file" accept="image/*" multiple id="ident-input" style={{ display: 'none' }}
                             onChange={e => setIdentityFiles(Array.from(e.target.files))} />
-                          <label htmlFor="ident-input" className="btn btn-secondary btn-small">
-                            📷 {identityFiles.length > 0 ? `${identityFiles.length} fotos seleccionadas` : 'Seleccionar fotos'}
+                          <label htmlFor="ident-input" className={`btn btn-secondary btn-small ${identityFiles.length === 2 ? 'btn-success' : ''}`}>
+                            📷 {identityFiles.length === 0 ? 'Seleccionar 2 fotos' : identityFiles.length === 2 ? `✓ Anverso y reverso` : `${identityFiles.length} fotos (necesitas 2)`}
                           </label>
                         </div>
                       )}
@@ -591,14 +599,14 @@ export default function MiCuenta({ user, onProfileUpdate }) {
                   <div className="mc-verif-item">
                     <div className="mc-verif-icon">📄</div>
                     <div className="mc-verif-info">
-                      <div className="mc-verif-label">Comprobante de domicilio</div>
+                      <div className="mc-verif-label">Comprobante de domicilio <span className="mc-required-badge">Obligatorio</span></div>
                       <div className="mc-verif-desc">Factura de servicio básico que muestre tu nombre y dirección.</div>
                       {!profile?.traficante_address_verified && (
                         <div className="mc-verif-upload-box">
                           <input type="file" accept="image/*" multiple id="addr-input" style={{ display: 'none' }}
                             onChange={e => setAddressFiles(Array.from(e.target.files))} />
-                          <label htmlFor="addr-input" className="btn btn-secondary btn-small">
-                            📷 {addressFiles.length > 0 ? `${addressFiles.length} fotos seleccionadas` : 'Seleccionar fotos'}
+                          <label htmlFor="addr-input" className={`btn btn-secondary btn-small ${addressFiles.length > 0 ? 'btn-success' : ''}`}>
+                            📷 {addressFiles.length > 0 ? `✓ ${addressFiles.length} foto(s)` : 'Seleccionar foto'}
                           </label>
                         </div>
                       )}
@@ -612,14 +620,14 @@ export default function MiCuenta({ user, onProfileUpdate }) {
                   <div className="mc-verif-item">
                     <div className="mc-verif-icon">🏦</div>
                     <div className="mc-verif-info">
-                      <div className="mc-verif-label">Extracto bancario <span className="mc-optional-badge">Opcional</span></div>
+                      <div className="mc-verif-label">Extracto bancario <span className="mc-required-badge">Obligatorio</span></div>
                       <div className="mc-verif-desc">Extracto reciente que muestre tu nombre y dirección.</div>
                       {!profile?.traficante_bank_verified && (
                         <div className="mc-verif-upload-box">
                           <input type="file" accept="image/*" multiple id="bank-input" style={{ display: 'none' }}
                             onChange={e => setBankFiles(Array.from(e.target.files))} />
-                          <label htmlFor="bank-input" className="btn btn-secondary btn-small">
-                            📷 {bankFiles.length > 0 ? `${bankFiles.length} fotos seleccionadas` : 'Seleccionar fotos'}
+                          <label htmlFor="bank-input" className={`btn btn-secondary btn-small ${bankFiles.length > 0 ? 'btn-success' : ''}`}>
+                            📷 {bankFiles.length > 0 ? `✓ ${bankFiles.length} foto(s)` : 'Seleccionar foto'}
                           </label>
                         </div>
                       )}
@@ -643,7 +651,12 @@ export default function MiCuenta({ user, onProfileUpdate }) {
                 </div>
 
                 <div className="mc-verif-actions" style={{ marginTop: '2rem' }}>
-                  <button className="btn btn-primary btn-full" onClick={handleSubmitVerification} disabled={uploadingDocs || (identityFiles.length === 0 && addressFiles.length === 0 && bankFiles.length === 0)}>
+                  <div className="mc-verif-requirement-note">
+                    <span>Identidad: {identityFiles.length}/2</span>
+                    <span>Domicilio: {addressFiles.length > 0 ? '✓' : '—'}</span>
+                    <span>Banco: {bankFiles.length > 0 ? '✓' : '—'}</span>
+                  </div>
+                  <button className="btn btn-primary btn-full" onClick={handleSubmitVerification} disabled={uploadingDocs || identityFiles.length !== 2 || addressFiles.length === 0 || bankFiles.length === 0}>
                     {uploadingDocs ? '📤 Subiendo documentos...' : '📤 Enviar documentos para revisión'}
                   </button>
                 </div>
