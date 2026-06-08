@@ -669,3 +669,49 @@
   font-size: 0.85rem;
   margin-right: 1rem;
 }
+
+/* ── BADGES REQUERIDOS ── */
+.mc-required-badge {
+  font-size: 0.65rem;
+  background: rgba(230, 57, 70, 0.1);
+  color: var(--danger);
+  padding: 0.15rem 0.4rem;
+  border-radius: 3px;
+  margin-left: 0.5rem;
+  font-weight: 600;
+}
+
+.mc-verif-requirement-note {
+  display: flex;
+  gap: 1.5rem;
+  padding: 1rem;
+  background: var(--dark);
+  border: 1px solid var(--dark-border);
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  color: var(--text-light);
+  margin-bottom: 1rem;
+}
+
+.mc-verif-requirement-note span {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.mc-verif-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.btn-success {
+  background: rgba(6, 214, 160, 0.15) !important;
+  color: var(--success) !important;
+  border: 1px solid var(--success) !important;
+}
+
+.btn-success:hover {
+  background: var(--success) !important;
+  color: white !important;
+}
