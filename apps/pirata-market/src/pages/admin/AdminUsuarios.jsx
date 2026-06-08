@@ -94,6 +94,7 @@ export default function AdminUsuarios() {
     if (appOrigin === 'traficante') {
       updateData.traficante_identity_verified = true
       updateData.traficante_address_verified = true
+      updateData.traficante_bank_verified = true
     }
 
     await supabase.from('verification_requests').update({ status: 'approved', reviewed_at: new Date().toISOString() }).eq('id', requestId)
@@ -208,13 +209,11 @@ export default function AdminUsuarios() {
         <div className="admin-card">
           {loading ? <div className="admin-loading">Cargando usuarios...</div> : (
             <div className="admin-users-table">
-              <div className="admin-users-header">
+                <div className="admin-users-header">
                 <span>Usuario</span>
                 <span>Tipo</span>
-                <span>App</span>
                 <span>Estado</span>
                 <span>Premium</span>
-                <span>Registro</span>
                 <span>Acciones</span>
               </div>
               {filtered.length === 0 ? (
@@ -254,12 +253,6 @@ export default function AdminUsuarios() {
                         </select>
                       </div>
 
-                      <div>
-                        <span className="admin-badge badge-app" style={{ backgroundColor: `${appInfo.color}20`, color: appInfo.color, borderColor: appInfo.color }}>
-                          {appInfo.icon} {appInfo.label}
-                        </span>
-                      </div>
-
                       <div className="admin-user-badges">
                         {user.is_verified && <span className="admin-badge badge-verified">✓ Verificado</span>}
                         {user.is_banned && <span className="admin-badge badge-banned">🚫 Baneado</span>}
@@ -275,8 +268,6 @@ export default function AdminUsuarios() {
                           </div>
                         ) : <span className="admin-badge badge-free">Básico</span>}
                       </div>
-
-                      <div className="admin-user-date">{new Date(user.created_at).toLocaleDateString()}</div>
 
                       <div className="admin-user-actions">
                         <button className={`btn-small ${user.is_verified ? 'btn-danger' : 'btn-success'}`}
