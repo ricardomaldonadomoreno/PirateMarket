@@ -268,6 +268,7 @@ export default function MiCuenta({ user, onProfileUpdate }) {
       const payload = {
         user_id: user.id,
         status: 'pending',
+        app_source: 'traficante',
         identity_docs: identityUrls,
         business_docs: [...addressUrls, ...bankUrls], // Reutilizamos business_docs para Traficante
       }
