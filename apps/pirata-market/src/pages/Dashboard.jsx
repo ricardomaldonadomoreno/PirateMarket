@@ -175,6 +175,7 @@ export default function Dashboard({ user }) {
       const payload = {
         user_id: user.id,
         status: 'pending',
+        app_source: 'pirata',
         identity_docs: identityUrls,
         business_docs: businessUrls,
       }
