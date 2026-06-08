@@ -8,28 +8,14 @@ export default function AdminUsuarios() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [filterType, setFilterType] = useState('all')
-  const [filterVerif, setFilterVerif] = useState('all') // all, pending, approved, rejected
-  const [filterApp, setFilterApp] = useState('all') // all, pirata-market, traficante
-  const [verificationRequests, setVerificationRequests] = useState({})
-  const [docsModal, setDocsModal] = useState(null) // { user, request, appOrigin }
+  const [filterVerif, setFilterVerif] = useState('all')
+  const [verificationRequests, setVerificationRequests] = useState({}) // { userId: { pirata: req, traficante: req } }
+  const [docsModal, setDocsModal] = useState(null) // { user, appSource }
   const [rejectNote, setRejectNote] = useState('')
+  const [rejectApp, setRejectApp] = useState('pirata') // app para la que se está rechazando
   const [lightboxImg, setLightboxImg] = useState(null)
 
   useEffect(() => { loadUsers() }, [])
-
-  // Detectar origen de la solicitud basado en los documentos
-  const detectAppOrigin = (request, user) => {
-    // Si tiene traficante_* fields, es de Traficante
-    if (user?.traficante_phone_locked || user?.traficante_address_locked || user?.traficante_full_name) {
-      return 'traficante'
-    }
-    // Si tiene shop_* fields, es de Pirata Market
-    if (user?.shop_name || user?.shop_bio) {
-      return 'pirata-market'
-    }
-    // Por defecto, Pirata Market
-    return 'pirata-market'
-  }
 
   const loadUsers = async () => {
     setLoading(true)
@@ -40,12 +26,13 @@ export default function AdminUsuarios() {
           id, display_name, email, user_type, is_verified, is_banned, is_premium, premium_until, 
           created_at, avatar_url, whatsapp,
           shop_name, shop_bio,
-          traficante_full_name, traficante_phone_locked, traficante_address_locked
+          traficante_full_name, traficante_phone_locked, traficante_address_locked,
+          traficante_identity_verified, traficante_address_verified, traficante_bank_verified
         `)
         .order('created_at', { ascending: false })
       if (data) {
         setUsers(data)
-        // cargar solicitudes de verificación para cada usuario
+        // Cargar todas las solicitudes de verificación agrupadas por usuario y app
         const { data: requests } = await supabase
           .from('verification_requests')
           .select('*')
@@ -53,7 +40,11 @@ export default function AdminUsuarios() {
           .order('created_at', { ascending: false })
         if (requests) {
           const map = {}
-          requests.forEach(r => { if (!map[r.user_id]) map[r.user_id] = r })
+          requests.forEach(r => {
+            if (!map[r.user_id]) map[r.user_id] = {}
+            const appSource = r.app_source || 'pirata'
+            if (!map[r.user_id][appSource]) map[r.user_id][appSource] = r
+          })
           setVerificationRequests(map)
         }
       }
@@ -61,82 +52,94 @@ export default function AdminUsuarios() {
     finally { setLoading(false) }
   }
 
-  const handleBan = async (userId, isBanned) => {
-    if (!confirm(isBanned ? '¿Desbanear este usuario?' : '¿Banear este usuario?')) return
-    await supabase.from('users').update({ is_banned: !isBanned }).eq('id', userId)
-    loadUsers()
-  }
-
-  const handleVerify = async (userId, isVerified) => {
-    await supabase.from('users').update({ is_verified: !isVerified }).eq('id', userId)
-    loadUsers()
-  }
-
-  const handleChangeType = async (userId, newType) => {
-    await supabase.from('users').update({ user_type: newType }).eq('id', userId)
-    loadUsers()
-  }
-
-  const handleTogglePremium = async (userId, isPremium) => {
-    if (isPremium) {
-      await supabase.from('users').update({ is_premium: false, premium_until: null }).eq('id', userId)
-    } else {
-      const until = new Date()
-      until.setFullYear(until.getFullYear() + 1)
-      await supabase.from('users').update({ is_premium: true, premium_until: until.toISOString() }).eq('id', userId)
-    }
-    loadUsers()
-  }
-
-  const handleApproveVerification = async (requestId, userId, appOrigin) => {
-    // Actualizar campos específicos según la app
-    const updateData = { is_verified: true }
-    if (appOrigin === 'traficante') {
-      updateData.traficante_identity_verified = true
-      updateData.traficante_address_verified = true
-      updateData.traficante_bank_verified = true
-    }
-
-    await supabase.from('verification_requests').update({ status: 'approved', reviewed_at: new Date().toISOString() }).eq('id', requestId)
-    await supabase.from('users').update(updateData).eq('id', userId)
-    setDocsModal(null)
-    loadUsers()
-  }
-
-  const handleRejectVerification = async (requestId, appOrigin) => {
-    if (!rejectNote.trim()) { alert('Escribe un motivo de rechazo'); return }
-    const fullNote = `[${appOrigin === 'traficante' ? 'Traficante' : 'Pirata Market'}] ${rejectNote}`
-    await supabase.from('verification_requests').update({
-      status: 'rejected', admin_note: fullNote, reviewed_at: new Date().toISOString()
-    }).eq('id', requestId)
-    setDocsModal(null)
-    setRejectNote('')
-    loadUsers()
-  }
-
-  const filtered = users.filter(u => {
-    const matchSearch = u.display_name?.toLowerCase().includes(search.toLowerCase()) ||
-      u.email?.toLowerCase().includes(search.toLowerCase())
-    const matchType = filterType === 'all' || u.user_type === filterType
-    const vReq = verificationRequests[u.id]
-    const matchVerif = filterVerif === 'all' || vReq?.status === filterVerif
-    const appOrigin = detectAppOrigin(vReq, u)
-    const matchApp = filterApp === 'all' || appOrigin === filterApp
-    return matchSearch && matchType && matchVerif && matchApp
+  const filtered = users.filter(user => {
+    const matchSearch = user.display_name?.toLowerCase().includes(search.toLowerCase()) || 
+                       user.email?.toLowerCase().includes(search.toLowerCase())
+    const matchType = filterType === 'all' || user.user_type === filterType
+    const matchVerif = filterVerif === 'all' || 
+                      (verificationRequests[user.id]?.pirata?.status === filterVerif) ||
+                      (verificationRequests[user.id]?.traficante?.status === filterVerif)
+    return matchSearch && matchType && matchVerif
   })
 
-  const typeIcon = (type) => type === 'shop' ? '🏪' : type === 'wholesale' ? '📦' : type === 'admin' ? '🔐' : '👤'
-  const premiumExpiry = (until) => until ? new Date(until).toLocaleDateString() : ''
-  const appBadge = (appOrigin) => appOrigin === 'traficante' 
-    ? { icon: '🚚', label: 'Traficante', color: '#E07B39' }
-    : { icon: '🏪', label: 'Pirata Market', color: '#B8985F' }
+  const handleApproveVerification = async (userId, appSource) => {
+    const request = verificationRequests[userId]?.[appSource]
+    if (!request) return
 
-  const pendingCount = Object.values(verificationRequests).filter(r => r?.status === 'pending').length
-  const traficantePendingCount = users.filter(u => {
-    const vReq = verificationRequests[u.id]
-    return vReq?.status === 'pending' && detectAppOrigin(vReq, u) === 'traficante'
-  }).length
-  const pirataPendingCount = pendingCount - traficantePendingCount
+    try {
+      // Actualizar solicitud
+      await supabase.from('verification_requests')
+        .update({ status: 'approved', reviewed_at: new Date().toISOString() })
+        .eq('id', request.id)
+
+      // Actualizar flags de usuario según la app
+      const updateData = {}
+      if (appSource === 'traficante') {
+        updateData.traficante_identity_verified = true
+        updateData.traficante_address_verified = true
+        updateData.traficante_bank_verified = true
+      } else if (appSource === 'pirata') {
+        updateData.is_verified = true
+      }
+      await supabase.from('users').update(updateData).eq('id', userId)
+
+      setDocsModal(null)
+      setRejectNote('')
+      loadUsers()
+    } catch (error) { console.error(error) }
+  }
+
+  const handleRejectVerification = async (userId, appSource) => {
+    if (!rejectNote.trim()) { alert('Escribe un motivo de rechazo'); return }
+    const request = verificationRequests[userId]?.[appSource]
+    if (!request) return
+
+    try {
+      const appLabel = appSource === 'traficante' ? 'Traficante' : 'Pirata Market'
+      const fullNote = `[${appLabel}] ${rejectNote}`
+      await supabase.from('verification_requests')
+        .update({ status: 'rejected', admin_note: fullNote, reviewed_at: new Date().toISOString() })
+        .eq('id', request.id)
+
+      setDocsModal(null)
+      setRejectNote('')
+      loadUsers()
+    } catch (error) { console.error(error) }
+  }
+
+  const handleRevokeVerification = async (userId, appSource) => {
+    if (!confirm(`¿Revocar verificación de ${appSource === 'traficante' ? 'Traficante' : 'Pirata Market'}?`)) return
+    const request = verificationRequests[userId]?.[appSource]
+    if (!request) return
+
+    try {
+      // Resetear solicitud a pending
+      await supabase.from('verification_requests')
+        .update({ status: 'pending', admin_note: null, reviewed_at: null })
+        .eq('id', request.id)
+
+      // Resetear flags de usuario
+      const updateData = {}
+      if (appSource === 'traficante') {
+        updateData.traficante_identity_verified = false
+        updateData.traficante_address_verified = false
+        updateData.traficante_bank_verified = false
+      } else if (appSource === 'pirata') {
+        updateData.is_verified = false
+      }
+      await supabase.from('users').update(updateData).eq('id', userId)
+
+      setDocsModal(null)
+      setRejectNote('')
+      loadUsers()
+    } catch (error) { console.error(error) }
+  }
+
+  const premiumExpiry = (date) => {
+    if (!date) return '—'
+    const d = new Date(date)
+    return d.toLocaleDateString('es-ES', { month: 'short', day: 'numeric', year: 'numeric' })
+  }
 
   return (
     <div className="admin-page">
@@ -144,75 +147,39 @@ export default function AdminUsuarios() {
       <div className="admin-content">
         <div className="admin-page-header">
           <h1 className="serif luxury-gold">Usuarios</h1>
-          <p className="admin-page-sub">{users.length} usuarios registrados • {pendingCount} solicitudes pendientes</p>
-        </div>
-
-        {/* ── STATS RÁPIDAS ── */}
-        <div className="admin-stats-row">
-          <div className="admin-stat-card">
-            <div className="admin-stat-icon">📄</div>
-            <div className="admin-stat-content">
-              <div className="admin-stat-label">Pendientes totales</div>
-              <div className="admin-stat-value">{pendingCount}</div>
-            </div>
-          </div>
-          <div className="admin-stat-card">
-            <div className="admin-stat-icon">🏪</div>
-            <div className="admin-stat-content">
-              <div className="admin-stat-label">Pirata Market</div>
-              <div className="admin-stat-value">{pirataPendingCount}</div>
-            </div>
-          </div>
-          <div className="admin-stat-card">
-            <div className="admin-stat-icon">🚚</div>
-            <div className="admin-stat-content">
-              <div className="admin-stat-label">Traficante</div>
-              <div className="admin-stat-value">{traficantePendingCount}</div>
-            </div>
-          </div>
+          <p className="admin-page-sub">{users.length} usuarios en total</p>
         </div>
 
         <div className="admin-filters-bar">
-          <input type="text" className="input" placeholder="Buscar por nombre o email..."
-            value={search} onChange={e => setSearch(e.target.value)} style={{ maxWidth: '320px' }} />
-          
+          <input
+            type="text" className="input" placeholder="Buscar por nombre o email..."
+            value={search} onChange={e => setSearch(e.target.value)}
+            style={{ maxWidth: '300px' }}
+          />
           <div className="admin-filter-btns">
-            <div className="admin-filter-group">
-              <span className="admin-filter-label">Tipo:</span>
-              {['all', 'person', 'shop', 'wholesale', 'admin'].map(type => (
-                <button key={type} className={`filter-btn ${filterType === type ? 'active' : ''}`} onClick={() => setFilterType(type)}>
-                  {type === 'all' ? 'Todos' : typeIcon(type) + ' ' + type}
-                </button>
-              ))}
-            </div>
-
-            <div className="admin-filter-group">
-              <span className="admin-filter-label">Verificación:</span>
-              {['all', 'pending', 'approved', 'rejected'].map(status => (
-                <button key={status} className={`filter-btn ${filterVerif === status ? 'active' : ''}`} onClick={() => setFilterVerif(status)}>
-                  {status === 'all' ? 'Todos' : status === 'pending' ? '⏳ Pendiente' : status === 'approved' ? '✓ Aprobado' : '✗ Rechazado'}
-                </button>
-              ))}
-            </div>
-
-            <div className="admin-filter-group">
-              <span className="admin-filter-label">App:</span>
-              {['all', 'pirata-market', 'traficante'].map(app => (
-                <button key={app} className={`filter-btn ${filterApp === app ? 'active' : ''}`} onClick={() => setFilterApp(app)}>
-                  {app === 'all' ? 'Todas' : app === 'pirata-market' ? '🏪 Pirata Market' : '🚚 Traficante'}
-                </button>
-              ))}
-            </div>
+            {['all', 'person', 'shop', 'wholesale', 'admin'].map(t => (
+              <button key={t} className={`filter-btn ${filterType === t ? 'active' : ''}`} onClick={() => setFilterType(t)}>
+                {t === 'all' ? 'Todos' : t === 'person' ? '👤' : t === 'shop' ? '🏪' : t === 'wholesale' ? '📦' : '🔐'}
+              </button>
+            ))}
+          </div>
+          <div className="admin-filter-btns">
+            {['all', 'pending', 'approved', 'rejected'].map(s => (
+              <button key={s} className={`filter-btn ${filterVerif === s ? 'active' : ''}`} onClick={() => setFilterVerif(s)}>
+                {s === 'all' ? 'Todos' : s === 'pending' ? '⏳' : s === 'approved' ? '✓' : '✗'}
+              </button>
+            ))}
           </div>
         </div>
 
         <div className="admin-card">
           {loading ? <div className="admin-loading">Cargando usuarios...</div> : (
             <div className="admin-users-table">
-                <div className="admin-users-header">
+              <div className="admin-users-header">
                 <span>Usuario</span>
                 <span>Tipo</span>
-                <span>Estado</span>
+                <span>Verif. Pirata</span>
+                <span>Verif. Traficante</span>
                 <span>Premium</span>
                 <span>Acciones</span>
               </div>
@@ -222,42 +189,56 @@ export default function AdminUsuarios() {
                 </div>
               ) : (
                 filtered.map(user => {
-                  const vReq = verificationRequests[user.id]
-                  const hasPendingDocs = vReq?.status === 'pending'
+                  const pirataReq = verificationRequests[user.id]?.pirata
+                  const trafReq = verificationRequests[user.id]?.traficante
                   const isPremiumActive = user.is_premium && user.premium_until && new Date(user.premium_until) > new Date()
-                  const appOrigin = detectAppOrigin(vReq, user)
-                  const appInfo = appBadge(appOrigin)
 
                   return (
-                    <div key={user.id} className={`admin-user-row ${user.is_banned ? 'banned' : ''}`}>
+                    <div key={user.id} className="admin-user-row">
                       <div className="admin-user-info">
                         <div className="admin-user-avatar">
-                          {user.avatar_url ? <img src={user.avatar_url} alt={user.display_name} />
-                            : <span>{user.display_name?.charAt(0).toUpperCase()}</span>}
+                          {user.avatar_url ? <img src={user.avatar_url} alt={user.display_name} /> : <span>👤</span>}
                         </div>
                         <div>
-                          <div className="admin-user-name">
-                            {user.display_name}
-                            {hasPendingDocs && <span className="verif-pending-dot" title="Docs pendientes de revisión">📄</span>}
-                          </div>
+                          <div className="admin-user-name">{user.display_name || user.email}</div>
                           <div className="admin-user-email">{user.email}</div>
                         </div>
                       </div>
 
                       <div>
-                        <select className="admin-type-select" value={user.user_type} onChange={e => handleChangeType(user.id, e.target.value)}>
-                          <option value="person">👤 Persona</option>
-                          <option value="shop">🏪 Tienda</option>
-                          <option value="wholesale">📦 Mayorista</option>
-                          <option value="admin">🔐 Admin</option>
+                        <select className="admin-type-select" disabled style={{ opacity: 0.6 }}>
+                          <option value={user.user_type}>
+                            {user.user_type === 'person' ? '👤' : user.user_type === 'shop' ? '🏪' : user.user_type === 'wholesale' ? '📦' : '🔐'} {user.user_type}
+                          </option>
                         </select>
                       </div>
 
-                      <div className="admin-user-badges">
-                        {user.is_verified && <span className="admin-badge badge-verified">✓ Verificado</span>}
-                        {user.is_banned && <span className="admin-badge badge-banned">🚫 Baneado</span>}
-                        {vReq?.status === 'pending' && <span className="admin-badge badge-pending">⏳ Docs</span>}
-                        {vReq?.status === 'rejected' && <span className="admin-badge badge-rejected">✗ Rechazado</span>}
+                      {/* Verificación Pirata Market */}
+                      <div className="admin-verif-cell">
+                        {pirataReq ? (
+                          <div className={`admin-verif-badge ${pirataReq.status}`}>
+                            {pirataReq.status === 'pending' && '⏳ Pendiente'}
+                            {pirataReq.status === 'approved' && '✓ Verificado'}
+                            {pirataReq.status === 'rejected' && '✗ Rechazado'}
+                            <button className="admin-verif-btn" onClick={() => setDocsModal({ user, appSource: 'pirata' })}>
+                              📄
+                            </button>
+                          </div>
+                        ) : <span className="admin-text-muted">—</span>}
+                      </div>
+
+                      {/* Verificación Traficante */}
+                      <div className="admin-verif-cell">
+                        {trafReq ? (
+                          <div className={`admin-verif-badge ${trafReq.status}`}>
+                            {trafReq.status === 'pending' && '⏳ Pendiente'}
+                            {trafReq.status === 'approved' && '✓ Verificado'}
+                            {trafReq.status === 'rejected' && '✗ Rechazado'}
+                            <button className="admin-verif-btn" onClick={() => setDocsModal({ user, appSource: 'traficante' })}>
+                              📄
+                            </button>
+                          </div>
+                        ) : <span className="admin-text-muted">—</span>}
                       </div>
 
                       <div className="admin-premium-cell">
@@ -270,27 +251,7 @@ export default function AdminUsuarios() {
                       </div>
 
                       <div className="admin-user-actions">
-                        <button className={`btn-small ${user.is_verified ? 'btn-danger' : 'btn-success'}`}
-                          onClick={() => handleVerify(user.id, user.is_verified)}
-                          title={user.is_verified ? 'Quitar verificación' : 'Verificar'}>
-                          {user.is_verified ? '✗' : '✓'}
-                        </button>
-                        {vReq && (
-                          <button className="btn-small btn-docs"
-                            onClick={() => { setDocsModal({ user, request: vReq, appOrigin }); setRejectNote('') }}
-                            title="Ver documentos">
-                            📄
-                          </button>
-                        )}
-                        <button className={`btn-small ${isPremiumActive ? 'btn-danger' : 'btn-premium'}`}
-                          onClick={() => handleTogglePremium(user.id, isPremiumActive)}
-                          title={isPremiumActive ? 'Desactivar premium' : 'Activar premium 1 año'}>
-                          ⭐
-                        </button>
-                        <button className={`btn-small ${user.is_banned ? 'btn-success' : 'btn-danger'}`}
-                          onClick={() => handleBan(user.id, user.is_banned)}>
-                          {user.is_banned ? 'Desbanear' : 'Banear'}
-                        </button>
+                        {user.is_banned && <span className="admin-badge badge-banned">🚫 Baneado</span>}
                       </div>
                     </div>
                   )
@@ -301,90 +262,118 @@ export default function AdminUsuarios() {
         </div>
       </div>
 
-      {/* Modal de documentos mejorado */}
+      {/* MODAL DE DOCUMENTOS */}
       {docsModal && (
-        <div className="docs-modal-overlay" onClick={() => setDocsModal(null)}>
-          <div className="docs-modal" onClick={e => e.stopPropagation()}>
-            <div className="docs-modal-header">
-              <div className="docs-modal-title-row">
-                <h3>📄 Documentos de {docsModal.user.display_name}</h3>
-                <span className="docs-modal-app-badge" style={{ 
-                  backgroundColor: `${appBadge(docsModal.appOrigin).color}20`, 
-                  color: appBadge(docsModal.appOrigin).color,
-                  borderColor: appBadge(docsModal.appOrigin).color
-                }}>
-                  {appBadge(docsModal.appOrigin).icon} {appBadge(docsModal.appOrigin).label}
-                </span>
-              </div>
-              <button className="docs-modal-close" onClick={() => setDocsModal(null)}>✕</button>
+        <div className="admin-modal-overlay" onClick={() => setDocsModal(null)}>
+          <div className="admin-modal" onClick={e => e.stopPropagation()}>
+            <div className="admin-modal-header">
+              <h2>Documentos de {docsModal.appSource === 'traficante' ? '🚚 Traficante' : '🏪 Pirata Market'}</h2>
+              <button className="admin-modal-close" onClick={() => setDocsModal(null)}>✕</button>
             </div>
 
-            <div className="docs-modal-body">
-              {/* Docs de identidad — solo visibles aquí */}
-              <div className="docs-section">
-                <h4>🪪 Identidad (privado)</h4>
-                <div className="docs-grid">
-                  {(docsModal.request.identity_docs || []).map((url, i) => (
-                    <img key={i} src={url} alt={`identity ${i}`} className="doc-thumb"
-                      onClick={() => setLightboxImg(url)} />
-                  ))}
-                  {(!docsModal.request.identity_docs?.length) && <p className="docs-empty">Sin fotos</p>}
-                </div>
+            <div className="admin-modal-body">
+              <div className="admin-docs-user-info">
+                <strong>{docsModal.user.display_name}</strong> ({docsModal.user.email})
               </div>
 
-              {/* Docs del negocio / Domicilio y Banco para Traficante */}
-              {docsModal.request.business_docs?.length > 0 && (
-                <div className="docs-section">
-                  <h4>
-                    {docsModal.appOrigin === 'traficante' ? '📄 Domicilio & Banco' : '🏪 Negocio / Certificaciones'}
-                  </h4>
-                  <div className="docs-grid">
-                    {docsModal.request.business_docs.map((url, i) => (
-                      <img key={i} src={url} alt={`business ${i}`} className="doc-thumb"
-                        onClick={() => setLightboxImg(url)} />
-                    ))}
-                  </div>
-                </div>
-              )}
+              {(() => {
+                const request = verificationRequests[docsModal.user.id]?.[docsModal.appSource]
+                if (!request) return <p>No hay solicitud de verificación</p>
 
-              <div className="docs-status-row">
-                <span>Estado: </span>
-                <span className={`admin-badge ${docsModal.request.status === 'pending' ? 'badge-pending' : docsModal.request.status === 'approved' ? 'badge-verified' : 'badge-rejected'}`}>
-                  {docsModal.request.status}
-                </span>
-              </div>
+                const isTraficante = docsModal.appSource === 'traficante'
+                const identityDocs = request.identity_docs || []
+                const businessDocs = request.business_docs || []
 
-              {docsModal.request.admin_note && (
-                <div className="docs-admin-note">
-                  <strong>Nota anterior:</strong>
-                  <p>{docsModal.request.admin_note}</p>
-                </div>
-              )}
+                return (
+                  <>
+                    {/* Documentos de Identidad */}
+                    <div className="admin-docs-section">
+                      <h3>🪪 Documentos de Identidad</h3>
+                      {identityDocs.length === 0 ? (
+                        <p className="admin-text-muted">Sin documentos</p>
+                      ) : (
+                        <div className="admin-docs-grid">
+                          {identityDocs.map((url, i) => (
+                            <div key={i} className="admin-doc-thumb" onClick={() => setLightboxImg(url)}>
+                              <img src={url} alt={`Identidad ${i + 1}`} />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
 
-              {docsModal.request.status === 'pending' && (
-                <div className="docs-actions">
-                  <button className="btn btn-primary" onClick={() => handleApproveVerification(docsModal.request.id, docsModal.user.id, docsModal.appOrigin)}>
-                    ✓ Aprobar verificación
-                  </button>
-                  <div className="docs-reject">
-                    <input type="text" className="input" placeholder="Motivo del rechazo..."
-                      value={rejectNote} onChange={e => setRejectNote(e.target.value)} />
-                    <button className="btn btn-secondary" onClick={() => handleRejectVerification(docsModal.request.id, docsModal.appOrigin)}>
-                      ✗ Rechazar
-                    </button>
-                  </div>
-                </div>
-              )}
+                    {/* Documentos de Negocio / Domicilio y Banco */}
+                    <div className="admin-docs-section">
+                      <h3>{isTraficante ? '📄 Domicilio & Banco' : '📦 Documentos de Negocio'}</h3>
+                      {businessDocs.length === 0 ? (
+                        <p className="admin-text-muted">Sin documentos</p>
+                      ) : (
+                        <div className="admin-docs-grid">
+                          {businessDocs.map((url, i) => (
+                            <div key={i} className="admin-doc-thumb" onClick={() => setLightboxImg(url)}>
+                              <img src={url} alt={`Doc ${i + 1}`} />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Notas de Admin */}
+                    {request.admin_note && (
+                      <div className="admin-docs-note">
+                        <strong>Nota del administrador:</strong>
+                        <p>{request.admin_note}</p>
+                      </div>
+                    )}
+
+                    {/* Acciones */}
+                    {request.status === 'pending' && (
+                      <div className="admin-docs-actions">
+                        <button className="btn btn-success" onClick={() => handleApproveVerification(docsModal.user.id, docsModal.appSource)}>
+                          ✓ Aprobar
+                        </button>
+                        <div className="admin-reject-box">
+                          <textarea
+                            className="input"
+                            placeholder="Motivo del rechazo..."
+                            value={rejectNote}
+                            onChange={e => setRejectNote(e.target.value)}
+                            rows={2}
+                          />
+                          <button className="btn btn-danger" onClick={() => handleRejectVerification(docsModal.user.id, docsModal.appSource)}>
+                            ✗ Rechazar
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {request.status === 'approved' && (
+                      <div className="admin-docs-actions">
+                        <button className="btn btn-warning" onClick={() => handleRevokeVerification(docsModal.user.id, docsModal.appSource)}>
+                          🔄 Revocar Verificación
+                        </button>
+                      </div>
+                    )}
+
+                    {request.status === 'rejected' && (
+                      <div className="admin-docs-actions">
+                        <button className="btn btn-primary" onClick={() => handleRevokeVerification(docsModal.user.id, docsModal.appSource)}>
+                          🔄 Volver a Revisar
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )
+              })()}
             </div>
           </div>
         </div>
       )}
 
-      {/* Lightbox de doc */}
+      {/* LIGHTBOX */}
       {lightboxImg && (
-        <div className="docs-lightbox" onClick={() => setLightboxImg(null)}>
-          <img src={lightboxImg} alt="doc" />
-          <button onClick={() => setLightboxImg(null)}>✕</button>
+        <div className="admin-lightbox" onClick={() => setLightboxImg(null)}>
+          <img src={lightboxImg} alt="Documento" />
         </div>
       )}
     </div>
