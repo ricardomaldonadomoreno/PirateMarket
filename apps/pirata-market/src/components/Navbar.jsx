@@ -33,7 +33,7 @@ export default function Navbar({ user, profile }) {
 
           {user ? (
             <>
-              <Link to="/dashboard" className="navbar-avatar-btn">
+              <Link to="/mi-perfil" className="navbar-avatar-btn">
                 {profile?.avatar_url
                   ? <img src={profile.avatar_url} alt="perfil" className="navbar-avatar-img" />
                   : <div className="navbar-avatar-placeholder">
