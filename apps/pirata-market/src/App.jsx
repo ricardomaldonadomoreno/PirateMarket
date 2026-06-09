@@ -13,6 +13,7 @@ import VentasTV from './pages/VentasTV'
 import ComoFunciona from './pages/ComoFunciona'
 import SellerCatalog from './pages/SellerCatalog'
 import Legal from './pages/Legal'
+import MiPerfil from './pages/MiPerfil'
 
 // Pages — Traficante
 import TraficanteHome from '../../traficante-app/src/pages/Home'
@@ -88,6 +89,7 @@ function App() {
         <Route path="/como-funciona" element={<><Navbar user={user} profile={profile} /><ComoFunciona /></>} />
         <Route path="/vendedor/:userId" element={<><Navbar user={user} profile={profile} /><SellerCatalog /></>} />
         <Route path="/legal" element={<><Navbar user={user} profile={profile} /><Legal /></>} />
+        <Route path="/mi-perfil" element={<><Navbar user={user} profile={profile} /><MiPerfil user={user} onProfileUpdate={setProfile} /></>} />
 
         {/* ── ADMIN PIRATA MARKET ── */}
         <Route path="/admin" element={<AdminLogin />} />
