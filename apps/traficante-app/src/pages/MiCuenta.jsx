@@ -77,6 +77,15 @@ export default function MiCuenta({ user, onProfileUpdate }) {
   const [bankFiles, setBankFiles] = useState([])
   const [verifSaved, setVerifSaved] = useState(false)
 
+  // Verificación Traficante
+  const [verifRequest, setVerifRequest] = useState(null)
+  const [identityFiles, setIdentityFiles] = useState([])
+  const [domicileFiles, setDomicileFiles] = useState([])
+  const [bankFiles, setBankFiles] = useState([])
+  const [uploadingDocs, setUploadingDocs] = useState(false)
+  const [verifSaved, setVerifSaved] = useState(false)
+  const [verifError, setVerifError] = useState('')
+
   useEffect(() => {
     if (!user) return navigate('/auth')
     loadProfile()
