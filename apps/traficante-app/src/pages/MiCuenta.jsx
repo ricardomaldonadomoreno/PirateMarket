@@ -227,136 +227,169 @@ export default function MiCuenta({ user, onProfileUpdate }) {
     setTimeout(() => setSaved(''), 3000)
   }
 
-  // ── VERIFICACIÓN ──
-  const uploadDocFiles = async (files, folder) => {
-    const urls = []
-    for (const file of files) {
-      const fileExt = file.name.split('.').pop()
-      const path = `${user.id}/${folder}/${Date.now()}.${fileExt}`
-      const { error } = await supabase.storage
-        .from('verification-docs')
-        .upload(path, file, { contentType: file.type })
-      if (error) throw error
-      const { data: { publicUrl } } = supabase.storage
-        .from('verification-docs')
-        .getPublicUrl(path)
-      urls.push(publicUrl)
-    }
-    return urls
-  }
-
-  const handleSubmitVerification = async () => {
-    if (identityFiles.length !== 2) {
-      setError('Debes subir exactamente 2 fotos de identidad (anverso y reverso)')
-      return
-    }
-    if (addressFiles.length === 0) {
-      setError('Debes subir el comprobante de domicilio')
-      return
-    }
-    if (bankFiles.length === 0) {
-      setError('Debes subir el extracto bancario')
-      return
-    }
-    setUploadingDocs(true)
-    setError('')
-    try {
-      const identityUrls = await uploadDocFiles(identityFiles, 'identity')
-      const addressUrls = await uploadDocFiles(addressFiles, 'address')
-      const bankUrls = await uploadDocFiles(bankFiles, 'bank')
-
-      const payload = {
-        user_id: user.id,
-        status: 'pending',
-        app_source: 'traficante',
-        identity_docs: identityUrls,
-        business_docs: [...addressUrls, ...bankUrls], // Reutilizamos business_docs para Traficante
-      }
-
-      if (verificationRequest) {
-        await supabase.from('verification_requests').update(payload).eq('id', verificationRequest.id)
-      } else {
-        await supabase.from('verification_requests').insert([payload])
-      }
-
-      setVerifSaved(true)
-      setIdentityFiles([])
-      setAddressFiles([])
-      setBankFiles([])
-      setTimeout(() => setVerifSaved(false), 4000)
-      loadVerification()
-    } catch (err) {
-      setError('Error al enviar documentos: ' + err.message)
-    } finally {
-      setUploadingDocs(false)
-    }
-  }
-
-  const getGPS = () => {
-    if (!navigator.geolocation) return
-    navigator.geolocation.getCurrentPosition(pos => {
-      setAddressCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude })
-    })
-  }
-
-  const avgRating = reviews.length
-    ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
-    : null
-
-  const trafProfile = profile ? {
-    level: 'basico', // viene de traficante_profiles
-    identity_verified: !!profile.traficante_identity_verified,
-    address_verified: !!profile.traficante_address_verified,
-  } : null
-
-  if (loading) return (
-    <div className="mc-loading">
-      <div className="loading" style={{ width: 40, height: 40 }} />
-    </div>
-  )
-
-  return (
-    <div className="mc-container">
-      <div className="container">
-        <div className="mc-layout">
-
-          {/* ── SIDEBAR ── */}
-          <aside className="mc-sidebar">
-            <div className="mc-sidebar-profile">
-              <div className="mc-avatar-wrap">
-                {profile?.avatar_url
-                  ? <img src={profile.avatar_url} alt="avatar" className="mc-avatar" />
-                  : <div className="mc-avatar-placeholder">
-                      {(profile?.display_name || user.email)?.charAt(0).toUpperCase()}
-                    </div>
-                }
-                <button className="mc-avatar-edit" onClick={() => fileInputRef.current?.click()}>
-                  {uploadingAvatar ? <span className="loading" style={{ width: 14, height: 14 }} /> : '📷'}
-                </button>
-                <input ref={fileInputRef} type="file" accept="image/*"
-                  style={{ display: 'none' }} onChange={handleAvatarUpload} />
-              </div>
-              <div className="mc-sidebar-name">{profile?.display_name || user.email}</div>
-              <div className="mc-sidebar-email">{user.email}</div>
-              {avgRating && (
-                <div className="mc-sidebar-rating">
-                  ⭐ {avgRating} <span>({reviews.length} reseñas)</span>
+{/* ══ VERIFICACIÓN ══ */}
+            {activeSection === 'verificacion' && (
+              <div className="mc-section">
+                <div className="mc-section-header">
+                  <h2>🔒 Verificación de identidad</h2>
+                  <p>Aumenta la confianza de los remitentes verificando tu identidad.</p>
                 </div>
-              )}
-            </div>
 
-            <nav className="mc-nav">
-              {SECTIONS.map(s => (
-                <button key={s.key}
-                  className={`mc-nav-item ${activeSection === s.key ? 'active' : ''}`}
-                  onClick={() => { setActiveSection(s.key); setError(''); setSaved('') }}
-                >
-                  <span>{s.icon}</span>
-                  <span>{s.label}</span>
-                </button>
-              ))}
-            </nav>
-          </aside>
+                <div className="mc-notice info">
+                  ℹ️ Los documentos deben mostrar <strong>exactamente la misma dirección y nombre</strong> que declaraste en "Mi dirección". Nuestro equipo revisará en 24-48 horas.
+                </div>
+
+                {/* Estado actual */}
+                <div className="mc-verif-list">
+                  <div className="mc-verif-item">
+                    <div className="mc-verif-icon">🪪</div>
+                    <div className="mc-verif-info">
+                      <div className="mc-verif-label">Documento de identidad</div>
+                      <div className="mc-verif-desc">Carnet de identidad, cédula o pasaporte vigente — foto frontal y dorsal.</div>
+                    </div>
+                    <div className={`mc-verif-status ${profile?.traficante_identity_verified ? 'verified' : 'pending'}`}>
+                      {profile?.traficante_identity_verified ? '✅ Verificado' : '⏳ Pendiente'}
+                    </div>
+                  </div>
+
+                  <div className="mc-verif-item">
+                    <div className="mc-verif-icon">📄</div>
+                    <div className="mc-verif-info">
+                      <div className="mc-verif-label">Comprobante de domicilio</div>
+                      <div className="mc-verif-desc">Factura de servicio básico: agua, luz, teléfono, internet o cable. Debe mostrar tu nombre y dirección declarada.</div>
+                    </div>
+                    <div className={`mc-verif-status ${profile?.traficante_address_verified ? 'verified' : 'pending'}`}>
+                      {profile?.traficante_address_verified ? '✅ Verificado' : '⏳ Pendiente'}
+                    </div>
+                  </div>
+
+                  <div className="mc-verif-item">
+                    <div className="mc-verif-icon">🏦</div>
+                    <div className="mc-verif-info">
+                      <div className="mc-verif-label">Extracto bancario <span className="mc-optional-badge">Opcional</span></div>
+                      <div className="mc-verif-desc">Extracto reciente que muestre tu nombre y dirección.</div>
+                    </div>
+                    <div className={`mc-verif-status ${profile?.traficante_bank_verified ? 'verified' : 'pending'}`}>
+                      {profile?.traficante_bank_verified ? '✅ Verificado' : '⏳ Pendiente'}
+                    </div>
+                  </div>
+
+                  <div className="mc-verif-item">
+                    <div className="mc-verif-icon">📱</div>
+                    <div className="mc-verif-info">
+                      <div className="mc-verif-label">Verificación de WhatsApp</div>
+                      <div className="mc-verif-desc">Confirma que el número registrado es tuyo y está activo.</div>
+                    </div>
+                    <div className={`mc-verif-status ${profile?.traficante_phone_locked ? 'verified' : 'pending'}`}>
+                      {profile?.traficante_phone_locked ? '✅ Verificado' : '⏳ Pendiente'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Formulario de subida */}
+                <div className="mc-verif-upload">
+                  <h3>📤 Enviar documentos</h3>
+
+                  {verifRequest?.status === 'pending' && (
+                    <div className="mc-notice warning">
+                      ⏳ Tus documentos están siendo revisados. Te notificaremos cuando estén aprobados.
+                    </div>
+                  )}
+
+                  {verifRequest?.status === 'rejected' && (
+                    <div className="mc-notice danger">
+                      ✗ Tu solicitud fue rechazada.
+                      {verifRequest.admin_note && <><br />📝 Motivo: <strong>{verifRequest.admin_note}</strong></>}
+                      <br />Puedes volver a enviar documentos corregidos.
+                    </div>
+                  )}
+
+                  {verifRequest?.status === 'approved' && (
+                    <div className="mc-notice info">
+                      🎉 Documentos aprobados. Tu verificación está siendo procesada por el equipo.
+                    </div>
+                  )}
+
+                  {verifRequest?.status !== 'pending' && (
+                    <>
+                      <div className="mc-verif-field">
+                        <label className="mc-label">🪪 Documento de identidad *</label>
+                        <p className="mc-hint">Foto frontal y dorsal del CI, cédula o pasaporte vigente.</p>
+                        <input type="file" accept="image/*,application/pdf" multiple
+                          id="identity-input" style={{ display: 'none' }}
+                          onChange={e => setIdentityFiles(Array.from(e.target.files))} />
+                        <label htmlFor="identity-input" className="btn btn-secondary">
+                          📷 Seleccionar ({identityFiles.length} archivo{identityFiles.length !== 1 ? 's' : ''})
+                        </label>
+                        {identityFiles.length > 0 && (
+                          <div className="mc-verif-preview">
+                            {identityFiles.map((f, i) => (
+                              <div key={i} className="mc-verif-preview-item">
+                                <img src={URL.createObjectURL(f)} alt={`id-${i}`} />
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="mc-verif-field">
+                        <label className="mc-label">📄 Comprobante de domicilio *</label>
+                        <p className="mc-hint">Factura de agua, luz, teléfono, internet o cable con tu nombre y dirección.</p>
+                        <input type="file" accept="image/*,application/pdf" multiple
+                          id="domicile-input" style={{ display: 'none' }}
+                          onChange={e => setDomicileFiles(Array.from(e.target.files))} />
+                        <label htmlFor="domicile-input" className="btn btn-secondary">
+                          📷 Seleccionar ({domicileFiles.length} archivo{domicileFiles.length !== 1 ? 's' : ''})
+                        </label>
+                        {domicileFiles.length > 0 && (
+                          <div className="mc-verif-preview">
+                            {domicileFiles.map((f, i) => (
+                              <div key={i} className="mc-verif-preview-item">
+                                <img src={URL.createObjectURL(f)} alt={`dom-${i}`} />
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="mc-verif-field">
+                        <label className="mc-label">🏦 Extracto bancario <span className="mc-optional-badge">Opcional</span></label>
+                        <p className="mc-hint">Extracto reciente con tu nombre y dirección.</p>
+                        <input type="file" accept="image/*,application/pdf" multiple
+                          id="bank-input" style={{ display: 'none' }}
+                          onChange={e => setBankFiles(Array.from(e.target.files))} />
+                        <label htmlFor="bank-input" className="btn btn-secondary">
+                          📷 Seleccionar ({bankFiles.length} archivo{bankFiles.length !== 1 ? 's' : ''})
+                        </label>
+                        {bankFiles.length > 0 && (
+                          <div className="mc-verif-preview">
+                            {bankFiles.map((f, i) => (
+                              <div key={i} className="mc-verif-preview-item">
+                                <img src={URL.createObjectURL(f)} alt={`bank-${i}`} />
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {verifError && <div className="mc-error">⚠️ {verifError}</div>}
+                      {verifSaved && <div className="mc-success">✅ Documentos enviados — en revisión</div>}
+
+                      <div className="mc-actions">
+                        <button className="btn btn-primary t-btn-primary"
+                          onClick={handleSubmitVerification}
+                          disabled={uploadingDocs || identityFiles.length === 0 || domicileFiles.length === 0}>
+                          {uploadingDocs
+                            ? <><span className="loading" style={{ width: 16, height: 16 }} /> Enviando...</>
+                            : '📤 Enviar documentos'}
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+              </div>
+            )}
 
           {/* ── CONTENIDO ── */}
           <main className="mc-main">
