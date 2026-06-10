@@ -12,7 +12,7 @@
 }
 
 .mp-card {
-  max-width: 680px;
+  max-width: 640px;
   margin: 0 auto;
   background: var(--dark-surface);
   border: 1px solid var(--dark-border);
@@ -38,7 +38,7 @@
   font-size: 0.9rem;
 }
 
-/* ── BODY ── */
+/* ── SECTIONS ── */
 .mp-body { padding: 0; }
 
 .mp-section {
@@ -62,7 +62,7 @@
   display: flex;
   align-items: center;
   gap: 1.5rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.75rem;
 }
 
 .mp-avatar-wrap {
@@ -72,7 +72,7 @@
   flex-shrink: 0;
 }
 
-.mp-avatar, .mp-avatar-placeholder {
+.mp-avatar {
   width: 80px;
   height: 80px;
   border-radius: 50%;
@@ -81,6 +81,9 @@
 }
 
 .mp-avatar-placeholder {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
   background: var(--dark-border);
   color: var(--gold);
   display: flex;
@@ -88,6 +91,7 @@
   justify-content: center;
   font-size: 2rem;
   font-weight: 700;
+  border: 3px solid var(--dark-border);
 }
 
 .mp-avatar-overlay {
@@ -108,7 +112,7 @@
 }
 
 .mp-avatar-email {
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   color: var(--text-muted);
   margin-bottom: 0.75rem;
 }
@@ -147,13 +151,64 @@
 .mp-field-row .input { flex: 1; }
 
 .mp-readonly-field {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
   padding: 0.875rem 1.25rem;
   background: rgba(58,58,58,0.4);
   border: 1.5px solid var(--dark-border);
   border-radius: var(--radius-md);
   color: var(--text-muted);
   font-size: 0.95rem;
-  cursor: not-allowed;
+}
+
+/* ── APPS STATUS ── */
+.mp-apps-status {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.mp-app-status-card {
+  padding: 1.25rem;
+  background: var(--dark);
+  border: 1px solid var(--dark-border);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.mp-app-status-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.mp-app-status-logo { font-size: 1.25rem; }
+
+.mp-app-status-name {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--text-light);
+}
+
+.mp-app-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.875rem;
+  border-radius: var(--radius-full);
+  border: 1.5px solid;
+  font-size: 0.8rem;
+  font-weight: 600;
+  width: fit-content;
+}
+
+.mp-app-status-none {
+  color: var(--text-muted) !important;
+  border-color: var(--dark-border) !important;
+  background: transparent !important;
 }
 
 /* ── CONTRASEÑA ── */
@@ -174,21 +229,14 @@
   display: flex;
   gap: 0.75rem;
   justify-content: flex-end;
-  padding-top: 0.5rem;
+  padding-top: 0.25rem;
 }
 
-/* ── APPS GRID ── */
-.mp-apps-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  margin-top: 1rem;
-}
-
-.mp-app-card {
+/* ── SOPORTE ── */
+.mp-support-btn {
   display: flex;
   align-items: center;
-  gap: 1.25rem;
+  gap: 1rem;
   padding: 1.25rem 1.5rem;
   background: var(--dark);
   border: 1.5px solid var(--dark-border);
@@ -197,39 +245,33 @@
   transition: all 0.2s ease;
 }
 
-.mp-app-card:hover {
+.mp-support-btn:hover {
   border-color: var(--gold);
   transform: translateX(4px);
 }
 
-.mp-app-traficante:hover {
-  border-color: #E07B39;
-}
+.mp-support-icon { font-size: 1.5rem; flex-shrink: 0; }
 
-.mp-app-icon { font-size: 2rem; flex-shrink: 0; }
-
-.mp-app-info { flex: 1; }
-
-.mp-app-name {
-  font-weight: 700;
+.mp-support-label {
+  font-weight: 600;
+  font-size: 0.9rem;
   color: var(--text-light);
-  font-size: 1rem;
-  margin-bottom: 0.2rem;
+  margin-bottom: 0.15rem;
 }
 
-.mp-app-desc {
-  font-size: 0.82rem;
+.mp-support-email {
+  font-size: 0.8rem;
   color: var(--text-muted);
-  line-height: 1.4;
 }
 
-.mp-app-arrow {
+.mp-support-arrow {
+  margin-left: auto;
   color: var(--text-muted);
   font-size: 1.2rem;
   transition: transform 0.2s ease;
 }
 
-.mp-app-card:hover .mp-app-arrow { transform: translateX(4px); }
+.mp-support-btn:hover .mp-support-arrow { transform: translateX(4px); }
 
 /* ── BUTTONS ── */
 .mp-btn-sm {
@@ -273,4 +315,5 @@
   .mp-field-row { flex-direction: column; align-items: stretch; }
   .mp-password-row { flex-direction: column; align-items: flex-start; }
   .mp-password-actions { flex-direction: column; }
+  .mp-apps-status { grid-template-columns: 1fr; }
 }
