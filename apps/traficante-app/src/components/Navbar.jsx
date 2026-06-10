@@ -1,17 +1,16 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { supabase } from '../lib/supabase'
-import LanguageSelector from './LanguageSelector'
+import { supabase } from '../../../pirata-market/src/lib/supabase'
+import LanguageSelector from '../../../pirata-market/src/components/LanguageSelector'
 import './Navbar.css'
 
-export default function Navbar({ user, profile }) {
-  const { t } = useTranslation()
+export default function TraficanteNavbar({ user, profile }) {
+  const { t } = useTranslation('traficante')
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef(null)
 
-  // Cerrar al click fuera
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
@@ -25,25 +24,29 @@ export default function Navbar({ user, profile }) {
   const handleLogout = async () => {
     setMenuOpen(false)
     await supabase.auth.signOut()
-    navigate('/')
+    navigate('/traficante')
   }
 
   return (
-    <nav className="navbar">
+    <nav className="navbar traficante-navbar">
       <div className="navbar-container">
-        <Link to="/" className="navbar-logo">
-          <img src="/logo - ico.png" alt="Pirata Market" className="logo-icon" />
+        <Link to="/traficante" className="navbar-logo">
+          <img src="/traficante/logoPNG.png" alt="Traficante" className="logo-icon" />
           <div className="logo-text">
-            <span className="logo-brand luxury-gold">pirata</span>
-            <span className="logo-suffix">market</span>
+            <span className="logo-brand traficante-gold">traficante</span>
+            <span className="logo-suffix traficante-by">by buses app</span>
           </div>
         </Link>
 
         <div className="navbar-actions">
           <LanguageSelector />
 
-          <Link to="/publicar" className="btn btn-primary">
-            {t('navbar.publish')}
+          <Link to="/traficante/publicar-viaje" className="btn btn-outline traficante-btn-outline">
+            {t('navbar.travel')}
+          </Link>
+
+          <Link to="/traficante/buscar" className="btn btn-primary t-btn-primary">
+            {t('navbar.send')}
           </Link>
 
           {user ? (
@@ -54,14 +57,14 @@ export default function Navbar({ user, profile }) {
               >
                 {profile?.avatar_url
                   ? <img src={profile.avatar_url} alt="perfil" className="navbar-avatar-img" />
-                  : <div className="navbar-avatar-placeholder">
+                  : <div className="navbar-avatar-placeholder traficante-avatar-placeholder">
                       {(profile?.display_name || user.email)?.charAt(0).toUpperCase()}
                     </div>
                 }
               </button>
 
               {menuOpen && (
-                <div className="navbar-dropdown">
+                <div className="navbar-dropdown traficante-dropdown">
                   {/* Info del usuario */}
                   <div className="navbar-dropdown-user">
                     <div className="navbar-dropdown-name">
@@ -80,13 +83,13 @@ export default function Navbar({ user, profile }) {
 
                   <div className="navbar-dropdown-divider" />
 
-                  <Link to="/dashboard" className="navbar-dropdown-item navbar-dropdown-item-active"
+                  <Link to="/dashboard" className="navbar-dropdown-item"
                     onClick={() => setMenuOpen(false)}>
                     <span>🏴‍☠️</span>
                     <span>Panel Pirata</span>
                   </Link>
 
-                  <Link to="/traficante/mi-cuenta" className="navbar-dropdown-item"
+                  <Link to="/traficante/mi-cuenta" className="navbar-dropdown-item navbar-dropdown-item-active traficante-item-active"
                     onClick={() => setMenuOpen(false)}>
                     <span>🚐</span>
                     <span>Panel Traficante</span>
