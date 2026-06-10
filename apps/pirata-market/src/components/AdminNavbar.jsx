@@ -21,7 +21,7 @@ export default function AdminNavbar() {
   return (
     <nav className="admin-navbar">
       <div className="admin-navbar-brand">
-        <img src="/logo - ico.png" alt="Pirata Market" className="admin-nav-logo" />
+        <img src="/logo-ico.png" alt="Pirata Market" className="admin-nav-logo" />
         <div>
           <span className="admin-nav-title serif">pirata</span>
           <span className="admin-nav-sub">backoffice</span>
