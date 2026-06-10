@@ -138,7 +138,7 @@ export default function Auth() {
           {/* Logo */}
           <div className="auth-logo">
             <img src="/logo-ico.png" alt="Pirata Market" className="auth-logo-icon" />
-            <h1 className="serif luxury-gold">REGISTRO FACIL</h1>
+            <h1 className="serif luxury-gold">Hola, Bienvenid@..</h1>
             <p className="auth-tagline">{t('brand.tagline')}</p>
           </div>
 
