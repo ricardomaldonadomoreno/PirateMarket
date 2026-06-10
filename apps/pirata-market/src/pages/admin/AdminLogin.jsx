@@ -43,11 +43,11 @@ export default function AdminLogin() {
   return (
     <div className="admin-login">
       <div className="admin-login-bg">
-        <img src="/logo - ico.png" alt="Pirata Market" className="admin-bg-logo" />
+        <img src="/logo-ico.png" alt="Pirata Market" className="admin-bg-logo" />
       </div>
       <div className="admin-login-card">
         <div className="admin-login-header">
-          <img src="/logo - ico.png" alt="Pirata Market" className="admin-login-logo" />
+          <img src="/logo-ico.png" alt="Pirata Market" className="admin-login-logo" />
           <h1 className="serif">Backoffice</h1>
           <p>Acceso restringido — Solo administradores</p>
         </div>
