@@ -375,7 +375,7 @@ export default function MiPerfil({ user, onProfileUpdate }) {
               <p className="mp-hint">
                 ¿Tienes algún problema con tu cuenta o necesitas ayuda? Escríbenos directamente.
               </p>
-              
+              <a
                 href={`mailto:busesapp55@gmail.com?subject=Soporte — ${user.email}`}
                 className="mp-support-btn"
               >
