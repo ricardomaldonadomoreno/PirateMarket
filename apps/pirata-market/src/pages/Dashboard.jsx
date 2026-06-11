@@ -7,19 +7,24 @@ import './Dashboard.css'
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024 // 2MB
 
+const SECTIONS = [
+  { key: 'anuncios',     icon: '📋', label: 'Mis anuncios' },
+  { key: 'verificacion', icon: '🏅', label: 'Verificación' },
+  { key: 'catalogo',     icon: '⭐', label: 'Catálogo Premium' },
+]
+
 export default function Dashboard({ user, onProfileUpdate }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const fileInputRef = useRef(null)
+  const [activeSection, setActiveSection] = useState('anuncios')
   const [listings, setListings] = useState([])
   const [stats, setStats] = useState({ total_views: 0, total_contacts: 0, active_listings: 0 })
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('active')
   const [profile, setProfile] = useState(null)
-  const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [changingType, setChangingType] = useState(false)
 
-  // Premium shop form
+  // Shop form
   const [shopForm, setShopForm] = useState({
     shop_name: '', shop_bio: '', shop_link: '', shop_hours: '',
     shop_color: '#B8985F', shop_logo_url: '', shop_banner_url: '',
@@ -61,14 +66,16 @@ export default function Dashboard({ user, onProfileUpdate }) {
           shop_banner_url: data.shop_banner_url || '',
         })
       }
-    } catch (error) { console.error('Error loading profile:', error) }
+    } catch (error) { console.error(error) }
   }
 
   const loadDashboard = async () => {
     setLoading(true)
     try {
-      let query = supabase.from('listings').select(`*, category:categories(name, slug, icon)`)
-        .eq('user_id', user.id).order('created_at', { ascending: false })
+      let query = supabase.from('listings')
+        .select(`*, category:categories(name, slug, icon)`)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
       if (filter !== 'all') query = query.eq('status', filter)
       const { data: listingsData, error: listingsError } = await query
       if (listingsError) throw listingsError
@@ -78,71 +85,31 @@ export default function Dashboard({ user, onProfileUpdate }) {
         total_contacts: listingsData.reduce((sum, l) => sum + (l.contacts_count || 0), 0),
         active_listings: listingsData.filter(l => l.status === 'active').length
       })
-    } catch (error) { console.error('Error loading dashboard:', error) }
+    } catch (error) { console.error(error) }
     finally { setLoading(false) }
   }
 
   const loadVerification = async () => {
-    const { data } = await supabase.from('verification_requests')
-      .select('*').eq('user_id', user.id)
-      .order('created_at', { ascending: false }).limit(1).single()
+    const { data } = await supabase
+      .from('verification_requests')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single()
     if (data) setVerificationRequest(data)
   }
 
-  // ── AVATAR ──
-  const handleAvatarUpload = async (e) => {
-    const file = e.target.files[0]
-    if (!file) return
-    if (file.size > MAX_FILE_SIZE) {
-      alert('La foto no puede superar 2MB')
-      return
-    }
-    setUploadingAvatar(true)
-    try {
-      const fileExt = file.name.split('.').pop()
-      const newFilePath = `${user.id}.${fileExt}`
-      if (profile?.avatar_url) {
-        const oldPath = profile.avatar_url.split('/avatars/')[1]?.split('?')[0]
-        if (oldPath) await supabase.storage.from('avatars').remove([oldPath])
-      }
-      const { error: uploadError } = await supabase.storage.from('avatars').upload(newFilePath, file, { contentType: file.type })
-      if (uploadError) throw uploadError
-      const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(newFilePath)
-      const urlWithCache = `${publicUrl}?t=${Date.now()}`
-      await supabase.from('users').update({ avatar_url: urlWithCache }).eq('id', user.id)
-      setProfile(prev => ({ ...prev, avatar_url: urlWithCache }))
-      if (onProfileUpdate) onProfileUpdate(prev => ({ ...prev, avatar_url: urlWithCache }))
-      e.target.value = ''
-    } catch (error) { alert('Error al subir la foto: ' + error.message) }
-    finally { setUploadingAvatar(false) }
-  }
-
-  const handleAvatarDelete = async () => {
-    if (!confirm('¿Eliminar tu foto de perfil?')) return
-    setUploadingAvatar(true)
-    try {
-      if (profile?.avatar_url) {
-        const oldPath = profile.avatar_url.split('/avatars/')[1]?.split('?')[0]
-        if (oldPath) await supabase.storage.from('avatars').remove([oldPath])
-      }
-      await supabase.from('users').update({ avatar_url: null }).eq('id', user.id)
-      setProfile(prev => ({ ...prev, avatar_url: null }))
-      if (onProfileUpdate) onProfileUpdate(prev => ({ ...prev, avatar_url: null }))
-    } catch (error) { alert('Error al eliminar la foto') }
-    finally { setUploadingAvatar(false) }
-  }
-
-  // ── CAMBIO DE TIPO ──
   const handleChangeType = async (newType) => {
     if (newType === profile?.user_type) return
-    if (!confirm(`¿Cambiar tu tipo de cuenta a ${newType === 'shop' ? 'Tienda' : newType === 'wholesale' ? 'Mayorista' : 'Persona'}? Tu verificación se reseteará y deberás verificarte de nuevo.`)) return
+    const label = newType === 'shop' ? 'Tienda' : newType === 'wholesale' ? 'Mayorista' : 'Persona'
+    if (!confirm(`¿Cambiar tu tipo de cuenta a ${label}? Tu verificación se reseteará y deberás verificarte de nuevo.`)) return
     setChangingType(true)
     try {
       await supabase.from('users').update({
         user_type: newType,
         is_verified: false,
       }).eq('id', user.id)
-      // Resetear solicitud de verificación anterior
       if (verificationRequest) {
         await supabase.from('verification_requests').update({
           status: 'pending',
@@ -160,7 +127,6 @@ export default function Dashboard({ user, onProfileUpdate }) {
     finally { setChangingType(false) }
   }
 
-  // ── LISTINGS ──
   const handleStatusChange = async (listingId, newStatus) => {
     try {
       await supabase.from('listings').update({ status: newStatus }).eq('id', listingId)
@@ -176,7 +142,6 @@ export default function Dashboard({ user, onProfileUpdate }) {
     } catch (error) { alert(t('messages.error')) }
   }
 
-  // ── SHOP SAVE ──
   const handleShopSave = async () => {
     setSavingShop(true)
     try {
@@ -196,11 +161,10 @@ export default function Dashboard({ user, onProfileUpdate }) {
     finally { setSavingShop(false) }
   }
 
-  // ── VALIDAR ARCHIVOS ──
   const validateFiles = (files) => {
     const oversized = files.filter(f => f.size > MAX_FILE_SIZE)
     if (oversized.length > 0) {
-      setFileError(`${oversized.length} archivo(s) superan el límite de 2MB: ${oversized.map(f => f.name).join(', ')}`)
+      setFileError(`${oversized.length} archivo(s) superan el límite de 2MB`)
       return false
     }
     setFileError('')
@@ -217,15 +181,16 @@ export default function Dashboard({ user, onProfileUpdate }) {
     if (validateFiles(files)) setBusinessFiles(files)
   }
 
-  // ── VERIFICACIÓN ──
   const uploadDocFiles = async (files, folder) => {
     const urls = []
     for (const file of files) {
       const fileExt = file.name.split('.').pop()
       const path = `${user.id}/${folder}/${Date.now()}.${fileExt}`
-      const { error } = await supabase.storage.from('verification-docs').upload(path, file, { contentType: file.type })
+      const { error } = await supabase.storage
+        .from('verification-docs').upload(path, file, { contentType: file.type })
       if (error) throw error
-      const { data: { publicUrl } } = supabase.storage.from('verification-docs').getPublicUrl(path)
+      const { data: { publicUrl } } = supabase.storage
+        .from('verification-docs').getPublicUrl(path)
       urls.push(publicUrl)
     }
     return urls
@@ -237,7 +202,8 @@ export default function Dashboard({ user, onProfileUpdate }) {
     setUploadingDocs(true)
     try {
       const identityUrls = await uploadDocFiles(identityFiles, 'identity')
-      const businessUrls = businessFiles.length > 0 ? await uploadDocFiles(businessFiles, 'business') : []
+      const businessUrls = businessFiles.length > 0
+        ? await uploadDocFiles(businessFiles, 'business') : []
       const payload = {
         user_id: user.id,
         status: 'pending',
@@ -255,7 +221,7 @@ export default function Dashboard({ user, onProfileUpdate }) {
       setBusinessFiles([])
       setTimeout(() => setVerifSaved(false), 4000)
       loadVerification()
-    } catch (error) { alert('Error al enviar documentos: ' + error.message) }
+    } catch (error) { alert('Error al enviar: ' + error.message) }
     finally { setUploadingDocs(false) }
   }
 
@@ -276,44 +242,19 @@ export default function Dashboard({ user, onProfileUpdate }) {
     rejected: { text: '✗ Rechazado',           cls: 'verif-rejected' },
   }
 
+  // Secciones visibles en sidebar
+  const visibleSections = SECTIONS.filter(s =>
+    s.key !== 'catalogo' || isShopOrWholesale
+  )
+
   return (
     <div className="dashboard">
       <div className="dashboard-container">
 
-        {/* ── HEADER ── */}
-        <div className="dashboard-header">
-          <div className="dashboard-profile">
-            <div className="avatar-section">
-              <div className="avatar-wrapper">
-                {avatarUrl
-                  ? <img src={avatarUrl} alt={displayName} className="avatar-img" />
-                  : <div className="avatar-placeholder">{displayName?.charAt(0).toUpperCase()}</div>}
-                {uploadingAvatar && <div className="avatar-loading">⏳</div>}
-              </div>
-              <div className="avatar-actions">
-                <button className="avatar-btn" onClick={() => fileInputRef.current?.click()} disabled={uploadingAvatar}>
-                  📷 {avatarUrl ? 'Cambiar' : 'Subir foto'}
-                </button>
-                {avatarUrl && (
-                  <button className="avatar-btn avatar-btn-delete" onClick={handleAvatarDelete} disabled={uploadingAvatar}>🗑️</button>
-                )}
-                <input ref={fileInputRef} type="file" accept="image/*" onChange={handleAvatarUpload} style={{ display: 'none' }} />
-              </div>
-            </div>
-            <div>
-              <h1 className="serif luxury-gold">{t('dashboard.title')}</h1>
-              <p className="dashboard-subtitle">{displayName}</p>
-              <span className={`user-type-badge user-type-${userType}`}>{userTypeIcon} {t(`auth.${userType}`)}</span>
-              {isPremium && <span className="premium-badge-dashboard">⭐ Premium — hasta {new Date(profile.premium_until).toLocaleDateString()}</span>}
-            </div>
-          </div>
-          <Link to="/publicar" className="btn btn-primary">+ {t('navbar.publish')}</Link>
-        </div>
-
-        {/* ── STATS ── */}
+        {/* ── STATS — siempre visibles ── */}
         <div className="dashboard-stats">
           {[
-            { icon: '👁️', value: stats.total_views.toLocaleString(),  label: t('dashboard.stats.total_views') },
+            { icon: '👁️', value: stats.total_views.toLocaleString(),   label: t('dashboard.stats.total_views') },
             { icon: '📱', value: stats.total_contacts.toLocaleString(), label: t('dashboard.stats.total_contacts') },
             { icon: '🏴‍☠️', value: stats.active_listings,               label: t('dashboard.stats.active_listings') },
           ].map((s, i) => (
@@ -327,294 +268,381 @@ export default function Dashboard({ user, onProfileUpdate }) {
           ))}
         </div>
 
-        {/* ── FILTERS ── */}
-        <div className="dashboard-filters">
-          {['all', 'active', 'sold', 'paused'].map(f => (
-            <button key={f} className={`filter-btn ${filter === f ? 'active' : ''}`} onClick={() => setFilter(f)}>
-              {f === 'all' ? t('dashboard.filters.all') : t(`dashboard.listing_status.${f}`)}
-            </button>
-          ))}
-        </div>
+        {/* ── LAYOUT CON SIDEBAR ── */}
+        <div className="db-layout">
 
-        {/* ── LISTINGS ── */}
-        <div className="dashboard-listings">
-          <h2>{t('dashboard.my_listings')}</h2>
-          {loading ? (
-            <div className="listings-loading">
-              {[...Array(3)].map((_, i) => <div key={i} className="listing-row skeleton" style={{ height: '100px' }} />)}
-            </div>
-          ) : listings.length === 0 ? (
-            <div className="no-listings">
-              <span className="no-listings-icon">🏴‍☠️</span>
-              <p>{t('dashboard.no_listings')}</p>
-              <Link to="/publicar" className="btn btn-primary">{t('dashboard.create_first')}</Link>
-            </div>
-          ) : (
-            <div className="listings-list">
-              {listings.map(listing => (
-                <div key={listing.id} className="listing-row card">
-                  <div className="listing-row-image">
-                    {listing.photos?.length > 0
-                      ? <img src={listing.photos[0]} alt={listing.title} />
-                      : <div className="listing-row-no-image">{listing.category?.icon || '📦'}</div>}
-                  </div>
-                  <div className="listing-row-info">
-                    <Link to={`/ficha/${listing.slug}`} className="listing-row-title">{listing.title}</Link>
-                    <div className="listing-row-meta">
-                      <span className="listing-row-price luxury-gold">{formatPrice(listing.price, listing.currency)}</span>
-                      <span className="listing-row-category">{listing.category?.icon} {t(`categories.${listing.category?.slug}`)}</span>
-                      <span className="listing-row-date">{timeAgo(listing.created_at, t)}</span>
-                    </div>
-                    <div className="listing-row-stats">
-                      <span>👁️ {listing.views_count}</span>
-                      <span>📱 {listing.contacts_count}</span>
-                      <span>🔗 {listing.shares_count}</span>
-                    </div>
-                  </div>
-                  <div className="listing-row-status">
-                    <span className={`status-badge status-${listing.status}`}>{t(`dashboard.listing_status.${listing.status}`)}</span>
-                  </div>
-                  <div className="listing-row-actions">
-                    <Link to={`/ficha/${listing.slug}`} className="btn-icon">👁️</Link>
-                    {listing.status === 'active' && <button className="btn-icon" onClick={() => handleStatusChange(listing.id, 'paused')}>⏸️</button>}
-                    {listing.status === 'paused' && <button className="btn-icon" onClick={() => handleStatusChange(listing.id, 'active')}>▶️</button>}
-                    {listing.status === 'active' && <button className="btn-icon" onClick={() => handleStatusChange(listing.id, 'sold')}>✓</button>}
-                    <button className="btn-icon btn-icon-danger" onClick={() => handleDelete(listing.id)}>🗑️</button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* ── VERIFICACIÓN + TIPO DE CUENTA ── */}
-        <div className="verification-section">
-          <div className="verification-header">
-            <div>
-              <h2 className="serif">🏅 Verificación de cuenta</h2>
-              <p>Verifica tu identidad para obtener el badge ✓ Verificado en tu perfil y catálogo</p>
-            </div>
-            {isVerified ? (
-              <span className="verif-badge verif-approved">✓ Cuenta verificada</span>
-            ) : verificationRequest ? (
-              <span className={`verif-badge ${verifStatusLabel[verificationRequest.status]?.cls}`}>
-                {verifStatusLabel[verificationRequest.status]?.text}
+          {/* ── SIDEBAR ── */}
+          <aside className="db-sidebar">
+            <div className="db-sidebar-profile">
+              <div className="db-avatar">
+                {avatarUrl
+                  ? <img src={avatarUrl} alt={displayName} />
+                  : <div className="db-avatar-placeholder">{displayName?.charAt(0).toUpperCase()}</div>
+                }
+              </div>
+              <div className="db-sidebar-name">{displayName}</div>
+              <span className={`user-type-badge user-type-${userType}`}>
+                {userTypeIcon} {t(`auth.${userType}`)}
               </span>
-            ) : (
-              <span className="verif-badge verif-none">Sin verificar</span>
-            )}
-          </div>
-
-          {/* ── MI TIPO DE CUENTA ── */}
-          <div className="account-type-section">
-            <div className="account-type-header">
-              <h3>¿Qué tipo de vendedor eres?</h3>
-              <p>Selecciona tu tipo de cuenta. Cambiar de tipo reseteará tu verificación.</p>
+              {isPremium && (
+                <div className="db-premium-badge">
+                  ⭐ Premium — hasta {new Date(profile.premium_until).toLocaleDateString()}
+                </div>
+              )}
+              <Link to="/publicar" className="btn btn-primary db-publish-btn">
+                + {t('navbar.publish')}
+              </Link>
             </div>
-            <div className="account-type-grid">
-              {[
-                { key: 'person',    icon: '👤', label: 'Persona',    desc: 'Vendo ocasionalmente' },
-                { key: 'shop',      icon: '🏪', label: 'Tienda',     desc: 'Tengo un negocio o emprendimiento' },
-                { key: 'wholesale', icon: '📦', label: 'Mayorista',  desc: 'Distribuidor o importador' },
-              ].map(type => (
-                <button
-                  key={type.key}
-                  className={`account-type-btn ${userType === type.key ? 'active' : ''}`}
-                  onClick={() => handleChangeType(type.key)}
-                  disabled={changingType || userType === type.key}
+
+            <nav className="db-nav">
+              {visibleSections.map(s => (
+                <button key={s.key}
+                  className={`db-nav-item ${activeSection === s.key ? 'active' : ''}`}
+                  onClick={() => setActiveSection(s.key)}
                 >
-                  <span className="account-type-icon">{type.icon}</span>
-                  <strong>{type.label}</strong>
-                  <small>{type.desc}</small>
-                  {userType === type.key && <span className="account-type-current">✓ Actual</span>}
+                  <span>{s.icon}</span>
+                  <span>{s.label}</span>
+                  {s.key === 'verificacion' && !isVerified && (
+                    <span className="db-nav-dot" />
+                  )}
                 </button>
               ))}
-            </div>
-            {isShopOrWholesale && (
-              <div className="account-type-notice">
-                🏪 Como <strong>{userType === 'shop' ? 'Tienda' : 'Mayorista'}</strong> debes verificar tu negocio además de tu identidad para obtener el badge verificado.
-              </div>
-            )}
-            {!isVerified && verificationRequest?.status !== 'pending' && (
-              <div className="account-type-notice account-type-warning">
-                ⚠️ Para ser un vendedor verificado debes completar la verificación de identidad
-                {isShopOrWholesale ? ' y documentos de negocio' : ''} en la sección de abajo.
-              </div>
-            )}
-          </div>
+            </nav>
+          </aside>
 
-          {/* ── ESTADO Y FORMULARIO DE VERIFICACIÓN ── */}
-          {isVerified ? (
-            <div className="verif-verified-msg">
-              <span>🎉</span>
-              <p>Tu cuenta está verificada. El badge ✓ aparece en tu perfil y catálogo.</p>
-            </div>
-          ) : verificationRequest?.status === 'pending' ? (
-            <div className="verif-pending-msg">
-              <span>⏳</span>
-              <p>Tus documentos están siendo revisados. Te notificaremos cuando estén aprobados.</p>
-              {verificationRequest.admin_note && (
-                <p className="verif-admin-note">📝 Nota del admin: {verificationRequest.admin_note}</p>
-              )}
-            </div>
-          ) : (
-            <div className="verif-form">
-              {verificationRequest?.status === 'rejected' && (
-                <div className="verif-rejected-msg">
-                  <p>✗ Tu solicitud anterior fue rechazada.</p>
-                  {verificationRequest.admin_note && (
-                    <p className="verif-admin-note">📝 Motivo: {verificationRequest.admin_note}</p>
-                  )}
-                  <p>Puedes volver a enviar documentos corregidos.</p>
+          {/* ── CONTENIDO ── */}
+          <main className="db-main">
+
+            {/* ══ MIS ANUNCIOS ══ */}
+            {activeSection === 'anuncios' && (
+              <div className="db-section">
+                <div className="db-section-header">
+                  <h2>📋 Mis anuncios</h2>
+                  <div className="db-filters">
+                    {['all', 'active', 'sold', 'paused'].map(f => (
+                      <button key={f}
+                        className={`filter-btn ${filter === f ? 'active' : ''}`}
+                        onClick={() => setFilter(f)}>
+                        {f === 'all' ? t('dashboard.filters.all') : t(`dashboard.listing_status.${f}`)}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              )}
 
-              {fileError && (
-                <div className="verif-file-error">⚠️ {fileError}</div>
-              )}
-
-              {/* Identidad — todos */}
-              <div className="verif-field">
-                <label>📄 Documento de identidad {identityAlreadySubmitted && <span className="verif-submitted-badge">✅ Ya enviado</span>}</label>
-                <p className="verif-hint">Foto del DNI/CI anverso y reverso + selfie sosteniendo el documento. Máximo 2MB por foto.</p>
-                {!identityAlreadySubmitted && (
-                  <>
-                    <input type="file" accept="image/*" multiple id="identity-input"
-                      style={{ display: 'none' }} onChange={handleIdentityFiles} />
-                    <label htmlFor="identity-input" className="btn btn-secondary verif-upload-btn">
-                      📷 Seleccionar fotos ({identityFiles.length} seleccionadas)
-                    </label>
-                    {identityFiles.length > 0 && (
-                      <div className="verif-preview-grid">
-                        {identityFiles.map((f, i) => (
-                          <div key={i} className="verif-preview-item">
-                            <img src={URL.createObjectURL(f)} alt={`doc ${i}`} />
-                            <span className="verif-file-size">{(f.size / 1024 / 1024).toFixed(1)}MB</span>
+                {loading ? (
+                  <div className="listings-loading">
+                    {[...Array(3)].map((_, i) => (
+                      <div key={i} className="listing-row skeleton" style={{ height: '100px' }} />
+                    ))}
+                  </div>
+                ) : listings.length === 0 ? (
+                  <div className="no-listings">
+                    <span className="no-listings-icon">🏴‍☠️</span>
+                    <p>{t('dashboard.no_listings')}</p>
+                    <Link to="/publicar" className="btn btn-primary">{t('dashboard.create_first')}</Link>
+                  </div>
+                ) : (
+                  <div className="listings-list">
+                    {listings.map(listing => (
+                      <div key={listing.id} className="listing-row card">
+                        <div className="listing-row-image">
+                          {listing.photos?.length > 0
+                            ? <img src={listing.photos[0]} alt={listing.title} />
+                            : <div className="listing-row-no-image">{listing.category?.icon || '📦'}</div>}
+                        </div>
+                        <div className="listing-row-info">
+                          <Link to={`/ficha/${listing.slug}`} className="listing-row-title">
+                            {listing.title}
+                          </Link>
+                          <div className="listing-row-meta">
+                            <span className="listing-row-price luxury-gold">
+                              {formatPrice(listing.price, listing.currency)}
+                            </span>
+                            <span className="listing-row-category">
+                              {listing.category?.icon} {t(`categories.${listing.category?.slug}`)}
+                            </span>
+                            <span className="listing-row-date">{timeAgo(listing.created_at, t)}</span>
                           </div>
-                        ))}
+                          <div className="listing-row-stats">
+                            <span>👁️ {listing.views_count}</span>
+                            <span>📱 {listing.contacts_count}</span>
+                            <span>🔗 {listing.shares_count}</span>
+                          </div>
+                        </div>
+                        <div className="listing-row-status">
+                          <span className={`status-badge status-${listing.status}`}>
+                            {t(`dashboard.listing_status.${listing.status}`)}
+                          </span>
+                        </div>
+                        <div className="listing-row-actions">
+                          <Link to={`/ficha/${listing.slug}`} className="db-action-btn">
+                            Ver
+                          </Link>
+                          {listing.status === 'active' && (
+                            <button className="db-action-btn"
+                              onClick={() => handleStatusChange(listing.id, 'paused')}>
+                              Pausar
+                            </button>
+                          )}
+                          {listing.status === 'paused' && (
+                            <button className="db-action-btn db-action-success"
+                              onClick={() => handleStatusChange(listing.id, 'active')}>
+                              Activar
+                            </button>
+                          )}
+                          {listing.status === 'active' && (
+                            <button className="db-action-btn db-action-success"
+                              onClick={() => handleStatusChange(listing.id, 'sold')}>
+                              Vendido
+                            </button>
+                          )}
+                          <button className="db-action-btn db-action-danger"
+                            onClick={() => handleDelete(listing.id)}>
+                            Eliminar
+                          </button>
+                        </div>
                       </div>
-                    )}
-                  </>
+                    ))}
+                  </div>
                 )}
               </div>
+            )}
 
-              {/* Negocio — solo shop/wholesale */}
-              {isShopOrWholesale && (
-                <div className="verif-field">
-                  <label>🏪 Documentos del negocio</label>
-                  <p className="verif-hint">
-                    Foto exterior del negocio · Foto del mural de certificaciones · Documento legal (NIT, matrícula de comercio, etc.)
-                    El nombre del titular debe coincidir con tu documento de identidad. Máximo 2MB por foto.
-                  </p>
-                  <input type="file" accept="image/*" multiple id="business-input"
-                    style={{ display: 'none' }} onChange={handleBusinessFiles} />
-                  <label htmlFor="business-input" className="btn btn-secondary verif-upload-btn">
-                    🏪 Seleccionar fotos del negocio ({businessFiles.length} seleccionadas)
-                  </label>
-                  {businessFiles.length > 0 && (
-                    <div className="verif-preview-grid">
-                      {businessFiles.map((f, i) => (
-                        <div key={i} className="verif-preview-item">
-                          <img src={URL.createObjectURL(f)} alt={`biz ${i}`} />
-                          <span className="verif-file-size">{(f.size / 1024 / 1024).toFixed(1)}MB</span>
-                        </div>
-                      ))}
+            {/* ══ VERIFICACIÓN ══ */}
+            {activeSection === 'verificacion' && (
+              <div className="db-section">
+                <div className="db-section-header">
+                  <h2>🏅 Verificación de cuenta</h2>
+                  <div>
+                    {isVerified ? (
+                      <span className="verif-badge verif-approved">✓ Verificado</span>
+                    ) : verificationRequest ? (
+                      <span className={`verif-badge ${verifStatusLabel[verificationRequest.status]?.cls}`}>
+                        {verifStatusLabel[verificationRequest.status]?.text}
+                      </span>
+                    ) : (
+                      <span className="verif-badge verif-none">Sin verificar</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Tipo de cuenta */}
+                <div className="account-type-section">
+                  <div className="account-type-header">
+                    <h3>¿Qué tipo de vendedor eres?</h3>
+                    <p>Cambiar de tipo reseteará tu verificación.</p>
+                  </div>
+                  <div className="account-type-grid">
+                    {[
+                      { key: 'person',    icon: '👤', label: 'Persona',   desc: 'Vendo ocasionalmente' },
+                      { key: 'shop',      icon: '🏪', label: 'Tienda',    desc: 'Tengo un negocio' },
+                      { key: 'wholesale', icon: '📦', label: 'Mayorista', desc: 'Distribuidor o importador' },
+                    ].map(type => (
+                      <button key={type.key}
+                        className={`account-type-btn ${userType === type.key ? 'active' : ''}`}
+                        onClick={() => handleChangeType(type.key)}
+                        disabled={changingType || userType === type.key}
+                      >
+                        <span className="account-type-icon">{type.icon}</span>
+                        <strong>{type.label}</strong>
+                        <small>{type.desc}</small>
+                        {userType === type.key && <span className="account-type-current">✓ Actual</span>}
+                      </button>
+                    ))}
+                  </div>
+                  {!isVerified && verificationRequest?.status !== 'pending' && (
+                    <div className="account-type-notice account-type-warning">
+                      ⚠️ Para ser un vendedor verificado completa la verificación
+                      {isShopOrWholesale ? ' de identidad y negocio' : ' de identidad'} abajo.
                     </div>
                   )}
                 </div>
-              )}
 
-              <div className="verif-actions">
-                {verifSaved && <span className="premium-saved">✓ Documentos enviados — en revisión</span>}
-                <button className="btn btn-primary" onClick={handleSubmitVerification}
-                  disabled={uploadingDocs || (identityAlreadySubmitted && businessFiles.length === 0 && !isShopOrWholesale)}>
-                  {uploadingDocs ? <><span className="loading" /> Enviando...</> : '📤 Enviar para verificación'}
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* ── CATÁLOGO PREMIUM ── */}
-        {isShopOrWholesale && (
-          <div className="premium-catalog-section">
-            <div className="premium-catalog-header">
-              <div>
-                <h2 className="serif">⭐ Catálogo Premium</h2>
-                <p>Personaliza tu página de catálogo con tu marca — solo $5 anual</p>
-              </div>
-              {isPremium
-                ? <span className="premium-active-badge">✓ Activo hasta {new Date(profile.premium_until).toLocaleDateString()}</span>
-                : <span className="premium-inactive-badge">🔒 No activo</span>}
-            </div>
-
-            {!isPremium ? (
-              <div className="premium-locked">
-                <div className="premium-locked-icon">🔒</div>
-                <h3>Catálogo Premium no activado</h3>
-                <p>Contacta al administrador para activar tu catálogo premium y personalizar tu página de vendedor con tu marca, banner, logo, descripción y más.</p>
-                <a href="https://api.whatsapp.com/send?phone=+59175109694&text=Hola,%20Soy%20Usuario%20de%20Pirata%20Marketplace%20y%20quiero%20tener%20mi%20catalogo%20premium.."
-                  target="_blank" rel="noopener noreferrer" className="btn btn-primary">
-                  📱 Solicitar activación
-                </a>
-              </div>
-            ) : (
-              <div className="premium-form">
-                <div className="premium-form-preview">
-                  <p className="premium-form-hint">💡 Estos datos aparecerán en tu página de catálogo en <strong>/vendedor/{user.id}</strong></p>
-                </div>
-                <div className="premium-form-grid">
-                  <div className="premium-field">
-                    <label>Nombre de tu tienda</label>
-                    <input type="text" className="input" placeholder="Ej: Tienda Maldonado"
-                      value={shopForm.shop_name} onChange={e => setShopForm(p => ({ ...p, shop_name: e.target.value }))} />
+                {/* Formulario verificación */}
+                {isVerified ? (
+                  <div className="verif-verified-msg">
+                    <span>🎉</span>
+                    <p>Tu cuenta está verificada. El badge ✓ aparece en tu perfil y catálogo.</p>
                   </div>
-                  <div className="premium-field">
-                    <label>Color de marca</label>
-                    <div className="color-picker-row">
-                      <input type="color" className="color-input" value={shopForm.shop_color}
-                        onChange={e => setShopForm(p => ({ ...p, shop_color: e.target.value }))} />
-                      <span className="color-value">{shopForm.shop_color}</span>
-                      <div className="color-preview" style={{ background: shopForm.shop_color }} />
+                ) : verificationRequest?.status === 'pending' ? (
+                  <div className="verif-pending-msg">
+                    <span>⏳</span>
+                    <p>Tus documentos están siendo revisados.</p>
+                    {verificationRequest.admin_note && (
+                      <p className="verif-admin-note">📝 {verificationRequest.admin_note}</p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="verif-form">
+                    {verificationRequest?.status === 'rejected' && (
+                      <div className="verif-rejected-msg">
+                        <p>✗ Tu solicitud fue rechazada.</p>
+                        {verificationRequest.admin_note && (
+                          <p className="verif-admin-note">📝 Motivo: {verificationRequest.admin_note}</p>
+                        )}
+                      </div>
+                    )}
+
+                    {fileError && <div className="verif-file-error">⚠️ {fileError}</div>}
+
+                    <div className="verif-field">
+                      <label>
+                        📄 Documento de identidad
+                        {identityAlreadySubmitted && <span className="verif-submitted-badge">✅ Ya enviado</span>}
+                      </label>
+                      <p className="verif-hint">CI/DNI anverso y reverso + selfie con el documento. Máx. 2MB por foto.</p>
+                      {!identityAlreadySubmitted && (
+                        <>
+                          <input type="file" accept="image/*" multiple
+                            id="identity-input" style={{ display: 'none' }}
+                            onChange={handleIdentityFiles} />
+                          <label htmlFor="identity-input" className="btn btn-secondary verif-upload-btn">
+                            Seleccionar fotos ({identityFiles.length} seleccionadas)
+                          </label>
+                          {identityFiles.length > 0 && (
+                            <div className="verif-preview-grid">
+                              {identityFiles.map((f, i) => (
+                                <div key={i} className="verif-preview-item">
+                                  <img src={URL.createObjectURL(f)} alt={`doc ${i}`} />
+                                  <span className="verif-file-size">
+                                    {(f.size / 1024 / 1024).toFixed(1)}MB
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+
+                    {isShopOrWholesale && (
+                      <div className="verif-field">
+                        <label>🏪 Documentos del negocio</label>
+                        <p className="verif-hint">
+                          Foto exterior · Certificaciones · Documento legal (NIT, matrícula, etc.). Máx. 2MB por foto.
+                        </p>
+                        <input type="file" accept="image/*" multiple
+                          id="business-input" style={{ display: 'none' }}
+                          onChange={handleBusinessFiles} />
+                        <label htmlFor="business-input" className="btn btn-secondary verif-upload-btn">
+                          Seleccionar fotos ({businessFiles.length} seleccionadas)
+                        </label>
+                        {businessFiles.length > 0 && (
+                          <div className="verif-preview-grid">
+                            {businessFiles.map((f, i) => (
+                              <div key={i} className="verif-preview-item">
+                                <img src={URL.createObjectURL(f)} alt={`biz ${i}`} />
+                                <span className="verif-file-size">
+                                  {(f.size / 1024 / 1024).toFixed(1)}MB
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="verif-actions">
+                      {verifSaved && <span className="premium-saved">✓ Documentos enviados — en revisión</span>}
+                      <button className="btn btn-primary"
+                        onClick={handleSubmitVerification}
+                        disabled={uploadingDocs || identityFiles.length === 0}>
+                        {uploadingDocs
+                          ? <><span className="loading" /> Enviando...</>
+                          : 'Enviar para verificación'}
+                      </button>
                     </div>
                   </div>
-                  <div className="premium-field full-width">
-                    <label>Descripción / Bio</label>
-                    <textarea className="input textarea" rows={3} placeholder="Cuéntale a tus clientes sobre tu tienda..."
-                      value={shopForm.shop_bio} onChange={e => setShopForm(p => ({ ...p, shop_bio: e.target.value }))} />
-                  </div>
-                  <div className="premium-field">
-                    <label>Link externo</label>
-                    <input type="url" className="input" placeholder="https://..."
-                      value={shopForm.shop_link} onChange={e => setShopForm(p => ({ ...p, shop_link: e.target.value }))} />
-                  </div>
-                  <div className="premium-field">
-                    <label>Horarios de atención</label>
-                    <input type="text" className="input" placeholder="Ej: Lun-Vie 9am-6pm"
-                      value={shopForm.shop_hours} onChange={e => setShopForm(p => ({ ...p, shop_hours: e.target.value }))} />
-                  </div>
-                  <div className="premium-field">
-                    <label>URL del logo</label>
-                    <input type="url" className="input" placeholder="https://..."
-                      value={shopForm.shop_logo_url} onChange={e => setShopForm(p => ({ ...p, shop_logo_url: e.target.value }))} />
-                  </div>
-                  <div className="premium-field">
-                    <label>URL del banner</label>
-                    <input type="url" className="input" placeholder="https://... (imagen horizontal)"
-                      value={shopForm.shop_banner_url} onChange={e => setShopForm(p => ({ ...p, shop_banner_url: e.target.value }))} />
-                  </div>
-                </div>
-                <div className="premium-form-actions">
-                  {shopSaved && <span className="premium-saved">✓ Guardado correctamente</span>}
-                  <button className="btn btn-primary" onClick={handleShopSave} disabled={savingShop}>
-                    {savingShop ? <><span className="loading" /> Guardando...</> : '💾 Guardar cambios'}
-                  </button>
-                </div>
+                )}
               </div>
             )}
-          </div>
-        )}
 
+            {/* ══ CATÁLOGO PREMIUM ══ */}
+            {activeSection === 'catalogo' && isShopOrWholesale && (
+              <div className="db-section">
+                <div className="db-section-header">
+                  <h2>⭐ Catálogo Premium</h2>
+                  {isPremium
+                    ? <span className="premium-active-badge">✓ Activo hasta {new Date(profile.premium_until).toLocaleDateString()}</span>
+                    : <span className="premium-inactive-badge">🔒 No activo</span>}
+                </div>
+
+                {!isPremium ? (
+                  <div className="premium-locked">
+                    <div className="premium-locked-icon">🔒</div>
+                    <h3>Catálogo Premium no activado</h3>
+                    <p>Contacta al administrador para activar tu catálogo premium — solo $5 anual.</p>
+                    <a href="https://api.whatsapp.com/send?phone=+59175109694&text=Hola,%20quiero%20activar%20mi%20catalogo%20premium%20en%20Pirata%20Market"
+                      target="_blank" rel="noopener noreferrer" className="btn btn-primary">
+                      Solicitar activación por WhatsApp
+                    </a>
+                  </div>
+                ) : (
+                  <div className="premium-form">
+                    <p className="premium-form-hint">
+                      💡 Estos datos aparecerán en tu página de catálogo en <strong>/vendedor/{user.id}</strong>
+                    </p>
+                    <div className="premium-form-grid">
+                      <div className="premium-field">
+                        <label>Nombre de tu tienda</label>
+                        <input type="text" className="input" placeholder="Ej: Tienda Maldonado"
+                          value={shopForm.shop_name}
+                          onChange={e => setShopForm(p => ({ ...p, shop_name: e.target.value }))} />
+                      </div>
+                      <div className="premium-field">
+                        <label>Color de marca</label>
+                        <div className="color-picker-row">
+                          <input type="color" className="color-input" value={shopForm.shop_color}
+                            onChange={e => setShopForm(p => ({ ...p, shop_color: e.target.value }))} />
+                          <span className="color-value">{shopForm.shop_color}</span>
+                          <div className="color-preview" style={{ background: shopForm.shop_color }} />
+                        </div>
+                      </div>
+                      <div className="premium-field full-width">
+                        <label>Descripción / Bio</label>
+                        <textarea className="input textarea" rows={3}
+                          placeholder="Cuéntale a tus clientes sobre tu tienda..."
+                          value={shopForm.shop_bio}
+                          onChange={e => setShopForm(p => ({ ...p, shop_bio: e.target.value }))} />
+                      </div>
+                      <div className="premium-field">
+                        <label>Link externo</label>
+                        <input type="url" className="input" placeholder="https://..."
+                          value={shopForm.shop_link}
+                          onChange={e => setShopForm(p => ({ ...p, shop_link: e.target.value }))} />
+                      </div>
+                      <div className="premium-field">
+                        <label>Horarios de atención</label>
+                        <input type="text" className="input" placeholder="Ej: Lun-Vie 9am-6pm"
+                          value={shopForm.shop_hours}
+                          onChange={e => setShopForm(p => ({ ...p, shop_hours: e.target.value }))} />
+                      </div>
+                      <div className="premium-field">
+                        <label>URL del logo</label>
+                        <input type="url" className="input" placeholder="https://..."
+                          value={shopForm.shop_logo_url}
+                          onChange={e => setShopForm(p => ({ ...p, shop_logo_url: e.target.value }))} />
+                      </div>
+                      <div className="premium-field">
+                        <label>URL del banner</label>
+                        <input type="url" className="input" placeholder="https://..."
+                          value={shopForm.shop_banner_url}
+                          onChange={e => setShopForm(p => ({ ...p, shop_banner_url: e.target.value }))} />
+                      </div>
+                    </div>
+                    <div className="premium-form-actions">
+                      {shopSaved && <span className="premium-saved">✓ Guardado correctamente</span>}
+                      <button className="btn btn-primary" onClick={handleShopSave} disabled={savingShop}>
+                        {savingShop ? <><span className="loading" /> Guardando...</> : 'Guardar cambios'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+          </main>
+        </div>
       </div>
     </div>
   )
