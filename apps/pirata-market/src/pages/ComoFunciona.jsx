@@ -10,7 +10,7 @@ export default function ComoFunciona() {
         {/* Hero */}
         <div className="cf-hero">
           <h1 className="serif luxury-gold">
-            <img src="/logo - ico.png" alt="Pirata Market" className="cf-logo" />
+            <img src="/logo-ico.png" alt="Pirata Market" className="cf-logo" />
             Pirata Market
           </h1>
           <p className="cf-tagline">Comercio sin intermediarios, sin censura, sin algoritmos basura.</p>
