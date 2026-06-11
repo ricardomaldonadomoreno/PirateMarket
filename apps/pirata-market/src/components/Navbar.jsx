@@ -34,7 +34,7 @@ export default function Navbar({ user, profile }) {
         <Link to="/" className="navbar-logo">
           <img src="/logo-ico.png" alt="Pirata Market" className="logo-icon" />
           <div className="logo-text">
-            <span className="logo-brand luxury-gold">pirata</span>
+            <span className="logo-brand luxury-gold">Pirata</span>
             <span className="logo-suffix">market</span>
           </div>
         </Link>
