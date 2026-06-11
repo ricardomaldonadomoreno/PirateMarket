@@ -5,7 +5,9 @@ import { supabase } from '../lib/supabase'
 import { formatPrice, timeAgo } from '../lib/utils'
 import './Dashboard.css'
 
-export default function Dashboard({ user }) {
+const MAX_FILE_SIZE = 2 * 1024 * 1024 // 2MB
+
+export default function Dashboard({ user, onProfileUpdate }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const fileInputRef = useRef(null)
@@ -15,6 +17,7 @@ export default function Dashboard({ user }) {
   const [filter, setFilter] = useState('active')
   const [profile, setProfile] = useState(null)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
+  const [changingType, setChangingType] = useState(false)
 
   // Premium shop form
   const [shopForm, setShopForm] = useState({
@@ -30,6 +33,7 @@ export default function Dashboard({ user }) {
   const [identityFiles, setIdentityFiles] = useState([])
   const [businessFiles, setBusinessFiles] = useState([])
   const [verifSaved, setVerifSaved] = useState(false)
+  const [fileError, setFileError] = useState('')
 
   useEffect(() => {
     if (!user) { navigate('/auth'); return }
@@ -48,10 +52,13 @@ export default function Dashboard({ user }) {
       if (data) {
         setProfile(data)
         setShopForm({
-          shop_name: data.shop_name || '', shop_bio: data.shop_bio || '',
-          shop_link: data.shop_link || '', shop_hours: data.shop_hours || '',
+          shop_name: data.shop_name || '',
+          shop_bio: data.shop_bio || '',
+          shop_link: data.shop_link || '',
+          shop_hours: data.shop_hours || '',
           shop_color: data.shop_color || '#B8985F',
-          shop_logo_url: data.shop_logo_url || '', shop_banner_url: data.shop_banner_url || '',
+          shop_logo_url: data.shop_logo_url || '',
+          shop_banner_url: data.shop_banner_url || '',
         })
       }
     } catch (error) { console.error('Error loading profile:', error) }
@@ -82,9 +89,14 @@ export default function Dashboard({ user }) {
     if (data) setVerificationRequest(data)
   }
 
+  // ── AVATAR ──
   const handleAvatarUpload = async (e) => {
     const file = e.target.files[0]
     if (!file) return
+    if (file.size > MAX_FILE_SIZE) {
+      alert('La foto no puede superar 2MB')
+      return
+    }
     setUploadingAvatar(true)
     try {
       const fileExt = file.name.split('.').pop()
@@ -120,6 +132,35 @@ export default function Dashboard({ user }) {
     finally { setUploadingAvatar(false) }
   }
 
+  // ── CAMBIO DE TIPO ──
+  const handleChangeType = async (newType) => {
+    if (newType === profile?.user_type) return
+    if (!confirm(`¿Cambiar tu tipo de cuenta a ${newType === 'shop' ? 'Tienda' : newType === 'wholesale' ? 'Mayorista' : 'Persona'}? Tu verificación se reseteará y deberás verificarte de nuevo.`)) return
+    setChangingType(true)
+    try {
+      await supabase.from('users').update({
+        user_type: newType,
+        is_verified: false,
+      }).eq('id', user.id)
+      // Resetear solicitud de verificación anterior
+      if (verificationRequest) {
+        await supabase.from('verification_requests').update({
+          status: 'pending',
+          identity_docs: [],
+          business_docs: [],
+          admin_note: null,
+        }).eq('id', verificationRequest.id)
+      }
+      setIdentityFiles([])
+      setBusinessFiles([])
+      setVerificationRequest(null)
+      await loadProfile()
+      await loadVerification()
+    } catch (error) { alert('Error al cambiar tipo: ' + error.message) }
+    finally { setChangingType(false) }
+  }
+
+  // ── LISTINGS ──
   const handleStatusChange = async (listingId, newStatus) => {
     try {
       await supabase.from('listings').update({ status: newStatus }).eq('id', listingId)
@@ -135,14 +176,18 @@ export default function Dashboard({ user }) {
     } catch (error) { alert(t('messages.error')) }
   }
 
+  // ── SHOP SAVE ──
   const handleShopSave = async () => {
     setSavingShop(true)
     try {
       await supabase.from('users').update({
-        shop_name: shopForm.shop_name || null, shop_bio: shopForm.shop_bio || null,
-        shop_link: shopForm.shop_link || null, shop_hours: shopForm.shop_hours || null,
+        shop_name: shopForm.shop_name || null,
+        shop_bio: shopForm.shop_bio || null,
+        shop_link: shopForm.shop_link || null,
+        shop_hours: shopForm.shop_hours || null,
         shop_color: shopForm.shop_color || '#B8985F',
-        shop_logo_url: shopForm.shop_logo_url || null, shop_banner_url: shopForm.shop_banner_url || null,
+        shop_logo_url: shopForm.shop_logo_url || null,
+        shop_banner_url: shopForm.shop_banner_url || null,
       }).eq('id', user.id)
       setShopSaved(true)
       setTimeout(() => setShopSaved(false), 3000)
@@ -151,7 +196,28 @@ export default function Dashboard({ user }) {
     finally { setSavingShop(false) }
   }
 
-  // Upload docs de verificación
+  // ── VALIDAR ARCHIVOS ──
+  const validateFiles = (files) => {
+    const oversized = files.filter(f => f.size > MAX_FILE_SIZE)
+    if (oversized.length > 0) {
+      setFileError(`${oversized.length} archivo(s) superan el límite de 2MB: ${oversized.map(f => f.name).join(', ')}`)
+      return false
+    }
+    setFileError('')
+    return true
+  }
+
+  const handleIdentityFiles = (e) => {
+    const files = Array.from(e.target.files)
+    if (validateFiles(files)) setIdentityFiles(files)
+  }
+
+  const handleBusinessFiles = (e) => {
+    const files = Array.from(e.target.files)
+    if (validateFiles(files)) setBusinessFiles(files)
+  }
+
+  // ── VERIFICACIÓN ──
   const uploadDocFiles = async (files, folder) => {
     const urls = []
     for (const file of files) {
@@ -167,25 +233,23 @@ export default function Dashboard({ user }) {
 
   const handleSubmitVerification = async () => {
     if (identityFiles.length === 0) { alert('Sube al menos una foto de identidad'); return }
+    if (!validateFiles([...identityFiles, ...businessFiles])) return
     setUploadingDocs(true)
     try {
       const identityUrls = await uploadDocFiles(identityFiles, 'identity')
       const businessUrls = businessFiles.length > 0 ? await uploadDocFiles(businessFiles, 'business') : []
-
       const payload = {
         user_id: user.id,
         status: 'pending',
-        app_source: 'pirata',
+        source: 'pirata',
         identity_docs: identityUrls,
         business_docs: businessUrls,
       }
-
       if (verificationRequest) {
         await supabase.from('verification_requests').update(payload).eq('id', verificationRequest.id)
       } else {
         await supabase.from('verification_requests').insert([payload])
       }
-
       setVerifSaved(true)
       setIdentityFiles([])
       setBusinessFiles([])
@@ -204,22 +268,25 @@ export default function Dashboard({ user }) {
   const isPremium = profile?.is_premium && profile?.premium_until && new Date(profile.premium_until) > new Date()
   const isShopOrWholesale = userType === 'shop' || userType === 'wholesale'
   const isVerified = profile?.is_verified
+  const identityAlreadySubmitted = verificationRequest?.identity_docs?.length > 0
 
   const verifStatusLabel = {
-    pending: { text: '⏳ Revisión pendiente', cls: 'verif-pending' },
-    approved: { text: '✓ Verificado', cls: 'verif-approved' },
-    rejected: { text: '✗ Rechazado', cls: 'verif-rejected' },
+    pending:  { text: '⏳ Revisión pendiente', cls: 'verif-pending' },
+    approved: { text: '✓ Verificado',          cls: 'verif-approved' },
+    rejected: { text: '✗ Rechazado',           cls: 'verif-rejected' },
   }
 
   return (
     <div className="dashboard">
       <div className="dashboard-container">
-        {/* Header */}
+
+        {/* ── HEADER ── */}
         <div className="dashboard-header">
           <div className="dashboard-profile">
             <div className="avatar-section">
               <div className="avatar-wrapper">
-                {avatarUrl ? <img src={avatarUrl} alt={displayName} className="avatar-img" />
+                {avatarUrl
+                  ? <img src={avatarUrl} alt={displayName} className="avatar-img" />
                   : <div className="avatar-placeholder">{displayName?.charAt(0).toUpperCase()}</div>}
                 {uploadingAvatar && <div className="avatar-loading">⏳</div>}
               </div>
@@ -243,12 +310,12 @@ export default function Dashboard({ user }) {
           <Link to="/publicar" className="btn btn-primary">+ {t('navbar.publish')}</Link>
         </div>
 
-        {/* Stats */}
+        {/* ── STATS ── */}
         <div className="dashboard-stats">
           {[
-            { icon: '👁️', value: stats.total_views.toLocaleString(), label: t('dashboard.stats.total_views') },
+            { icon: '👁️', value: stats.total_views.toLocaleString(),  label: t('dashboard.stats.total_views') },
             { icon: '📱', value: stats.total_contacts.toLocaleString(), label: t('dashboard.stats.total_contacts') },
-            { icon: '🏴‍☠️', value: stats.active_listings, label: t('dashboard.stats.active_listings') },
+            { icon: '🏴‍☠️', value: stats.active_listings,               label: t('dashboard.stats.active_listings') },
           ].map((s, i) => (
             <div key={i} className="stat-card">
               <div className="stat-icon">{s.icon}</div>
@@ -260,7 +327,7 @@ export default function Dashboard({ user }) {
           ))}
         </div>
 
-        {/* Filters */}
+        {/* ── FILTERS ── */}
         <div className="dashboard-filters">
           {['all', 'active', 'sold', 'paused'].map(f => (
             <button key={f} className={`filter-btn ${filter === f ? 'active' : ''}`} onClick={() => setFilter(f)}>
@@ -269,11 +336,13 @@ export default function Dashboard({ user }) {
           ))}
         </div>
 
-        {/* Listings */}
+        {/* ── LISTINGS ── */}
         <div className="dashboard-listings">
           <h2>{t('dashboard.my_listings')}</h2>
           {loading ? (
-            <div className="listings-loading">{[...Array(3)].map((_, i) => <div key={i} className="listing-row skeleton" style={{ height: '120px' }}></div>)}</div>
+            <div className="listings-loading">
+              {[...Array(3)].map((_, i) => <div key={i} className="listing-row skeleton" style={{ height: '100px' }} />)}
+            </div>
           ) : listings.length === 0 ? (
             <div className="no-listings">
               <span className="no-listings-icon">🏴‍☠️</span>
@@ -318,7 +387,7 @@ export default function Dashboard({ user }) {
           )}
         </div>
 
-        {/* ===== VERIFICACIÓN ===== */}
+        {/* ── VERIFICACIÓN + TIPO DE CUENTA ── */}
         <div className="verification-section">
           <div className="verification-header">
             <div>
@@ -336,6 +405,45 @@ export default function Dashboard({ user }) {
             )}
           </div>
 
+          {/* ── MI TIPO DE CUENTA ── */}
+          <div className="account-type-section">
+            <div className="account-type-header">
+              <h3>¿Qué tipo de vendedor eres?</h3>
+              <p>Selecciona tu tipo de cuenta. Cambiar de tipo reseteará tu verificación.</p>
+            </div>
+            <div className="account-type-grid">
+              {[
+                { key: 'person',    icon: '👤', label: 'Persona',    desc: 'Vendo ocasionalmente' },
+                { key: 'shop',      icon: '🏪', label: 'Tienda',     desc: 'Tengo un negocio o emprendimiento' },
+                { key: 'wholesale', icon: '📦', label: 'Mayorista',  desc: 'Distribuidor o importador' },
+              ].map(type => (
+                <button
+                  key={type.key}
+                  className={`account-type-btn ${userType === type.key ? 'active' : ''}`}
+                  onClick={() => handleChangeType(type.key)}
+                  disabled={changingType || userType === type.key}
+                >
+                  <span className="account-type-icon">{type.icon}</span>
+                  <strong>{type.label}</strong>
+                  <small>{type.desc}</small>
+                  {userType === type.key && <span className="account-type-current">✓ Actual</span>}
+                </button>
+              ))}
+            </div>
+            {isShopOrWholesale && (
+              <div className="account-type-notice">
+                🏪 Como <strong>{userType === 'shop' ? 'Tienda' : 'Mayorista'}</strong> debes verificar tu negocio además de tu identidad para obtener el badge verificado.
+              </div>
+            )}
+            {!isVerified && verificationRequest?.status !== 'pending' && (
+              <div className="account-type-notice account-type-warning">
+                ⚠️ Para ser un vendedor verificado debes completar la verificación de identidad
+                {isShopOrWholesale ? ' y documentos de negocio' : ''} en la sección de abajo.
+              </div>
+            )}
+          </div>
+
+          {/* ── ESTADO Y FORMULARIO DE VERIFICACIÓN ── */}
           {isVerified ? (
             <div className="verif-verified-msg">
               <span>🎉</span>
@@ -361,36 +469,45 @@ export default function Dashboard({ user }) {
                 </div>
               )}
 
-              {/* Documentos de identidad — todos */}
+              {fileError && (
+                <div className="verif-file-error">⚠️ {fileError}</div>
+              )}
+
+              {/* Identidad — todos */}
               <div className="verif-field">
-                <label>📄 Documento de identidad</label>
-                <p className="verif-hint">Foto del DNI/CI anverso y reverso + selfie sosteniendo el documento</p>
-                <input type="file" accept="image/*" multiple id="identity-input" style={{ display: 'none' }}
-                  onChange={e => setIdentityFiles(Array.from(e.target.files))} />
-                <label htmlFor="identity-input" className="btn btn-secondary verif-upload-btn">
-                  📷 Seleccionar fotos ({identityFiles.length} seleccionadas)
-                </label>
-                {identityFiles.length > 0 && (
-                  <div className="verif-preview-grid">
-                    {identityFiles.map((f, i) => (
-                      <div key={i} className="verif-preview-item">
-                        <img src={URL.createObjectURL(f)} alt={`doc ${i}`} />
+                <label>📄 Documento de identidad {identityAlreadySubmitted && <span className="verif-submitted-badge">✅ Ya enviado</span>}</label>
+                <p className="verif-hint">Foto del DNI/CI anverso y reverso + selfie sosteniendo el documento. Máximo 2MB por foto.</p>
+                {!identityAlreadySubmitted && (
+                  <>
+                    <input type="file" accept="image/*" multiple id="identity-input"
+                      style={{ display: 'none' }} onChange={handleIdentityFiles} />
+                    <label htmlFor="identity-input" className="btn btn-secondary verif-upload-btn">
+                      📷 Seleccionar fotos ({identityFiles.length} seleccionadas)
+                    </label>
+                    {identityFiles.length > 0 && (
+                      <div className="verif-preview-grid">
+                        {identityFiles.map((f, i) => (
+                          <div key={i} className="verif-preview-item">
+                            <img src={URL.createObjectURL(f)} alt={`doc ${i}`} />
+                            <span className="verif-file-size">{(f.size / 1024 / 1024).toFixed(1)}MB</span>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
+                    )}
+                  </>
                 )}
               </div>
 
-              {/* Documentos del negocio — solo shop/wholesale */}
+              {/* Negocio — solo shop/wholesale */}
               {isShopOrWholesale && (
                 <div className="verif-field">
                   <label>🏪 Documentos del negocio</label>
                   <p className="verif-hint">
                     Foto exterior del negocio · Foto del mural de certificaciones · Documento legal (NIT, matrícula de comercio, etc.)
-                    <br />El nombre del titular debe coincidir con tu documento de identidad.
+                    El nombre del titular debe coincidir con tu documento de identidad. Máximo 2MB por foto.
                   </p>
-                  <input type="file" accept="image/*" multiple id="business-input" style={{ display: 'none' }}
-                    onChange={e => setBusinessFiles(Array.from(e.target.files))} />
+                  <input type="file" accept="image/*" multiple id="business-input"
+                    style={{ display: 'none' }} onChange={handleBusinessFiles} />
                   <label htmlFor="business-input" className="btn btn-secondary verif-upload-btn">
                     🏪 Seleccionar fotos del negocio ({businessFiles.length} seleccionadas)
                   </label>
@@ -399,6 +516,7 @@ export default function Dashboard({ user }) {
                       {businessFiles.map((f, i) => (
                         <div key={i} className="verif-preview-item">
                           <img src={URL.createObjectURL(f)} alt={`biz ${i}`} />
+                          <span className="verif-file-size">{(f.size / 1024 / 1024).toFixed(1)}MB</span>
                         </div>
                       ))}
                     </div>
@@ -408,21 +526,22 @@ export default function Dashboard({ user }) {
 
               <div className="verif-actions">
                 {verifSaved && <span className="premium-saved">✓ Documentos enviados — en revisión</span>}
-                <button className="btn btn-primary" onClick={handleSubmitVerification} disabled={uploadingDocs || identityFiles.length === 0}>
-                  {uploadingDocs ? <><span className="loading"></span> Enviando...</> : '📤 Enviar para verificación'}
+                <button className="btn btn-primary" onClick={handleSubmitVerification}
+                  disabled={uploadingDocs || (identityAlreadySubmitted && businessFiles.length === 0 && !isShopOrWholesale)}>
+                  {uploadingDocs ? <><span className="loading" /> Enviando...</> : '📤 Enviar para verificación'}
                 </button>
               </div>
             </div>
           )}
         </div>
 
-        {/* ===== CATÁLOGO PREMIUM ===== */}
+        {/* ── CATÁLOGO PREMIUM ── */}
         {isShopOrWholesale && (
           <div className="premium-catalog-section">
             <div className="premium-catalog-header">
               <div>
                 <h2 className="serif">⭐ Catálogo Premium</h2>
-                <p>Personaliza tu página de catálogo con tu marca x solo 5$ anual</p>
+                <p>Personaliza tu página de catálogo con tu marca — solo $5 anual</p>
               </div>
               {isPremium
                 ? <span className="premium-active-badge">✓ Activo hasta {new Date(profile.premium_until).toLocaleDateString()}</span>
@@ -434,7 +553,7 @@ export default function Dashboard({ user }) {
                 <div className="premium-locked-icon">🔒</div>
                 <h3>Catálogo Premium no activado</h3>
                 <p>Contacta al administrador para activar tu catálogo premium y personalizar tu página de vendedor con tu marca, banner, logo, descripción y más.</p>
-                <a href="https://api.whatsapp.com/send?phone=+59175109694&text=Hola,%20Soy%20Usuario%20de%20Pirata%20Marketplace%20y%20quiero%20tener%20mi%20catalogo%20premium..%20"
+                <a href="https://api.whatsapp.com/send?phone=+59175109694&text=Hola,%20Soy%20Usuario%20de%20Pirata%20Marketplace%20y%20quiero%20tener%20mi%20catalogo%20premium.."
                   target="_blank" rel="noopener noreferrer" className="btn btn-primary">
                   📱 Solicitar activación
                 </a>
@@ -456,7 +575,7 @@ export default function Dashboard({ user }) {
                       <input type="color" className="color-input" value={shopForm.shop_color}
                         onChange={e => setShopForm(p => ({ ...p, shop_color: e.target.value }))} />
                       <span className="color-value">{shopForm.shop_color}</span>
-                      <div className="color-preview" style={{ background: shopForm.shop_color }}></div>
+                      <div className="color-preview" style={{ background: shopForm.shop_color }} />
                     </div>
                   </div>
                   <div className="premium-field full-width">
@@ -488,13 +607,14 @@ export default function Dashboard({ user }) {
                 <div className="premium-form-actions">
                   {shopSaved && <span className="premium-saved">✓ Guardado correctamente</span>}
                   <button className="btn btn-primary" onClick={handleShopSave} disabled={savingShop}>
-                    {savingShop ? <><span className="loading"></span> Guardando...</> : '💾 Guardar cambios'}
+                    {savingShop ? <><span className="loading" /> Guardando...</> : '💾 Guardar cambios'}
                   </button>
                 </div>
               </div>
             )}
           </div>
         )}
+
       </div>
     </div>
   )
