@@ -311,3 +311,9 @@
   .email-sent h2 { font-size: 20px; }
   .auth-apps-badges { flex-wrap: wrap; }
 }
+
+.auth-buses-app-logo {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+}
