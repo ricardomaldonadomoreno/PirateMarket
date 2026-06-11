@@ -122,7 +122,7 @@ export default function Auth() {
           {/* ── LOGO BUSES APP ── */}
           <div className="auth-logo">
             <div className="auth-buses-logo">
-              <span className="auth-buses-icon">🚌</span>
+              <img src="/buses/logo.png" alt="Buses App" className="auth-buses-app-logo" />
               <h1 className="auth-buses-title">Buses App</h1>
             </div>
             <p className="auth-tagline">Módulos de transporte</p>
