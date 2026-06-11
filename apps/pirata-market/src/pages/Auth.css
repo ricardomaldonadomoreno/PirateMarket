@@ -20,31 +20,72 @@
   padding: 40px;
 }
 
-/* Logo Section */
+/* ── BUSES APP LOGO ── */
 .auth-logo {
   text-align: center;
   margin-bottom: 32px;
 }
 
-.auth-logo-icon {
-  width: 64px;
-  height: 64px;
-  margin-bottom: 16px;
+.auth-buses-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
 }
 
-.auth-logo h1 {
-  font-size: 32px;
-  margin: 0 0 8px 0;
+.auth-buses-icon {
+  font-size: 2.5rem;
+  line-height: 1;
+}
+
+.auth-buses-title {
+  font-size: 2rem;
+  font-family: 'Playfair Display', serif;
+  font-weight: 700;
   color: var(--gold);
+  margin: 0;
+  letter-spacing: -0.02em;
 }
 
 .auth-tagline {
   color: var(--text-muted);
   font-size: 14px;
-  margin: 0;
+  margin: 0.25rem 0 0;
 }
 
-/* Tabs */
+/* ── APPS BADGES ── */
+.auth-apps-badges {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--dark-border);
+}
+
+.auth-app-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.auth-app-badge-logo {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.auth-app-badge-sep {
+  color: var(--dark-border);
+  font-size: 1.2rem;
+}
+
+/* ── TABS ── */
 .auth-tabs {
   display: flex;
   gap: 8px;
@@ -75,7 +116,7 @@
   color: var(--text-light);
 }
 
-/* Forms */
+/* ── FORMS ── */
 .auth-form {
   display: flex;
   flex-direction: column;
@@ -100,7 +141,7 @@
   margin: 0;
 }
 
-/* Error and Success Messages */
+/* ── MESSAGES ── */
 .auth-error {
   background-color: rgba(230, 57, 70, 0.1);
   border: 1px solid var(--danger);
@@ -123,7 +164,7 @@
   text-align: center;
 }
 
-/* Email Sent Screen */
+/* ── EMAIL SENT ── */
 .email-sent {
   text-align: center;
   padding: 20px 0;
@@ -172,9 +213,7 @@
   margin-bottom: 20px;
 }
 
-.step:last-child {
-  margin-bottom: 0;
-}
+.step:last-child { margin-bottom: 0; }
 
 .step-number {
   background: var(--gold);
@@ -198,7 +237,7 @@
   font-size: 14px;
 }
 
-/* Pirate Notice */
+/* ── NOTICE ── */
 .auth-notice {
   margin-top: 24px;
   padding-top: 24px;
@@ -212,7 +251,7 @@
   margin: 0;
 }
 
-/* Button Text */
+/* ── BUTTON TEXT ── */
 .btn-text {
   background: none;
   border: none;
@@ -229,29 +268,14 @@
   text-decoration: underline;
 }
 
-/* Responsive */
-@media (max-width: 640px) {
-  .auth-card {
-    padding: 24px;
-  }
-  
-  .auth-logo h1 {
-    font-size: 28px;
-  }
-  
-  .email-sent h2 {
-    font-size: 20px;
-  }
-}
-
-/* Password Toggle */
+/* ── PASSWORD TOGGLE ── */
 .password-input-wrapper {
   position: relative;
   width: 100%;
 }
 
 .password-input-wrapper .input {
-  padding-right: 48px; /* Espacio para el botón */
+  padding-right: 48px;
 }
 
 .password-toggle {
@@ -272,12 +296,18 @@
   line-height: 1;
 }
 
-.password-toggle:hover {
-  opacity: 1;
-}
+.password-toggle:hover { opacity: 1; }
 
 .password-toggle:focus {
   outline: 2px solid var(--gold);
   outline-offset: 2px;
   border-radius: 4px;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 640px) {
+  .auth-card { padding: 24px; }
+  .auth-buses-title { font-size: 1.6rem; }
+  .email-sent h2 { font-size: 20px; }
+  .auth-apps-badges { flex-wrap: wrap; }
 }
