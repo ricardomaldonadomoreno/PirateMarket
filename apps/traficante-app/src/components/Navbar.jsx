@@ -33,7 +33,7 @@ export default function TraficanteNavbar({ user, profile }) {
         <Link to="/traficante" className="navbar-logo">
           <img src="/traficante/logoPNG.png" alt="Traficante" className="logo-icon" />
           <div className="logo-text">
-            <span className="logo-brand traficante-gold">traficante</span>
+            <span className="logo-brand traficante-gold">Traficante</span>
             <span className="logo-suffix traficante-by">by buses app</span>
           </div>
         </Link>
