@@ -29,7 +29,7 @@ export default function AdminUsuarios() {
         const { data: requests } = await supabase
           .from('verification_requests')
           .select('*')
-          .eq('app_source', 'pirata')
+          .eq('source', 'pirata')
           .in('user_id', data.map(u => u.id))
           .order('created_at', { ascending: false })
         if (requests) {
