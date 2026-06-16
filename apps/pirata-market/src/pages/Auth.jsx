@@ -36,7 +36,7 @@ export default function Auth() {
     setLoading(true)
     setError(null)
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password
       })
@@ -48,7 +48,8 @@ export default function Auth() {
         }
         throw error
       }
-      const from = location.state?.from?.pathname || '/dashboard'
+      // Identidad 1: Login exitoso, redirigir según contexto o al perfil público
+      const from = location.state?.from?.pathname || '/perfil'
       navigate(from)
     } catch (err) {
       setError(err.message || t('auth.error_login'))
@@ -75,6 +76,7 @@ export default function Auth() {
     }
 
     try {
+      // Identidad 1: Solo registrar datos básicos (Email, WhatsApp, Display Name)
       const { error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -82,11 +84,11 @@ export default function Auth() {
           data: {
             display_name: formData.display_name,
             whatsapp: formData.whatsapp,
-            user_type: 'person'
+            user_type: 'person' // Por defecto persona hasta que elija app
           },
           emailRedirectTo: fromTraficante
             ? 'https://pirate-market.vercel.app/traficante/mi-cuenta'
-            : 'https://pirate-market.vercel.app/dashboard'
+            : 'https://pirate-market.vercel.app/perfil'
         }
       })
       if (authError) throw authError
