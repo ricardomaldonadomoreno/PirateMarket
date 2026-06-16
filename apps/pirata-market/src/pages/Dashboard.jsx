@@ -40,6 +40,14 @@ export default function Dashboard({ user, onProfileUpdate }) {
   const [verifSaved, setVerifSaved] = useState(false)
   const [fileError, setFileError] = useState('')
 
+  // Datos Reales (Capa 1)
+  const [realData, setRealData] = useState({
+    full_name: '',
+    country: '',
+    city: '',
+    phone: ''
+  })
+
   useEffect(() => {
     if (!user) { navigate('/auth'); return }
     loadProfile()
@@ -51,11 +59,21 @@ export default function Dashboard({ user, onProfileUpdate }) {
     try {
       const { data } = await supabase
         .from('users')
-        .select('display_name, user_type, avatar_url, is_verified, is_premium, premium_until, shop_name, shop_bio, shop_link, shop_hours, shop_color, shop_logo_url, shop_banner_url')
+        .select(`
+          display_name, user_type, avatar_url, is_verified, is_premium, premium_until, 
+          shop_name, shop_bio, shop_link, shop_hours, shop_color, shop_logo_url, shop_banner_url,
+          full_name, country, city, phone, identity_verified, business_verified, identity_locked, allow_identity_edit
+        `)
         .eq('id', user.id)
         .single()
       if (data) {
         setProfile(data)
+        setRealData({
+          full_name: data.full_name || '',
+          country: data.country || '',
+          city: data.city || '',
+          phone: data.phone || ''
+        })
         setShopForm({
           shop_name: data.shop_name || '',
           shop_bio: data.shop_bio || '',
@@ -94,6 +112,7 @@ export default function Dashboard({ user, onProfileUpdate }) {
       .from('verification_requests')
       .select('*')
       .eq('user_id', user.id)
+      .eq('source', 'pirata')
       .order('created_at', { ascending: false })
       .limit(1)
       .single()
@@ -103,24 +122,23 @@ export default function Dashboard({ user, onProfileUpdate }) {
   const handleChangeType = async (newType) => {
     if (newType === profile?.user_type) return
     const label = newType === 'shop' ? 'Tienda' : newType === 'wholesale' ? 'Mayorista' : 'Persona'
-    if (!confirm(`¿Cambiar tu tipo de cuenta a ${label}? Tu verificación se reseteará y deberás verificarte de nuevo.`)) return
+    if (!confirm(`¿Cambiar tu tipo de cuenta a ${label}? Tu verificación de negocio se reseteará, pero tu identidad se mantendrá.`)) return
     setChangingType(true)
     try {
       await supabase.from('users').update({
         user_type: newType,
-        is_verified: false,
+        business_verified: false,
       }).eq('id', user.id)
+      
+      // Resetear solo la capa de negocio en la solicitud
       if (verificationRequest) {
         await supabase.from('verification_requests').update({
-          status: 'pending',
-          identity_docs: [],
           business_docs: [],
-          admin_note: null,
+          status: 'pending'
         }).eq('id', verificationRequest.id)
       }
-      setIdentityFiles([])
+      
       setBusinessFiles([])
-      setVerificationRequest(null)
       await loadProfile()
       await loadVerification()
     } catch (error) { alert('Error al cambiar tipo: ' + error.message) }
@@ -197,13 +215,28 @@ export default function Dashboard({ user, onProfileUpdate }) {
   }
 
   const handleSubmitVerification = async () => {
-    if (identityFiles.length === 0) { alert('Sube al menos una foto de identidad'); return }
-    if (!validateFiles([...identityFiles, ...businessFiles])) return
+    // Validar Capa 1 si no está verificada
+    if (!profile?.identity_verified) {
+      if (!realData.full_name || !realData.country || !realData.city || !realData.phone) {
+        alert('Completa todos tus datos reales para la verificación de identidad.'); return
+      }
+      if (identityFiles.length !== 2) {
+        alert('Sube exactamente 2 fotos de tu identidad (anverso y reverso).'); return
+      }
+    }
+
     setUploadingDocs(true)
     try {
-      const identityUrls = await uploadDocFiles(identityFiles, 'identity')
-      const businessUrls = businessFiles.length > 0
-        ? await uploadDocFiles(businessFiles, 'business') : []
+      let identityUrls = verificationRequest?.identity_docs || []
+      if (identityFiles.length > 0) {
+        identityUrls = await uploadDocFiles(identityFiles, 'identity')
+      }
+
+      let businessUrls = verificationRequest?.business_docs || []
+      if (businessFiles.length > 0) {
+        businessUrls = await uploadDocFiles(businessFiles, 'business')
+      }
+
       const payload = {
         user_id: user.id,
         status: 'pending',
@@ -211,16 +244,27 @@ export default function Dashboard({ user, onProfileUpdate }) {
         identity_docs: identityUrls,
         business_docs: businessUrls,
       }
+
+      // Actualizar datos reales en tabla users
+      await supabase.from('users').update({
+        full_name: realData.full_name,
+        country: realData.country,
+        city: realData.city,
+        phone: realData.phone,
+      }).eq('id', user.id)
+
       if (verificationRequest) {
         await supabase.from('verification_requests').update(payload).eq('id', verificationRequest.id)
       } else {
         await supabase.from('verification_requests').insert([payload])
       }
+
       setVerifSaved(true)
       setIdentityFiles([])
       setBusinessFiles([])
       setTimeout(() => setVerifSaved(false), 4000)
       loadVerification()
+      loadProfile()
     } catch (error) { alert('Error al enviar: ' + error.message) }
     finally { setUploadingDocs(false) }
   }
@@ -234,13 +278,9 @@ export default function Dashboard({ user, onProfileUpdate }) {
   const isPremium = profile?.is_premium && profile?.premium_until && new Date(profile.premium_until) > new Date()
   const isShopOrWholesale = userType === 'shop' || userType === 'wholesale'
   const isVerified = profile?.is_verified
-  const identityAlreadySubmitted = verificationRequest?.identity_docs?.length > 0
-
-  const verifStatusLabel = {
-    pending:  { text: '⏳ Revisión pendiente', cls: 'verif-pending' },
-    approved: { text: '✓ Verificado',          cls: 'verif-approved' },
-    rejected: { text: '✗ Rechazado',           cls: 'verif-rejected' },
-  }
+  const identityVerified = profile?.identity_verified
+  const businessVerified = profile?.business_verified
+  const identityLocked = profile?.identity_locked && !profile?.allow_identity_edit
 
   // Secciones visibles en sidebar
   const visibleSections = SECTIONS.filter(s =>
@@ -251,7 +291,7 @@ export default function Dashboard({ user, onProfileUpdate }) {
     <div className="dashboard">
       <div className="dashboard-container">
 
-        {/* ── STATS — siempre visibles ── */}
+        {/* ── STATS ── */}
         <div className="dashboard-stats">
           {[
             { icon: '👁️', value: stats.total_views.toLocaleString(),   label: t('dashboard.stats.total_views') },
@@ -268,10 +308,7 @@ export default function Dashboard({ user, onProfileUpdate }) {
           ))}
         </div>
 
-        {/* ── LAYOUT CON SIDEBAR ── */}
         <div className="db-layout">
-
-          {/* ── SIDEBAR ── */}
           <aside className="db-sidebar">
             <div className="db-sidebar-profile">
               <div className="db-avatar">
@@ -281,17 +318,20 @@ export default function Dashboard({ user, onProfileUpdate }) {
                 }
               </div>
               <div className="db-sidebar-name">{displayName}</div>
-              <span className={`user-type-badge user-type-${userType}`}>
-                {userTypeIcon} {t(`auth.${userType}`)}
-              </span>
-              {isPremium && (
-                <div className="db-premium-badge">
-                  ⭐ Premium — hasta {new Date(profile.premium_until).toLocaleDateString()}
+              <div className="db-type-selector">
+                <span className={`user-type-badge user-type-${userType}`}>
+                  {userTypeIcon} {t(`auth.${userType}`)}
+                </span>
+                <div className="type-change-options">
+                  <button onClick={() => handleChangeType('person')} disabled={changingType || userType === 'person'}>👤 Persona</button>
+                  <button onClick={() => handleChangeType('shop')} disabled={changingType || userType === 'shop'}>🏪 Tienda</button>
+                  <button onClick={() => handleChangeType('wholesale')} disabled={changingType || userType === 'wholesale'}>📦 Mayorista</button>
                 </div>
+              </div>
+              {isPremium && (
+                <div className="db-premium-badge">⭐ Premium — hasta {new Date(profile.premium_until).toLocaleDateString()}</div>
               )}
-              <Link to="/publicar" className="btn btn-primary db-publish-btn">
-                + {t('navbar.publish')}
-              </Link>
+              <Link to="/publicar" className="btn btn-primary db-publish-btn">+ {t('navbar.publish')}</Link>
             </div>
 
             <nav className="db-nav">
@@ -302,7 +342,7 @@ export default function Dashboard({ user, onProfileUpdate }) {
                 >
                   <span>{s.icon}</span>
                   <span>{s.label}</span>
-                  {s.key === 'verificacion' && !isVerified && (
+                  {s.key === 'verificacion' && (!identityVerified || (isShopOrWholesale && !businessVerified)) && (
                     <span className="db-nav-dot" />
                   )}
                 </button>
@@ -310,10 +350,7 @@ export default function Dashboard({ user, onProfileUpdate }) {
             </nav>
           </aside>
 
-          {/* ── CONTENIDO ── */}
           <main className="db-main">
-
-            {/* ══ MIS ANUNCIOS ══ */}
             {activeSection === 'anuncios' && (
               <div className="db-section">
                 <div className="db-section-header">
@@ -328,12 +365,9 @@ export default function Dashboard({ user, onProfileUpdate }) {
                     ))}
                   </div>
                 </div>
-
                 {loading ? (
                   <div className="listings-loading">
-                    {[...Array(3)].map((_, i) => (
-                      <div key={i} className="listing-row skeleton" style={{ height: '100px' }} />
-                    ))}
+                    {[...Array(3)].map((_, i) => <div key={i} className="listing-row skeleton" style={{ height: '100px' }} />)}
                   </div>
                 ) : listings.length === 0 ? (
                   <div className="no-listings">
@@ -351,55 +385,17 @@ export default function Dashboard({ user, onProfileUpdate }) {
                             : <div className="listing-row-no-image">{listing.category?.icon || '📦'}</div>}
                         </div>
                         <div className="listing-row-info">
-                          <Link to={`/ficha/${listing.slug}`} className="listing-row-title">
-                            {listing.title}
-                          </Link>
+                          <Link to={`/ficha/${listing.slug}`} className="listing-row-title">{listing.title}</Link>
                           <div className="listing-row-meta">
-                            <span className="listing-row-price luxury-gold">
-                              {formatPrice(listing.price, listing.currency)}
-                            </span>
-                            <span className="listing-row-category">
-                              {listing.category?.icon} {t(`categories.${listing.category?.slug}`)}
-                            </span>
-                            <span className="listing-row-date">{timeAgo(listing.created_at, t)}</span>
+                            <span className="listing-row-price luxury-gold">{formatPrice(listing.price, listing.currency)}</span>
+                            <span className="listing-row-category">{listing.category?.icon} {listing.category?.name}</span>
                           </div>
-                          <div className="listing-row-stats">
-                            <span>👁️ {listing.views_count}</span>
-                            <span>📱 {listing.contacts_count}</span>
-                            <span>🔗 {listing.shares_count}</span>
-                          </div>
-                        </div>
-                        <div className="listing-row-status">
-                          <span className={`status-badge status-${listing.status}`}>
-                            {t(`dashboard.listing_status.${listing.status}`)}
-                          </span>
                         </div>
                         <div className="listing-row-actions">
-                          <Link to={`/ficha/${listing.slug}`} className="db-action-btn">
-                            Ver
-                          </Link>
-                          {listing.status === 'active' && (
-                            <button className="db-action-btn"
-                              onClick={() => handleStatusChange(listing.id, 'paused')}>
-                              Pausar
-                            </button>
-                          )}
-                          {listing.status === 'paused' && (
-                            <button className="db-action-btn db-action-success"
-                              onClick={() => handleStatusChange(listing.id, 'active')}>
-                              Activar
-                            </button>
-                          )}
-                          {listing.status === 'active' && (
-                            <button className="db-action-btn db-action-success"
-                              onClick={() => handleStatusChange(listing.id, 'sold')}>
-                              Vendido
-                            </button>
-                          )}
-                          <button className="db-action-btn db-action-danger"
-                            onClick={() => handleDelete(listing.id)}>
-                            Eliminar
-                          </button>
+                          {listing.status === 'active' && <button onClick={() => handleStatusChange(listing.id, 'paused')} className="btn-icon" title="Pausar">⏸️</button>}
+                          {listing.status === 'paused' && <button onClick={() => handleStatusChange(listing.id, 'active')} className="btn-icon" title="Activar">▶️</button>}
+                          <button onClick={() => handleStatusChange(listing.id, 'sold')} className="btn-icon" title="Vendido">🤝</button>
+                          <button onClick={() => handleDelete(listing.id)} className="btn-icon delete" title="Eliminar">🗑️</button>
                         </div>
                       </div>
                     ))}
@@ -408,239 +404,144 @@ export default function Dashboard({ user, onProfileUpdate }) {
               </div>
             )}
 
-            {/* ══ VERIFICACIÓN ══ */}
             {activeSection === 'verificacion' && (
               <div className="db-section">
                 <div className="db-section-header">
-                  <h2>🏅 Verificación de cuenta</h2>
-                  <div>
-                    {isVerified ? (
-                      <span className="verif-badge verif-approved">✓ Verificado</span>
-                    ) : verificationRequest ? (
-                      <span className={`verif-badge ${verifStatusLabel[verificationRequest.status]?.cls}`}>
-                        {verifStatusLabel[verificationRequest.status]?.text}
+                  <h2>🏅 Verificación en Capas</h2>
+                  {isVerified && <span className="verif-badge approved">✓ Usuario Verificado</span>}
+                </div>
+
+                <div className="verif-layers">
+                  {/* CAPA 1: IDENTIDAD */}
+                  <div className={`verif-layer ${identityVerified ? 'verified' : ''}`}>
+                    <div className="layer-header">
+                      <h3>👤 Capa 1: Identidad Personal</h3>
+                      <span className={`layer-status ${identityVerified ? 'approved' : verificationRequest?.status === 'pending' ? 'pending' : ''}`}>
+                        {identityVerified ? '✓ Verificada' : verificationRequest?.status === 'pending' ? '⏳ En revisión' : '✗ Pendiente'}
                       </span>
-                    ) : (
-                      <span className="verif-badge verif-none">Sin verificar</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Tipo de cuenta */}
-                <div className="account-type-section">
-                  <div className="account-type-header">
-                    <h3>¿Qué tipo de vendedor eres?</h3>
-                    <p>Cambiar de tipo reseteará tu verificación.</p>
-                  </div>
-                  <div className="account-type-grid">
-                    {[
-                      { key: 'person',    icon: '👤', label: 'Persona',   desc: 'Vendo ocasionalmente' },
-                      { key: 'shop',      icon: '🏪', label: 'Tienda',    desc: 'Tengo un negocio' },
-                      { key: 'wholesale', icon: '📦', label: 'Mayorista', desc: 'Distribuidor o importador' },
-                    ].map(type => (
-                      <button key={type.key}
-                        className={`account-type-btn ${userType === type.key ? 'active' : ''}`}
-                        onClick={() => handleChangeType(type.key)}
-                        disabled={changingType || userType === type.key}
-                      >
-                        <span className="account-type-icon">{type.icon}</span>
-                        <strong>{type.label}</strong>
-                        <small>{type.desc}</small>
-                        {userType === type.key && <span className="account-type-current">✓ Actual</span>}
-                      </button>
-                    ))}
-                  </div>
-                  {!isVerified && verificationRequest?.status !== 'pending' && (
-                    <div className="account-type-notice account-type-warning">
-                      ⚠️ Para ser un vendedor verificado completa la verificación
-                      {isShopOrWholesale ? ' de identidad y negocio' : ' de identidad'} abajo.
                     </div>
-                  )}
-                </div>
-
-                {/* Formulario verificación */}
-                {isVerified ? (
-                  <div className="verif-verified-msg">
-                    <span>🎉</span>
-                    <p>Tu cuenta está verificada. El badge ✓ aparece en tu perfil y catálogo.</p>
-                  </div>
-                ) : verificationRequest?.status === 'pending' ? (
-                  <div className="verif-pending-msg">
-                    <span>⏳</span>
-                    <p>Tus documentos están siendo revisados.</p>
-                    {verificationRequest.admin_note && (
-                      <p className="verif-admin-note">📝 {verificationRequest.admin_note}</p>
-                    )}
-                  </div>
-                ) : (
-                  <div className="verif-form">
-                    {verificationRequest?.status === 'rejected' && (
-                      <div className="verif-rejected-msg">
-                        <p>✗ Tu solicitud fue rechazada.</p>
-                        {verificationRequest.admin_note && (
-                          <p className="verif-admin-note">📝 Motivo: {verificationRequest.admin_note}</p>
-                        )}
+                    
+                    <div className="layer-content">
+                      <div className="real-data-grid">
+                        <div className="form-group">
+                          <label>Nombre Completo Real</label>
+                          <input type="text" className="input" value={realData.full_name} disabled={identityLocked}
+                            onChange={e => setRealData(p => ({ ...p, full_name: e.target.value }))} placeholder="Como figura en tu documento" />
+                        </div>
+                        <div className="form-group">
+                          <label>País</label>
+                          <input type="text" className="input" value={realData.country} disabled={identityLocked}
+                            onChange={e => setRealData(p => ({ ...p, country: e.target.value }))} placeholder="Ej: Bolivia" />
+                        </div>
+                        <div className="form-group">
+                          <label>Ciudad</label>
+                          <input type="text" className="input" value={realData.city} disabled={identityLocked}
+                            onChange={e => setRealData(p => ({ ...p, city: e.target.value }))} placeholder="Ej: Santa Cruz" />
+                        </div>
+                        <div className="form-group">
+                          <label>Teléfono de contacto</label>
+                          <input type="tel" className="input" value={realData.phone} disabled={identityLocked}
+                            onChange={e => setRealData(p => ({ ...p, phone: e.target.value }))} placeholder="+591 ..." />
+                        </div>
                       </div>
-                    )}
 
-                    {fileError && <div className="verif-file-error">⚠️ {fileError}</div>}
-
-                    <div className="verif-field">
-                      <label>
-                        📄 Documento de identidad
-                        {identityAlreadySubmitted && <span className="verif-submitted-badge">✅ Ya enviado</span>}
-                      </label>
-                      <p className="verif-hint">CI/DNI anverso y reverso + selfie con el documento. Máx. 2MB por foto.</p>
-                      {!identityAlreadySubmitted && (
-                        <>
-                          <input type="file" accept="image/*" multiple
-                            id="identity-input" style={{ display: 'none' }}
-                            onChange={handleIdentityFiles} />
-                          <label htmlFor="identity-input" className="btn btn-secondary verif-upload-btn">
-                            Seleccionar fotos ({identityFiles.length} seleccionadas)
+                      {!identityVerified && (
+                        <div className="verif-docs-upload">
+                          <label>Fotos del Documento (CI/Pasaporte)</label>
+                          <p className="verif-hint">Sube 2 fotos: Anverso y Reverso. Máx 2MB c/u.</p>
+                          <input type="file" accept="image/*" multiple id="id-input" style={{ display: 'none' }} onChange={handleIdentityFiles} />
+                          <label htmlFor="id-input" className="btn btn-secondary verif-upload-btn">
+                            Seleccionar 2 fotos ({identityFiles.length} seleccionadas)
                           </label>
                           {identityFiles.length > 0 && (
                             <div className="verif-preview-grid">
                               {identityFiles.map((f, i) => (
                                 <div key={i} className="verif-preview-item">
-                                  <img src={URL.createObjectURL(f)} alt={`doc ${i}`} />
-                                  <span className="verif-file-size">
-                                    {(f.size / 1024 / 1024).toFixed(1)}MB
-                                  </span>
+                                  <img src={URL.createObjectURL(f)} alt="preview" />
                                 </div>
                               ))}
                             </div>
                           )}
-                        </>
+                        </div>
                       )}
                     </div>
+                  </div>
 
-                    {isShopOrWholesale && (
-                      <div className="verif-field">
-                        <label>🏪 Documentos del negocio</label>
-                        <p className="verif-hint">
-                          Foto exterior · Certificaciones · Documento legal (NIT, matrícula, etc.). Máx. 2MB por foto.
-                        </p>
-                        <input type="file" accept="image/*" multiple
-                          id="business-input" style={{ display: 'none' }}
-                          onChange={handleBusinessFiles} />
-                        <label htmlFor="business-input" className="btn btn-secondary verif-upload-btn">
-                          Seleccionar fotos ({businessFiles.length} seleccionadas)
+                  {/* CAPA 2: NEGOCIO */}
+                  {isShopOrWholesale && (
+                    <div className={`verif-layer ${businessVerified ? 'verified' : ''}`}>
+                      <div className="layer-header">
+                        <h3>🏪 Capa 2: Verificación de Negocio</h3>
+                        <span className={`layer-status ${businessVerified ? 'approved' : ''}`}>
+                          {businessVerified ? '✓ Verificada' : '✗ Pendiente'}
+                        </span>
+                      </div>
+                      <div className="layer-content">
+                        <p className="verif-hint">Sube fotos de tu local, almacén o documentos legales de tu negocio.</p>
+                        <input type="file" accept="image/*" multiple id="biz-input" style={{ display: 'none' }} onChange={handleBusinessFiles} />
+                        <label htmlFor="biz-input" className="btn btn-secondary verif-upload-btn">
+                          Subir documentos de negocio ({businessFiles.length})
                         </label>
                         {businessFiles.length > 0 && (
                           <div className="verif-preview-grid">
                             {businessFiles.map((f, i) => (
                               <div key={i} className="verif-preview-item">
-                                <img src={URL.createObjectURL(f)} alt={`biz ${i}`} />
-                                <span className="verif-file-size">
-                                  {(f.size / 1024 / 1024).toFixed(1)}MB
-                                </span>
+                                <img src={URL.createObjectURL(f)} alt="preview" />
                               </div>
                             ))}
                           </div>
                         )}
                       </div>
-                    )}
-
-                    <div className="verif-actions">
-                      {verifSaved && <span className="premium-saved">✓ Documentos enviados — en revisión</span>}
-                      <button className="btn btn-primary"
-                        onClick={handleSubmitVerification}
-                        disabled={uploadingDocs || identityFiles.length === 0}>
-                        {uploadingDocs
-                          ? <><span className="loading" /> Enviando...</>
-                          : 'Enviar para verificación'}
-                      </button>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
+
+                <div className="verif-footer">
+                  {verificationRequest?.admin_note && (
+                    <div className="admin-note">
+                      <strong>Nota del administrador:</strong> {verificationRequest.admin_note}
+                    </div>
+                  )}
+                  <button className="btn btn-primary btn-full" onClick={handleSubmitVerification} disabled={uploadingDocs || (!identityFiles.length && !businessFiles.length)}>
+                    {uploadingDocs ? 'Enviando...' : 'Enviar Solicitud de Verificación'}
+                  </button>
+                  {verifSaved && <p className="success-msg">✓ Solicitud enviada con éxito</p>}
+                </div>
               </div>
             )}
 
-            {/* ══ CATÁLOGO PREMIUM ══ */}
             {activeSection === 'catalogo' && isShopOrWholesale && (
               <div className="db-section">
                 <div className="db-section-header">
                   <h2>⭐ Catálogo Premium</h2>
-                  {isPremium
-                    ? <span className="premium-active-badge">✓ Activo hasta {new Date(profile.premium_until).toLocaleDateString()}</span>
-                    : <span className="premium-inactive-badge">🔒 No activo</span>}
+                  {isPremium ? <span className="premium-active-badge">✓ Activo</span> : <span className="premium-inactive-badge">🔒 Inactivo</span>}
                 </div>
-
                 {!isPremium ? (
                   <div className="premium-locked">
-                    <div className="premium-locked-icon">🔒</div>
-                    <h3>Catálogo Premium no activado</h3>
-                    <p>Contacta al administrador para activar tu catálogo premium — solo $5 anual.</p>
-                    <a href="https://api.whatsapp.com/send?phone=+59175109694&text=Hola,%20quiero%20activar%20mi%20catalogo%20premium%20en%20Pirata%20Market"
-                      target="_blank" rel="noopener noreferrer" className="btn btn-primary">
-                      Solicitar activación por WhatsApp
-                    </a>
+                    <p>Activa tu catálogo premium para personalizar tu tienda.</p>
+                    <a href="https://wa.me/59175109694" className="btn btn-primary">Solicitar por WhatsApp</a>
                   </div>
                 ) : (
                   <div className="premium-form">
-                    <p className="premium-form-hint">
-                      💡 Estos datos aparecerán en tu página de catálogo en <strong>/vendedor/{user.id}</strong>
-                    </p>
                     <div className="premium-form-grid">
-                      <div className="premium-field">
-                        <label>Nombre de tu tienda</label>
-                        <input type="text" className="input" placeholder="Ej: Tienda Maldonado"
-                          value={shopForm.shop_name}
-                          onChange={e => setShopForm(p => ({ ...p, shop_name: e.target.value }))} />
+                      <div className="form-group">
+                        <label>Nombre de Tienda</label>
+                        <input type="text" className="input" value={shopForm.shop_name} onChange={e => setShopForm(p => ({ ...p, shop_name: e.target.value }))} />
                       </div>
-                      <div className="premium-field">
-                        <label>Color de marca</label>
-                        <div className="color-picker-row">
-                          <input type="color" className="color-input" value={shopForm.shop_color}
-                            onChange={e => setShopForm(p => ({ ...p, shop_color: e.target.value }))} />
-                          <span className="color-value">{shopForm.shop_color}</span>
-                          <div className="color-preview" style={{ background: shopForm.shop_color }} />
-                        </div>
+                      <div className="form-group">
+                        <label>Color de Marca</label>
+                        <input type="color" className="color-input" value={shopForm.shop_color} onChange={e => setShopForm(p => ({ ...p, shop_color: e.target.value }))} />
                       </div>
-                      <div className="premium-field full-width">
-                        <label>Descripción / Bio</label>
-                        <textarea className="input textarea" rows={3}
-                          placeholder="Cuéntale a tus clientes sobre tu tienda..."
-                          value={shopForm.shop_bio}
-                          onChange={e => setShopForm(p => ({ ...p, shop_bio: e.target.value }))} />
-                      </div>
-                      <div className="premium-field">
-                        <label>Link externo</label>
-                        <input type="url" className="input" placeholder="https://..."
-                          value={shopForm.shop_link}
-                          onChange={e => setShopForm(p => ({ ...p, shop_link: e.target.value }))} />
-                      </div>
-                      <div className="premium-field">
-                        <label>Horarios de atención</label>
-                        <input type="text" className="input" placeholder="Ej: Lun-Vie 9am-6pm"
-                          value={shopForm.shop_hours}
-                          onChange={e => setShopForm(p => ({ ...p, shop_hours: e.target.value }))} />
-                      </div>
-                      <div className="premium-field">
-                        <label>URL del logo</label>
-                        <input type="url" className="input" placeholder="https://..."
-                          value={shopForm.shop_logo_url}
-                          onChange={e => setShopForm(p => ({ ...p, shop_logo_url: e.target.value }))} />
-                      </div>
-                      <div className="premium-field">
-                        <label>URL del banner</label>
-                        <input type="url" className="input" placeholder="https://..."
-                          value={shopForm.shop_banner_url}
-                          onChange={e => setShopForm(p => ({ ...p, shop_banner_url: e.target.value }))} />
+                      <div className="form-group full-width">
+                        <label>Bio / Descripción</label>
+                        <textarea className="input" rows={3} value={shopForm.shop_bio} onChange={e => setShopForm(p => ({ ...p, shop_bio: e.target.value }))} />
                       </div>
                     </div>
-                    <div className="premium-form-actions">
-                      {shopSaved && <span className="premium-saved">✓ Guardado correctamente</span>}
-                      <button className="btn btn-primary" onClick={handleShopSave} disabled={savingShop}>
-                        {savingShop ? <><span className="loading" /> Guardando...</> : 'Guardar cambios'}
-                      </button>
-                    </div>
+                    <button className="btn btn-primary" onClick={handleShopSave} disabled={savingShop}>Guardar Cambios</button>
                   </div>
                 )}
               </div>
             )}
-
           </main>
         </div>
       </div>
