@@ -88,7 +88,7 @@ export default function Auth() {
           },
           emailRedirectTo: fromTraficante
             ? 'https://pirate-market.vercel.app/traficante/mi-cuenta'
-            : 'https://pirate-market.vercel.app/perfil'
+            : 'https://pirate-market.vercel.app/mi-perfil'
         }
       })
       if (authError) throw authError
@@ -207,7 +207,7 @@ export default function Auth() {
                         onChange={handleInputChange} required minLength={6} />
                       <button type="button" className="password-toggle"
                         onClick={() => setShowPassword(!showPassword)}>
-                        {showPassword ? '👁️' : '👁️‍🗨️'}
+                        {showPassword ? '🙉' : '🙈'}
                       </button>
                     </div>
                   </div>
