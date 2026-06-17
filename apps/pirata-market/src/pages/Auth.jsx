@@ -246,7 +246,7 @@ export default function Auth() {
                         onChange={handleInputChange} required minLength={6} />
                       <button type="button" className="password-toggle"
                         onClick={() => setShowPassword(!showPassword)}>
-                        {showPassword ? '👁️' : '👁️‍🗨️'}
+                        {showPassword ? '🙉' : '🙈'}
                       </button>
                     </div>
                     <p className="form-hint">{t('auth.password_hint')}</p>
