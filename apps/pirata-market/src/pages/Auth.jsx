@@ -49,7 +49,7 @@ export default function Auth() {
         throw error
       }
       // Identidad 1: Login exitoso, redirigir según contexto o al perfil público
-      const from = location.state?.from?.pathname || '/perfil'
+      const from = location.state?.from?.pathname || '/mi-perfil'
       navigate(from)
     } catch (err) {
       setError(err.message || t('auth.error_login'))
