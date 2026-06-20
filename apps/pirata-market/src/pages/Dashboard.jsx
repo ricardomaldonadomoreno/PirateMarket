@@ -13,6 +13,12 @@ const SECTIONS = [
   { key: 'catalogo',     icon: '⭐', label: 'Catálogo Premium' },
 ]
 
+const ACCOUNT_TYPES = [
+  { value: 'person',    label: 'Persona',   icon: '👤' },
+  { value: 'shop',      label: 'Tienda',    icon: '🏪' },
+  { value: 'wholesale', label: 'Mayorista', icon: '📦' },
+]
+
 export default function Dashboard({ user, onProfileUpdate }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -39,6 +45,11 @@ export default function Dashboard({ user, onProfileUpdate }) {
   const [businessFiles, setBusinessFiles] = useState([])
   const [verifSaved, setVerifSaved] = useState(false)
   const [fileError, setFileError] = useState('')
+
+  // Avatar (Identidad 1)
+  const avatarInputRef = useRef(null)
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
+  const [avatarError, setAvatarError] = useState('')
 
   // Datos Reales (Capa 1)
   const [realData, setRealData] = useState({
@@ -119,9 +130,61 @@ export default function Dashboard({ user, onProfileUpdate }) {
     if (data) setVerificationRequest(data)
   }
 
+  // ── AVATAR (Identidad 1: editable siempre) ──
+  const handleAvatarSelect = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setAvatarError('')
+
+    if (file.size > MAX_FILE_SIZE) {
+      setAvatarError('La imagen supera el límite de 2MB')
+      e.target.value = ''
+      return
+    }
+    if (!file.type.startsWith('image/')) {
+      setAvatarError('El archivo debe ser una imagen')
+      e.target.value = ''
+      return
+    }
+
+    setUploadingAvatar(true)
+    try {
+      const fileExt = file.name.split('.').pop()
+      const path = `${user.id}/avatar/${Date.now()}.${fileExt}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(path, file, { contentType: file.type, upsert: true })
+      if (uploadError) throw uploadError
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(path)
+
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ avatar_url: publicUrl })
+        .eq('id', user.id)
+      if (updateError) throw updateError
+
+      setProfile(prev => ({ ...prev, avatar_url: publicUrl }))
+      onProfileUpdate?.()
+    } catch (error) {
+      setAvatarError('Error al subir la imagen: ' + error.message)
+    } finally {
+      setUploadingAvatar(false)
+      e.target.value = ''
+    }
+  }
+
+  // ── CAMBIO DE TIPO DE CUENTA ──
+  // Nota: is_verified es un campo manual que solo el admin aprueba desde el
+  // panel admin (tras revisar la Capa 1 de identidad). Este flujo NUNCA debe
+  // tocar is_verified, solo el estado de la verificación de negocio (Capa 2),
+  // que sí depende del tipo de cuenta elegido.
   const handleChangeType = async (newType) => {
     if (newType === profile?.user_type) return
-    const label = newType === 'shop' ? 'Tienda' : newType === 'wholesale' ? 'Mayorista' : 'Persona'
+    const label = ACCOUNT_TYPES.find(o => o.value === newType)?.label || newType
     if (!confirm(`¿Cambiar tu tipo de cuenta a ${label}? Tu verificación de negocio se reseteará, pero tu identidad se mantendrá.`)) return
     setChangingType(true)
     try {
@@ -129,15 +192,18 @@ export default function Dashboard({ user, onProfileUpdate }) {
         user_type: newType,
         business_verified: false,
       }).eq('id', user.id)
-      
-      // Resetear solo la capa de negocio en la solicitud
+
+      // Resetear solo la capa de negocio en la solicitud.
+      // Si el nuevo tipo ya no requiere verificación de negocio (persona),
+      // igual limpiamos business_docs para que no quede una solicitud
+      // "pending" colgada que el admin tenga que revisar sin sentido.
       if (verificationRequest) {
         await supabase.from('verification_requests').update({
           business_docs: [],
-          status: 'pending'
+          status: newType === 'person' ? verificationRequest.status : 'pending'
         }).eq('id', verificationRequest.id)
       }
-      
+
       setBusinessFiles([])
       await loadProfile()
       await loadVerification()
@@ -312,22 +378,34 @@ export default function Dashboard({ user, onProfileUpdate }) {
           <aside className="db-sidebar">
             <div className="db-sidebar-profile">
               <div className="db-avatar">
-                {avatarUrl
-                  ? <img src={avatarUrl} alt={displayName} />
-                  : <div className="db-avatar-placeholder">{displayName?.charAt(0).toUpperCase()}</div>
-                }
+                <input
+                  type="file"
+                  accept="image/*"
+                  ref={avatarInputRef}
+                  style={{ display: 'none' }}
+                  onChange={handleAvatarSelect}
+                />
+                <button
+                  type="button"
+                  className="db-avatar-trigger"
+                  onClick={() => avatarInputRef.current?.click()}
+                  disabled={uploadingAvatar}
+                  title="Cambiar foto de perfil"
+                >
+                  {avatarUrl
+                    ? <img src={avatarUrl} alt={displayName} />
+                    : <div className="db-avatar-placeholder">{displayName?.charAt(0).toUpperCase()}</div>
+                  }
+                  <span className="db-avatar-edit-overlay">
+                    {uploadingAvatar ? '...' : 'Editar'}
+                  </span>
+                </button>
               </div>
+              {avatarError && <p className="error-msg" style={{ fontSize: '12px', marginTop: '4px' }}>{avatarError}</p>}
               <div className="db-sidebar-name">{displayName}</div>
-              <div className="db-type-selector">
-                <span className={`user-type-badge user-type-${userType}`}>
-                  {userTypeIcon} {t(`auth.${userType}`)}
-                </span>
-                <div className="type-change-options">
-                  <button onClick={() => handleChangeType('person')} disabled={changingType || userType === 'person'}>👤 Persona</button>
-                  <button onClick={() => handleChangeType('shop')} disabled={changingType || userType === 'shop'}>🏪 Tienda</button>
-                  <button onClick={() => handleChangeType('wholesale')} disabled={changingType || userType === 'wholesale'}>📦 Mayorista</button>
-                </div>
-              </div>
+              <span className={`user-type-badge user-type-${userType}`}>
+                {userTypeIcon} {t(`auth.${userType}`)}
+              </span>
               {isPremium && (
                 <div className="db-premium-badge">⭐ Premium — hasta {new Date(profile.premium_until).toLocaleDateString()}</div>
               )}
@@ -392,10 +470,22 @@ export default function Dashboard({ user, onProfileUpdate }) {
                           </div>
                         </div>
                         <div className="listing-row-actions">
-                          {listing.status === 'active' && <button onClick={() => handleStatusChange(listing.id, 'paused')} className="btn-icon" title="Pausar">⏸️</button>}
-                          {listing.status === 'paused' && <button onClick={() => handleStatusChange(listing.id, 'active')} className="btn-icon" title="Activar">▶️</button>}
-                          <button onClick={() => handleStatusChange(listing.id, 'sold')} className="btn-icon" title="Vendido">🤝</button>
-                          <button onClick={() => handleDelete(listing.id)} className="btn-icon delete" title="Eliminar">🗑️</button>
+                          {listing.status === 'active' && (
+                            <button onClick={() => handleStatusChange(listing.id, 'paused')} className="btn-text-action" title="Pausar">
+                              Pausar
+                            </button>
+                          )}
+                          {listing.status === 'paused' && (
+                            <button onClick={() => handleStatusChange(listing.id, 'active')} className="btn-text-action" title="Activar">
+                              Activar
+                            </button>
+                          )}
+                          <button onClick={() => handleStatusChange(listing.id, 'sold')} className="btn-text-action" title="Vendido">
+                            Vendido
+                          </button>
+                          <button onClick={() => handleDelete(listing.id)} className="btn-text-action delete" title="Eliminar">
+                            Eliminar
+                          </button>
                         </div>
                       </div>
                     ))}
@@ -420,7 +510,7 @@ export default function Dashboard({ user, onProfileUpdate }) {
                         {identityVerified ? '✓ Verificada' : verificationRequest?.status === 'pending' ? '⏳ En revisión' : '✗ Pendiente'}
                       </span>
                     </div>
-                    
+
                     <div className="layer-content">
                       <div className="real-data-grid">
                         <div className="form-group">
@@ -494,6 +584,33 @@ export default function Dashboard({ user, onProfileUpdate }) {
                       </div>
                     </div>
                   )}
+                </div>
+
+                {/* TIPO DE CUENTA — movido aquí desde el sidebar.
+                    Vive en Verificación porque cambiar de tipo impacta
+                    directamente la Capa 2 (business_verified se resetea). */}
+                <div className="verif-layer account-type-layer">
+                  <div className="layer-header">
+                    <h3>🔁 Tipo de Cuenta</h3>
+                  </div>
+                  <div className="layer-content">
+                    <p className="verif-hint">
+                      Cambiar tu tipo de cuenta reinicia tu Capa 2 (verificación de negocio).
+                      Tu Capa 1 (identidad personal) no se ve afectada.
+                    </p>
+                    <div className="type-change-options">
+                      {ACCOUNT_TYPES.map(opt => (
+                        <button
+                          key={opt.value}
+                          onClick={() => handleChangeType(opt.value)}
+                          disabled={changingType || userType === opt.value}
+                          className={userType === opt.value ? 'active' : ''}
+                        >
+                          {opt.icon} {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
 
                 <div className="verif-footer">
