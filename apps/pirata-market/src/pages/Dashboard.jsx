@@ -131,6 +131,9 @@ export default function Dashboard({ user, onProfileUpdate }) {
   }
 
   // ── AVATAR (Identidad 1: editable siempre) ──
+  // Mismo patrón que MiPerfil.jsx: un solo archivo por usuario (${user.id}.${ext}),
+  // upsert, y cache-busting con ?t=, para que ambas pantallas lean siempre el
+  // mismo objeto de Storage y se vean sincronizadas entre sí.
   const handleAvatarSelect = async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -150,25 +153,31 @@ export default function Dashboard({ user, onProfileUpdate }) {
     setUploadingAvatar(true)
     try {
       const fileExt = file.name.split('.').pop()
-      const path = `${user.id}/avatar/${Date.now()}.${fileExt}`
+      const newFilePath = `${user.id}.${fileExt}`
+
+      if (profile?.avatar_url) {
+        const oldPath = profile.avatar_url.split('/avatars/')[1]?.split('?')[0]
+        if (oldPath) await supabase.storage.from('avatars').remove([oldPath])
+      }
 
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(path, file, { contentType: file.type, upsert: true })
+        .upload(newFilePath, file, { upsert: true, contentType: file.type })
       if (uploadError) throw uploadError
 
       const { data: { publicUrl } } = supabase.storage
         .from('avatars')
-        .getPublicUrl(path)
+        .getPublicUrl(newFilePath)
+      const urlWithCache = `${publicUrl}?t=${Date.now()}`
 
       const { error: updateError } = await supabase
         .from('users')
-        .update({ avatar_url: publicUrl })
+        .update({ avatar_url: urlWithCache })
         .eq('id', user.id)
       if (updateError) throw updateError
 
-      setProfile(prev => ({ ...prev, avatar_url: publicUrl }))
-      onProfileUpdate?.()
+      setProfile(prev => ({ ...prev, avatar_url: urlWithCache }))
+      if (onProfileUpdate) onProfileUpdate(prev => ({ ...prev, avatar_url: urlWithCache }))
     } catch (error) {
       setAvatarError('Error al subir la imagen: ' + error.message)
     } finally {
@@ -180,12 +189,21 @@ export default function Dashboard({ user, onProfileUpdate }) {
   // ── CAMBIO DE TIPO DE CUENTA ──
   // Nota: is_verified es un campo manual que solo el admin aprueba desde el
   // panel admin (tras revisar la Capa 1 de identidad). Este flujo NUNCA debe
-  // tocar is_verified, solo el estado de la verificación de negocio (Capa 2),
-  // que sí depende del tipo de cuenta elegido.
+  // tocar is_verified, solo el estado de la verificación de negocio (Capa 2).
+  //
+  // Si el usuario pasa a Tienda/Mayorista: business_verified se resetea y
+  // business_docs se limpia, dejando la Capa 2 lista para que suba nuevos
+  // documentos. El status general vuelve siempre a 'pending' para que el
+  // admin vea que hay una nueva revisión de negocio esperando.
   const handleChangeType = async (newType) => {
     if (newType === profile?.user_type) return
     const label = ACCOUNT_TYPES.find(o => o.value === newType)?.label || newType
-    if (!confirm(`¿Cambiar tu tipo de cuenta a ${label}? Tu verificación de negocio se reseteará, pero tu identidad se mantendrá.`)) return
+    const requiresBusinessVerification = newType === 'shop' || newType === 'wholesale'
+    const confirmMsg = requiresBusinessVerification
+      ? `¿Cambiar tu tipo de cuenta a ${label}? Deberás completar una nueva verificación de negocio (Capa 2). Tu identidad (Capa 1) se mantiene.`
+      : `¿Cambiar tu tipo de cuenta a ${label}? Tu verificación de negocio se reseteará, pero tu identidad se mantendrá.`
+    if (!confirm(confirmMsg)) return
+
     setChangingType(true)
     try {
       await supabase.from('users').update({
@@ -193,20 +211,30 @@ export default function Dashboard({ user, onProfileUpdate }) {
         business_verified: false,
       }).eq('id', user.id)
 
-      // Resetear solo la capa de negocio en la solicitud.
-      // Si el nuevo tipo ya no requiere verificación de negocio (persona),
-      // igual limpiamos business_docs para que no quede una solicitud
-      // "pending" colgada que el admin tenga que revisar sin sentido.
       if (verificationRequest) {
         await supabase.from('verification_requests').update({
           business_docs: [],
-          status: newType === 'person' ? verificationRequest.status : 'pending'
+          status: requiresBusinessVerification ? 'pending' : verificationRequest.status
         }).eq('id', verificationRequest.id)
+      } else if (requiresBusinessVerification) {
+        // No existía solicitud previa (ej. usuario nunca subió Capa 1 todavía);
+        // creamos una para que la Capa 2 quede activa y visible para el admin.
+        await supabase.from('verification_requests').insert([{
+          user_id: user.id,
+          status: 'pending',
+          source: 'pirata',
+          identity_docs: [],
+          business_docs: [],
+        }])
       }
 
       setBusinessFiles([])
       await loadProfile()
       await loadVerification()
+
+      // Llevar al usuario directo a la sección de Verificación para que
+      // complete la Capa 2 recién activada.
+      if (requiresBusinessVerification) setActiveSection('verificacion')
     } catch (error) { alert('Error al cambiar tipo: ' + error.message) }
     finally { setChangingType(false) }
   }
