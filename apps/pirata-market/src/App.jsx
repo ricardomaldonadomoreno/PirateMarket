@@ -108,7 +108,7 @@ function App() {
         {/* ── ADMIN LANDING + SUB-ADMINS ── */}
         <Route path="/admin" element={<AdminLogin />} />
         <Route path="/admin/home" element={<AdminRoute><AdminLanding /></AdminRoute>} />
-        <Route path="/admin/sub-admins" element={<AdminRoute requireSuperAdmin><AdminSubAdmins /></AdminRoute>} />
+        <Route path="/admin/sub-admins" element={<AdminRoute><AdminSubAdmins /></AdminRoute>} />
 
         {/* ── ADMIN PIRATA MARKET ── */}
         <Route path="/admin/pirata" element={<AdminRoute><AdminDashboard /></AdminRoute>} />

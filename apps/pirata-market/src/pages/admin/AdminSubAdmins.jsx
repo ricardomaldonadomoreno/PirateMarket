@@ -18,7 +18,6 @@ const appLabels = {
 export default function AdminSubAdmins() {
   const [admins, setAdmins] = useState([])
   const [loading, setLoading] = useState(true)
-  // Formulario: crear nuevo admin corporativo
   const [form, setForm] = useState({
     email: '',
     password: '',
@@ -28,7 +27,7 @@ export default function AdminSubAdmins() {
     notes: '',
   })
   const [saving, setSaving] = useState(false)
-  const [isSuperAdmin, setIsSuperAdmin] = useState(false)
+  const [currentAdminRole, setCurrentAdminRole] = useState('')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const navigate = useNavigate()
@@ -37,26 +36,47 @@ export default function AdminSubAdmins() {
 
   const loadAll = async () => {
     setLoading(true)
+    setError('')
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { setLoading(false); return }
+      if (!user) {
+        setError('No hay sesión activa. Por favor inicia sesión nuevamente.')
+        setLoading(false)
+        return
+      }
 
-      // Verificar si el usuario actual es super_admin
-      const { data: roleData } = await supabase
+      // Verificar el rol del usuario actual
+      const { data: roleData, error: roleError } = await supabase
         .from('admin_roles')
         .select('role')
         .eq('user_id', user.id)
         .single()
-      setIsSuperAdmin(roleData?.role === 'super_admin')
+
+      if (roleError) {
+        // Si la tabla admin_roles no existe o el usuario no tiene rol
+        setError('No tienes acceso administrativo. Ejecuta el script backoffice_setup.sql en Supabase primero.')
+        setLoading(false)
+        return
+      }
+
+      setCurrentAdminRole(roleData?.role || '')
 
       // Cargar todos los admins registrados
-      const { data: adminList } = await supabase
+      const { data: adminList, error: listError } = await supabase
         .from('admin_roles')
         .select('*, users:users(display_name, email)')
         .order('created_at', { ascending: false })
-      if (adminList) setAdmins(adminList)
+
+      if (listError) {
+        // Si no puede leer la lista (RLS), al menos mostrar error
+        console.error('Error loading admin list:', listError)
+        setAdmins([])
+      } else if (adminList) {
+        setAdmins(adminList)
+      }
     } catch (err) {
       console.error('Error loading:', err)
+      setError('Error al cargar la pagina. Verifica tu conexion.')
     } finally {
       setLoading(false)
     }
@@ -78,16 +98,11 @@ export default function AdminSubAdmins() {
     setSaving(true)
     try {
       // 1. Verificar que no existe ya un admin con ese email
-      const { data: existingRole } = await supabase
+      const { data: existingRole, error: checkError } = await supabase
         .from('admin_roles')
-        .select('id, users:users(email)')
-        .eq('users.email', form.email)
+        .select('id')
+        .eq('user_id', supabase.auth.getUser().data?.user?.id)
         .single()
-      if (existingRole) {
-        setError('Ya existe un admin con ese correo.')
-        setSaving(false)
-        return
-      }
 
       // 2. Crear nuevo usuario en Supabase Auth
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
@@ -128,7 +143,13 @@ export default function AdminSubAdmins() {
         app: form.app,
         notes: form.notes || null,
       }])
-      if (roleError) throw roleError
+      if (roleError) {
+        // Si es error de RLS (no super_admin), intentar con RPC o mostrar mensaje claro
+        if (roleError.code === '42501' || roleError.message?.includes('violates row-level')) {
+          throw new Error('No tienes permisos para crear administradores. Solo el Super Admin puede hacerlo.')
+        }
+        throw roleError
+      }
 
       setSuccess(`Admin creado correctamente: ${form.email}`)
       setForm({ email: '', password: '', full_name: '', role: 'admin', app: 'pirata', notes: '' })
@@ -142,14 +163,24 @@ export default function AdminSubAdmins() {
 
   const handleRemove = async (id) => {
     if (!confirm('Eliminar este sub-admin?')) return
-    await supabase.from('admin_roles').delete().eq('id', id)
+    const { error } = await supabase.from('admin_roles').delete().eq('id', id)
+    if (error) {
+      setError('No tienes permisos para eliminar. Solo el Super Admin puede hacerlo.')
+      return
+    }
     await loadAll()
   }
 
   const handleChangeRole = async (id, newRole) => {
-    await supabase.from('admin_roles').update({ role: newRole }).eq('id', id)
+    const { error } = await supabase.from('admin_roles').update({ role: newRole }).eq('id', id)
+    if (error) {
+      setError('No tienes permisos para cambiar roles. Solo el Super Admin puede hacerlo.')
+      return
+    }
     await loadAll()
   }
+
+  const isSuperAdmin = currentAdminRole === 'super_admin'
 
   return (
     <div className="admin-page">
@@ -173,74 +204,83 @@ export default function AdminSubAdmins() {
           </div>
         )}
 
-        {isSuperAdmin && (
-          <div className="admin-card" style={{ marginBottom: '1.5rem' }}>
-            <h3 className="serif" style={{ color: 'var(--gold)', marginBottom: '1rem' }}>Crear Nuevo Admin</h3>
-            <form onSubmit={handleCreateAdmin} style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-              <div style={{ flex: 1, minWidth: '200px' }}>
-                <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>Email</label>
-                <input
-                  type="email"
-                  className="input"
-                  placeholder="admin@empresa.com"
-                  value={form.email}
-                  onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
-                  required
-                />
-              </div>
-              <div style={{ flex: 1, minWidth: '200px' }}>
-                <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>Contraseña</label>
-                <input
-                  type="password"
-                  className="input"
-                  placeholder="Mínimo 6 caracteres"
-                  value={form.password}
-                  onChange={e => setForm(p => ({ ...p, password: e.target.value }))}
-                  minLength={6}
-                  required
-                />
-              </div>
-              <div style={{ flex: 1, minWidth: '180px' }}>
-                <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>Nombre completo</label>
-                <input
-                  type="text"
-                  className="input"
-                  placeholder="Juan Pérez"
-                  value={form.full_name}
-                  onChange={e => setForm(p => ({ ...p, full_name: e.target.value }))}
-                />
-              </div>
-              <div style={{ minWidth: '140px' }}>
-                <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>Rol</label>
-                <select className="input" value={form.role} onChange={e => setForm(p => ({ ...p, role: e.target.value }))}>
-                  <option value="admin">Admin</option>
-                  <option value="moderator">Moderador</option>
-                </select>
-              </div>
-              <div style={{ minWidth: '140px' }}>
-                <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>App</label>
-                <select className="input" value={form.app} onChange={e => setForm(p => ({ ...p, app: e.target.value }))}>
-                  <option value="pirata">Pirata Market</option>
-                  <option value="traficante">Traficante</option>
-                  <option value="both">Ambas</option>
-                </select>
-              </div>
-              <div style={{ flex: 1, minWidth: '180px' }}>
-                <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>Notas</label>
-                <input
-                  type="text"
-                  className="input"
-                  placeholder="Departamento, referencia..."
-                  value={form.notes}
-                  onChange={e => setForm(p => ({ ...p, notes: e.target.value }))}
-                />
-              </div>
-              <button type="submit" className="btn btn-primary" disabled={saving || !form.email || !form.password}>
-                {saving ? 'Creando...' : '+ Crear Admin'}
-              </button>
-            </form>
-          </div>
-        )}
+        {/* Formulario visible para cualquier admin, pero la acción de insertar requiere super_admin */}
+        <div className="admin-card" style={{ marginBottom: '1.5rem' }}>
+          <h3 className="serif" style={{ color: 'var(--gold)', marginBottom: '0.25rem' }}>Crear Nuevo Admin</h3>
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
+            {isSuperAdmin
+              ? 'Como Super Admin puedes crear administradores.'
+              : 'Solo el Super Admin puede crear nuevos administradores. Tu rol actual: ' + (currentAdminRole || 'sin rol')}
+          </p>
+          <form onSubmit={handleCreateAdmin} style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+            <div style={{ flex: 1, minWidth: '200px' }}>
+              <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>Email</label>
+              <input
+                type="email"
+                className="input"
+                placeholder="admin@empresa.com"
+                value={form.email}
+                onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
+                required
+              />
+            </div>
+            <div style={{ flex: 1, minWidth: '200px' }}>
+              <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>Contraseña</label>
+              <input
+                type="password"
+                className="input"
+                placeholder="Mínimo 6 caracteres"
+                value={form.password}
+                onChange={e => setForm(p => ({ ...p, password: e.target.value }))}
+                minLength={6}
+                required
+              />
+            </div>
+            <div style={{ flex: 1, minWidth: '180px' }}>
+              <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>Nombre completo</label>
+              <input
+                type="text"
+                className="input"
+                placeholder="Juan Pérez"
+                value={form.full_name}
+                onChange={e => setForm(p => ({ ...p, full_name: e.target.value }))}
+              />
+            </div>
+            <div style={{ minWidth: '140px' }}>
+              <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>Rol</label>
+              <select className="input" value={form.role} onChange={e => setForm(p => ({ ...p, role: e.target.value }))}>
+                <option value="admin">Admin</option>
+                <option value="moderator">Moderador</option>
+              </select>
+            </div>
+            <div style={{ minWidth: '140px' }}>
+              <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>App</label>
+              <select className="input" value={form.app} onChange={e => setForm(p => ({ ...p, app: e.target.value }))}>
+                <option value="pirata">Pirata Market</option>
+                <option value="traficante">Traficante</option>
+                <option value="both">Ambas</option>
+              </select>
+            </div>
+            <div style={{ flex: 1, minWidth: '180px' }}>
+              <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>Notas</label>
+              <input
+                type="text"
+                className="input"
+                placeholder="Departamento, referencia..."
+                value={form.notes}
+                onChange={e => setForm(p => ({ ...p, notes: e.target.value }))}
+              />
+            </div>
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={saving || !form.email || !form.password || !isSuperAdmin}
+              title={!isSuperAdmin ? 'Solo el Super Admin puede crear admins' : ''}
+            >
+              {saving ? 'Creando...' : '+ Crear Admin'}
+            </button>
+          </form>
+        </div>
 
         <div className="admin-card">
           {loading ? (
