@@ -215,12 +215,16 @@ export default function MiCuenta({ user, onProfileUpdate }) {
     const urls = []
     for (const file of files) {
       try {
-        const compressed = await compressImage(file)
-        const ext = compressed.type.split('/').pop() || 'jpg'
+        // Si es imagen, comprimir. Si es PDF u otro, subir tal cual.
+        const isImage = file.type.startsWith('image/')
+        const processed = isImage ? await compressImage(file) : file
+        const ext = isImage
+          ? (processed.type.split('/').pop() || 'jpg')
+          : (file.name.split('.').pop() || 'pdf')
         const path = `${user.id}/${folder}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`
         const { error } = await supabase.storage
           .from('traficante-docs')
-          .upload(path, compressed, { contentType: compressed.type })
+          .upload(path, processed, { contentType: isImage ? processed.type : file.type })
         if (error) throw error
         const { data: { publicUrl } } = supabase.storage
           .from('traficante-docs')
@@ -671,8 +675,8 @@ export default function MiCuenta({ user, onProfileUpdate }) {
                       {profile?.traficante_bank_verified ? 'Verificado' : 'Pendiente'}
                     </span>
                   </div>
-                  <p className="verif-hint">Extracto reciente con tu nombre y dirección. Las imágenes se comprimen automáticamente.</p>
-                  <input type="file" accept="image/*" multiple id="bank-input" style={{ display: 'none' }}
+                  <p className="verif-hint">El extracto puede contener una sola transacción. Lo importante es que sea visible tu nombre completo y dirección, igual que en tus documentos de identidad y domicilio. Acepta imágenes y PDFs.</p>
+                  <input type="file" accept="image/*,application/pdf,.pdf" multiple id="bank-input" style={{ display: 'none' }}
                     onChange={e => setBankFiles(Array.from(e.target.files))} />
                   <label htmlFor="bank-input" className="btn btn-secondary">
                     Seleccionar documentos ({bankFiles.length} archivo{bankFiles.length !== 1 ? 's' : ''})
@@ -680,8 +684,11 @@ export default function MiCuenta({ user, onProfileUpdate }) {
                   {bankFiles.length > 0 && (
                     <div className="verif-preview-grid">
                       {bankFiles.map((f, i) => (
-                        <div key={i} className="verif-preview-item">
-                          <img src={URL.createObjectURL(f)} alt={`bank-${i}`} />
+                        <div key={i} className={`verif-preview-item ${f.type.startsWith('image/') ? '' : 'verif-preview-nonimage'}`}>
+                          {f.type.startsWith('image/')
+                            ? <img src={URL.createObjectURL(f)} alt={`bank-${i}`} />
+                            : <div className="verif-nonimage-icon">📄 {f.name}</div>
+                          }
                           <button className="verif-preview-remove" onClick={() => removeFile(setBankFiles, i)} type="button">X</button>
                         </div>
                       ))}
