@@ -29,7 +29,7 @@ export default function TraficanteAdminDestacados() {
 
   const handleActivate = async (id) => {
     const expiresAt = new Date()
-    expiresAt.setDate(expiresAt.getDate() + 7)
+    expiresAt.setDate(expiresAt.getDate() + 7) // 1 semana
     await supabase.from('featured_trips').update({
       status: 'active',
       activated_at: new Date().toISOString(),
@@ -49,7 +49,7 @@ export default function TraficanteAdminDestacados() {
   }
 
   const handleDelete = async (id) => {
-    if (!confirm('Eliminar este destacado?')) return
+    if (!confirm('¿Eliminar este destacado?')) return
     await supabase.from('featured_trips').delete().eq('id', id)
     loadFeatured()
   }
@@ -89,7 +89,7 @@ export default function TraficanteAdminDestacados() {
                     <div className="admin-listing-thumb">
                       {f.banner_image_url
                         ? <img src={f.banner_image_url} alt="Banner" />
-                        : <span>Viaje</span>
+                        : <span>🚛</span>
                       }
                     </div>
                     <div>
@@ -108,8 +108,8 @@ export default function TraficanteAdminDestacados() {
                       f.status === 'pending' ? 'badge-pending' :
                       f.status === 'expired' ? 'badge-rejected' : 'badge-free'
                     }`}>
-                      {f.status === 'active' ? 'Activo' :
-                       f.status === 'pending' ? 'Pendiente' :
+                      {f.status === 'active' ? '✓ Activo' :
+                       f.status === 'pending' ? '⏳ Pendiente' :
                        f.status === 'expired' ? 'Expirado' : f.status}
                     </span>
                   </div>
@@ -120,7 +120,7 @@ export default function TraficanteAdminDestacados() {
                       onClick={() => handleToggleBanner(f.id, f.show_in_banner)}
                       disabled={f.status !== 'active'}
                     >
-                      {f.show_in_banner ? 'En banner' : 'No banner'}
+                      {f.show_in_banner ? '🖼️ En banner' : '🖼️ No banner'}
                     </button>
                   </div>
 
@@ -130,16 +130,16 @@ export default function TraficanteAdminDestacados() {
                   <div className="admin-user-actions">
                     {f.status === 'pending' && (
                       <button className="btn-small btn-success" onClick={() => handleActivate(f.id)}>
-                        Activar
+                        ✓ Activar
                       </button>
                     )}
                     {f.status === 'active' && (
                       <button className="btn-small btn-danger" onClick={() => handleDeactivate(f.id)}>
-                        Expirar
+                        ✗ Expirar
                       </button>
                     )}
                     <button className="btn-small btn-danger" onClick={() => handleDelete(f.id)}>
-                      Eliminar
+                      🗑️
                     </button>
                   </div>
                 </div>

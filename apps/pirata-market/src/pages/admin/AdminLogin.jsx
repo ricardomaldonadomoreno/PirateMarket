@@ -67,7 +67,7 @@ export default function AdminLogin() {
           <p>Acceso restringido — Solo administradores</p>
         </div>
 
-        {error && <div className="admin-error">{error}</div>}
+        {error && <div className="admin-error">⚠️ {error}</div>}
 
         <form onSubmit={handleLogin} className="admin-login-form">
           <div className="admin-form-group">
@@ -93,7 +93,7 @@ export default function AdminLogin() {
             />
           </div>
           <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
-            {loading ? <><span className="loading"></span> Verificando...</> : 'Ingresar al panel'}
+            {loading ? <><span className="loading"></span> Verificando...</> : '🔐 Ingresar al panel'}
           </button>
         </form>
       </div>

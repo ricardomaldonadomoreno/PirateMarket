@@ -77,7 +77,7 @@ export default function AdminLanding() {
               e.currentTarget.style.borderColor = 'rgba(212,175,55,0.2)'
             }}
           >
-            <div style={{ fontSize: '1.5rem', marginBottom: '1rem', fontWeight: 700, color: 'var(--gold)', fontFamily: 'Inter, sans-serif' }}>PM</div>
+            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🏴‍☠️</div>
             <h2 className="serif" style={{ color: 'var(--gold)', marginBottom: '0.5rem' }}>Pirata Market</h2>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
               Usuarios, anuncios, reportes y destacados
@@ -104,7 +104,7 @@ export default function AdminLanding() {
               e.currentTarget.style.borderColor = 'rgba(212,175,55,0.2)'
             }}
           >
-            <div style={{ fontSize: '1.5rem', marginBottom: '1rem', fontWeight: 700, color: 'var(--gold)', fontFamily: 'Inter, sans-serif' }}>TR</div>
+            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🚛</div>
             <h2 className="serif" style={{ color: 'var(--gold)', marginBottom: '0.5rem' }}>Traficante</h2>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
               Viajes, verificaciones y destacados

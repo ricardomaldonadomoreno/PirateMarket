@@ -52,12 +52,12 @@ export default function TraficanteAdminDashboard() {
   }
 
   const statCards = [
-    { icon: 'Tr', value: stats.total_traficantes, label: 'Traficantes', color: 'gold' },
-    { icon: 'Vi', value: stats.trips, label: 'Viajes totales', color: 'gold' },
-    { icon: 'Va', value: stats.trips_active, label: 'Viajes activos', color: 'success' },
-    { icon: 'Vp', value: stats.pending_verifications, label: 'Verificaciones pendientes', color: 'warning' },
-    { icon: 'Dp', value: stats.pending_destacados, label: 'Destacados pendientes', color: 'gold' },
-    { icon: 'Rs', value: stats.total_reviews, label: 'Resenas', color: 'gold' },
+    { icon: '🚛', value: stats.total_traficantes, label: 'Traficantes', color: 'gold' },
+    { icon: '🗺️', value: stats.trips, label: 'Viajes totales', color: 'gold' },
+    { icon: '✅', value: stats.trips_active, label: 'Viajes activos', color: 'success' },
+    { icon: '📄', value: stats.pending_verifications, label: 'Verificaciones pendientes', color: 'warning' },
+    { icon: '⭐', value: stats.pending_destacados, label: 'Destacados pendientes', color: 'gold' },
+    { icon: '⭐', value: stats.total_reviews, label: 'Reseñas', color: 'gold' },
   ]
 
   return (

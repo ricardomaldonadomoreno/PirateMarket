@@ -12,11 +12,11 @@ export default function AdminNavbarPirata() {
   }
 
   const links = [
-    { path: '/admin/pirata', icon: 'DB', label: 'Dashboard' },
-    { path: '/admin/pirata/usuarios', icon: 'Us', label: 'Usuarios' },
-    { path: '/admin/pirata/anuncios', icon: 'An', label: 'Anuncios' },
-    { path: '/admin/pirata/reportes', icon: 'Rp', label: 'Reportes' },
-    { path: '/admin/sub-admins', icon: 'SA', label: 'Sub-Admins' },
+    { path: '/admin/pirata', icon: '📊', label: 'Dashboard' },
+    { path: '/admin/pirata/usuarios', icon: '👥', label: 'Usuarios' },
+    { path: '/admin/pirata/anuncios', icon: '📋', label: 'Anuncios' },
+    { path: '/admin/pirata/reportes', icon: '🚨', label: 'Reportes' },
+    { path: '/admin/sub-admins', icon: '🔐', label: 'Sub-Admins' },
   ]
 
   return (
@@ -43,10 +43,10 @@ export default function AdminNavbarPirata() {
 
       <div className="admin-navbar-actions">
         <Link to="/admin" className="admin-nav-link">
-          Cambiar app
+          🔄 Cambiar app
         </Link>
         <Link to="/" className="admin-nav-link" target="_blank">
-          Ver tienda
+          🌐 Ver tienda
         </Link>
         <button onClick={handleLogout} className="btn btn-ghost admin-logout">
           Salir

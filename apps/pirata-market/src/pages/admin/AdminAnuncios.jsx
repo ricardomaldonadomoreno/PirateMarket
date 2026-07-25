@@ -46,7 +46,7 @@ export default function AdminAnuncios() {
   }
 
   const handleDelete = async (id) => {
-    if (!confirm('Eliminar este anuncio?')) return
+    if (!confirm('¿Eliminar este anuncio?')) return
     await supabase.from('listings').delete().eq('id', id)
     loadListings()
   }
@@ -56,10 +56,10 @@ export default function AdminAnuncios() {
     loadListings()
   }
 
-  // -- DESTACADOS --
+  // ── DESTACADOS ──
   const handleActivateFeatured = async (id) => {
     const expiresAt = new Date()
-    expiresAt.setDate(expiresAt.getDate() + 7)
+    expiresAt.setDate(expiresAt.getDate() + 7) // 1 semana
     await supabase.from('featured_listings').update({
       status: 'active',
       activated_at: new Date().toISOString(),
@@ -81,7 +81,7 @@ export default function AdminAnuncios() {
   }
 
   const handleDeleteFeatured = async (id) => {
-    if (!confirm('Eliminar este destacado?')) return
+    if (!confirm('¿Eliminar este destacado?')) return
     await supabase.from('featured_listings').delete().eq('id', id)
     loadFeatured()
   }
@@ -110,10 +110,10 @@ export default function AdminAnuncios() {
         {/* Tabs */}
         <div className="admin-tab-bar">
           <button className={`admin-tab ${activeTab === 'listings' ? 'active' : ''}`} onClick={() => setActiveTab('listings')}>
-            Anuncios ({listings.length})
+            📋 Anuncios ({listings.length})
           </button>
           <button className={`admin-tab ${activeTab === 'featured' ? 'active' : ''}`} onClick={() => setActiveTab('featured')}>
-            Destacados ({featured.length})
+            ⭐ Destacados ({featured.length})
           </button>
         </div>
 
@@ -121,19 +121,19 @@ export default function AdminAnuncios() {
           <>
             <div className="admin-filters-bar">
               <input
-                type="text" className="input" placeholder="Buscar por titulo o vendedor..."
+                type="text" className="input" placeholder="Buscar por título o vendedor..."
                 value={search} onChange={e => setSearch(e.target.value)}
                 style={{ maxWidth: '300px' }}
               />
               <div className="admin-filter-btns">
                 {['all', 'active', 'paused', 'sold'].map(s => (
                   <button key={s} className={`filter-btn ${filterStatus === s ? 'active' : ''}`} onClick={() => setFilterStatus(s)}>
-                    {s === 'all' ? 'Todos' : s === 'active' ? 'Activos' : s === 'paused' ? 'Pausados' : 'Vendidos'}
+                    {s === 'all' ? 'Todos' : s}
                   </button>
                 ))}
               </div>
               <div className="admin-filter-btns">
-                {[['all', 'Todo'], ['pirate', 'Piratas'], ['registered', 'Registrados']].map(([val, label]) => (
+                {[['all', 'Todo'], ['pirate', '🏴‍☠️ Piratas'], ['registered', '✓ Registrados']].map(([val, label]) => (
                   <button key={val} className={`filter-btn ${filterType === val ? 'active' : ''}`} onClick={() => setFilterType(val)}>
                     {label}
                   </button>
@@ -160,13 +160,13 @@ export default function AdminAnuncios() {
                         <div className="admin-listing-thumb">
                           {listing.photos?.[0]
                             ? <img src={listing.photos[0]} alt={listing.title} />
-                            : <span>{listing.category?.icon || 'Prod'}</span>
+                            : <span>{listing.category?.icon || '📦'}</span>
                           }
                         </div>
                         <div>
                           <div className="admin-listing-title">{listing.title}</div>
                           <div className="admin-listing-meta">
-                            {listing.is_ghost ? 'Pirata' : listing.category?.name || 'Sin categoria'}
+                            {listing.is_ghost ? '🏴‍☠️ Pirata' : `${listing.category?.icon} ${listing.category?.name}`}
                           </div>
                         </div>
                       </div>
@@ -192,14 +192,14 @@ export default function AdminAnuncios() {
                         </select>
                       </div>
 
-                      <div className="admin-cell-muted">{listing.views_count}</div>
+                      <div className="admin-cell-muted">👁️ {listing.views_count}</div>
 
                       <div className="admin-user-actions">
                         <Link to={`/ficha/${listing.slug}`} target="_blank" className="btn-small btn-success">
-                          Ver ficha
+                          Ver
                         </Link>
                         <button className="btn-small btn-danger" onClick={() => handleDelete(listing.id)}>
-                          Eliminar
+                          🗑️
                         </button>
                       </div>
                     </div>
@@ -214,7 +214,7 @@ export default function AdminAnuncios() {
           <div className="admin-card">
             {featured.length === 0 ? (
               <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-                No hay solicitudes de destacados aun.
+                No hay solicitudes de destacados aún.
               </div>
             ) : (
               <div className="admin-listings-table">
@@ -235,7 +235,7 @@ export default function AdminAnuncios() {
                           ? <img src={f.banner_image_url} alt="Banner" />
                           : f.listing?.photos?.[0]
                             ? <img src={f.listing.photos[0]} alt={f.listing.title} />
-                            : <span>Prod</span>
+                            : <span>📦</span>
                         }
                       </div>
                       <div>
@@ -252,8 +252,8 @@ export default function AdminAnuncios() {
                         f.status === 'pending' ? 'badge-pending' :
                         f.status === 'expired' ? 'badge-rejected' : 'badge-free'
                       }`}>
-                        {f.status === 'active' ? 'Activo' :
-                         f.status === 'pending' ? 'Pendiente' :
+                        {f.status === 'active' ? '✓ Activo' :
+                         f.status === 'pending' ? '⏳ Pendiente' :
                          f.status === 'expired' ? 'Expirado' : f.status}
                       </span>
                     </div>
@@ -264,7 +264,7 @@ export default function AdminAnuncios() {
                         onClick={() => handleToggleBanner(f.id, f.show_in_banner)}
                         disabled={f.status !== 'active'}
                       >
-                        {f.show_in_banner ? 'En banner' : 'No banner'}
+                        {f.show_in_banner ? '🖼️ En banner' : '🖼️ No banner'}
                       </button>
                     </div>
 
@@ -274,16 +274,16 @@ export default function AdminAnuncios() {
                     <div className="admin-user-actions">
                       {f.status === 'pending' && (
                         <button className="btn-small btn-success" onClick={() => handleActivateFeatured(f.id)}>
-                          Activar
+                          ✓ Activar
                         </button>
                       )}
                       {f.status === 'active' && (
                         <button className="btn-small btn-danger" onClick={() => handleDeactivateFeatured(f.id)}>
-                          Expirar
+                          ✗ Expirar
                         </button>
                       )}
                       <button className="btn-small btn-danger" onClick={() => handleDeleteFeatured(f.id)}>
-                        Eliminar
+                        🗑️
                       </button>
                     </div>
                   </div>
