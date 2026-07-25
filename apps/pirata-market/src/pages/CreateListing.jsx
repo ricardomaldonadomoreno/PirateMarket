@@ -55,6 +55,12 @@ export default function CreateListing() {
   const [videoFile, setVideoFile] = useState(null)
   const [errors, setErrors] = useState({})
 
+  // Destacado (de pago)
+  const [wantFeatured, setWantFeatured] = useState(false)
+  const [bannerFile, setBannerFile] = useState(null)
+  const [bannerUrl, setBannerUrl] = useState(null)
+  const FEATURED_PRICE = '$1.00'
+
   useEffect(() => {
     checkUser()
     loadCategories()
@@ -125,6 +131,18 @@ export default function CreateListing() {
 
   const removePhoto = (index) => setPhotoFiles(prev => prev.filter((_, i) => i !== index))
   const removeVideo = () => setVideoFile(null)
+
+  const handleBannerChange = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    setBannerFile(file)
+    setBannerUrl(URL.createObjectURL(file))
+  }
+
+  const removeBanner = () => {
+    setBannerFile(null)
+    setBannerUrl(null)
+  }
 
   // GPS
   const handleGetGPS = () => {
@@ -211,6 +229,29 @@ export default function CreateListing() {
         .single()
 
       if (error) throw error
+
+      // Si el usuario quiere destacar el anuncio, crear solicitud
+      if (wantFeatured && user) {
+        let bannerImageUrl = null
+        if (bannerFile) {
+          const { data: bData, error: bError } = await supabase.storage
+            .from('listing-banners')
+            .upload(`${user.id}/${data.id}_${Date.now()}.jpg`, bannerFile, { contentType: 'image/jpeg', upsert: false })
+          if (!bError) {
+            const { data: bPublic } = supabase.storage.from('listing-banners').getPublicUrl(bData.path)
+            bannerImageUrl = bPublic?.publicUrl || null
+          }
+        }
+        // Insertar solicitud de destacado
+        await supabase.from('featured_listings').insert([{
+          listing_id: data.id,
+          user_id: user.id,
+          banner_image_url: bannerImageUrl,
+          status: 'pending',
+          price_per_week: 1.00,
+        }])
+      }
+
       alert(t('listing.create.success'))
       navigate(`/ficha/${data.slug}`)
     } catch (error) {
@@ -464,7 +505,51 @@ export default function CreateListing() {
             )}
           </div>
 
-          {/* Submit — sin cambios */}
+          {/* Destacar Anuncio (De Pago) — Solo usuarios registrados */}
+          {!isPirate && (
+            <div className="form-section card featured-section">
+              <h3>⭐ Destacar este anuncio — {FEATURED_PRICE}/semana</h3>
+              <label className="checkbox-label">
+                <input type="checkbox" checked={wantFeatured}
+                  onChange={e => setWantFeatured(e.target.checked)} />
+                <span>Quiero destacar este anuncio</span>
+              </label>
+              {wantFeatured && (
+                <div className="featured-details">
+                  <div className="featured-benefits">
+                    <p>✓ Aparecerá con un badge <strong>“⭐ Oferta”</strong> en el Home</p>
+                    <p>✓ Aparecerá <strong>primero en las búsquedas</strong> de los usuarios</p>
+                    <p>✓ Posible aparición en el <strong>banner rotatorio</strong> del Home</p>
+                  </div>
+                  <div className="featured-banner-upload">
+                    <p><strong>Imagen de banner (opcional):</strong></p>
+                    <p className="form-hint">Recomendado: 1200×300px. Si no subes una, usaremos la primera foto de tu anuncio.</p>
+                    {!bannerUrl ? (
+                      <>
+                        <input type="file" accept="image/*" onChange={handleBannerChange}
+                          id="banner-input" style={{ display: 'none' }} />
+                        <label htmlFor="banner-input" className="btn btn-secondary upload-btn">
+                          🖼️ Subir imagen de banner
+                        </label>
+                      </>
+                    ) : (
+                      <div className="banner-preview">
+                        <img src={bannerUrl} alt="Banner preview" />
+                        <button type="button" className="btn btn-ghost" onClick={removeBanner}>
+                          Quitar banner
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <div className="featured-payment-notice">
+                    <p>💬 Al publicar, se creará una solicitud. <strong>Solicita y paga por WhatsApp</strong> para activar tu destacado.</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Submit */}
           <div className="form-actions">
             <button type="button" className="btn btn-secondary"
               onClick={() => navigate('/')} disabled={loading}>

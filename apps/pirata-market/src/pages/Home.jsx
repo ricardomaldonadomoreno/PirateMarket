@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { getListings, getCategories } from '../lib/supabase'
+import { supabase } from '../lib/supabase'
 import { formatPrice, timeAgo } from '../lib/utils'
 import { Link, useNavigate } from 'react-router-dom'
 import { MapContainer, TileLayer, Circle, useMapEvents } from 'react-leaflet'
@@ -19,6 +20,8 @@ export default function Home() {
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
   const [showDrawer, setShowDrawer] = useState(false)
+  const [featuredListings, setFeaturedListings] = useState([])
+  const [featuredBanner, setFeaturedBanner] = useState(null)
   const [filters, setFilters] = useState({
     category: null,
     minPrice: '',
@@ -60,8 +63,26 @@ export default function Home() {
     }
   }, [loading, listings])
 
-  useEffect(() => { loadData() }, [])
+  useEffect(() => { loadData(); loadFeatured() }, [])
   useEffect(() => { loadListings() }, [filters])
+
+  const loadFeatured = async () => {
+    try {
+      const { data: featuredData } = await supabase
+        .from('featured_listings')
+        .select('listing_id, banner_image_url')
+        .eq('status', 'active')
+      if (featuredData && featuredData.length > 0) {
+        setFeaturedListings(featuredData)
+        // Banner: seleccionar uno aleatorio que tenga imagen
+        const withBanner = featuredData.filter(f => f.banner_image_url)
+        if (withBanner.length > 0) {
+          const random = withBanner[Math.floor(Math.random() * withBanner.length)]
+          setFeaturedBanner(random)
+        }
+      }
+    } catch (error) { console.error('Error loading featured:', error) }
+  }
 
   const loadData = async () => {
     try {
@@ -106,7 +127,13 @@ export default function Home() {
     })
   }
 
-  const displayedListings = filterByZone(listings)
+  // Construir set de IDs destacados y ordenar: destacados primero
+  const featuredIds = new Set(featuredListings.map(f => f.listing_id))
+  const displayedListings = filterByZone(listings).sort((a, b) => {
+    const aFeatured = featuredIds.has(a.id) ? 0 : 1
+    const bFeatured = featuredIds.has(b.id) ? 0 : 1
+    return aFeatured - bFeatured
+  })
 
   const handleSetZone = (latlng) => setZoneFilter({ lat: latlng.lat, lng: latlng.lng, radius_km: zoneRadius })
   const handleClearZone = () => { setZoneFilter(null); setShowZoneMap(false) }
@@ -266,6 +293,23 @@ export default function Home() {
         </aside>
 
         <main className="content">
+
+          {/* Banner Rotatorio (Destacados) */}
+          {featuredBanner && (
+            <div className="featured-banner">
+              <Link to={`/ficha/${featuredBanner.listing_id}`} className="featured-banner-link">
+                {featuredBanner.banner_image_url ? (
+                  <img src={featuredBanner.banner_image_url} alt="Anuncio destacado" className="featured-banner-img" />
+                ) : (
+                  <div className="featured-banner-placeholder">
+                    <span className="luxury-gold serif">⭐ Oferta Destacada</span>
+                  </div>
+                )}
+              </Link>
+              <span className="featured-banner-badge">⭐ Oferta</span>
+            </div>
+          )}
+
           <div className="content-header">
             <h2 className="serif">{t('home.title')}</h2>
             <div className="differentiators">
@@ -307,6 +351,7 @@ export default function Home() {
                         <div className="listing-no-image"><span>{listing.category?.icon || '📦'}</span></div>
                       )}
                       {listing.video_url && <div className="video-badge">▶ 6s</div>}
+                      {featuredIds.has(listing.id) && <div className="featured-badge">⭐ Oferta</div>}
                       <div className={`seller-badge ${sellerClass}`}>{sellerIcon}</div>
                       {listing.location_lat && <div className="location-dot" title="Tiene ubicación">📍</div>}
                     </div>
