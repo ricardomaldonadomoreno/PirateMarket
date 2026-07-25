@@ -270,7 +270,7 @@ export default function PublicarViaje({ user }) {
                   <MapContainer center={originCoords || [-17.8, -63.18]} zoom={13}
                     style={{ height: '280px', borderRadius: '12px' }}>
                     <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                    <MapPicker onSelect={(coords) => { setOriginCoords(coords); setShowOriginMap(false) }} />
+                    <MapPicker onSelect={(coords) => { setOriginCoords(coords) }} />
                     {originCoords && <Marker position={[originCoords.lat, originCoords.lng]} />}
                   </MapContainer>
                   <p className="pv-map-hint">Haz clic en el mapa para marcar el punto exacto</p>
@@ -322,7 +322,7 @@ export default function PublicarViaje({ user }) {
                   <MapContainer center={destCoords || [-17.8, -63.18]} zoom={13}
                     style={{ height: '280px', borderRadius: '12px' }}>
                     <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                    <MapPicker onSelect={(coords) => { setDestCoords(coords); setShowDestMap(false) }} />
+                    <MapPicker onSelect={(coords) => { setDestCoords(coords) }} />
                     {destCoords && <Marker position={[destCoords.lat, destCoords.lng]} />}
                   </MapContainer>
                   <p className="pv-map-hint">Haz clic en el mapa para marcar el punto exacto</p>

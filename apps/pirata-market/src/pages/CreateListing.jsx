@@ -414,7 +414,6 @@ export default function CreateListing() {
                     center={[mapCenter.lat, mapCenter.lng]}
                     zoom={13}
                     style={{ height: '280px', width: '100%', borderRadius: '12px' }}
-                    key={`${mapCenter.lat}-${mapCenter.lng}`}
                   >
                     <TileLayer
                       url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

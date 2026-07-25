@@ -511,7 +511,7 @@ export default function MiCuenta({ user, onProfileUpdate }) {
                           <MapContainer center={addressCoords || [-17.8, -63.18]} zoom={13}
                             style={{ height: '280px', borderRadius: '12px' }}>
                             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                            <MapPicker onSelect={(coords) => { setAddressCoords(coords); setShowMap(false) }} />
+                            <MapPicker onSelect={(coords) => { setAddressCoords(coords) }} />
                             {addressCoords && <Marker position={[addressCoords.lat, addressCoords.lng]} />}
                           </MapContainer>
                           <p className="mc-map-hint">Haz clic en el mapa para marcar el punto exacto</p>
