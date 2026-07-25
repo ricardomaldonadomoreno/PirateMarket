@@ -8,6 +8,8 @@ import Home from './pages/Home'
 import ListingDetail from './pages/ListingDetail'
 import CreateListing from './pages/CreateListing'
 import Dashboard from './pages/Dashboard'
+import DashboardVerificacion from './pages/DashboardVerificacion'
+import DashboardTienda from './pages/DashboardTienda'
 import Auth from './pages/Auth'
 import VentasTV from './pages/VentasTV'
 import ComoFunciona from './pages/ComoFunciona'
@@ -83,7 +85,10 @@ function App() {
         <Route path="/" element={<><Navbar user={user} profile={profile} /><Home /></>} />
         <Route path="/ficha/:slug" element={<><Navbar user={user} profile={profile} /><ListingDetail user={user} /></>} />
         <Route path="/publicar" element={<><Navbar user={user} profile={profile} /><CreateListing user={user} /></>} />
-        <Route path="/dashboard" element={<><Navbar user={user} profile={profile} /><Dashboard user={user} onProfileUpdate={setProfile} /></>} />
+        <Route path="/dashboard" element={<><Navbar user={user} profile={profile} /><Dashboard user={user} profile={profile} /></>}>
+          <Route path="verificacion" element={<DashboardVerificacion user={user} profile={profile} onProfileUpdate={loadProfile} />} />
+          <Route path="tienda" element={<DashboardTienda user={user} profile={profile} />} />
+        </Route>
         <Route path="/auth" element={<><Navbar user={user} profile={profile} /><Auth /></>} />
         <Route path="/ventas-tv" element={<><Navbar user={user} profile={profile} /><VentasTV /></>} />
         <Route path="/como-funciona" element={<><Navbar user={user} profile={profile} /><ComoFunciona /></>} />
