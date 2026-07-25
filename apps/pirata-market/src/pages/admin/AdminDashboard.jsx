@@ -13,15 +13,11 @@ export default function AdminDashboard() {
     pending_reports: 0,
     total_views: 0
   })
-  const [categories, setCategories] = useState([])
   const [recentListings, setRecentListings] = useState([])
   const [loading, setLoading] = useState(true)
-  const [newCat, setNewCat] = useState({ name: '', slug: '', icon: '' })
-  const [catLoading, setCatLoading] = useState(false)
 
   useEffect(() => {
     loadStats()
-    loadCategories()
     loadRecentListings()
   }, [])
 
@@ -49,11 +45,6 @@ export default function AdminDashboard() {
     }
   }
 
-  const loadCategories = async () => {
-    const { data } = await supabase.from('categories').select('*').order('name')
-    if (data) setCategories(data)
-  }
-
   const loadRecentListings = async () => {
     const { data } = await supabase
       .from('listings')
@@ -61,31 +52,6 @@ export default function AdminDashboard() {
       .order('created_at', { ascending: false })
       .limit(5)
     if (data) setRecentListings(data)
-  }
-
-  const handleAddCategory = async (e) => {
-    e.preventDefault()
-    if (!newCat.name || !newCat.slug) return
-    setCatLoading(true)
-    try {
-      const { error } = await supabase.from('categories').insert([{
-        name: newCat.name,
-        slug: newCat.slug.toLowerCase().replace(/\s+/g, '-'),
-        icon: newCat.icon || '📦'
-      }])
-      if (error) throw error
-      setNewCat({ name: '', slug: '', icon: '' })
-      loadCategories()
-    } catch (error) {
-      alert('Error: ' + error.message)
-    } finally {
-      setCatLoading(false)
-    }
-  }
-
-  const handleToggleCategory = async (cat) => {
-    await supabase.from('categories').update({ is_active: !cat.is_active }).eq('id', cat.id)
-    loadCategories()
   }
 
   const statCards = [
@@ -119,7 +85,7 @@ export default function AdminDashboard() {
           ))}
         </div>
 
-        <div className="admin-grid-2">
+        <div className="admin-grid">
           {/* Anuncios recientes */}
           <div className="admin-card">
             <div className="admin-card-header">
@@ -135,44 +101,6 @@ export default function AdminDashboard() {
                   </span>
                   <span className={`admin-status status-${listing.status}`}>{listing.status}</span>
                   <span className="admin-table-meta">👁️ {listing.views_count}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Categorías */}
-          <div className="admin-card">
-            <div className="admin-card-header">
-              <h2>🗂️ Categorías</h2>
-            </div>
-
-            <form onSubmit={handleAddCategory} className="admin-cat-form">
-              <input
-                type="text" className="input" placeholder="Icono emoji"
-                value={newCat.icon} onChange={e => setNewCat(p => ({ ...p, icon: e.target.value }))}
-                style={{ width: '70px' }}
-              />
-              <input
-                type="text" className="input" placeholder="Nombre"
-                value={newCat.name} onChange={e => setNewCat(p => ({ ...p, name: e.target.value }))}
-              />
-              <input
-                type="text" className="input" placeholder="slug"
-                value={newCat.slug} onChange={e => setNewCat(p => ({ ...p, slug: e.target.value }))}
-              />
-              <button type="submit" className="btn btn-primary" disabled={catLoading}>+</button>
-            </form>
-
-            <div className="admin-cat-list">
-              {categories.map(cat => (
-                <div key={cat.id} className={`admin-cat-item ${!cat.is_active ? 'inactive' : ''}`}>
-                  <span>{cat.icon} {cat.name}</span>
-                  <button
-                    className={`btn-small ${cat.is_active ? 'btn-danger' : 'btn-success'}`}
-                    onClick={() => handleToggleCategory(cat)}
-                  >
-                    {cat.is_active ? 'Desactivar' : 'Activar'}
-                  </button>
                 </div>
               ))}
             </div>
