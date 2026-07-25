@@ -2,7 +2,6 @@ import { Link, useLocation } from 'react-router-dom'
 
 const SECTIONS = [
   { key: 'personal',     icon: '👤', label: 'Información personal', path: '/traficante/mi-cuenta' },
-  { key: 'direccion',    icon: '📍', label: 'Mi dirección', path: '/traficante/mi-cuenta/direccion' },
   { key: 'verificacion', icon: '🔒', label: 'Verificación', path: '/traficante/mi-cuenta/verificacion' },
   { key: 'resenas',      icon: '⭐', label: 'Mis reseñas', path: '/traficante/mi-cuenta/resenas' },
   { key: 'nivel',        icon: '🏆', label: 'Mi nivel', path: '/traficante/mi-cuenta/nivel' },

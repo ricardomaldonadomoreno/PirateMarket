@@ -159,11 +159,9 @@ export default function MiCuenta({ user, onProfileUpdate }) {
     })
   }
 
-  // ── DETERMINAR SECCIÓN ACTUAL POR RUTA ──
+  // ── DETERMINAR SI ESTAMOS EN RUTA HIJA (verificacion, resenas, nivel) ──
   const path = location.pathname
-  const isPersonal = path === '/traficante/mi-cuenta'
-  const isDireccion = path === '/traficante/mi-cuenta/direccion'
-  const showChildRoute = !isPersonal && !isDireccion
+  const showChildRoute = path !== '/traficante/mi-cuenta'
 
   if (loading) return (
     <div className="mc-loading">
@@ -188,8 +186,8 @@ export default function MiCuenta({ user, onProfileUpdate }) {
           {/* ── CONTENIDO ── */}
           <main className="mc-main">
 
-            {/* ══ INFORMACIÓN PERSONAL ══ */}
-            {isPersonal && (
+            {/* ══ INFORMACIÓN PERSONAL + DIRECCIÓN ══ */}
+            {!showChildRoute && (
               <div className="mc-section">
                 <div className="mc-section-header">
                   <h2>Información personal</h2>
@@ -267,7 +265,7 @@ export default function MiCuenta({ user, onProfileUpdate }) {
             )}
 
             {/* ══ DIRECCIÓN ══ */}
-            {isDireccion && (
+            {!showChildRoute && (
               <div className="mc-section">
                 <div className="mc-section-header">
                   <h2>Mi dirección</h2>
