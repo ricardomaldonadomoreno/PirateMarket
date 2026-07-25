@@ -1,117 +1,18 @@
-import { useState, useRef, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { useTranslation } from 'react-i18next'
-import { supabase } from '../../../pirata-market/src/lib/supabase'
-import LanguageSelector from '../../../pirata-market/src/components/LanguageSelector'
+import SharedNavbar from '../../../pirata-market/src/lib/shared/SharedNavbar'
 import './Navbar.css'
 
-export default function TraficanteNavbar({ user, profile }) {
-  const { t } = useTranslation('traficante')
-  const navigate = useNavigate()
-  const [menuOpen, setMenuOpen] = useState(false)
-  const menuRef = useRef(null)
-
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
-        setMenuOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
-
-  const handleLogout = async () => {
-    setMenuOpen(false)
-    await supabase.auth.signOut()
-    navigate('/traficante')
-  }
-
+export default function TraficanteNavbar(props) {
   return (
-    <nav className="navbar traficante-navbar">
-      <div className="navbar-container">
-        <Link to="/traficante" className="navbar-logo">
-          <img src="/traficante/logoPNG.png" alt="Traficante" className="logo-icon" />
-          <div className="logo-text">
-            <span className="logo-brand traficante-gold">Traficante</span>
-            <span className="logo-suffix traficante-by">by buses app</span>
-          </div>
-        </Link>
-
-        <div className="navbar-actions">
-          <LanguageSelector />
-
-          <Link to="/traficante/publicar-viaje" className="btn btn-outline traficante-btn-outline">
-            {t('navbar.travel')}
-          </Link>
-
-          <Link to="/traficante/buscar" className="btn btn-primary t-btn-primary">
-            {t('navbar.send')}
-          </Link>
-
-          {user ? (
-            <div className="navbar-user-menu" ref={menuRef}>
-              <button
-                className="navbar-avatar-btn"
-                onClick={() => setMenuOpen(!menuOpen)}
-              >
-                {profile?.avatar_url
-                  ? <img src={profile.avatar_url} alt="perfil" className="navbar-avatar-img" />
-                  : <div className="navbar-avatar-placeholder traficante-avatar-placeholder">
-                      {(profile?.display_name || user.email)?.charAt(0).toUpperCase()}
-                    </div>
-                }
-              </button>
-
-              {menuOpen && (
-                <div className="navbar-dropdown traficante-dropdown">
-                  {/* Info del usuario */}
-                  <div className="navbar-dropdown-user">
-                    <div className="navbar-dropdown-name">
-                      {profile?.display_name || user.email?.split('@')[0]}
-                    </div>
-                    <div className="navbar-dropdown-email">{user.email}</div>
-                  </div>
-
-                  <div className="navbar-dropdown-divider" />
-
-                  <Link to="/mi-perfil" className="navbar-dropdown-item"
-                    onClick={() => setMenuOpen(false)}>
-                    <span>⚙️</span>
-                    <span>Perfil y Ayuda</span>
-                  </Link>
-
-                  <div className="navbar-dropdown-divider" />
-
-                  <Link to="/dashboard" className="navbar-dropdown-item"
-                    onClick={() => setMenuOpen(false)}>
-                    <span>🏴‍☠️</span>
-                    <span>Panel Pirata</span>
-                  </Link>
-
-                  <Link to="/traficante/mi-cuenta" className="navbar-dropdown-item navbar-dropdown-item-active traficante-item-active"
-                    onClick={() => setMenuOpen(false)}>
-                    <span>🚐</span>
-                    <span>Panel Traficante</span>
-                  </Link>
-
-                  <div className="navbar-dropdown-divider" />
-
-                  <button className="navbar-dropdown-item navbar-dropdown-logout"
-                    onClick={handleLogout}>
-                    <span>🚪</span>
-                    <span>{t('navbar.logout')}</span>
-                  </button>
-                </div>
-              )}
-            </div>
-          ) : (
-            <Link to="/auth" className="btn btn-secondary">
-              {t('navbar.login')}
-            </Link>
-          )}
-        </div>
-      </div>
-    </nav>
+    <SharedNavbar
+      {...props}
+      brandName={<><span className="traficante-gold">Traficante</span><span className="logo-suffix traficante-by">by buses app</span></>}
+      brandLogo="/traficante/logoPNG.png"
+      homeRoute="/traficante"
+      logoutRoute="/traficante"
+      i18nNamespace="traficante"
+      navClass="traficante-navbar"
+      primaryCta={{ to: '/traficante/publicar-viaje', labelKey: 'navbar.travel', className: 'btn-outline traficante-btn-outline' }}
+      secondaryCta={{ to: '/traficante/buscar', labelKey: 'navbar.send', className: 'btn-primary t-btn-primary' }}
+    />
   )
 }
