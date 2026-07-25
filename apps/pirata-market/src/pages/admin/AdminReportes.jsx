@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import AdminNavbar from '../../components/AdminNavbar'
+import AdminNavbarPirata from '../../components/AdminNavbarPirata'
 import './AdminReportes.css'
 
 export default function AdminReportes() {
@@ -53,7 +53,7 @@ export default function AdminReportes() {
 
   return (
     <div className="admin-page">
-      <AdminNavbar />
+      <AdminNavbarPirata />
       <div className="admin-content">
         <div className="admin-page-header">
           <h1 className="serif luxury-gold">Reportes</h1>

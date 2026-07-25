@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import './AdminNavbar.css'
 
-export default function AdminNavbar() {
+export default function AdminNavbarTraficante() {
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -12,18 +12,19 @@ export default function AdminNavbar() {
   }
 
   const links = [
-    { path: '/admin/dashboard', icon: '📊', label: 'Dashboard' },
-    { path: '/admin/usuarios', icon: '👥', label: 'Usuarios' },
-    { path: '/admin/anuncios', icon: '📋', label: 'Anuncios' },
-    { path: '/admin/reportes', icon: '🚨', label: 'Reportes' },
+    { path: '/admin/traficante', icon: '📊', label: 'Dashboard' },
+    { path: '/admin/traficante/viajes', icon: '🚛', label: 'Viajes' },
+    { path: '/admin/traficante/verificaciones', icon: '✅', label: 'Verificaciones' },
+    { path: '/admin/traficante/destacados', icon: '⭐', label: 'Destacados' },
+    { path: '/admin/sub-admins', icon: '🔐', label: 'Sub-Admins' },
   ]
 
   return (
     <nav className="admin-navbar">
       <div className="admin-navbar-brand">
-        <img src="/logo-ico.png" alt="Pirata Market" className="admin-nav-logo" />
+        <img src="/logo-ico.png" alt="Traficante" className="admin-nav-logo" />
         <div>
-          <span className="admin-nav-title serif">pirata</span>
+          <span className="admin-nav-title serif">traficante</span>
           <span className="admin-nav-sub">backoffice</span>
         </div>
       </div>
@@ -41,8 +42,11 @@ export default function AdminNavbar() {
       </div>
 
       <div className="admin-navbar-actions">
-        <Link to="/" className="admin-nav-link" target="_blank">
-          🌐 Ver tienda
+        <Link to="/admin" className="admin-nav-link">
+          🔄 Cambiar app
+        </Link>
+        <Link to="/traficante" className="admin-nav-link" target="_blank">
+          🌐 Ver traficante
         </Link>
         <button onClick={handleLogout} className="btn btn-ghost admin-logout">
           Salir

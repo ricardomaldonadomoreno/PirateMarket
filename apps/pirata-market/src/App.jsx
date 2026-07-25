@@ -29,16 +29,22 @@ import MiCuentaResenas from '../../traficante-app/src/pages/MiCuentaResenas'
 import MiCuentaNivel from '../../traficante-app/src/pages/MiCuentaNivel'
 import TraficanteSolicitud from '../../traficante-app/src/pages/Solicitud'
 
-// Admin — Pirata Market
+// Admin — Landing + SubAdmins
 import AdminLogin from './pages/admin/AdminLogin'
+import AdminLanding from './pages/admin/AdminLanding'
+import AdminSubAdmins from './pages/admin/AdminSubAdmins'
+
+// Admin — Pirata Market
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminUsuarios from './pages/admin/AdminUsuarios'
 import AdminAnuncios from './pages/admin/AdminAnuncios'
 import AdminReportes from './pages/admin/AdminReportes'
 
 // Admin — Traficante
-import TraficanteAdminLogin from '../../traficante-app/src/pages/admin/AdminLogin'
-import TraficanteAdminDashboard from '../../traficante-app/src/pages/admin/AdminDashboard'
+import TraficanteAdminDashboard from './pages/admin/TraficanteAdminDashboard'
+import TraficanteAdminViajes from './pages/admin/TraficanteAdminViajes'
+import TraficanteAdminVerificaciones from './pages/admin/TraficanteAdminVerificaciones'
+import TraficanteAdminDestacados from './pages/admin/TraficanteAdminDestacados'
 
 // Components
 import Navbar from './components/Navbar'
@@ -99,12 +105,16 @@ function App() {
         <Route path="/legal" element={<><Navbar user={user} profile={profile} /><Legal /></>} />
         <Route path="/mi-perfil" element={<><Navbar user={user} profile={profile} /><MiPerfil user={user} onProfileUpdate={setProfile} /></>} />
 
-        {/* ── ADMIN PIRATA MARKET ── */}
+        {/* ── ADMIN LANDING + SUB-ADMINS ── */}
         <Route path="/admin" element={<AdminLogin />} />
-        <Route path="/admin/dashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-        <Route path="/admin/usuarios" element={<AdminRoute><AdminUsuarios /></AdminRoute>} />
-        <Route path="/admin/anuncios" element={<AdminRoute><AdminAnuncios /></AdminRoute>} />
-        <Route path="/admin/reportes" element={<AdminRoute><AdminReportes /></AdminRoute>} />
+        <Route path="/admin/home" element={<AdminRoute><AdminLanding /></AdminRoute>} />
+        <Route path="/admin/sub-admins" element={<AdminRoute requireSuperAdmin><AdminSubAdmins /></AdminRoute>} />
+
+        {/* ── ADMIN PIRATA MARKET ── */}
+        <Route path="/admin/pirata" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+        <Route path="/admin/pirata/usuarios" element={<AdminRoute><AdminUsuarios /></AdminRoute>} />
+        <Route path="/admin/pirata/anuncios" element={<AdminRoute><AdminAnuncios /></AdminRoute>} />
+        <Route path="/admin/pirata/reportes" element={<AdminRoute><AdminReportes /></AdminRoute>} />
 
         {/* ── TRAFICANTE ── */}
         <Route path="/traficante" element={<><TraficanteNavbar user={user} profile={profile} /><TraficanteHome user={user} /></>} />
@@ -120,8 +130,10 @@ function App() {
         <Route path="/traficante/dashboard" element={<><TraficanteNavbar user={user} profile={profile} /><TraficanteDashboard user={user} /></>} />
 
         {/* ── ADMIN TRAFICANTE ── */}
-        <Route path="/traficante/admin" element={<TraficanteAdminLogin />} />
-        <Route path="/traficante/admin/dashboard" element={<AdminRoute><TraficanteAdminDashboard /></AdminRoute>} />
+        <Route path="/admin/traficante" element={<AdminRoute><TraficanteAdminDashboard /></AdminRoute>} />
+        <Route path="/admin/traficante/viajes" element={<AdminRoute><TraficanteAdminViajes /></AdminRoute>} />
+        <Route path="/admin/traficante/verificaciones" element={<AdminRoute><TraficanteAdminVerificaciones /></AdminRoute>} />
+        <Route path="/admin/traficante/destacados" element={<AdminRoute><TraficanteAdminDestacados /></AdminRoute>} />
       </Routes>
     </Router>
   )

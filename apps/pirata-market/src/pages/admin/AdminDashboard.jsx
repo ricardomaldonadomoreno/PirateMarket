@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import AdminNavbar from '../../components/AdminNavbar'
+import AdminNavbarPirata from '../../components/AdminNavbarPirata'
 import './AdminDashboard.css'
 
 export default function AdminDashboard() {
@@ -99,7 +99,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="admin-page">
-      <AdminNavbar />
+      <AdminNavbarPirata />
       <div className="admin-content">
         <div className="admin-page-header">
           <h1 className="serif luxury-gold">Dashboard</h1>
@@ -124,7 +124,7 @@ export default function AdminDashboard() {
           <div className="admin-card">
             <div className="admin-card-header">
               <h2>📋 Anuncios recientes</h2>
-              <Link to="/admin/anuncios" className="admin-link">Ver todos →</Link>
+              <Link to="/admin/pirata/anuncios" className="admin-link">Ver todos →</Link>
             </div>
             <div className="admin-table">
               {recentListings.map(listing => (

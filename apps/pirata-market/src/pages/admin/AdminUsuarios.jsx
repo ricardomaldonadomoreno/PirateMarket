@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
-import AdminNavbar from '../../components/AdminNavbar'
+import AdminNavbarPirata from '../../components/AdminNavbarPirata'
 import './AdminUsuarios.css'
 
 const fmt = (date) => date ? new Date(date).toLocaleDateString('es-BO', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '—'
@@ -13,20 +13,15 @@ export default function AdminUsuarios() {
   const [filterType, setFilterType]               = useState('all')
   const [verificationRequests, setVerificationRequests] = useState({})
   const [activeListings, setActiveListings]       = useState({})
-  const [docsModal, setDocsModal]                 = useState(null) // { user, request }
+  const [docsModal, setDocsModal]                 = useState(null)
   const [rejectNotes, setRejectNotes]             = useState({ identity: '', business: '' })
   const [infoNote, setInfoNote]                   = useState('')
   const [sendingNote, setSendingNote]             = useState(false)
   const [noteSent, setNoteSent]                   = useState(false)
-  const [lightbox, setLightbox]                   = useState(null) // { images:[], index:0 }
+  const [lightbox, setLightbox]                   = useState(null)
 
   useEffect(() => { loadUsers() }, [])
 
-  // ── CARGA PRINCIPAL ──
-  // Partimos del select que YA FUNCIONABA, le sumamos las columnas
-  // de verificación por capas. Si alguna no existe en tu tabla,
-  // Supabase la ignorará (a diferencia de un select con columna
-  // inexistente que devuelve error). Usamos try/catch por seguridad.
   const loadUsers = async () => {
     setLoading(true)
     try {
@@ -41,17 +36,8 @@ export default function AdminUsuarios() {
         `)
         .order('created_at', { ascending: false })
 
-      if (error) {
-        // Si falla por columnas faltantes, intentar con el select mínimo
-        console.warn('Select completo falló, reintentando con select base:', error.message)
-        const { data: fallback } = await supabase
-          .from('users')
-          .select('id, display_name, email, user_type, is_verified, is_banned, is_premium, premium_until, created_at, avatar_url, whatsapp, shop_name')
-          .order('created_at', { ascending: false })
-        if (fallback) await processUsers(fallback)
-      } else if (data) {
-        await processUsers(data)
-      }
+      if (error) { console.error('loadUsers error:', error); setLoading(false); return }
+      if (data) await processUsers(data)
     } catch (err) {
       console.error('loadUsers error:', err)
     } finally {
@@ -63,7 +49,6 @@ export default function AdminUsuarios() {
     setUsers(usersData)
     const userIds = usersData.map(u => u.id)
 
-    // Solicitudes de verificación — sin filtro de source para compatibilidad
     const { data: requests } = await supabase
       .from('verification_requests')
       .select('*')
@@ -72,12 +57,10 @@ export default function AdminUsuarios() {
 
     if (requests) {
       const map = {}
-      // Solo guardar la más reciente por usuario
       requests.forEach(r => { if (!map[r.user_id]) map[r.user_id] = r })
       setVerificationRequests(map)
     }
 
-    // Conteo de anuncios activos
     const { data: listings } = await supabase
       .from('listings')
       .select('user_id')
@@ -91,7 +74,6 @@ export default function AdminUsuarios() {
     }
   }
 
-  // Refresca tabla Y modal abierto para que no quede obsoleto
   const refreshAll = async (userId) => {
     await loadUsers()
     if (docsModal?.user?.id === userId) {
@@ -111,7 +93,6 @@ export default function AdminUsuarios() {
     }
   }
 
-  // ── ACCIONES ──
   const handleBan = async (userId, isBanned) => {
     if (!confirm(isBanned ? '¿Desbanear este usuario?' : '¿Banear este usuario?')) return
     await supabase.from('users').update({ is_banned: !isBanned }).eq('id', userId)
@@ -174,7 +155,6 @@ export default function AdminUsuarios() {
     await refreshAll(userId)
   }
 
-  // Aprobación simple (versión original, para cuando no hay capas)
   const handleApproveVerification = async (requestId, userId) => {
     await supabase.from('verification_requests').update({ status: 'approved', reviewed_at: new Date().toISOString() }).eq('id', requestId)
     await supabase.from('users').update({ is_verified: true }).eq('id', userId)
@@ -227,7 +207,6 @@ export default function AdminUsuarios() {
     return () => window.removeEventListener('keydown', fn)
   }, [lightbox])
 
-  // ── FILTRADO ──
   const filtered = users.filter(u => {
     const q = search.toLowerCase()
     const matchSearch = u.display_name?.toLowerCase().includes(q) ||
@@ -240,7 +219,7 @@ export default function AdminUsuarios() {
 
   return (
     <div className="admin-page">
-      <AdminNavbar />
+      <AdminNavbarPirata />
       <div className="admin-content">
         <div className="admin-page-header">
           <h1 className="serif luxury-gold">Usuarios</h1>
@@ -288,7 +267,6 @@ export default function AdminUsuarios() {
                 return (
                   <div key={user.id} className={`admin-user-row ${user.is_banned ? 'banned' : ''}`}>
 
-                    {/* Columna 1: avatar + nombre + email + whatsapp + fecha */}
                     <div className="admin-user-info">
                       <div className="admin-user-avatar">
                         {user.avatar_url
@@ -313,7 +291,6 @@ export default function AdminUsuarios() {
                       </div>
                     </div>
 
-                    {/* Columna 2: tipo */}
                     <div>
                       <select className="admin-type-select" value={user.user_type}
                         onChange={e => handleChangeType(user.id, e.target.value)}>
@@ -324,7 +301,6 @@ export default function AdminUsuarios() {
                       </select>
                     </div>
 
-                    {/* Columna 3: estado de verificación */}
                     <div className="admin-user-badges">
                       {user.is_verified
                         ? <span className="admin-badge badge-verified">✓ Verificado</span>
@@ -332,12 +308,10 @@ export default function AdminUsuarios() {
                       {user.is_banned && <span className="admin-badge badge-banned">🚫 Baneado</span>}
                       {vReq?.status === 'pending'  && <span className="admin-badge badge-pending">⏳ Docs</span>}
                       {vReq?.status === 'rejected' && <span className="admin-badge badge-rejected">✗ Rechazado</span>}
-                      {/* Capas si existen */}
                       {user.identity_verified  && <span className="admin-badge badge-id">🪪 ID</span>}
                       {user.business_verified  && <span className="admin-badge badge-biz">🏪 Neg</span>}
                     </div>
 
-                    {/* Columna 4: premium */}
                     <div className="admin-premium-cell">
                       {isPremiumActive
                         ? <><span className="admin-badge badge-premium">⭐ Premium</span>
@@ -345,10 +319,8 @@ export default function AdminUsuarios() {
                         : <span className="admin-badge badge-free">Básico</span>}
                     </div>
 
-                    {/* Columna 5: fecha */}
                     <div className="admin-user-date">{fmt(user.created_at)}</div>
 
-                    {/* Columna 6: acciones */}
                     <div className="admin-user-actions">
                       <button className={`btn-small ${user.is_verified ? 'btn-danger' : 'btn-success'}`}
                         onClick={() => handleVerify(user.id, user.is_verified)}
@@ -392,7 +364,6 @@ export default function AdminUsuarios() {
 
             <div className="docs-modal-body">
 
-              {/* Datos reales si existen */}
               {(docsModal.user.full_name || docsModal.user.country || docsModal.user.city || docsModal.user.phone) && (
                 <div className="docs-section">
                   <h4>👤 Datos de Identidad Real</h4>
@@ -443,7 +414,6 @@ export default function AdminUsuarios() {
                     )}
                   </>
                 ) : (
-                  // Fallback: aprobación simple si no hay capas pero hay solicitud
                   docsModal.request ? (
                     <>
                       <p className="docs-empty">Sin fotos de identidad subidas aún.</p>
