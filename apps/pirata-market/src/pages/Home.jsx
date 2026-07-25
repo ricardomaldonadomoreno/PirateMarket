@@ -4,16 +4,8 @@ import { getListings, getCategories } from '../lib/supabase'
 import { formatPrice, timeAgo } from '../lib/utils'
 import { Link, useNavigate } from 'react-router-dom'
 import { MapContainer, TileLayer, Circle, useMapEvents } from 'react-leaflet'
-import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import './Home.css'
-
-delete L.Icon.Default.prototype._getIconUrl
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-})
 
 function ZoneDrawHandler({ onZoneSet }) {
   useMapEvents({ click: (e) => onZoneSet({ lat: e.latlng.lat, lng: e.latlng.lng }) })

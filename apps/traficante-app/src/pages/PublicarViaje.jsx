@@ -6,14 +6,6 @@ import { supabase } from '../../../pirata-market/src/lib/supabase'
 import 'leaflet/dist/leaflet.css'
 import './PublicarViaje.css'
 
-import L from 'leaflet'
-delete L.Icon.Default.prototype._getIconUrl
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-})
-
 const CURRENCIES = ['BOB', 'USD', 'BRL', 'ARS', 'PEN', 'CLP', 'PYG']
 const PACKAGE_TYPES = ['documentos', 'ropa', 'electronica', 'alimentos', 'cosmeticos', 'libros', 'juguetes', 'otro']
 const PACKAGE_SIZES = ['sobre', 'pequeño', 'mediano', 'grande']

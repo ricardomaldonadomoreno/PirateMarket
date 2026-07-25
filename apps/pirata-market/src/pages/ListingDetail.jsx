@@ -2,19 +2,10 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { MapContainer, TileLayer, Marker, Circle } from 'react-leaflet'
-import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { getListingBySlug, incrementViews, incrementContacts, incrementShares } from '../lib/supabase'
 import { formatPrice, timeAgo, timeUntilExpiry, generateWhatsAppURL, generateShareURL, copyToClipboard, openInMaps, getUserBadge } from '../lib/utils'
 import './ListingDetail.css'
-
-// Fix Leaflet icon
-delete L.Icon.Default.prototype._getIconUrl
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-})
 
 function updateMetaTags({ title, description, image, url }) {
   document.title = title
