@@ -151,7 +151,7 @@
 
 .navbar-dropdown-user {
   padding: 1rem 1.25rem;
-  background: rgba(184, 152, 95, 0.05);
+  background: rgba(212, 175, 55, 0.05);
 }
 
 .navbar-dropdown-name {
@@ -194,7 +194,7 @@
 
 .navbar-dropdown-item-active {
   color: var(--gold) !important;
-  background: rgba(184, 152, 95, 0.08) !important;
+  background: rgba(212, 175, 55, 0.08) !important;
 }
 
 .navbar-dropdown-logout {
@@ -207,18 +207,18 @@
 
 /* ── TRAFICANTE OVERRIDES ── */
 .traficante-dropdown {
-  border-color: rgba(224, 123, 57, 0.2);
+  border-color: rgba(212, 175, 55, 0.2);
 }
 
 .traficante-dropdown .navbar-dropdown-user {
-  background: rgba(224, 123, 57, 0.05);
+  background: rgba(212, 175, 55, 0.05);
 }
 
 .traficante-item-active {
-  color: #E07B39 !important;
-  background: rgba(224, 123, 57, 0.08) !important;
+  color: #D4AF37 !important;
+  background: rgba(212, 175, 55, 0.08) !important;
 }
 
 .traficante-avatar-placeholder {
-  color: #E07B39 !important;
+  color: #D4AF37 !important;
 }

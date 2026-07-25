@@ -1,14 +1,8 @@
 /* Hereda todo de globals.css de pirata-market */
 /* Solo overrides específicos de Traficante */
 
-:root {
-  --traficante-gold: #E07B39;
-  --traficante-gold-light: #F08C4A;
-  --traficante-gold-dark: #C96A28;
-}
-
 .traficante-navbar {
-  border-bottom-color: rgba(224, 123, 57, 0.2);
+  border-bottom-color: rgba(212, 175, 55, 0.2);
 }
 
 .traficante-navbar .navbar-logo:hover {
@@ -16,7 +10,7 @@
 }
 
 .traficante-gold {
-  color: var(--traficante-gold) !important;
+  color: var(--gold) !important;
   font-family: 'Playfair Display', serif;
 }
 
@@ -33,32 +27,32 @@
 }
 
 .traficante-btn-outline {
-  border-color: var(--traficante-gold) !important;
-  color: var(--traficante-gold) !important;
+  border-color: var(--gold) !important;
+  color: var(--gold) !important;
 }
 
 .traficante-btn-outline:hover {
-  background: var(--traficante-gold) !important;
+  background: var(--gold) !important;
   color: var(--dark) !important;
 }
 
 .btn-primary.traficante-btn {
-  background: var(--traficante-gold);
+  background: var(--gold);
 }
 
 .btn-primary.traficante-btn:hover {
-  background: var(--traficante-gold-light);
+  background: var(--gold-light);
 }
 
 /* ── AVATAR ── */
 .traficante-navbar .navbar-avatar-btn {
-  border-color: rgba(224, 123, 57, 0.3);
+  border-color: rgba(212, 175, 55, 0.3);
 }
 
 .traficante-navbar .navbar-avatar-btn:hover {
-  border-color: var(--traficante-gold);
+  border-color: var(--gold);
 }
 
 .traficante-navbar .navbar-avatar-placeholder {
-  color: var(--traficante-gold);
+  color: var(--gold);
 }

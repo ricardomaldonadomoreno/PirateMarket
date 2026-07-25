@@ -33,7 +33,7 @@ export default function Dashboard({ user, onProfileUpdate }) {
   // Shop form
   const [shopForm, setShopForm] = useState({
     shop_name: '', shop_bio: '', shop_link: '', shop_hours: '',
-    shop_color: '#B8985F', shop_logo_url: '', shop_banner_url: '',
+    shop_color: '#D4AF37', shop_logo_url: '', shop_banner_url: '',
   })
   const [savingShop, setSavingShop] = useState(false)
   const [shopSaved, setShopSaved] = useState(false)
@@ -90,7 +90,7 @@ export default function Dashboard({ user, onProfileUpdate }) {
           shop_bio: data.shop_bio || '',
           shop_link: data.shop_link || '',
           shop_hours: data.shop_hours || '',
-          shop_color: data.shop_color || '#B8985F',
+          shop_color: data.shop_color || '#D4AF37',
           shop_logo_url: data.shop_logo_url || '',
           shop_banner_url: data.shop_banner_url || '',
         })
@@ -262,7 +262,7 @@ export default function Dashboard({ user, onProfileUpdate }) {
         shop_bio: shopForm.shop_bio || null,
         shop_link: shopForm.shop_link || null,
         shop_hours: shopForm.shop_hours || null,
-        shop_color: shopForm.shop_color || '#B8985F',
+        shop_color: shopForm.shop_color || '#D4AF37',
         shop_logo_url: shopForm.shop_logo_url || null,
         shop_banner_url: shopForm.shop_banner_url || null,
       }).eq('id', user.id)

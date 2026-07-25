@@ -46,7 +46,7 @@
   padding: 1.5rem;
   text-align: center;
   border-bottom: 1px solid var(--dark-border);
-  background: linear-gradient(135deg, rgba(184,152,95,0.06), transparent);
+  background: linear-gradient(135deg, rgba(212,175,55,0.06), transparent);
 }
 
 .db-avatar {
@@ -145,7 +145,7 @@
 .type-change-options button.active {
   opacity: 0.5;
   cursor: default;
-  background: rgba(184,152,95,0.1);
+  background: rgba(212,175,55,0.1);
   border-color: var(--gold);
   color: var(--gold);
 }
@@ -184,10 +184,10 @@
   font-family: 'Inter', sans-serif;
 }
 
-.db-nav-item:hover { background: rgba(184,152,95,0.05); color: var(--text-light); }
+.db-nav-item:hover { background: rgba(212,175,55,0.05); color: var(--text-light); }
 
 .db-nav-item.active {
-  background: rgba(184,152,95,0.08);
+  background: rgba(212,175,55,0.08);
   color: var(--gold);
   border-left-color: var(--gold);
   font-weight: 600;

@@ -16,7 +16,7 @@
 .pv-header {
   padding: 2rem 2.5rem 1.5rem;
   border-bottom: 1px solid var(--dark-border);
-  background: linear-gradient(135deg, rgba(224,123,57,0.08), transparent);
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.08), transparent);
 }
 
 .pv-header h1 {
@@ -42,7 +42,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #E07B39;
+  color: #D4AF37;
   margin-bottom: 0.4rem;
 }
 
@@ -132,13 +132,13 @@
   text-align: center;
 }
 
-.pv-type-btn:hover { border-color: #E07B39; color: var(--text-light); }
+.pv-type-btn:hover { border-color: #D4AF37; color: var(--text-light); }
 .pv-type-btn.active {
-  border-color: #E07B39;
-  background: rgba(224, 123, 57, 0.08);
+  border-color: #D4AF37;
+  background: rgba(212, 175, 55, 0.08);
   color: var(--text-light);
 }
-.pv-type-btn.active strong { color: #E07B39; }
+.pv-type-btn.active strong { color: #D4AF37; }
 .pv-type-icon { font-size: 2rem; }
 .pv-type-btn strong { font-size: 1rem; font-weight: 600; }
 .pv-type-btn small { font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; }
@@ -162,11 +162,11 @@
   transition: all 0.2s ease;
 }
 
-.pv-chip:hover { border-color: #E07B39; color: var(--text-light); }
+.pv-chip:hover { border-color: #D4AF37; color: var(--text-light); }
 .pv-chip.active {
-  background: rgba(224, 123, 57, 0.15);
-  border-color: #E07B39;
-  color: #E07B39;
+  background: rgba(212, 175, 55, 0.15);
+  border-color: #D4AF37;
+  color: #D4AF37;
   font-weight: 600;
 }
 

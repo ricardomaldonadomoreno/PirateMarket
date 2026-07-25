@@ -1,17 +1,17 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-  --gold: #B8985F;
-  --gold-light: #C9A86A;
-  --gold-dark: #A0844F;
-  --dark: #2B2B2B;
-  --dark-surface: #1a1a1a;
-  --dark-border: #3a3a3a;
-  --light: #F5F1E8;
+  --gold: #D4AF37;
+  --gold-light: #E5C76B;
+  --gold-dark: #B8962F;
+  --dark: #000000;
+  --dark-surface: #111111;
+  --dark-border: #222222;
+  --light: #FFFFFF;
   --light-surface: #FFFFFF;
-  --light-border: #E8E4D9;
-  --text-dark: #1a1a1a;
-  --text-light: #F5F1E8;
+  --light-border: #E0E0E0;
+  --text-dark: #000000;
+  --text-light: #FFFFFF;
   --text-muted: #888888;
   --danger: #E63946;
   --success: #06D6A0;
@@ -109,12 +109,12 @@ input, textarea, select { font-family: 'Inter', sans-serif; font-size: 1rem; }
   transition: all 0.2s ease;
   font-size: 0.95rem;
 }
-.input:focus { outline: none; border-color: var(--gold); background: var(--dark); box-shadow: 0 0 0 3px rgba(184, 152, 95, 0.1); }
+.input:focus { outline: none; border-color: var(--gold); background: var(--dark); box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1); }
 .input::placeholder { color: var(--text-muted); }
 .textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
 .select {
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23B8985F' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23D4AF37' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 1rem center;
   padding-right: 3rem;
@@ -136,7 +136,7 @@ input, textarea, select { font-family: 'Inter', sans-serif; font-size: 1rem; }
   padding: 0.4rem 0.875rem; border-radius: var(--radius-full);
   font-size: 0.8rem; font-weight: 600; letter-spacing: 0.03em;
 }
-.badge-pirate { background: rgba(184, 152, 95, 0.15); color: var(--gold); border: 1.5px solid var(--gold); }
+.badge-pirate { background: rgba(212, 175, 55, 0.15); color: var(--gold); border: 1.5px solid var(--gold); }
 .badge-verified { background: rgba(6, 214, 160, 0.15); color: var(--success); border: 1.5px solid var(--success); }
 .badge-shop { background: rgba(255, 183, 3, 0.15); color: var(--warning); border: 1.5px solid var(--warning); }
 

@@ -24,7 +24,7 @@
   display: flex;
   gap: 1rem;
   padding: 1.25rem;
-  background: rgba(184, 152, 95, 0.15);
+  background: rgba(212, 175, 55, 0.15);
   border: 1.5px solid var(--gold);
   border-radius: var(--radius-md);
   align-items: flex-start;
@@ -154,7 +154,7 @@
   font-family: 'Inter', sans-serif;
 }
 .location-mode-btn:hover { border-color: var(--gold); }
-.location-mode-btn.active { background: rgba(184,152,95,0.15); border-color: var(--gold); color: var(--gold); }
+.location-mode-btn.active { background: rgba(212,175,55,0.15); border-color: var(--gold); color: var(--gold); }
 
 .gps-btn { width: 100%; }
 

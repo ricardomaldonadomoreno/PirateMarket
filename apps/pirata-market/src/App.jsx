@@ -70,7 +70,7 @@ function App() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: '#2B2B2B' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: '#000000' }}>
         <div className="loading" style={{ width: '40px', height: '40px' }}></div>
       </div>
     )

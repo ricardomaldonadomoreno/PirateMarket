@@ -28,7 +28,7 @@ export default function AdminRoute({ children }) {
 
   if (status === 'loading') {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: '#1a1a1a' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: '#111111' }}>
         <div className="loading" style={{ width: '40px', height: '40px' }}></div>
       </div>
     )

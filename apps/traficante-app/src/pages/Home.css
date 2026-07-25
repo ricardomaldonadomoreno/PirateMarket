@@ -1,9 +1,4 @@
 /* ── Variables Traficante ── */
-:root {
-  --t-gold: #E07B39;
-  --t-gold-light: #F08C4A;
-  --t-gold-glow: rgba(224, 123, 57, 0.15);
-}
 
 .traficante-home {
   min-height: 100vh;
@@ -25,7 +20,7 @@
   transform: translateX(-50%);
   width: 600px;
   height: 600px;
-  background: radial-gradient(circle, var(--t-gold-glow) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.15) 0%, transparent 70%);
   pointer-events: none;
   z-index: 0;
 }
@@ -40,12 +35,12 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.4rem 1rem;
-  border: 1px solid rgba(224, 123, 57, 0.3);
+  border: 1px solid rgba(212, 175, 55, 0.3);
   border-radius: var(--radius-full);
   font-size: 0.8rem;
-  color: var(--t-gold);
+  color: var(--gold);
   margin-bottom: 1.5rem;
-  background: rgba(224, 123, 57, 0.08);
+  background: rgba(212, 175, 55, 0.08);
 }
 
 .t-hero-title {
@@ -73,22 +68,22 @@
 }
 
 .t-btn-primary {
-  background: var(--t-gold) !important;
+  background: var(--gold) !important;
   color: var(--dark) !important;
 }
 
 .t-btn-primary:hover:not(:disabled) {
-  background: var(--t-gold-light) !important;
+  background: var(--gold-light) !important;
   transform: translateY(-2px);
 }
 
 .t-btn-outline {
-  border-color: var(--t-gold) !important;
-  color: var(--t-gold) !important;
+  border-color: var(--gold) !important;
+  color: var(--gold) !important;
 }
 
 .t-btn-outline:hover:not(:disabled) {
-  background: var(--t-gold) !important;
+  background: var(--gold) !important;
   color: var(--dark) !important;
 }
 
@@ -99,8 +94,8 @@
 }
 
 .t-btn-ghost:hover:not(:disabled) {
-  border-color: var(--t-gold) !important;
-  color: var(--t-gold) !important;
+  border-color: var(--gold) !important;
+  color: var(--gold) !important;
 }
 
 /* ── GANA DINERO ── */
@@ -119,12 +114,12 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.4rem 1rem;
-  border: 1px solid rgba(224, 123, 57, 0.3);
+  border: 1px solid rgba(212, 175, 55, 0.3);
   border-radius: var(--radius-full);
   font-size: 0.8rem;
-  color: var(--t-gold);
+  color: var(--gold);
   margin-bottom: 1rem;
-  background: rgba(224, 123, 57, 0.08);
+  background: rgba(212, 175, 55, 0.08);
 }
 
 .t-earn-subtitle {
@@ -152,7 +147,7 @@
 }
 
 .t-earn-card:hover {
-  border-color: rgba(224, 123, 57, 0.4);
+  border-color: rgba(212, 175, 55, 0.4);
   transform: translateY(-4px);
 }
 
@@ -192,8 +187,8 @@
   gap: 1rem;
   max-width: 680px;
   margin: 0 auto;
-  background: rgba(224, 123, 57, 0.06);
-  border: 1px solid rgba(224, 123, 57, 0.15);
+  background: rgba(212, 175, 55, 0.06);
+  border: 1px solid rgba(212, 175, 55, 0.15);
   border-radius: var(--radius-md);
   padding: 1.25rem 2rem;
 }
@@ -211,7 +206,7 @@
 }
 
 .t-earn-cta-text strong {
-  color: var(--t-gold);
+  color: var(--gold);
 }
 
 /* ── BUSCADOR ── */
@@ -262,7 +257,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--t-gold);
+  color: var(--gold);
   font-size: 1.5rem;
   padding-bottom: 0.2rem;
 }
@@ -296,7 +291,7 @@
   left: -1px;
   width: 36px;
   height: 36px;
-  background: var(--t-gold);
+  background: var(--gold);
   color: var(--dark);
   border-radius: var(--radius-sm) 0 var(--radius-sm) 0;
   display: flex;
@@ -370,8 +365,8 @@
   display: flex;
   align-items: center;
   gap: 2rem;
-  background: linear-gradient(135deg, rgba(224, 123, 57, 0.08), rgba(224, 123, 57, 0.03));
-  border: 1px solid rgba(224, 123, 57, 0.25);
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.08), rgba(212, 175, 55, 0.03));
+  border: 1px solid rgba(212, 175, 55, 0.25);
   border-radius: var(--radius-lg);
   padding: 2.5rem;
 }
