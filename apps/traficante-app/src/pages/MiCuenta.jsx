@@ -377,17 +377,10 @@ export default function MiCuenta({ user, onProfileUpdate }) {
                 </div>
 
                 <div className="mc-notice info">
-                  Tu nombre para mostrar puede cambiarse cuando quieras. Sin embargo, tu <strong>nombre completo real</strong> y <strong>teléfono</strong> son datos fijos que solo el equipo de soporte puede modificar.
+                  Tu <strong>nombre completo real</strong> y <strong>teléfono</strong> son datos fijos que solo el equipo de soporte puede modificar.
                 </div>
 
                 <div className="real-data-grid">
-                  <div className="form-group">
-                    <label>Nombre para mostrar</label>
-                    <p className="verif-hint">El nombre que verán los remitentes en tu perfil.</p>
-                    <input className="input" value={displayName}
-                      onChange={e => setDisplayName(e.target.value)}
-                      placeholder="Ej: Ricardo M." />
-                  </div>
                   <div className="form-group">
                     <label>Rutas frecuentes</label>
                     <p className="verif-hint">Indica las rutas que haces regularmente.</p>
@@ -673,7 +666,7 @@ export default function MiCuenta({ user, onProfileUpdate }) {
                 {/* Extracto bancario */}
                 <div className="verif-layer">
                   <div className="layer-header">
-                    <h3>Extracto Bancario <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem', fontWeight: 400 }}>(Opcional)</span></h3>
+                    <h3>Extracto Bancario</h3>
                     <span className={`layer-status ${profile?.traficante_bank_verified ? 'approved' : ''}`}>
                       {profile?.traficante_bank_verified ? 'Verificado' : 'Pendiente'}
                     </span>
