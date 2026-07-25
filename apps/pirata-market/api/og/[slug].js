@@ -2,28 +2,39 @@ import { createClient } from '@supabase/supabase-js'
 
 export default async function handler(req, res) {
   const { slug, img } = req.query
-  const siteUrl = 'https://pirate-market.vercel.app'
+  const siteUrl = process.env.SITE_URL || 'https://pirate-market.vercel.app'
 
   const supabase = createClient(
     process.env.SUPABASE_URL,
-    process.env.SUPABASE_ANON_KEY
+    process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY
   )
 
   const { data: listing } = await supabase
     .from('listings')
-    .select('title, price, photos, description')
+    .select(`
+      title, price, currency, photos, description,
+      category:categories(name, slug, icon),
+      user:users(display_name, avatar_url, is_verified, user_type)
+    `)
     .eq('slug', slug)
     .single()
 
   const photo = listing?.photos?.[0] || null
-  const title = listing ? `${listing.title} - BOB ${listing.price}` : 'Pirata Market'
-  const description = listing?.description || ''
-  const pageUrl = `${siteUrl}/ficha/${slug}`
+  const userDisplay = listing?.user?.display_name || 'Pirata'
+  const title = listing
+    ? `${listing.title} — ${listing.currency || 'BOB'} ${listing.price}`
+    : 'Pirata Market'
+  const description = listing?.description
+    ? listing.description.slice(0, 200)
+    : 'Comercio sin intermediarios — Pirata Market'
+  const pageUrl = listing ? `${siteUrl}/ficha/${slug}` : siteUrl
   const imageUrl = `${siteUrl}/api/og/${slug}?img=1`
 
   if (img === '1') {
-    const titleSafe = title.slice(0, 45).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    const descSafe = description.slice(0, 80).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    const titleSafe = title.slice(0, 55)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    const descSafe = description.slice(0, 90)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
     // Descargar foto y convertir a base64
     let photoBase64 = ''
@@ -50,19 +61,19 @@ export default async function handler(req, res) {
   <defs>
     <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#000000" stop-opacity="0"/>
-      <stop offset="100%" stop-color="#000000" stop-opacity="0.92"/>
+      <stop offset="70%" stop-color="#000000" stop-opacity="0.85"/>
     </linearGradient>
   </defs>
-  <rect y="200" width="1200" height="430" fill="url(#grad)"/>
-  <rect x="40" y="390" width="220" height="55" rx="8" fill="#F5A623"/>
-  <text x="150" y="425" font-family="Arial, sans-serif" font-size="26" font-weight="bold" fill="#000000" text-anchor="middle">Ver anuncio</text>
-  <text x="40" y="510" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="#ffffff">${titleSafe}</text>
-  <text x="40" y="570" font-family="Arial, sans-serif" font-size="26" fill="#cccccc">${descSafe}</text>
-  <text x="1160" y="50" font-family="Arial, sans-serif" font-size="22" fill="#ffffff" opacity="0.8" text-anchor="end">pirate-market.vercel.app</text>
+  <rect y="180" width="1200" height="450" fill="url(#grad)"/>
+  <rect x="40" y="400" width="200" height="50" rx="8" fill="#F5A623"/>
+  <text x="140" y="433" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#000000" text-anchor="middle">Ver anuncio</text>
+  <text x="40" y="510" font-family="Arial, sans-serif" font-size="44" font-weight="bold" fill="#ffffff">${titleSafe}</text>
+  <text x="40" y="565" font-family="Arial, sans-serif" font-size="24" fill="#cccccc">Por ${userDisplay} | ${descSafe}</text>
+  <text x="1160" y="50" font-family="Arial, sans-serif" font-size="20" fill="#F5A623" opacity="0.9" text-anchor="end">PIRATA MARKET</text>
 </svg>`
 
     res.setHeader('Content-Type', 'image/svg+xml')
-    res.setHeader('Cache-Control', 's-maxage=3600')
+    res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400')
     return res.status(200).send(svg)
   }
 
@@ -88,6 +99,6 @@ export default async function handler(req, res) {
 </html>`
 
   res.setHeader('Content-Type', 'text/html')
-  res.setHeader('Cache-Control', 's-maxage=3600')
+  res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400')
   res.status(200).send(html)
 }

@@ -7,49 +7,6 @@ import { getListingBySlug, incrementViews, incrementContacts, incrementShares } 
 import { formatPrice, timeAgo, timeUntilExpiry, generateWhatsAppURL, generateShareURL, copyToClipboard, openInMaps, getUserBadge } from '../lib/utils'
 import './ListingDetail.css'
 
-function updateMetaTags({ title, description, image, url }) {
-  document.title = title
-  const setMeta = (selector, value) => {
-    let el = document.querySelector(selector)
-    if (!el) {
-      el = document.createElement('meta')
-      if (selector.includes('property=')) {
-        el.setAttribute('property', selector.match(/property="([^"]+)"/)[1])
-      } else {
-        el.setAttribute('name', selector.match(/name="([^"]+)"/)[1])
-      }
-      document.head.appendChild(el)
-    }
-    el.setAttribute('content', value)
-  }
-  setMeta('meta[property="og:title"]', title)
-  setMeta('meta[property="og:description"]', description)
-  setMeta('meta[property="og:image"]', image)
-  setMeta('meta[property="og:image:width"]', '1200')
-  setMeta('meta[property="og:image:height"]', '630')
-  setMeta('meta[property="og:url"]', url)
-  setMeta('meta[property="og:type"]', 'product')
-  setMeta('meta[property="og:site_name"]', 'Pirata Market')
-  setMeta('meta[name="twitter:card"]', 'summary_large_image')
-  setMeta('meta[name="twitter:title"]', title)
-  setMeta('meta[name="twitter:description"]', description)
-  setMeta('meta[name="twitter:image"]', image)
-  setMeta('meta[name="description"]', description)
-}
-
-function resetMetaTags() {
-  document.title = 'Pirata Market'
-  const setMeta = (selector, value) => {
-    const el = document.querySelector(selector)
-    if (el) el.setAttribute('content', value)
-  }
-  setMeta('meta[property="og:title"]', 'Pirata Market')
-  setMeta('meta[property="og:description"]', 'Comercio sin intermediarios')
-  setMeta('meta[property="og:image"]', '/logo.png')
-  setMeta('meta[property="og:url"]', window.location.origin)
-  setMeta('meta[name="description"]', 'Pirata Market - Comercio sin intermediarios')
-}
-
 export default function ListingDetail({ user }) {
   const { slug } = useParams()
   const { t } = useTranslation()
@@ -61,7 +18,6 @@ export default function ListingDetail({ user }) {
 
   useEffect(() => {
     loadListing()
-    return () => resetMetaTags()
   }, [slug])
 
   const loadListing = async () => {
@@ -70,18 +26,6 @@ export default function ListingDetail({ user }) {
       const data = await getListingBySlug(slug)
       setListing(data)
       await incrementViews(data.id)
-      const imageUrl = data.photos && data.photos.length > 0
-        ? data.photos[0] : `${window.location.origin}/logo.png`
-      const priceText = formatPrice(data.price, data.currency)
-      const descText = data.description
-        ? data.description.substring(0, 150).replace(/\n/g, ' ') + '...'
-        : `${priceText} - Pirata Market`
-      updateMetaTags({
-        title: `${data.title} - ${priceText} | Pirata Market`,
-        description: descText,
-        image: imageUrl,
-        url: `${window.location.origin}/ficha/${data.slug}`
-      })
     } catch (error) {
       console.error('Error loading listing:', error)
       navigate('/')
