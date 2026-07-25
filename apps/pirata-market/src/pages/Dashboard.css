@@ -288,7 +288,96 @@
   color: var(--danger);
 }
 
-/* ── VERIFICACIÓN EN CAPAS ── */
+/* ── VERIFICACIÓN DE CUENTA ── */
+
+/* Info box con tipos de verificación */
+.verif-info-box {
+  background: rgba(212,175,55,0.04);
+  border: 1px solid var(--dark-border);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.verif-info-box > p:first-child {
+  color: var(--gold);
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
+}
+
+.verif-types-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.verif-type-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: var(--dark);
+  border: 1px solid var(--dark-border);
+  border-radius: var(--radius-sm);
+  transition: border-color 0.2s;
+}
+
+.verif-type-card:hover { border-color: rgba(212,175,55,0.3); }
+
+.verif-type-icon { font-size: 1.25rem; flex-shrink: 0; margin-top: 0.1rem; }
+
+.verif-type-card strong { color: var(--text-light); font-size: 0.9rem; }
+
+.verif-type-card p {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  margin: 0.25rem 0 0;
+}
+
+/* Preview individual (selfie) */
+.verif-preview-single { display: flex; gap: 0.75rem; margin-top: 1rem; }
+
+.verif-preview-single-item {
+  width: 120px;
+  height: 120px;
+  position: relative;
+}
+
+/* Botón X para eliminar preview */
+.verif-preview-remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.7);
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  font-size: 0.75rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  z-index: 2;
+}
+
+.verif-preview-remove:hover {
+  background: var(--gold);
+  color: var(--dark);
+}
+
+.verif-preview-item { position: relative; }
+
+/* Error de archivo */
+.verif-error {
+  color: var(--danger);
+  font-size: 0.8rem;
+  margin-top: 0.75rem;
+}
+
+/* ── LAYERS ── */
 .verif-layers {
   display: flex;
   flex-direction: column;

@@ -2,10 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
-import { formatPrice, timeAgo } from '../lib/utils'
+import { formatPrice, timeAgo, compressImage } from '../lib/utils'
 import './Dashboard.css'
-
-const MAX_FILE_SIZE = 2 * 1024 * 1024 // 2MB
 
 const COUNTRIES = [
   'Argentina', 'Bolivia', 'Brasil', 'Canadá', 'Chile', 'Colombia', 'Costa Rica',
@@ -50,12 +48,14 @@ export default function Dashboard({ user, onProfileUpdate }) {
   const [uploadingDocs, setUploadingDocs] = useState(false)
   const [identityFiles, setIdentityFiles] = useState([])
   const [businessFiles, setBusinessFiles] = useState([])
+  const [selfieFiles, setSelfieFiles] = useState([])
   const [verifSaved, setVerifSaved] = useState(false)
   const [fileError, setFileError] = useState('')
+  const [comprError, setComprError] = useState('')
 
   // Avatar (solo lectura — se gestiona en MiPerfil o por admin vía verificación)
 
-  // Datos Reales (Capa 1)
+  // Datos Reales (Identidad personal)
   const [realData, setRealData] = useState({
     full_name: '',
     country: '',
@@ -140,20 +140,17 @@ export default function Dashboard({ user, onProfileUpdate }) {
   // El admin lo actualiza al aprobar la verificación de identidad.
 
   // ── CAMBIO DE TIPO DE CUENTA ──
-  // Nota: is_verified es un campo manual que solo el admin aprueba desde el
-  // panel admin (tras revisar la Capa 1 de identidad). Este flujo NUNCA debe
-  // tocar is_verified, solo el estado de la verificación de negocio (Capa 2).
+  // Nota: is_verified lo aprueba solo el admin (tras revisar la identidad).
+  // Este flujo NUNCA toca is_verified, solo la verificación de negocio.
   //
   // Si el usuario pasa a Tienda/Mayorista: business_verified se resetea y
-  // business_docs se limpia, dejando la Capa 2 lista para que suba nuevos
-  // documentos. El status general vuelve siempre a 'pending' para que el
-  // admin vea que hay una nueva revisión de negocio esperando.
+  // business_docs se limpia para que suba nuevos documentos de negocio.
   const handleChangeType = async (newType) => {
     if (newType === profile?.user_type) return
     const label = ACCOUNT_TYPES.find(o => o.value === newType)?.label || newType
     const requiresBusinessVerification = newType === 'shop' || newType === 'wholesale'
     const confirmMsg = requiresBusinessVerification
-      ? `¿Cambiar tu tipo de cuenta a ${label}? Deberás completar una nueva verificación de negocio (Capa 2). Tu identidad (Capa 1) se mantiene.`
+      ? `¿Cambiar tu tipo de cuenta a ${label}? Deberás completar una nueva verificación de negocio. Tu verificación de identidad se mantiene.`
       : `¿Cambiar tu tipo de cuenta a ${label}? Tu verificación de negocio se reseteará, pero tu identidad se mantendrá.`
     if (!confirm(confirmMsg)) return
 
@@ -170,8 +167,8 @@ export default function Dashboard({ user, onProfileUpdate }) {
           status: requiresBusinessVerification ? 'pending' : verificationRequest.status
         }).eq('id', verificationRequest.id)
       } else if (requiresBusinessVerification) {
-        // No existía solicitud previa (ej. usuario nunca subió Capa 1 todavía);
-        // creamos una para que la Capa 2 quede activa y visible para el admin.
+        // No existía solicitud previa (ej. usuario nunca subió documentos todavía);
+        // creamos una para que la verificación de negocio quede activa y visible para el admin.
         await supabase.from('verification_requests').insert([{
           user_id: user.id,
           status: 'pending',
@@ -186,7 +183,7 @@ export default function Dashboard({ user, onProfileUpdate }) {
       await loadVerification()
 
       // Llevar al usuario directo a la sección de Verificación para que
-      // complete la Capa 2 recién activada.
+      // complete la verificación de negocio recién activada.
       if (requiresBusinessVerification) setActiveSection('verificacion')
     } catch (error) { alert('Error al cambiar tipo: ' + error.message) }
     finally { setChangingType(false) }
@@ -226,33 +223,68 @@ export default function Dashboard({ user, onProfileUpdate }) {
     finally { setSavingShop(false) }
   }
 
-  const validateFiles = (files) => {
-    const oversized = files.filter(f => f.size > MAX_FILE_SIZE)
-    if (oversized.length > 0) {
-      setFileError(`${oversized.length} archivo(s) superan el límite de 2MB`)
+  // Validar tipo de archivo
+  const validateImageType = (files) => {
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+    const invalid = files.filter(f => !validTypes.includes(f.type))
+    if (invalid.length > 0) {
+      setFileError('Solo se permiten imágenes JPG, PNG o WebP')
       return false
     }
     setFileError('')
     return true
   }
 
-  const handleIdentityFiles = (e) => {
+  const handleIdentityFiles = async (e) => {
     const files = Array.from(e.target.files)
-    if (validateFiles(files)) setIdentityFiles(files)
+    if (!validateImageType(files)) return
+    try {
+      setComprError('')
+      const compressed = await Promise.all(files.map(f => compressImage(f)))
+      setIdentityFiles(compressed)
+    } catch (err) {
+      setComprError('Error al comprimir imágenes: ' + err.message)
+    }
   }
 
-  const handleBusinessFiles = (e) => {
+  const handleBusinessFiles = async (e) => {
     const files = Array.from(e.target.files)
-    if (validateFiles(files)) setBusinessFiles(files)
+    if (!validateImageType(files)) return
+    try {
+      setComprError('')
+      const compressed = await Promise.all(files.map(f => compressImage(f)))
+      setBusinessFiles(compressed)
+    } catch (err) {
+      setComprError('Error al comprimir imágenes: ' + err.message)
+    }
   }
+
+  const handleSelfieFiles = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    if (!validateImageType([file])) return
+    try {
+      setComprError('')
+      const compressed = await compressImage(file)
+      setSelfieFiles([compressed])
+    } catch (err) {
+      setComprError('Error al comprimir imagen: ' + err.message)
+    }
+  }
+
+  // Eliminar fotos seleccionadas antes de enviar
+  const removeIdentityFile = (index) => setIdentityFiles(prev => prev.filter((_, i) => i !== index))
+  const removeBusinessFile = (index) => setBusinessFiles(prev => prev.filter((_, i) => i !== index))
+  const removeSelfieFile = () => setSelfieFiles([])
 
   const uploadDocFiles = async (files, folder) => {
     const urls = []
     for (const file of files) {
-      const fileExt = file.name.split('.').pop()
-      const path = `${user.id}/${folder}/${Date.now()}.${fileExt}`
+      const fileExt = file.type === 'image/png' ? 'png' : 'jpg'
+      const path = `${user.id}/${folder}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${fileExt}`
+      const compressed = await compressImage(file)
       const { error } = await supabase.storage
-        .from('verification-docs').upload(path, file, { contentType: file.type })
+        .from('verification-docs').upload(path, compressed, { contentType: 'image/jpeg' })
       if (error) throw error
       const { data: { publicUrl } } = supabase.storage
         .from('verification-docs').getPublicUrl(path)
@@ -262,13 +294,13 @@ export default function Dashboard({ user, onProfileUpdate }) {
   }
 
   const handleSubmitVerification = async () => {
-    // Validar Capa 1 si no está verificada
+    // Validar identidad personal si no está verificada
     if (!profile?.identity_verified) {
       if (!realData.full_name || !realData.country || !realData.city || !realData.phone) {
-        alert('Completa todos tus datos reales para la verificación de identidad.'); return
+        alert('Completa todos tus datos personales para la verificación.'); return
       }
-      if (identityFiles.length !== 2) {
-        alert('Sube exactamente 2 fotos de tu identidad (anverso y reverso).'); return
+      if (identityFiles.length < 1) {
+        alert('Sube al menos una foto de tu documento de identidad.'); return
       }
     }
 
@@ -284,15 +316,23 @@ export default function Dashboard({ user, onProfileUpdate }) {
         businessUrls = await uploadDocFiles(businessFiles, 'business')
       }
 
+      // Subir selfie/foto personal
+      let selfieUrl = verificationRequest?.selfie_url || null
+      if (selfieFiles.length > 0) {
+        const urls = await uploadDocFiles(selfieFiles, 'selfie')
+        selfieUrl = urls[0] || null
+      }
+
       const payload = {
         user_id: user.id,
         status: 'pending',
         source: 'pirata',
         identity_docs: identityUrls,
         business_docs: businessUrls,
+        selfie_url: selfieUrl,
       }
 
-      // Actualizar datos reales en tabla users
+      // Actualizar datos personales en tabla users
       await supabase.from('users').update({
         full_name: realData.full_name,
         country: realData.country,
@@ -309,6 +349,7 @@ export default function Dashboard({ user, onProfileUpdate }) {
       setVerifSaved(true)
       setIdentityFiles([])
       setBusinessFiles([])
+      setSelfieFiles([])
       setTimeout(() => setVerifSaved(false), 4000)
       loadVerification()
       loadProfile()
@@ -459,15 +500,46 @@ export default function Dashboard({ user, onProfileUpdate }) {
             {activeSection === 'verificacion' && (
               <div className="db-section">
                 <div className="db-section-header">
-                  <h2>🏅 Verificación en Capas</h2>
-                  {isVerified && <span className="verif-badge approved">✓ Usuario Verificado</span>}
+                  <h2>🏅 Verificación de Cuenta</h2>
+                  {isVerified && <span className="verif-badge approved">✓ Cuenta Verificada</span>}
                 </div>
 
+                {/* INFO: Tipos de verificación */}
+                {!isVerified && (
+                  <div className="verif-info-box">
+                    <p><strong>¿Qué tipo de verificación necesitas?</strong></p>
+                    <div className="verif-types-info">
+                      <div className="verif-type-card">
+                        <span className="verif-type-icon">👤</span>
+                        <div>
+                          <strong>Persona</strong>
+                          <p>Solo tu identidad personal. Para publicar como vendedor individual.</p>
+                        </div>
+                      </div>
+                      <div className="verif-type-card">
+                        <span className="verif-type-icon">🏪</span>
+                        <div>
+                          <strong>Tienda</strong>
+                          <p>Identidad + verificación de tu local/negocio físico. Para publicar como tienda.</p>
+                        </div>
+                      </div>
+                      <div className="verif-type-card">
+                        <span className="verif-type-icon">📦</span>
+                        <div>
+                          <strong>Mayorista</strong>
+                          <p>Identidad + documentos legales de tu negocio. Para venta al por mayor.</p>
+                        </div>
+                      </div>
+                    </div>
+                    <p className="verif-hint">Selecciona tu tipo de cuenta abajo y completa los documentos.</p>
+                  </div>
+                )}
+
                 <div className="verif-layers">
-                  {/* CAPA 1: IDENTIDAD */}
+                  {/* IDENTIDAD PERSONAL */}
                   <div className={`verif-layer ${identityVerified ? 'verified' : ''}`}>
                     <div className="layer-header">
-                      <h3>👤 Capa 1: Identidad Personal</h3>
+                      <h3>👤 Identidad Personal</h3>
                       <span className={`layer-status ${identityVerified ? 'approved' : verificationRequest?.status === 'pending' ? 'pending' : ''}`}>
                         {identityVerified ? '✓ Verificada' : verificationRequest?.status === 'pending' ? '⏳ En revisión' : '✗ Pendiente'}
                       </span>
@@ -501,47 +573,73 @@ export default function Dashboard({ user, onProfileUpdate }) {
                       </div>
 
                       {!identityVerified && (
-                        <div className="verif-docs-upload">
-                          <label>Fotos del Documento (CI/Pasaporte)</label>
-                          <p className="verif-hint">Sube 2 fotos: Anverso y Reverso. Máx 2MB c/u.</p>
-                          <input type="file" accept="image/*" multiple id="id-input" style={{ display: 'none' }} onChange={handleIdentityFiles} />
-                          <label htmlFor="id-input" className="btn btn-secondary verif-upload-btn">
-                            Seleccionar 2 fotos ({identityFiles.length} seleccionadas)
-                          </label>
-                          {identityFiles.length > 0 && (
-                            <div className="verif-preview-grid">
-                              {identityFiles.map((f, i) => (
-                                <div key={i} className="verif-preview-item">
-                                  <img src={URL.createObjectURL(f)} alt="preview" />
+                        <>
+                          {/* Foto personal (selfie) */}
+                          <div className="verif-docs-upload">
+                            <label>📸 Tu Foto Personal</label>
+                            <p className="verif-hint">Sube una foto clara de tu rostro. Se usará para verificar que eres la misma persona del documento.</p>
+                            <input type="file" accept="image/*" id="selfie-input" style={{ display: 'none' }} onChange={handleSelfieFiles} />
+                            <label htmlFor="selfie-input" className="btn btn-secondary verif-upload-btn">
+                              {selfieFiles.length > 0 ? 'Cambiar foto' : 'Seleccionar foto'}
+                            </label>
+                            {selfieFiles.length > 0 && (
+                              <div className="verif-preview-single">
+                                <div className="verif-preview-item verif-preview-single-item">
+                                  <img src={URL.createObjectURL(selfieFiles[0])} alt="Tu foto" />
+                                  <button className="verif-preview-remove" onClick={removeSelfieFile} title="Eliminar">✕</button>
                                 </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
+                              </div>
+                            )}
+                            {verificationRequest?.selfie_url && selfieFiles.length === 0 && (
+                              <p className="verif-hint" style={{color: 'var(--gold)'}}>✓ Foto personal ya enviada anteriormente</p>
+                            )}
+                          </div>
+
+                          {/* Documentos de identidad */}
+                          <div className="verif-docs-upload">
+                            <label>📄 Documentos de Identidad (CI/Pasaporte)</label>
+                            <p className="verif-hint">Sube fotos de tu documento: Anverso y Reverso. Las imágenes se comprimen automáticamente.</p>
+                            <input type="file" accept="image/*" multiple id="id-input" style={{ display: 'none' }} onChange={handleIdentityFiles} />
+                            <label htmlFor="id-input" className="btn btn-secondary verif-upload-btn">
+                              {identityFiles.length > 0 ? 'Cambiar documentos' : 'Seleccionar documentos'} ({identityFiles.length})
+                            </label>
+                            {identityFiles.length > 0 && (
+                              <div className="verif-preview-grid">
+                                {identityFiles.map((f, i) => (
+                                  <div key={i} className="verif-preview-item">
+                                    <img src={URL.createObjectURL(f)} alt="preview" />
+                                    <button className="verif-preview-remove" onClick={() => removeIdentityFile(i)} title="Eliminar">✕</button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </>
                       )}
                     </div>
                   </div>
 
-                  {/* CAPA 2: NEGOCIO */}
+                  {/* VERIFICACIÓN DE NEGOCIO */}
                   {isShopOrWholesale && (
                     <div className={`verif-layer ${businessVerified ? 'verified' : ''}`}>
                       <div className="layer-header">
-                        <h3>🏪 Capa 2: Verificación de Negocio</h3>
+                        <h3>🏪 Verificación de Negocio</h3>
                         <span className={`layer-status ${businessVerified ? 'approved' : ''}`}>
                           {businessVerified ? '✓ Verificada' : '✗ Pendiente'}
                         </span>
                       </div>
                       <div className="layer-content">
-                        <p className="verif-hint">Sube fotos de tu local, almacén o documentos legales de tu negocio.</p>
+                        <p className="verif-hint">Sube fotos de tu local, almacén o documentos legales de tu negocio. Las imágenes se comprimen automáticamente.</p>
                         <input type="file" accept="image/*" multiple id="biz-input" style={{ display: 'none' }} onChange={handleBusinessFiles} />
                         <label htmlFor="biz-input" className="btn btn-secondary verif-upload-btn">
-                          Subir documentos de negocio ({businessFiles.length})
+                          {businessFiles.length > 0 ? 'Cambiar documentos' : 'Subir documentos'} ({businessFiles.length})
                         </label>
                         {businessFiles.length > 0 && (
                           <div className="verif-preview-grid">
                             {businessFiles.map((f, i) => (
                               <div key={i} className="verif-preview-item">
                                 <img src={URL.createObjectURL(f)} alt="preview" />
+                                <button className="verif-preview-remove" onClick={() => removeBusinessFile(i)} title="Eliminar">✕</button>
                               </div>
                             ))}
                           </div>
@@ -551,17 +649,14 @@ export default function Dashboard({ user, onProfileUpdate }) {
                   )}
                 </div>
 
-                {/* TIPO DE CUENTA — movido aquí desde el sidebar.
-                    Vive en Verificación porque cambiar de tipo impacta
-                    directamente la Capa 2 (business_verified se resetea). */}
+                {/* TIPO DE CUENTA */}
                 <div className="verif-layer account-type-layer">
                   <div className="layer-header">
                     <h3>🔁 Tipo de Cuenta</h3>
                   </div>
                   <div className="layer-content">
                     <p className="verif-hint">
-                      Cambiar tu tipo de cuenta reinicia tu Capa 2 (verificación de negocio).
-                      Tu Capa 1 (identidad personal) no se ve afectada.
+                      Cambiar tu tipo de cuenta reinicia la verificación de negocio. Tu identidad personal no se ve afectada.
                     </p>
                     <div className="type-change-options">
                       {ACCOUNT_TYPES.map(opt => (
@@ -584,10 +679,12 @@ export default function Dashboard({ user, onProfileUpdate }) {
                       <strong>Nota del administrador:</strong> {verificationRequest.admin_note}
                     </div>
                   )}
-                  <button className="btn btn-primary btn-full" onClick={handleSubmitVerification} disabled={identityLocked || uploadingDocs || (!identityFiles.length && !businessFiles.length)}>
+                  {fileError && <p className="verif-error">{fileError}</p>}
+                  {comprError && <p className="verif-error">{comprError}</p>}
+                  <button className="btn btn-primary btn-full" onClick={handleSubmitVerification} disabled={identityLocked || uploadingDocs || (!identityFiles.length && !businessFiles.length && !selfieFiles.length)}>
                     {uploadingDocs ? 'Enviando...' : identityLocked ? 'Tu identidad está bloqueada por el administrador' : 'Enviar Solicitud de Verificación'}
                   </button>
-                  {verifSaved && <p className="success-msg">✓ Solicitud enviada con éxito</p>}
+                  {verifSaved && <p className="success-msg">✓ Solicitud enviada con éxito. El equipo revisará tus documentos pronto.</p>}
                 </div>
               </div>
             )}

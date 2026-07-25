@@ -9,19 +9,20 @@
     "preview": "vite preview --config apps/pirata-market/vite.config.js"
   },
   "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-router-dom": "^6.22.0",
     "@supabase/supabase-js": "^2.39.7",
-    "react-i18next": "^14.0.5",
+    "browser-image-compression": "^2.0.2",
+    "date-fns": "^3.3.1",
     "i18next": "^23.8.2",
     "i18next-browser-languagedetector": "^7.2.0",
     "i18next-http-backend": "^2.5.0",
-    "date-fns": "^3.3.1",
-    "mapbox-gl": "^3.1.2",
-    "react-dropzone": "^14.2.3",
     "leaflet": "^1.9.4",
-    "react-leaflet": "^4.2.1"
+    "mapbox-gl": "^3.1.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-dropzone": "^14.2.3",
+    "react-i18next": "^14.0.5",
+    "react-leaflet": "^4.2.1",
+    "react-router-dom": "^6.22.0"
   },
   "devDependencies": {
     "@types/react": "^18.2.55",
