@@ -1,33 +1,10 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Outlet, useLocation } from 'react-router-dom'
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet'
 import { supabase } from '../../../pirata-market/src/lib/supabase'
 import 'leaflet/dist/leaflet.css'
 import './MiCuenta.css'
-
-import { compressImage } from '../../../pirata-market/src/lib/utils'
-
-const SECTIONS = [
-  { key: 'personal',     icon: '👤', label: 'Información personal' },
-  { key: 'direccion',    icon: '📍', label: 'Mi dirección' },
-  { key: 'verificacion', icon: '🔒', label: 'Verificación' },
-  { key: 'resenas',      icon: '⭐', label: 'Mis reseñas' },
-  { key: 'nivel',        icon: '🏆', label: 'Mi nivel' },
-]
-
-const LEVEL_INFO = {
-  basico: { label: 'Básico', color: 'var(--text-muted)', icon: '⚪', next: 'medio' },
-  medio:  { label: 'Medio',  color: '#2980B9', icon: '🔵', next: 'pro' },
-  pro:    { label: 'PRO',    color: '#8E44AD', icon: '🟣', next: 'elite' },
-  elite:  { label: 'Elite',  color: '#784212', icon: '🟤', next: null },
-}
-
-const LEVEL_REQUIREMENTS = {
-  basico: ['Identidad verificada', 'Dirección verificada', 'Comprobante de viaje'],
-  medio:  ['Todo lo anterior', 'Garantía por artículo', 'Escrow habilitado'],
-  pro:    ['Todo lo anterior', 'Oficina o domicilio habilitado', 'Rutas frecuentes verificadas'],
-  elite:  ['Todo lo anterior', 'Dirección verificada en segundo país', 'Historial sólido de envíos'],
-}
+import MiCuentaSidebar from './MiCuentaSidebar'
 
 function MapPicker({ onSelect }) {
   useMapEvents({
@@ -38,19 +15,17 @@ function MapPicker({ onSelect }) {
 
 export default function MiCuenta({ user, onProfileUpdate }) {
   const navigate = useNavigate()
-  const [activeSection, setActiveSection] = useState('personal')
+  const location = useLocation()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState('')
   const [error, setError] = useState('')
   const [showMap, setShowMap] = useState(false)
-  const [reviews, setReviews] = useState([])
 
   // Perfil
   const [profile, setProfile] = useState(null)
 
   // Campos editables
-  const [displayName, setDisplayName] = useState('')
   const [bio, setBio] = useState('')
   const [frequentRoutes, setFrequentRoutes] = useState('')
 
@@ -61,25 +36,15 @@ export default function MiCuenta({ user, onProfileUpdate }) {
   const [addressText, setAddressText] = useState('')
   const [addressCoords, setAddressCoords] = useState(null)
 
-  // Verificación
+  // Para sidebar (cargados aquí, pasados por props)
   const [verifRequest, setVerifRequest] = useState(null)
-  const [identityFiles, setIdentityFiles] = useState([])
-  const [domicileFiles, setDomicileFiles] = useState([])
-  const [bankFiles, setBankFiles] = useState([])
-  const [selfieFile, setSelfieFile] = useState(null)
-  const [selfiePreview, setSelfiePreview] = useState('')
-  const [comprError, setComprError] = useState('')
-  const [uploadingDocs, setUploadingDocs] = useState(false)
-  const [verifSaved, setVerifSaved] = useState(false)
-  const [verifError, setVerifError] = useState('')
-  const [currentLevel, setCurrentLevel] = useState('basico')
+  const [reviews, setReviews] = useState([])
 
   useEffect(() => {
     if (!user) return navigate('/auth')
     loadProfile()
     loadReviews()
     loadVerification()
-    loadLevel()
   }, [user])
 
   const loadProfile = async () => {
@@ -100,7 +65,6 @@ export default function MiCuenta({ user, onProfileUpdate }) {
       .single()
     if (data) {
       setProfile(data)
-      setDisplayName(data.display_name || '')
       setBio(data.traficante_bio || '')
       setFrequentRoutes(data.traficante_frequent_routes || '')
       setFullName(data.traficante_full_name || '')
@@ -114,21 +78,11 @@ export default function MiCuenta({ user, onProfileUpdate }) {
     setLoading(false)
   }
 
-  const loadLevel = async () => {
-    const { data } = await supabase
-      .from('traficante_profiles')
-      .select('level')
-      .eq('id', user.id)
-      .single()
-    if (data?.level) setCurrentLevel(data.level)
-  }
-
   const loadReviews = async () => {
     const { data } = await supabase
       .from('traficante_reviews')
-      .select('*, reviewer:reviewer_id(display_name, avatar_url)')
+      .select('*')
       .eq('reviewed_id', user.id)
-      .order('created_at', { ascending: false })
     setReviews(data || [])
   }
 
@@ -141,21 +95,23 @@ export default function MiCuenta({ user, onProfileUpdate }) {
     if (data) setVerifRequest(data)
   }
 
-  // Avatar: solo lectura. Se gestiona en MiPerfil.
+  const avgRating = reviews.length
+    ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
+    : null
 
   // ── GUARDAR PERSONAL ──
   const savePersonal = async () => {
     setSaving(true)
     setError('')
     const { error: err } = await supabase.from('users').update({
-      display_name: displayName,
+      display_name: profile?.display_name,
       traficante_bio: bio,
       traficante_frequent_routes: frequentRoutes,
     }).eq('id', user.id)
     setSaving(false)
     if (err) return setError(err.message)
     setSaved('personal')
-    if (onProfileUpdate) onProfileUpdate(prev => ({ ...prev, display_name: displayName }))
+    if (onProfileUpdate) onProfileUpdate(prev => ({ ...prev, display_name: profile?.display_name }))
     setTimeout(() => setSaved(''), 3000)
   }
 
@@ -203,120 +159,11 @@ export default function MiCuenta({ user, onProfileUpdate }) {
     })
   }
 
-  // ── VERIFICACIÓN ──
-  const uploadDocFiles = async (files, folder) => {
-    const urls = []
-    for (const file of files) {
-      try {
-        // Si es imagen, comprimir. Si es PDF u otro, subir tal cual.
-        const isImage = file.type.startsWith('image/')
-        const processed = isImage ? await compressImage(file) : file
-        const ext = isImage
-          ? (processed.type.split('/').pop() || 'jpg')
-          : (file.name.split('.').pop() || 'pdf')
-        const path = `${user.id}/${folder}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`
-        const { error } = await supabase.storage
-          .from('traficante-docs')
-          .upload(path, processed, { contentType: isImage ? processed.type : file.type })
-        if (error) throw error
-        const { data: { publicUrl } } = supabase.storage
-          .from('traficante-docs')
-          .getPublicUrl(path)
-        urls.push(publicUrl)
-      } catch (err) {
-        throw new Error(`Error al procesar ${file.name}: ${err.message}`)
-      }
-    }
-    return urls
-  }
-
-  const handleSelfieChange = async (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setComprError('')
-    try {
-      const compressed = await compressImage(file)
-      const url = URL.createObjectURL(compressed)
-      setSelfieFile(compressed)
-      setSelfiePreview(url)
-    } catch (err) {
-      setComprError('Error al comprimir la foto: ' + err.message)
-    }
-  }
-
-  const removeSelfie = () => {
-    if (selfiePreview) URL.revokeObjectURL(selfiePreview)
-    setSelfieFile(null)
-    setSelfiePreview('')
-  }
-
-  const removeFile = (setter, index) => {
-    setter(prev => {
-      const copy = [...prev]
-      copy.splice(index, 1)
-      return copy
-    })
-  }
-
-  const handleSubmitVerification = async () => {
-    if (identityFiles.length === 0 || domicileFiles.length === 0) {
-      setVerifError('El documento de identidad y comprobante de domicilio son obligatorios')
-      return
-    }
-    setUploadingDocs(true)
-    setVerifError('')
-    setComprError('')
-    try {
-      const identityUrls = await uploadDocFiles(identityFiles, 'identity')
-      const domicileUrls = await uploadDocFiles(domicileFiles, 'domicile')
-      const bankUrls = bankFiles.length > 0 ? await uploadDocFiles(bankFiles, 'bank') : []
-
-      let selfieUrl = null
-      if (selfieFile) {
-        const compressedSelfie = await compressImage(selfieFile)
-        const selfieExt = compressedSelfie.type.split('/').pop() || 'jpg'
-        const selfiePath = `${user.id}/identity/selfie_${Date.now()}.${selfieExt}`
-        const { error: selfieErr } = await supabase.storage
-          .from('traficante-docs')
-          .upload(selfiePath, compressedSelfie, { contentType: compressedSelfie.type })
-        if (selfieErr) throw new Error('Error al subir foto personal: ' + selfieErr.message)
-        const { data: { publicUrl } } = supabase.storage
-          .from('traficante-docs')
-          .getPublicUrl(selfiePath)
-        selfieUrl = publicUrl
-      }
-
-      const payload = {
-        user_id: user.id,
-        status: 'pending',
-        identity_docs: identityUrls,
-        domicile_docs: domicileUrls,
-        bank_docs: bankUrls,
-        selfie_url: selfieUrl,
-      }
-      if (verifRequest) {
-        await supabase.from('traficante_verification_requests')
-          .update(payload).eq('id', verifRequest.id)
-      } else {
-        await supabase.from('traficante_verification_requests')
-          .insert([payload])
-      }
-      setVerifSaved(true)
-      setIdentityFiles([])
-      setDomicileFiles([])
-      setBankFiles([])
-      removeSelfie()
-      setTimeout(() => setVerifSaved(false), 4000)
-      loadVerification()
-    } catch (err) {
-      setVerifError('Error al enviar documentos: ' + err.message)
-    }
-    setUploadingDocs(false)
-  }
-
-  const avgRating = reviews.length
-    ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
-    : null
+  // ── DETERMINAR SECCIÓN ACTUAL POR RUTA ──
+  const path = location.pathname
+  const isPersonal = path === '/traficante/mi-cuenta'
+  const isDireccion = path === '/traficante/mi-cuenta/direccion'
+  const showChildRoute = !isPersonal && !isDireccion
 
   if (loading) return (
     <div className="mc-loading">
@@ -330,43 +177,19 @@ export default function MiCuenta({ user, onProfileUpdate }) {
         <div className="mc-layout">
 
           {/* ── SIDEBAR ── */}
-          <aside className="mc-sidebar">
-            <div className="mc-sidebar-profile">
-              <div className="mc-avatar-wrap">
-                {verifRequest?.selfie_url
-                  ? <img src={verifRequest.selfie_url} alt="verificación" className="mc-avatar" />
-                  : <div className="mc-avatar-placeholder">
-                      {(profile?.display_name || user.email)?.charAt(0).toUpperCase()}
-                    </div>
-                }
-              </div>
-              <div className="mc-sidebar-name">{profile?.display_name || user.email}</div>
-              <div className="mc-sidebar-email">{user.email}</div>
-              {avgRating && (
-                <div className="mc-sidebar-rating">
-                  ⭐ {avgRating} <span>({reviews.length} reseñas)</span>
-                </div>
-              )}
-            </div>
-
-            <nav className="mc-nav">
-              {SECTIONS.map(s => (
-                <button key={s.key}
-                  className={`mc-nav-item ${activeSection === s.key ? 'active' : ''}`}
-                  onClick={() => { setActiveSection(s.key); setError(''); setSaved(''); setVerifError('') }}
-                >
-                  <span>{s.icon}</span>
-                  <span>{s.label}</span>
-                </button>
-              ))}
-            </nav>
-          </aside>
+          <MiCuentaSidebar
+            user={user}
+            profile={profile}
+            verifRequest={verifRequest}
+            avgRating={avgRating}
+            reviewsCount={reviews.length}
+          />
 
           {/* ── CONTENIDO ── */}
           <main className="mc-main">
 
             {/* ══ INFORMACIÓN PERSONAL ══ */}
-            {activeSection === 'personal' && (
+            {isPersonal && (
               <div className="mc-section">
                 <div className="mc-section-header">
                   <h2>Información personal</h2>
@@ -444,7 +267,7 @@ export default function MiCuenta({ user, onProfileUpdate }) {
             )}
 
             {/* ══ DIRECCIÓN ══ */}
-            {activeSection === 'direccion' && (
+            {isDireccion && (
               <div className="mc-section">
                 <div className="mc-section-header">
                   <h2>Mi dirección</h2>
@@ -533,278 +356,8 @@ export default function MiCuenta({ user, onProfileUpdate }) {
               </div>
             )}
 
-            {/* ══ VERIFICACIÓN ══ */}
-            {activeSection === 'verificacion' && (
-              <div className="mc-section">
-                <div className="mc-section-header">
-                  <h2>Verificación de transportador</h2>
-                  <p>Verifica tu identidad para ganar la confianza de los remitentes.</p>
-                </div>
-
-                <div className="verif-info-box">
-                  <h4>Requisitos para la verificación</h4>
-                  <p>Completa los siguientes documentos para que nuestro equipo pueda verificar tu identidad. El proceso toma 24-48 horas.</p>
-                  <div className="verif-types-info">
-                    <div className="verif-type-card">
-                      <div className="verif-type-icon">📄</div>
-                      <div>
-                        <strong>Documento de identidad</strong>
-                        <p>Carnet de identidad, cédula o pasaporte vigente. Foto frontal y dorsal. Obligatorio.</p>
-                      </div>
-                    </div>
-                    <div className="verif-type-card">
-                      <div className="verif-type-icon">🏠</div>
-                      <div>
-                        <strong>Comprobante de domicilio</strong>
-                        <p>Factura de agua, luz, teléfono, internet o cable con tu nombre y dirección. Obligatorio.</p>
-                      </div>
-                    </div>
-                    <div className="verif-type-card">
-                      <div className="verif-type-icon">🏦</div>
-                      <div>
-                        <strong>Extracto bancario</strong>
-                        <p>Extracto reciente con tu nombre y dirección. Opcional.</p>
-                      </div>
-                    </div>
-                    <div className="verif-type-card">
-                      <div className="verif-type-icon">📷</div>
-                      <div>
-                        <strong>Foto personal</strong>
-                        <p>Foto clara de tu rostro para confirmar que eres la misma persona del documento.</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Status de verificación */}
-                {verifRequest?.status === 'pending' && (
-                  <div className="mc-notice warning">Tus documentos están siendo revisados. Te notificaremos cuando estén aprobados.</div>
-                )}
-                {verifRequest?.status === 'rejected' && (
-                  <div className="mc-notice danger">
-                    Tu solicitud fue rechazada.
-                    {verifRequest.admin_note && <><br />Motivo: <strong>{verifRequest.admin_note}</strong></>}
-                    <br />Puedes volver a enviar documentos corregidos.
-                  </div>
-                )}
-                {verifRequest?.status === 'approved' && (
-                  <div className="mc-notice info">Documentos aprobados. Tu verificación está siendo procesada.</div>
-                )}
-
-                {/* Foto personal */}
-                <div className="verif-layer">
-                  <div className="layer-header">
-                    <h3>Tu Foto Personal</h3>
-                    <span className="layer-status">Sube una foto clara de tu rostro</span>
-                  </div>
-                  <p className="verif-hint">Se usará para verificar que eres la misma persona del documento. Las imágenes se comprimen automáticamente.</p>
-                  <input type="file" accept="image/*" id="selfie-input" style={{ display: 'none' }} onChange={handleSelfieChange} />
-                  {selfiePreview
-                    ? <div className="verif-preview-single">
-                        <img src={selfiePreview} alt="selfie" />
-                        <button className="verif-preview-remove" onClick={removeSelfie} type="button">X</button>
-                      </div>
-                    : <label htmlFor="selfie-input" className="btn btn-secondary">Seleccionar foto</label>
-                  }
-                </div>
-
-                {/* Documento de identidad */}
-                <div className="verif-layer">
-                  <div className="layer-header">
-                    <h3>Documento de Identidad (CI/Pasaporte)</h3>
-                    <span className={`layer-status ${profile?.traficante_identity_verified ? 'approved' : ''}`}>
-                      {profile?.traficante_identity_verified ? 'Verificado' : 'Pendiente'}
-                    </span>
-                  </div>
-                  <p className="verif-hint">Sube fotos de tu documento: Anverso y Reverso. Las imágenes se comprimen automáticamente.</p>
-                  <input type="file" accept="image/*" multiple id="identity-input" style={{ display: 'none' }}
-                    onChange={e => setIdentityFiles(Array.from(e.target.files))} />
-                  <label htmlFor="identity-input" className="btn btn-secondary">
-                    Seleccionar documentos ({identityFiles.length} archivo{identityFiles.length !== 1 ? 's' : ''})
-                  </label>
-                  {identityFiles.length > 0 && (
-                    <div className="verif-preview-grid">
-                      {identityFiles.map((f, i) => (
-                        <div key={i} className="verif-preview-item">
-                          <img src={URL.createObjectURL(f)} alt={`id-${i}`} />
-                          <button className="verif-preview-remove" onClick={() => removeFile(setIdentityFiles, i)} type="button">X</button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Comprobante de domicilio */}
-                <div className="verif-layer">
-                  <div className="layer-header">
-                    <h3>Comprobante de Domicilio</h3>
-                    <span className={`layer-status ${profile?.traficante_address_verified ? 'approved' : ''}`}>
-                      {profile?.traficante_address_verified ? 'Verificado' : 'Pendiente'}
-                    </span>
-                  </div>
-                  <p className="verif-hint">Factura de agua, luz, teléfono, internet o cable con tu nombre y dirección. Las imágenes se comprimen automáticamente.</p>
-                  <input type="file" accept="image/*" multiple id="domicile-input" style={{ display: 'none' }}
-                    onChange={e => setDomicileFiles(Array.from(e.target.files))} />
-                  <label htmlFor="domicile-input" className="btn btn-secondary">
-                    Seleccionar documentos ({domicileFiles.length} archivo{domicileFiles.length !== 1 ? 's' : ''})
-                  </label>
-                  {domicileFiles.length > 0 && (
-                    <div className="verif-preview-grid">
-                      {domicileFiles.map((f, i) => (
-                        <div key={i} className="verif-preview-item">
-                          <img src={URL.createObjectURL(f)} alt={`dom-${i}`} />
-                          <button className="verif-preview-remove" onClick={() => removeFile(setDomicileFiles, i)} type="button">X</button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Extracto bancario */}
-                <div className="verif-layer">
-                  <div className="layer-header">
-                    <h3>Extracto Bancario</h3>
-                    <span className={`layer-status ${profile?.traficante_bank_verified ? 'approved' : ''}`}>
-                      {profile?.traficante_bank_verified ? 'Verificado' : 'Pendiente'}
-                    </span>
-                  </div>
-                  <p className="verif-hint">El extracto puede contener una sola transacción. Lo importante es que sea visible tu nombre completo y dirección, igual que en tus documentos de identidad y domicilio. Acepta imágenes y PDFs.</p>
-                  <input type="file" accept="image/*,application/pdf,.pdf" multiple id="bank-input" style={{ display: 'none' }}
-                    onChange={e => setBankFiles(Array.from(e.target.files))} />
-                  <label htmlFor="bank-input" className="btn btn-secondary">
-                    Seleccionar documentos ({bankFiles.length} archivo{bankFiles.length !== 1 ? 's' : ''})
-                  </label>
-                  {bankFiles.length > 0 && (
-                    <div className="verif-preview-grid">
-                      {bankFiles.map((f, i) => (
-                        <div key={i} className={`verif-preview-item ${f.type.startsWith('image/') ? '' : 'verif-preview-nonimage'}`}>
-                          {f.type.startsWith('image/')
-                            ? <img src={URL.createObjectURL(f)} alt={`bank-${i}`} />
-                            : <div className="verif-nonimage-icon">📄 {f.name}</div>
-                          }
-                          <button className="verif-preview-remove" onClick={() => removeFile(setBankFiles, i)} type="button">X</button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Verificación de WhatsApp */}
-                <div className="verif-layer">
-                  <div className="layer-header">
-                    <h3>Verificación de WhatsApp</h3>
-                    <span className={`layer-status ${profile?.traficante_phone_locked ? 'approved' : ''}`}>
-                      {profile?.traficante_phone_locked ? 'Fijado' : 'Pendiente'}
-                    </span>
-                  </div>
-                  <p className="verif-hint">El teléfono se fija una vez durante el registro. Para modificarlo contacta a soporte.</p>
-                </div>
-
-                {comprError && <div className="mc-error">{comprError}</div>}
-                {verifError && <div className="mc-error">{verifError}</div>}
-                {verifSaved && <div className="mc-success">Documentos enviados — en revisión</div>}
-
-                {verifRequest?.status !== 'pending' && (
-                  <div className="verif-footer">
-                    <button className="btn btn-primary t-btn-primary"
-                      onClick={handleSubmitVerification}
-                      disabled={uploadingDocs || identityFiles.length === 0 || domicileFiles.length === 0}>
-                      {uploadingDocs
-                        ? <><span className="loading" style={{ width: 16, height: 16 }} /> Enviando...</>
-                        : 'Enviar documentos'}
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* ══ RESEÑAS ══ */}
-            {activeSection === 'resenas' && (
-              <div className="mc-section">
-                <div className="mc-section-header">
-                  <h2>Mis reseñas</h2>
-                  <p>Lo que dicen quienes han usado tu servicio.</p>
-                </div>
-
-                {reviews.length === 0 ? (
-                  <div className="mc-empty">
-                    <div className="mc-empty-icon">No hay reseñas</div>
-                    <p>Aún no tienes reseñas. Completa tu primer envío para comenzar a construir tu reputación.</p>
-                  </div>
-                ) : (
-                  <>
-                    <div className="mc-rating-summary">
-                      <div className="mc-rating-big">{avgRating}</div>
-                      <div className="mc-rating-stars">{'⭐'.repeat(Math.round(avgRating))}</div>
-                      <div className="mc-rating-count">{reviews.length} reseñas</div>
-                    </div>
-                    <div className="mc-reviews-list">
-                      {reviews.map(review => (
-                        <div key={review.id} className="mc-review-card card">
-                          <div className="mc-review-header">
-                            <div className="mc-review-avatar">
-                              {review.reviewer?.avatar_url
-                                ? <img src={review.reviewer.avatar_url} alt="" />
-                                : <div>{review.reviewer?.display_name?.charAt(0) || '?'}</div>
-                              }
-                            </div>
-                            <div>
-                              <div className="mc-review-name">{review.reviewer?.display_name || 'Usuario'}</div>
-                              <div className="mc-review-role">{review.reviewer_role}</div>
-                            </div>
-                            <div className="mc-review-stars">{'⭐'.repeat(review.rating)}</div>
-                          </div>
-                          {review.comment && <p className="mc-review-comment">{review.comment}</p>}
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
-
-            {/* ══ NIVEL ══ */}
-            {activeSection === 'nivel' && (
-              <div className="mc-section">
-                <div className="mc-section-header">
-                  <h2>Mi nivel</h2>
-                  <p>Tu nivel determina qué tipos de envíos puedes aceptar.</p>
-                </div>
-
-                <div className="mc-level-current">
-                  <div className="mc-level-icon" style={{ color: LEVEL_INFO[currentLevel]?.color || LEVEL_INFO.basico.color }}>
-                    {LEVEL_INFO[currentLevel]?.icon || LEVEL_INFO.basico.icon}
-                  </div>
-                  <div>
-                    <div className="mc-level-label" style={{ color: LEVEL_INFO[currentLevel]?.color || LEVEL_INFO.basico.color }}>
-                      Nivel {LEVEL_INFO[currentLevel]?.label || LEVEL_INFO.basico.label}
-                    </div>
-                    <div className="mc-level-desc">Tu nivel es asignado por el equipo según tus verificaciones completadas.</div>
-                  </div>
-                </div>
-
-                <div className="mc-levels-progress">
-                  {Object.entries(LEVEL_INFO).map(([key, info]) => (
-                    <div key={key} className={`mc-level-row ${key === currentLevel ? 'current' : ''}`}>
-                      <div className="mc-level-row-icon" style={{ color: info.color }}>{info.icon}</div>
-                      <div className="mc-level-row-info">
-                        <div className="mc-level-row-label" style={{ color: info.color }}>{info.label}</div>
-                        <div className="mc-level-row-reqs">
-                          {LEVEL_REQUIREMENTS[key].map((req, i) => (
-                            <span key={i} className="mc-req-chip">{req}</span>
-                          ))}
-                        </div>
-                      </div>
-                      {key === currentLevel && <div className="mc-level-current-badge">← Tu nivel actual</div>}
-                    </div>
-                  ))}
-                </div>
-
-                <div className="mc-notice info">
-                  ℹ️ Para subir de nivel, completa las verificaciones y contacta a soporte.
-                </div>
-              </div>
-            )}
+            {/* ══ RUTAS HIJAS (Verificación / Reseñas / Nivel) ══ */}
+            {showChildRoute && <Outlet />}
 
           </main>
         </div>

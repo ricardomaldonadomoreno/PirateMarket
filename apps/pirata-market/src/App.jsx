@@ -24,6 +24,9 @@ import TraficantePublicarViaje from '../../traficante-app/src/pages/PublicarViaj
 import TraficanteDashboard from '../../traficante-app/src/pages/Dashboard'
 import TraficanteViajeDetalle from '../../traficante-app/src/pages/ViajeDetalle'
 import MiCuenta from '../../traficante-app/src/pages/MiCuenta'
+import MiCuentaVerificacion from '../../traficante-app/src/pages/MiCuentaVerificacion'
+import MiCuentaResenas from '../../traficante-app/src/pages/MiCuentaResenas'
+import MiCuentaNivel from '../../traficante-app/src/pages/MiCuentaNivel'
 import TraficanteSolicitud from '../../traficante-app/src/pages/Solicitud'
 
 // Admin — Pirata Market
@@ -109,7 +112,11 @@ function App() {
         <Route path="/traficante/publicar-viaje" element={<><TraficanteNavbar user={user} profile={profile} /><TraficantePublicarViaje user={user} /></>} />
         <Route path="/traficante/viaje/:id" element={<><TraficanteNavbar user={user} profile={profile} /><TraficanteViajeDetalle user={user} /></>} />
         <Route path="/traficante/solicitud/:id" element={<><TraficanteNavbar user={user} profile={profile} /><TraficanteSolicitud user={user} /></>} />
-        <Route path="/traficante/mi-cuenta" element={<><TraficanteNavbar user={user} profile={profile} /><MiCuenta user={user} onProfileUpdate={setProfile} /></>} />
+        <Route path="/traficante/mi-cuenta" element={<><TraficanteNavbar user={user} profile={profile} /><MiCuenta user={user} onProfileUpdate={setProfile} /></>}>
+          <Route path="verificacion" element={<MiCuentaVerificacion user={user} profile={profile} />} />
+          <Route path="resenas" element={<MiCuentaResenas user={user} />} />
+          <Route path="nivel" element={<MiCuentaNivel user={user} />} />
+        </Route>
         <Route path="/traficante/dashboard" element={<><TraficanteNavbar user={user} profile={profile} /><TraficanteDashboard user={user} /></>} />
 
         {/* ── ADMIN TRAFICANTE ── */}
