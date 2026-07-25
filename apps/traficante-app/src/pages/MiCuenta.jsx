@@ -377,69 +377,55 @@ export default function MiCuenta({ user, onProfileUpdate }) {
                 </div>
 
                 <div className="mc-notice info">
-                  ℹ️ Tu nombre para mostrar puede cambiarse cuando quieras. Sin embargo, tu <strong>nombre completo real</strong> y <strong>teléfono</strong> son datos fijos que solo el equipo de soporte puede modificar.
+                  Tu nombre para mostrar puede cambiarse cuando quieras. Sin embargo, tu <strong>nombre completo real</strong> y <strong>teléfono</strong> son datos fijos que solo el equipo de soporte puede modificar.
                 </div>
 
-                <div className="mc-field-group">
-                  <label className="mc-label">Foto de perfil</label>
-                  <p className="mc-hint">Compartida con tu cuenta de Pirata Market. Edítala desde "Mi Perfil".</p>
-                  <div className="mc-avatar-actions">
-                    <div className="mc-avatar-preview">
-                      {profile?.avatar_url
-                        ? <img src={profile.avatar_url} alt="avatar" />
-                        : <div className="mc-avatar-preview-placeholder">
-                            {(profile?.display_name || user.email)?.charAt(0).toUpperCase()}
-                          </div>
-                      }
-                    </div>
+                <div className="real-data-grid">
+                  <div className="form-group">
+                    <label>Nombre para mostrar</label>
+                    <p className="verif-hint">El nombre que verán los remitentes en tu perfil.</p>
+                    <input className="input" value={displayName}
+                      onChange={e => setDisplayName(e.target.value)}
+                      placeholder="Ej: Ricardo M." />
                   </div>
-                </div>
-
-                <div className="mc-field-group">
-                  <label className="mc-label">Nombre para mostrar</label>
-                  <p className="mc-hint">El nombre que verán los remitentes en tu perfil.</p>
-                  <input className="input" value={displayName}
-                    onChange={e => setDisplayName(e.target.value)}
-                    placeholder="Ej: Ricardo M." />
-                </div>
-
-                <div className="mc-field-group">
-                  <label className="mc-label">
-                    Nombre completo real
-                    {profile?.traficante_phone_locked && <span className="mc-locked-badge">🔒 Fijo</span>}
-                  </label>
-                  <p className="mc-hint">Debe coincidir exactamente con tu documento de identidad.</p>
-                  {profile?.traficante_phone_locked
-                    ? <div className="mc-locked-field">{profile.traficante_full_name || '—'}</div>
-                    : <input className="input" value={fullName}
-                        onChange={e => setFullName(e.target.value)}
-                        placeholder="Ej: Ricardo Maldonado Moreno" />
-                  }
-                </div>
-
-                <div className="mc-field-group">
-                  <label className="mc-label">
-                    Teléfono / WhatsApp
-                    {profile?.traficante_phone_locked && <span className="mc-locked-badge">🔒 Fijo</span>}
-                  </label>
-                  <p className="mc-hint">
+                  <div className="form-group">
+                    <label>Rutas frecuentes</label>
+                    <p className="verif-hint">Indica las rutas que haces regularmente.</p>
+                    <input className="input" value={frequentRoutes}
+                      onChange={e => setFrequentRoutes(e.target.value)}
+                      placeholder="Ej: SCZ → SP, SCZ → BsAs" />
+                  </div>
+                  <div className="form-group">
+                    <label>
+                      Nombre completo real
+                      {profile?.traficante_phone_locked && <span className="mc-locked-badge">Fijo</span>}
+                    </label>
+                    <p className="verif-hint">Debe coincidir exactamente con tu documento de identidad.</p>
                     {profile?.traficante_phone_locked
-                      ? 'Para cambiar este dato contacta a soporte.'
-                      : 'Una vez guardado, solo soporte puede modificarlo.'}
-                  </p>
-                  {profile?.traficante_phone_locked
-                    ? <div className="mc-locked-field">{profile.traficante_phone || '—'}</div>
-                    : <input className="input" value={phone}
-                        onChange={e => setPhone(e.target.value)}
-                        placeholder="Ej: +591 70000000" />
-                  }
-                </div>
-
-                {!profile?.traficante_phone_locked && (fullName || phone) && (
-                  <div className="mc-notice warning">
-                    ⚠️ Al fijar el nombre real y teléfono, solo soporte podrá modificarlos.
+                      ? <div className="mc-locked-field">{profile.traficante_full_name || '—'}</div>
+                      : <input className="input" value={fullName}
+                          onChange={e => setFullName(e.target.value)}
+                          placeholder="Ej: Ricardo Maldonado Moreno" />
+                    }
                   </div>
-                )}
+                  <div className="form-group">
+                    <label>
+                      Teléfono de contacto
+                      {profile?.traficante_phone_locked && <span className="mc-locked-badge">Fijo</span>}
+                    </label>
+                    <p className="verif-hint">
+                      {profile?.traficante_phone_locked
+                        ? 'Para cambiar este dato contacta a soporte.'
+                        : 'Una vez guardado, solo soporte puede modificarlo.'}
+                    </p>
+                    {profile?.traficante_phone_locked
+                      ? <div className="mc-locked-field">{profile.traficante_phone || '—'}</div>
+                      : <input className="input" value={phone}
+                          onChange={e => setPhone(e.target.value)}
+                          placeholder="Ej: +591 70000000" />
+                    }
+                  </div>
+                </div>
 
                 <div className="mc-field-group">
                   <label className="mc-label">Bio pública</label>
@@ -450,25 +436,17 @@ export default function MiCuenta({ user, onProfileUpdate }) {
                     rows={3} />
                 </div>
 
-                <div className="mc-field-group">
-                  <label className="mc-label">Rutas frecuentes</label>
-                  <p className="mc-hint">Indica las rutas que haces regularmente.</p>
-                  <input className="input" value={frequentRoutes}
-                    onChange={e => setFrequentRoutes(e.target.value)}
-                    placeholder="Ej: SCZ → SP, SCZ → BsAs" />
-                </div>
+                {error && <div className="mc-error">{error}</div>}
+                {saved === 'personal' && <div className="mc-success">Datos guardados correctamente</div>}
+                {saved === 'fixed' && <div className="mc-success">Nombre y teléfono guardados y fijados</div>}
 
-                {error && <div className="mc-error">⚠️ {error}</div>}
-                {saved === 'personal' && <div className="mc-success">✅ Datos guardados correctamente</div>}
-                {saved === 'fixed' && <div className="mc-success">✅ Nombre y teléfono guardados y fijados</div>}
-
-                <div className="mc-actions">
+                <div className="verif-footer">
                   <button className="btn btn-primary t-btn-primary" onClick={savePersonal} disabled={saving}>
-                    {saving ? <span className="loading" style={{ width: 16, height: 16 }} /> : '💾 Guardar cambios'}
+                    {saving ? <span className="loading" style={{ width: 16, height: 16 }} /> : 'Guardar cambios'}
                   </button>
                   {!profile?.traficante_phone_locked && (fullName || phone) && (
                     <button className="btn btn-outline t-btn-outline" onClick={saveFixed} disabled={saving}>
-                      🔒 Fijar nombre y teléfono
+                      Fijar nombre y teléfono
                     </button>
                   )}
                 </div>
@@ -484,7 +462,7 @@ export default function MiCuenta({ user, onProfileUpdate }) {
                 </div>
 
                 <div className="mc-notice warning">
-                  ⚠️ <strong>Lee antes de guardar:</strong> Una vez confirmada, tu dirección principal quedará fija y no podrá editarse. Debe coincidir exactamente con tu documento de identidad.
+                  <strong>Lee antes de guardar:</strong> Una vez confirmada, tu dirección principal quedará fija y no podrá editarse. Debe coincidir exactamente con tu documento de identidad.
                 </div>
 
                 {profile?.traficante_address_locked ? (
@@ -495,11 +473,11 @@ export default function MiCuenta({ user, onProfileUpdate }) {
                       <div className="mc-locked-address-text">{profile.traficante_address_text}</div>
                       {addressCoords && (
                         <div className="mc-locked-address-coords">
-                          📡 {addressCoords.lat.toFixed(5)}, {addressCoords.lng.toFixed(5)}
+                          {addressCoords.lat.toFixed(5)}, {addressCoords.lng.toFixed(5)}
                         </div>
                       )}
                     </div>
-                    <div className="mc-locked-badge-lg">🔒 Dirección fija</div>
+                    <div className="mc-locked-badge-lg">Dirección fija</div>
                   </div>
                 ) : (
                   <>
@@ -523,15 +501,15 @@ export default function MiCuenta({ user, onProfileUpdate }) {
                       <p className="mc-hint">Marca tu punto exacto en el mapa.</p>
                       <div className="mc-gps-row">
                         <button type="button" className="btn btn-secondary" onClick={getGPS}>
-                          📡 Usar mi ubicación actual
+                          Usar mi ubicación actual
                         </button>
                         <button type="button" className="btn btn-secondary"
                           onClick={() => setShowMap(!showMap)}>
-                          🗺️ {showMap ? 'Cerrar mapa' : 'Pinchar en mapa'}
+                          {showMap ? 'Cerrar mapa' : 'Pinchar en mapa'}
                         </button>
                         {addressCoords && (
                           <span className="mc-coords-badge">
-                            ✅ {addressCoords.lat.toFixed(5)}, {addressCoords.lng.toFixed(5)}
+                            {addressCoords.lat.toFixed(5)}, {addressCoords.lng.toFixed(5)}
                           </span>
                         )}
                       </div>
@@ -549,15 +527,15 @@ export default function MiCuenta({ user, onProfileUpdate }) {
                     </div>
 
                     <div className="mc-notice danger">
-                      🔒 Al guardar tu dirección quedará fija. Contacta a soporte para cualquier cambio posterior.
+                      Al guardar tu dirección quedará fija. Contacta a soporte para cualquier cambio posterior.
                     </div>
 
-                    {error && <div className="mc-error">⚠️ {error}</div>}
-                    {saved === 'address' && <div className="mc-success">✅ Dirección guardada y fijada correctamente</div>}
+                    {error && <div className="mc-error">{error}</div>}
+                    {saved === 'address' && <div className="mc-success">Dirección guardada y fijada correctamente</div>}
 
-                    <div className="mc-actions">
+                    <div className="verif-footer">
                       <button className="btn btn-primary t-btn-primary" onClick={saveAddress} disabled={saving}>
-                        {saving ? <span className="loading" style={{ width: 16, height: 16 }} /> : '🔒 Confirmar y fijar dirección'}
+                        {saving ? <span className="loading" style={{ width: 16, height: 16 }} /> : 'Confirmar y fijar dirección'}
                       </button>
                     </div>
                   </>
@@ -578,202 +556,172 @@ export default function MiCuenta({ user, onProfileUpdate }) {
                   <p>Completa los siguientes documentos para que nuestro equipo pueda verificar tu identidad. El proceso toma 24-48 horas.</p>
                   <div className="verif-types-info">
                     <div className="verif-type-card">
-                      <div className="verif-type-title">Documento de identidad</div>
-                      <div className="verif-type-desc">Carnet de identidad, cédula o pasaporte vigente. Foto frontal y dorsal. Obligatorio.</div>
+                      <div className="verif-type-icon">📄</div>
+                      <div>
+                        <strong>Documento de identidad</strong>
+                        <p>Carnet de identidad, cédula o pasaporte vigente. Foto frontal y dorsal. Obligatorio.</p>
+                      </div>
                     </div>
                     <div className="verif-type-card">
-                      <div className="verif-type-title">Comprobante de domicilio</div>
-                      <div className="verif-type-desc">Factura de agua, luz, teléfono, internet o cable con tu nombre y dirección. Obligatorio.</div>
+                      <div className="verif-type-icon">🏠</div>
+                      <div>
+                        <strong>Comprobante de domicilio</strong>
+                        <p>Factura de agua, luz, teléfono, internet o cable con tu nombre y dirección. Obligatorio.</p>
+                      </div>
                     </div>
                     <div className="verif-type-card">
-                      <div className="verif-type-title">Extracto bancario</div>
-                      <div className="verif-type-desc">Extracto reciente con tu nombre y dirección. Opcional.</div>
+                      <div className="verif-type-icon">🏦</div>
+                      <div>
+                        <strong>Extracto bancario</strong>
+                        <p>Extracto reciente con tu nombre y dirección. Opcional.</p>
+                      </div>
                     </div>
                     <div className="verif-type-card">
-                      <div className="verif-type-title">Foto personal</div>
-                      <div className="verif-type-desc">Foto clara de tu rostro para confirmar que eres la misma persona del documento.</div>
+                      <div className="verif-type-icon">📷</div>
+                      <div>
+                        <strong>Foto personal</strong>
+                        <p>Foto clara de tu rostro para confirmar que eres la misma persona del documento.</p>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="mc-verif-layers">
-                  {/* Identidad */}
-                  <div className="verif-layer">
-                    <div className="verif-layer-header">
-                      <span className="verif-layer-title">Documento de identidad</span>
-                      <span className={`verif-layer-badge ${profile?.traficante_identity_verified ? 'approved' : 'pending'}`}>
-                        {profile?.traficante_identity_verified ? 'Verificado' : 'Pendiente'}
-                      </span>
-                    </div>
-                    <div className="verif-layer-content">
-                      <p>Carnet de identidad, cédula o pasaporte vigente — foto frontal y dorsal.</p>
-                    </div>
+                {/* Status de verificación */}
+                {verifRequest?.status === 'pending' && (
+                  <div className="mc-notice warning">Tus documentos están siendo revisados. Te notificaremos cuando estén aprobados.</div>
+                )}
+                {verifRequest?.status === 'rejected' && (
+                  <div className="mc-notice danger">
+                    Tu solicitud fue rechazada.
+                    {verifRequest.admin_note && <><br />Motivo: <strong>{verifRequest.admin_note}</strong></>}
+                    <br />Puedes volver a enviar documentos corregidos.
                   </div>
+                )}
+                {verifRequest?.status === 'approved' && (
+                  <div className="mc-notice info">Documentos aprobados. Tu verificación está siendo procesada.</div>
+                )}
 
-                  {/* Domicilio */}
-                  <div className="verif-layer">
-                    <div className="verif-layer-header">
-                      <span className="verif-layer-title">Comprobante de domicilio</span>
-                      <span className={`verif-layer-badge ${profile?.traficante_address_verified ? 'approved' : 'pending'}`}>
-                        {profile?.traficante_address_verified ? 'Verificado' : 'Pendiente'}
-                      </span>
-                    </div>
-                    <div className="verif-layer-content">
-                      <p>Factura de agua, luz, teléfono, internet o cable con tu nombre y dirección.</p>
-                    </div>
+                {/* Foto personal */}
+                <div className="verif-layer">
+                  <div className="layer-header">
+                    <h3>Tu Foto Personal</h3>
+                    <span className="layer-status">Sube una foto clara de tu rostro</span>
                   </div>
-
-                  {/* Banco */}
-                  <div className="verif-layer">
-                    <div className="verif-layer-header">
-                      <span className="verif-layer-title">Extracto bancario</span>
-                      <span className="verif-layer-badge optional">Opcional</span>
-                      <span className={`verif-layer-badge ${profile?.traficante_bank_verified ? 'approved' : 'pending'}`}>
-                        {profile?.traficante_bank_verified ? 'Verificado' : 'Pendiente'}
-                      </span>
-                    </div>
-                    <div className="verif-layer-content">
-                      <p>Extracto reciente con tu nombre y dirección.</p>
-                    </div>
-                  </div>
-
-                  {/* WhatsApp */}
-                  <div className="verif-layer">
-                    <div className="verif-layer-header">
-                      <span className="verif-layer-title">Verificación de WhatsApp</span>
-                      <span className={`verif-layer-badge ${profile?.traficante_phone_locked ? 'approved' : 'pending'}`}>
-                        {profile?.traficante_phone_locked ? 'Fijado' : 'Pendiente'}
-                      </span>
-                    </div>
-                    <div className="verif-layer-content">
-                      <p>El teléfono se fija una vez durante el registro.</p>
-                    </div>
-                  </div>
+                  <p className="verif-hint">Se usará para verificar que eres la misma persona del documento. Las imágenes se comprimen automáticamente.</p>
+                  <input type="file" accept="image/*" id="selfie-input" style={{ display: 'none' }} onChange={handleSelfieChange} />
+                  {selfiePreview
+                    ? <div className="verif-preview-single">
+                        <img src={selfiePreview} alt="selfie" />
+                        <button className="verif-preview-remove" onClick={removeSelfie} type="button">X</button>
+                      </div>
+                    : <label htmlFor="selfie-input" className="btn btn-secondary">Seleccionar foto</label>
+                  }
                 </div>
 
-                <div className="mc-verif-upload">
-                  <h3>Enviar documentos</h3>
-
-                  {verifRequest?.status === 'pending' && (
-                    <div className="mc-notice warning">
-                      Tus documentos están siendo revisados. Te notificaremos cuando estén aprobados.
+                {/* Documento de identidad */}
+                <div className="verif-layer">
+                  <div className="layer-header">
+                    <h3>Documento de Identidad (CI/Pasaporte)</h3>
+                    <span className={`layer-status ${profile?.traficante_identity_verified ? 'approved' : ''}`}>
+                      {profile?.traficante_identity_verified ? 'Verificado' : 'Pendiente'}
+                    </span>
+                  </div>
+                  <p className="verif-hint">Sube fotos de tu documento: Anverso y Reverso. Las imágenes se comprimen automáticamente.</p>
+                  <input type="file" accept="image/*" multiple id="identity-input" style={{ display: 'none' }}
+                    onChange={e => setIdentityFiles(Array.from(e.target.files))} />
+                  <label htmlFor="identity-input" className="btn btn-secondary">
+                    Seleccionar documentos ({identityFiles.length} archivo{identityFiles.length !== 1 ? 's' : ''})
+                  </label>
+                  {identityFiles.length > 0 && (
+                    <div className="verif-preview-grid">
+                      {identityFiles.map((f, i) => (
+                        <div key={i} className="verif-preview-item">
+                          <img src={URL.createObjectURL(f)} alt={`id-${i}`} />
+                          <button className="verif-preview-remove" onClick={() => removeFile(setIdentityFiles, i)} type="button">X</button>
+                        </div>
+                      ))}
                     </div>
-                  )}
-
-                  {verifRequest?.status === 'rejected' && (
-                    <div className="mc-notice danger">
-                      Tu solicitud fue rechazada.
-                      {verifRequest.admin_note && <><br />Motivo: <strong>{verifRequest.admin_note}</strong></>}
-                      <br />Puedes volver a enviar documentos corregidos.
-                    </div>
-                  )}
-
-                  {verifRequest?.status === 'approved' && (
-                    <div className="mc-notice info">
-                      Documentos aprobados. Tu verificación está siendo procesada.
-                    </div>
-                  )}
-
-                  {verifRequest?.status !== 'pending' && (
-                    <>
-                      {/* Selfie */}
-                      <div className="mc-verif-field">
-                        <label className="mc-label">Foto personal</label>
-                        <p className="mc-hint">Sube una foto clara de tu rostro. Se usará para verificar que eres la misma persona del documento.</p>
-                        <input type="file" accept="image/*"
-                          id="selfie-input" style={{ display: 'none' }}
-                          onChange={handleSelfieChange} />
-                        {selfiePreview
-                          ? <div className="verif-preview-single">
-                              <img src={selfiePreview} alt="selfie" />
-                              <button className="verif-preview-remove" onClick={removeSelfie} type="button">X</button>
-                            </div>
-                          : <label htmlFor="selfie-input" className="btn btn-secondary">Seleccionar foto</label>
-                        }
-                      </div>
-
-                      {/* Documentos identidad */}
-                      <div className="mc-verif-field">
-                        <label className="mc-label">Documento de identidad *</label>
-                        <p className="mc-hint">Foto frontal y dorsal del CI, cédula o pasaporte vigente. Las imágenes se comprimen automáticamente.</p>
-                        <input type="file" accept="image/*,application/pdf" multiple
-                          id="identity-input" style={{ display: 'none' }}
-                          onChange={e => setIdentityFiles(Array.from(e.target.files))} />
-                        <label htmlFor="identity-input" className="btn btn-secondary">
-                          Seleccionar documentos ({identityFiles.length} archivo{identityFiles.length !== 1 ? 's' : ''})
-                        </label>
-                        {identityFiles.length > 0 && (
-                          <div className="mc-verif-preview">
-                            {identityFiles.map((f, i) => (
-                              <div key={i} className="mc-verif-preview-item">
-                                <img src={URL.createObjectURL(f)} alt={`id-${i}`} />
-                                <button className="mc-verif-preview-remove" onClick={() => removeFile(setIdentityFiles, i)} type="button">X</button>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Domicilio */}
-                      <div className="mc-verif-field">
-                        <label className="mc-label">Comprobante de domicilio *</label>
-                        <p className="mc-hint">Factura de agua, luz, teléfono, internet o cable. Las imágenes se comprimen automáticamente.</p>
-                        <input type="file" accept="image/*,application/pdf" multiple
-                          id="domicile-input" style={{ display: 'none' }}
-                          onChange={e => setDomicileFiles(Array.from(e.target.files))} />
-                        <label htmlFor="domicile-input" className="btn btn-secondary">
-                          Seleccionar documentos ({domicileFiles.length} archivo{domicileFiles.length !== 1 ? 's' : ''})
-                        </label>
-                        {domicileFiles.length > 0 && (
-                          <div className="mc-verif-preview">
-                            {domicileFiles.map((f, i) => (
-                              <div key={i} className="mc-verif-preview-item">
-                                <img src={URL.createObjectURL(f)} alt={`dom-${i}`} />
-                                <button className="mc-verif-preview-remove" onClick={() => removeFile(setDomicileFiles, i)} type="button">X</button>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Banco */}
-                      <div className="mc-verif-field">
-                        <label className="mc-label">Extracto bancario <span className="mc-optional-badge">Opcional</span></label>
-                        <p className="mc-hint">Extracto reciente con tu nombre y dirección. Las imágenes se comprimen automáticamente.</p>
-                        <input type="file" accept="image/*,application/pdf" multiple
-                          id="bank-input" style={{ display: 'none' }}
-                          onChange={e => setBankFiles(Array.from(e.target.files))} />
-                        <label htmlFor="bank-input" className="btn btn-secondary">
-                          Seleccionar documentos ({bankFiles.length} archivo{bankFiles.length !== 1 ? 's' : ''})
-                        </label>
-                        {bankFiles.length > 0 && (
-                          <div className="mc-verif-preview">
-                            {bankFiles.map((f, i) => (
-                              <div key={i} className="mc-verif-preview-item">
-                                <img src={URL.createObjectURL(f)} alt={`bank-${i}`} />
-                                <button className="mc-verif-preview-remove" onClick={() => removeFile(setBankFiles, i)} type="button">X</button>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      {comprError && <div className="mc-error">{comprError}</div>}
-                      {verifError && <div className="mc-error">{verifError}</div>}
-                      {verifSaved && <div className="mc-success">Documentos enviados — en revisión</div>}
-
-                      <div className="mc-actions">
-                        <button className="btn btn-primary t-btn-primary"
-                          onClick={handleSubmitVerification}
-                          disabled={uploadingDocs || identityFiles.length === 0 || domicileFiles.length === 0}>
-                          {uploadingDocs
-                            ? <><span className="loading" style={{ width: 16, height: 16 }} /> Enviando...</>
-                            : 'Enviar documentos'}
-                        </button>
-                      </div>
-                    </>
                   )}
                 </div>
+
+                {/* Comprobante de domicilio */}
+                <div className="verif-layer">
+                  <div className="layer-header">
+                    <h3>Comprobante de Domicilio</h3>
+                    <span className={`layer-status ${profile?.traficante_address_verified ? 'approved' : ''}`}>
+                      {profile?.traficante_address_verified ? 'Verificado' : 'Pendiente'}
+                    </span>
+                  </div>
+                  <p className="verif-hint">Factura de agua, luz, teléfono, internet o cable con tu nombre y dirección. Las imágenes se comprimen automáticamente.</p>
+                  <input type="file" accept="image/*" multiple id="domicile-input" style={{ display: 'none' }}
+                    onChange={e => setDomicileFiles(Array.from(e.target.files))} />
+                  <label htmlFor="domicile-input" className="btn btn-secondary">
+                    Seleccionar documentos ({domicileFiles.length} archivo{domicileFiles.length !== 1 ? 's' : ''})
+                  </label>
+                  {domicileFiles.length > 0 && (
+                    <div className="verif-preview-grid">
+                      {domicileFiles.map((f, i) => (
+                        <div key={i} className="verif-preview-item">
+                          <img src={URL.createObjectURL(f)} alt={`dom-${i}`} />
+                          <button className="verif-preview-remove" onClick={() => removeFile(setDomicileFiles, i)} type="button">X</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Extracto bancario */}
+                <div className="verif-layer">
+                  <div className="layer-header">
+                    <h3>Extracto Bancario <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem', fontWeight: 400 }}>(Opcional)</span></h3>
+                    <span className={`layer-status ${profile?.traficante_bank_verified ? 'approved' : ''}`}>
+                      {profile?.traficante_bank_verified ? 'Verificado' : 'Pendiente'}
+                    </span>
+                  </div>
+                  <p className="verif-hint">Extracto reciente con tu nombre y dirección. Las imágenes se comprimen automáticamente.</p>
+                  <input type="file" accept="image/*" multiple id="bank-input" style={{ display: 'none' }}
+                    onChange={e => setBankFiles(Array.from(e.target.files))} />
+                  <label htmlFor="bank-input" className="btn btn-secondary">
+                    Seleccionar documentos ({bankFiles.length} archivo{bankFiles.length !== 1 ? 's' : ''})
+                  </label>
+                  {bankFiles.length > 0 && (
+                    <div className="verif-preview-grid">
+                      {bankFiles.map((f, i) => (
+                        <div key={i} className="verif-preview-item">
+                          <img src={URL.createObjectURL(f)} alt={`bank-${i}`} />
+                          <button className="verif-preview-remove" onClick={() => removeFile(setBankFiles, i)} type="button">X</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Verificación de WhatsApp */}
+                <div className="verif-layer">
+                  <div className="layer-header">
+                    <h3>Verificación de WhatsApp</h3>
+                    <span className={`layer-status ${profile?.traficante_phone_locked ? 'approved' : ''}`}>
+                      {profile?.traficante_phone_locked ? 'Fijado' : 'Pendiente'}
+                    </span>
+                  </div>
+                  <p className="verif-hint">El teléfono se fija una vez durante el registro. Para modificarlo contacta a soporte.</p>
+                </div>
+
+                {comprError && <div className="mc-error">{comprError}</div>}
+                {verifError && <div className="mc-error">{verifError}</div>}
+                {verifSaved && <div className="mc-success">Documentos enviados — en revisión</div>}
+
+                {verifRequest?.status !== 'pending' && (
+                  <div className="verif-footer">
+                    <button className="btn btn-primary t-btn-primary"
+                      onClick={handleSubmitVerification}
+                      disabled={uploadingDocs || identityFiles.length === 0 || domicileFiles.length === 0}>
+                      {uploadingDocs
+                        ? <><span className="loading" style={{ width: 16, height: 16 }} /> Enviando...</>
+                        : 'Enviar documentos'}
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 
