@@ -64,6 +64,14 @@
   font-family: 'Inter', sans-serif;
 }
 
+/* Selects editables (listings, trips, roles) */
+.admin-type-select {
+  background: var(--dark); border: 1px solid var(--dark-border);
+  color: var(--text-light); border-radius: var(--radius-md);
+  padding: 0.3rem 0.5rem; font-size: 0.8rem; cursor: pointer;
+  font-family: 'Inter', sans-serif;
+}
+
 /* Premium */
 .admin-premium-cell { display: flex; flex-direction: column; gap: 0.2rem; }
 .premium-expiry { font-size: 0.7rem; color: var(--text-muted); margin-top: 0.2rem; }

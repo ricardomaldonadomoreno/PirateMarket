@@ -55,12 +55,12 @@ export default function AdminDashboard() {
   }
 
   const statCards = [
-    { icon: '👥', value: stats.total_users, label: 'Usuarios', color: 'gold' },
-    { icon: '📋', value: stats.total_listings, label: 'Anuncios totales', color: 'gold' },
-    { icon: '✅', value: stats.active_listings, label: 'Anuncios activos', color: 'success' },
-    { icon: '🏴‍☠️', value: stats.pirate_listings, label: 'Piratas activos', color: 'warning' },
-    { icon: '🚨', value: stats.pending_reports, label: 'Reportes pendientes', color: 'danger' },
-    { icon: '👁️', value: stats.total_views.toLocaleString(), label: 'Vistas totales', color: 'gold' },
+    { icon: 'Us', value: stats.total_users, label: 'Usuarios', color: 'gold' },
+    { icon: 'An', value: stats.total_listings, label: 'Anuncios totales', color: 'gold' },
+    { icon: 'Ac', value: stats.active_listings, label: 'Anuncios activos', color: 'success' },
+    { icon: 'Pi', value: stats.pirate_listings, label: 'Piratas activos', color: 'warning' },
+    { icon: 'Rp', value: stats.pending_reports, label: 'Reportes pendientes', color: 'danger' },
+    { icon: 'Vi', value: stats.total_views.toLocaleString(), label: 'Vistas totales', color: 'gold' },
   ]
 
   return (
@@ -89,7 +89,7 @@ export default function AdminDashboard() {
           {/* Anuncios recientes */}
           <div className="admin-card">
             <div className="admin-card-header">
-              <h2>📋 Anuncios recientes</h2>
+              <h2>Anuncios recientes</h2>
               <Link to="/admin/pirata/anuncios" className="admin-link">Ver todos →</Link>
             </div>
             <div className="admin-table">
@@ -97,10 +97,10 @@ export default function AdminDashboard() {
                 <div key={listing.id} className="admin-table-row">
                   <span className="admin-table-title">{listing.title}</span>
                   <span className={`admin-badge ${listing.is_ghost ? 'badge-pirate' : 'badge-verified'}`}>
-                    {listing.is_ghost ? '🏴‍☠️' : '✓'}
+                    {listing.is_ghost ? 'Pirata' : 'Reg'}
                   </span>
                   <span className={`admin-status status-${listing.status}`}>{listing.status}</span>
-                  <span className="admin-table-meta">👁️ {listing.views_count}</span>
+                  <span className="admin-table-meta">{listing.views_count} vistas</span>
                 </div>
               ))}
             </div>

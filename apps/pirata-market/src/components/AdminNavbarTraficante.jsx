@@ -12,11 +12,11 @@ export default function AdminNavbarTraficante() {
   }
 
   const links = [
-    { path: '/admin/traficante', icon: '📊', label: 'Dashboard' },
-    { path: '/admin/traficante/viajes', icon: '🚛', label: 'Viajes' },
-    { path: '/admin/traficante/verificaciones', icon: '✅', label: 'Verificaciones' },
-    { path: '/admin/traficante/destacados', icon: '⭐', label: 'Destacados' },
-    { path: '/admin/sub-admins', icon: '🔐', label: 'Sub-Admins' },
+    { path: '/admin/traficante', icon: 'DB', label: 'Dashboard' },
+    { path: '/admin/traficante/viajes', icon: 'Vi', label: 'Viajes' },
+    { path: '/admin/traficante/verificaciones', icon: 'Vr', label: 'Verificaciones' },
+    { path: '/admin/traficante/destacados', icon: 'Ds', label: 'Destacados' },
+    { path: '/admin/sub-admins', icon: 'SA', label: 'Sub-Admins' },
   ]
 
   return (
@@ -43,10 +43,10 @@ export default function AdminNavbarTraficante() {
 
       <div className="admin-navbar-actions">
         <Link to="/admin" className="admin-nav-link">
-          🔄 Cambiar app
+          Cambiar app
         </Link>
         <Link to="/traficante" className="admin-nav-link" target="_blank">
-          🌐 Ver traficante
+          Ver traficante
         </Link>
         <button onClick={handleLogout} className="btn btn-ghost admin-logout">
           Salir

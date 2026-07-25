@@ -38,7 +38,6 @@ export default function TraficanteAdminVerificaciones() {
       status: 'approved', reviewed_at: now
     }).eq('id', requestId)
 
-    // Calcular nivel basado en documentos subidos
     const req = requests.find(r => r.id === requestId)
     let level = 'basico'
     if (req?.identity_docs?.length > 0) level = 'medio'
@@ -62,7 +61,7 @@ export default function TraficanteAdminVerificaciones() {
   }
 
   const handleRevoke = async (userId) => {
-    if (!confirm('¿Revocar verificación del traficante?')) return
+    if (!confirm('Revocar verificacion del traficante?')) return
     await supabase.from('traficante_profiles').update({ is_verified: false }).eq('id', userId)
     await supabase.from('users').update({ is_verified: false }).eq('id', userId)
     loadRequests()
@@ -86,6 +85,12 @@ export default function TraficanteAdminVerificaciones() {
     return () => window.removeEventListener('keydown', fn)
   }, [lightbox])
 
+  const statusLabels = {
+    pending: 'Pendiente',
+    approved: 'Aprobado',
+    rejected: 'Rechazado'
+  }
+
   return (
     <div className="admin-page">
       <AdminNavbarTraficante />
@@ -97,9 +102,9 @@ export default function TraficanteAdminVerificaciones() {
 
         <div className="admin-filters-bar">
           <div className="admin-filter-btns">
-            {['all', 'pending', 'approved', 'rejected'].map(s => (
-              <button key={s} className={`filter-btn ${filterStatus === s ? 'active' : ''}`} onClick={() => setFilterStatus(s)}>
-                {s === 'all' ? 'Todos' : s === 'pending' ? '⏳ Pendientes' : s === 'approved' ? '✓ Aprobados' : '✗ Rechazados'}
+            {[['all', 'Todos'], ['pending', 'Pendientes'], ['approved', 'Aprobados'], ['rejected', 'Rechazados']].map(([val, label]) => (
+              <button key={val} className={`filter-btn ${filterStatus === val ? 'active' : ''}`} onClick={() => setFilterStatus(val)}>
+                {label}
               </button>
             ))}
           </div>
@@ -110,7 +115,7 @@ export default function TraficanteAdminVerificaciones() {
             <div className="admin-loading">Cargando verificaciones...</div>
           ) : requests.length === 0 ? (
             <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-              No hay solicitudes de verificación.
+              No hay solicitudes de verificacion.
             </div>
           ) : (
             <div className="admin-listings-table">
@@ -126,8 +131,8 @@ export default function TraficanteAdminVerificaciones() {
                   <div className="admin-listing-info">
                     <div className="admin-listing-thumb">
                       {req.user?.is_verified
-                        ? <span style={{ color: '#22c55e', fontSize: '1.5rem' }}>✓</span>
-                        : <span style={{ fontSize: '1.5rem' }}>📄</span>
+                        ? <span style={{ color: '#22c55e', fontSize: '0.85rem', fontWeight: 700 }}>Verif</span>
+                        : <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)' }}>Docs</span>
                       }
                     </div>
                     <div>
@@ -144,16 +149,15 @@ export default function TraficanteAdminVerificaciones() {
                       req.status === 'approved' ? 'badge-verified' :
                       req.status === 'rejected' ? 'badge-rejected' : 'badge-pending'
                     }`}>
-                      {req.status === 'pending' ? '⏳ Pendiente' :
-                       req.status === 'approved' ? '✓ Aprobado' : '✗ Rechazado'}
+                      {statusLabels[req.status] || req.status}
                     </span>
                   </div>
 
                   <div style={{ fontSize: '0.8rem' }}>
-                    {req.identity_docs?.length > 0 && <span style={{ marginRight: '0.5rem' }}>🪪 {req.identity_docs.length}</span>}
-                    {req.domicile_docs?.length > 0 && <span style={{ marginRight: '0.5rem' }}>🏠 {req.domicile_docs.length}</span>}
-                    {req.bank_docs?.length > 0 && <span style={{ marginRight: '0.5rem' }}>🏦 {req.bank_docs.length}</span>}
-                    {req.selfie_url && <span>📷 ✓</span>}
+                    {req.identity_docs?.length > 0 && <span style={{ marginRight: '0.5rem' }}>Identidad: {req.identity_docs.length}</span>}
+                    {req.domicile_docs?.length > 0 && <span style={{ marginRight: '0.5rem' }}>Domicilio: {req.domicile_docs.length}</span>}
+                    {req.bank_docs?.length > 0 && <span style={{ marginRight: '0.5rem' }}>Banco: {req.bank_docs.length}</span>}
+                    {req.selfie_url && <span>Selfie: Si</span>}
                   </div>
 
                   <div className="admin-cell-muted">{fmt(req.created_at)}</div>
@@ -162,10 +166,10 @@ export default function TraficanteAdminVerificaciones() {
                     {req.status === 'pending' && (
                       <>
                         <button className="btn-small btn-success" onClick={() => handleApprove(req.id, req.user_id)}>
-                          ✓ Aprobar
+                          Aprobar
                         </button>
                         <button className="btn-small btn-danger" onClick={() => handleReject(req.id, req.user_id)}>
-                          ✗ Rechazar
+                          Rechazar
                         </button>
                       </>
                     )}
@@ -174,20 +178,19 @@ export default function TraficanteAdminVerificaciones() {
                         Revocar
                       </button>
                     )}
-                    {/* Lightbox para documentos */}
                     {req.identity_docs?.length > 0 && (
                       <button className="btn-small btn-docs" onClick={() => openLightbox(req.identity_docs, 0)}>
-                        🪪 Ver
+                        Ver identidad
                       </button>
                     )}
                     {req.domicile_docs?.length > 0 && (
                       <button className="btn-small btn-docs" onClick={() => openLightbox(req.domicile_docs, 0)}>
-                        🏠 Ver
+                        Ver domicilio
                       </button>
                     )}
                     {req.bank_docs?.length > 0 && (
                       <button className="btn-small btn-docs" onClick={() => openLightbox(req.bank_docs, 0)}>
-                        🏦 Ver
+                        Ver banco
                       </button>
                     )}
                   </div>
@@ -213,7 +216,7 @@ export default function TraficanteAdminVerificaciones() {
           <button className="lightbox-nav-btn lightbox-next"
             onClick={e => { e.stopPropagation(); lbNext() }}
             disabled={lightbox.index === lightbox.images.length - 1}>›</button>
-          <button onClick={closeLightbox} style={{ position: 'fixed', top: '1rem', right: '1rem', width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', cursor: 'pointer', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+          <button onClick={closeLightbox} style={{ position: 'fixed', top: '1rem', right: '1rem', width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', cursor: 'pointer', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>X</button>
         </div>
       )}
     </div>

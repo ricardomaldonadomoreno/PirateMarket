@@ -32,7 +32,7 @@ export default function TraficanteAdminViajes() {
   }
 
   const handleDeleteTrip = async (id) => {
-    if (!confirm('¿Eliminar este viaje?')) return
+    if (!confirm('Eliminar este viaje?')) return
     await supabase.from('traficante_trips').delete().eq('id', id)
     loadTrips()
   }
@@ -85,7 +85,7 @@ export default function TraficanteAdminViajes() {
                 <div key={trip.id} className="admin-listing-row">
                   <div className="admin-listing-info">
                     <div className="admin-listing-thumb">
-                      <span>{trip.type === 'viajero' ? '🧳' : '📦'}</span>
+                      <span>{trip.type === 'viajero' ? 'Viajero' : 'Compactador'}</span>
                     </div>
                     <div>
                       <div className="admin-listing-title">{trip.type === 'viajero' ? 'Viajero' : 'Compactador'}</div>
@@ -97,7 +97,7 @@ export default function TraficanteAdminViajes() {
 
                   <div className="admin-cell-muted">
                     {trip.user?.display_name || '—'}
-                    {trip.user?.is_verified && <span style={{ marginLeft: '0.3rem', fontSize: '0.7rem' }}>✓</span>}
+                    {trip.user?.is_verified && <span style={{ marginLeft: '0.3rem', fontSize: '0.7rem', color: 'var(--success)' }}>(Verificado)</span>}
                   </div>
 
                   <div>{trip.type}</div>
@@ -124,7 +124,7 @@ export default function TraficanteAdminViajes() {
 
                   <div className="admin-user-actions">
                     <button className="btn-small btn-danger" onClick={() => handleDeleteTrip(trip.id)}>
-                      🗑️
+                      Eliminar
                     </button>
                   </div>
                 </div>

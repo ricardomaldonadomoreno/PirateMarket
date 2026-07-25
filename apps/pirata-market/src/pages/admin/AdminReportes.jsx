@@ -38,17 +38,24 @@ export default function AdminReportes() {
   }
 
   const handleDeleteListing = async (listingId, reportId) => {
-    if (!confirm('¿Eliminar el anuncio reportado?')) return
+    if (!confirm('Eliminar el anuncio reportado?')) return
     await supabase.from('listings').delete().eq('id', listingId)
     await supabase.from('reports').update({ status: 'action_taken' }).eq('id', reportId)
     loadReports()
   }
 
   const reasonLabels = {
-    spam: '📢 Spam',
-    illegal: '🚫 Ilegal',
-    scam: '💸 Estafa',
-    inappropriate: '⚠️ Inapropiado'
+    spam: 'Spam',
+    illegal: 'Ilegal',
+    scam: 'Estafa',
+    inappropriate: 'Inapropiado'
+  }
+
+  const statusLabels = {
+    pending: 'Pendiente',
+    reviewed: 'Revisado',
+    action_taken: 'Accion tomada',
+    dismissed: 'Descartado'
   }
 
   return (
@@ -62,9 +69,9 @@ export default function AdminReportes() {
 
         <div className="admin-filters-bar">
           <div className="admin-filter-btns">
-            {['all', 'pending', 'reviewed', 'action_taken', 'dismissed'].map(s => (
-              <button key={s} className={`filter-btn ${filter === s ? 'active' : ''}`} onClick={() => setFilter(s)}>
-                {s === 'all' ? 'Todos' : s === 'pending' ? '🔴 Pendientes' : s === 'reviewed' ? '🟡 Revisados' : s === 'action_taken' ? '🟢 Acción tomada' : '⚫ Descartados'}
+            {[['all', 'Todos'], ['pending', 'Pendientes'], ['reviewed', 'Revisados'], ['action_taken', 'Accion tomada'], ['dismissed', 'Descartados']].map(([val, label]) => (
+              <button key={val} className={`filter-btn ${filter === val ? 'active' : ''}`} onClick={() => setFilter(val)}>
+                {label}
               </button>
             ))}
           </div>
@@ -74,12 +81,12 @@ export default function AdminReportes() {
           {loading ? (
             <div className="admin-card admin-loading">Cargando reportes...</div>
           ) : reports.length === 0 ? (
-            <div className="admin-card admin-loading">No hay reportes {filter !== 'all' ? `con estado "${filter}"` : ''}</div>
+            <div className="admin-card admin-loading">No hay reportes {filter !== 'all' ? `con estado "${statusLabels[filter]}"` : ''}</div>
           ) : reports.map(report => (
             <div key={report.id} className="admin-report-card">
               <div className="admin-report-header">
                 <span className="admin-report-reason">{reasonLabels[report.reason] || report.reason}</span>
-                <span className={`admin-status status-${report.status}`}>{report.status}</span>
+                <span className={`admin-status status-${report.status}`}>{statusLabels[report.status] || report.status}</span>
                 <span className="admin-cell-muted">{new Date(report.created_at).toLocaleDateString()}</span>
               </div>
 
@@ -88,7 +95,7 @@ export default function AdminReportes() {
                   <strong>Anuncio:</strong>{' '}
                   {report.listing ? (
                     <Link to={`/ficha/${report.listing.slug}`} target="_blank" className="admin-link">
-                      {report.listing.title} {report.listing.is_ghost ? '🏴‍☠️' : ''}
+                      {report.listing.title} {report.listing.is_ghost ? '(Pirata)' : ''}
                     </Link>
                   ) : '(eliminado)'}
                 </div>
@@ -105,14 +112,14 @@ export default function AdminReportes() {
               {report.status === 'pending' && (
                 <div className="admin-report-actions">
                   <button className="btn-small btn-success" onClick={() => handleAction(report.id, 'reviewed')}>
-                    ✓ Marcar revisado
+                    Marcar revisado
                   </button>
                   <button className="btn-small btn-danger" onClick={() => handleAction(report.id, 'dismissed')}>
                     Descartar
                   </button>
                   {report.listing && (
                     <button className="btn-small btn-danger" onClick={() => handleDeleteListing(report.listing.id, report.id)}>
-                      🗑️ Eliminar anuncio
+                      Eliminar anuncio
                     </button>
                   )}
                 </div>
