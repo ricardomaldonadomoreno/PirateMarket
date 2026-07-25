@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet'
 import { supabase } from '../../../pirata-market/src/lib/supabase'
@@ -22,7 +22,7 @@ const SECTIONS = [
 ]
 
 const LEVEL_INFO = {
-  basico: { label: 'Básico', color: '#888888', icon: '⚪', next: 'medio' },
+  basico: { label: 'Básico', color: 'var(--text-muted)', icon: '⚪', next: 'medio' },
   medio:  { label: 'Medio',  color: '#2980B9', icon: '🔵', next: 'pro' },
   pro:    { label: 'PRO',    color: '#8E44AD', icon: '🟣', next: 'elite' },
   elite:  { label: 'Elite',  color: '#784212', icon: '🟤', next: null },
@@ -44,13 +44,11 @@ function MapPicker({ onSelect }) {
 
 export default function MiCuenta({ user, onProfileUpdate }) {
   const navigate = useNavigate()
-  const fileInputRef = useRef(null)
   const [activeSection, setActiveSection] = useState('personal')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState('')
   const [error, setError] = useState('')
-  const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [showMap, setShowMap] = useState(false)
   const [reviews, setReviews] = useState([])
 
@@ -135,40 +133,7 @@ export default function MiCuenta({ user, onProfileUpdate }) {
     if (data) setVerifRequest(data)
   }
 
-  // ── AVATAR ──
-  const handleAvatarUpload = async (e) => {
-    const file = e.target.files[0]
-    if (!file) return
-    setUploadingAvatar(true)
-    try {
-      const fileExt = file.name.split('.').pop()
-      const newFilePath = `${user.id}.${fileExt}`
-      if (profile?.avatar_url) {
-        const oldPath = profile.avatar_url.split('/avatars/')[1]?.split('?')[0]
-        if (oldPath) await supabase.storage.from('avatars').remove([oldPath])
-      }
-      const { error: uploadError } = await supabase.storage
-        .from('avatars').upload(newFilePath, file, { upsert: true, contentType: file.type })
-      if (uploadError) throw uploadError
-      const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(newFilePath)
-      const urlWithCache = `${publicUrl}?t=${Date.now()}`
-      await supabase.from('users').update({ avatar_url: urlWithCache }).eq('id', user.id)
-      setProfile(prev => ({ ...prev, avatar_url: urlWithCache }))
-      if (onProfileUpdate) onProfileUpdate(prev => ({ ...prev, avatar_url: urlWithCache }))
-    } catch (err) {
-      setError('Error al subir la imagen')
-    }
-    setUploadingAvatar(false)
-  }
-
-  const handleDeleteAvatar = async () => {
-    if (!profile?.avatar_url) return
-    const oldPath = profile.avatar_url.split('/avatars/')[1]?.split('?')[0]
-    if (oldPath) await supabase.storage.from('avatars').remove([oldPath])
-    await supabase.from('users').update({ avatar_url: null }).eq('id', user.id)
-    setProfile(prev => ({ ...prev, avatar_url: null }))
-    if (onProfileUpdate) onProfileUpdate(prev => ({ ...prev, avatar_url: null }))
-  }
+  // Avatar: solo lectura. Se gestiona en MiPerfil.
 
   // ── GUARDAR PERSONAL ──
   const savePersonal = async () => {
@@ -310,11 +275,6 @@ export default function MiCuenta({ user, onProfileUpdate }) {
                       {(profile?.display_name || user.email)?.charAt(0).toUpperCase()}
                     </div>
                 }
-                <button className="mc-avatar-edit" onClick={() => fileInputRef.current?.click()}>
-                  {uploadingAvatar ? <span className="loading" style={{ width: 14, height: 14 }} /> : '📷'}
-                </button>
-                <input ref={fileInputRef} type="file" accept="image/*"
-                  style={{ display: 'none' }} onChange={handleAvatarUpload} />
               </div>
               <div className="mc-sidebar-name">{profile?.display_name || user.email}</div>
               <div className="mc-sidebar-email">{user.email}</div>
@@ -355,7 +315,7 @@ export default function MiCuenta({ user, onProfileUpdate }) {
 
                 <div className="mc-field-group">
                   <label className="mc-label">Foto de perfil</label>
-                  <p className="mc-hint">Compartida con tu cuenta de Pirata Market.</p>
+                  <p className="mc-hint">Compartida con tu cuenta de Pirata Market. Edítala desde "Mi Perfil".</p>
                   <div className="mc-avatar-actions">
                     <div className="mc-avatar-preview">
                       {profile?.avatar_url
@@ -364,16 +324,6 @@ export default function MiCuenta({ user, onProfileUpdate }) {
                             {(profile?.display_name || user.email)?.charAt(0).toUpperCase()}
                           </div>
                       }
-                    </div>
-                    <div className="mc-avatar-btns">
-                      <button className="btn btn-secondary" onClick={() => fileInputRef.current?.click()}>
-                        {uploadingAvatar ? <span className="loading" style={{ width: 16, height: 16 }} /> : '📷 Cambiar foto'}
-                      </button>
-                      {profile?.avatar_url && (
-                        <button className="btn btn-ghost mc-danger-btn" onClick={handleDeleteAvatar}>
-                          🗑️ Eliminar
-                        </button>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -598,10 +548,10 @@ export default function MiCuenta({ user, onProfileUpdate }) {
                     <div className="mc-verif-icon">📱</div>
                     <div className="mc-verif-info">
                       <div className="mc-verif-label">Verificación de WhatsApp</div>
-                      <div className="mc-verif-desc">Confirma que el número registrado es tuyo y está activo.</div>
+                      <div className="mc-verif-desc">El teléfono se fija una vez durante el registro.</div>
                     </div>
                     <div className={`mc-verif-status ${profile?.traficante_phone_locked ? 'verified' : 'pending'}`}>
-                      {profile?.traficante_phone_locked ? '✅ Verificado' : '⏳ Pendiente'}
+                      {profile?.traficante_phone_locked ? '✅ Fijado' : '⏳ Pendiente'}
                     </div>
                   </div>
                 </div>
@@ -763,12 +713,12 @@ export default function MiCuenta({ user, onProfileUpdate }) {
                 </div>
 
                 <div className="mc-level-current">
-                  <div className="mc-level-icon" style={{ color: LEVEL_INFO['basico'].color }}>
-                    {LEVEL_INFO['basico'].icon}
+                  <div className="mc-level-icon" style={{ color: LEVEL_INFO[currentLevel]?.color || LEVEL_INFO.basico.color }}>
+                    {LEVEL_INFO[currentLevel]?.icon || LEVEL_INFO.basico.icon}
                   </div>
                   <div>
-                    <div className="mc-level-label" style={{ color: LEVEL_INFO['basico'].color }}>
-                      Nivel {LEVEL_INFO['basico'].label}
+                    <div className="mc-level-label" style={{ color: LEVEL_INFO[currentLevel]?.color || LEVEL_INFO.basico.color }}>
+                      Nivel {LEVEL_INFO[currentLevel]?.label || LEVEL_INFO.basico.label}
                     </div>
                     <div className="mc-level-desc">Tu nivel es asignado por el equipo según tus verificaciones completadas.</div>
                   </div>
@@ -776,7 +726,7 @@ export default function MiCuenta({ user, onProfileUpdate }) {
 
                 <div className="mc-levels-progress">
                   {Object.entries(LEVEL_INFO).map(([key, info]) => (
-                    <div key={key} className={`mc-level-row ${key === 'basico' ? 'current' : ''}`}>
+                    <div key={key} className={`mc-level-row ${key === currentLevel ? 'current' : ''}`}>
                       <div className="mc-level-row-icon" style={{ color: info.color }}>{info.icon}</div>
                       <div className="mc-level-row-info">
                         <div className="mc-level-row-label" style={{ color: info.color }}>{info.label}</div>
@@ -786,7 +736,7 @@ export default function MiCuenta({ user, onProfileUpdate }) {
                           ))}
                         </div>
                       </div>
-                      {key === 'basico' && <div className="mc-level-current-badge">← Tu nivel actual</div>}
+                      {key === currentLevel && <div className="mc-level-current-badge">← Tu nivel actual</div>}
                     </div>
                   ))}
                 </div>

@@ -7,6 +7,13 @@ import './Dashboard.css'
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024 // 2MB
 
+const COUNTRIES = [
+  'Argentina', 'Bolivia', 'Brasil', 'Canadá', 'Chile', 'Colombia', 'Costa Rica',
+  'Cuba', 'República Dominicana', 'Ecuador', 'El Salvador', 'Guatemala',
+  'Honduras', 'Jamaica', 'México', 'Nicaragua', 'Panamá', 'Paraguay', 'Perú',
+  'Puerto Rico', 'Trinidad y Tobago', 'Estados Unidos', 'Uruguay', 'Venezuela'
+]
+
 const SECTIONS = [
   { key: 'anuncios',     icon: '📋', label: 'Mis anuncios' },
   { key: 'verificacion', icon: '🏅', label: 'Verificación' },
@@ -46,10 +53,7 @@ export default function Dashboard({ user, onProfileUpdate }) {
   const [verifSaved, setVerifSaved] = useState(false)
   const [fileError, setFileError] = useState('')
 
-  // Avatar (Identidad 1)
-  const avatarInputRef = useRef(null)
-  const [uploadingAvatar, setUploadingAvatar] = useState(false)
-  const [avatarError, setAvatarError] = useState('')
+  // Avatar (solo lectura — se gestiona en MiPerfil o por admin vía verificación)
 
   // Datos Reales (Capa 1)
   const [realData, setRealData] = useState({
@@ -58,6 +62,7 @@ export default function Dashboard({ user, onProfileUpdate }) {
     city: '',
     phone: ''
   })
+  const [city, setCity] = useState('')
 
   useEffect(() => {
     if (!user) { navigate('/auth'); return }
@@ -85,6 +90,7 @@ export default function Dashboard({ user, onProfileUpdate }) {
           city: data.city || '',
           phone: data.phone || ''
         })
+        setCity(data.city || '')
         setShopForm({
           shop_name: data.shop_name || '',
           shop_bio: data.shop_bio || '',
@@ -130,61 +136,8 @@ export default function Dashboard({ user, onProfileUpdate }) {
     if (data) setVerificationRequest(data)
   }
 
-  // ── AVATAR (Identidad 1: editable siempre) ──
-  // Mismo patrón que MiPerfil.jsx: un solo archivo por usuario (${user.id}.${ext}),
-  // upsert, y cache-busting con ?t=, para que ambas pantallas lean siempre el
-  // mismo objeto de Storage y se vean sincronizadas entre sí.
-  const handleAvatarSelect = async (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setAvatarError('')
-
-    if (file.size > MAX_FILE_SIZE) {
-      setAvatarError('La imagen supera el límite de 2MB')
-      e.target.value = ''
-      return
-    }
-    if (!file.type.startsWith('image/')) {
-      setAvatarError('El archivo debe ser una imagen')
-      e.target.value = ''
-      return
-    }
-
-    setUploadingAvatar(true)
-    try {
-      const fileExt = file.name.split('.').pop()
-      const newFilePath = `${user.id}.${fileExt}`
-
-      if (profile?.avatar_url) {
-        const oldPath = profile.avatar_url.split('/avatars/')[1]?.split('?')[0]
-        if (oldPath) await supabase.storage.from('avatars').remove([oldPath])
-      }
-
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(newFilePath, file, { upsert: true, contentType: file.type })
-      if (uploadError) throw uploadError
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(newFilePath)
-      const urlWithCache = `${publicUrl}?t=${Date.now()}`
-
-      const { error: updateError } = await supabase
-        .from('users')
-        .update({ avatar_url: urlWithCache })
-        .eq('id', user.id)
-      if (updateError) throw updateError
-
-      setProfile(prev => ({ ...prev, avatar_url: urlWithCache }))
-      if (onProfileUpdate) onProfileUpdate(prev => ({ ...prev, avatar_url: urlWithCache }))
-    } catch (error) {
-      setAvatarError('Error al subir la imagen: ' + error.message)
-    } finally {
-      setUploadingAvatar(false)
-      e.target.value = ''
-    }
-  }
+  // Avatar: solo lectura aquí. El usuario lo edita en MiPerfil.
+  // El admin lo actualiza al aprobar la verificación de identidad.
 
   // ── CAMBIO DE TIPO DE CUENTA ──
   // Nota: is_verified es un campo manual que solo el admin aprueba desde el
@@ -406,30 +359,11 @@ export default function Dashboard({ user, onProfileUpdate }) {
           <aside className="db-sidebar">
             <div className="db-sidebar-profile">
               <div className="db-avatar">
-                <input
-                  type="file"
-                  accept="image/*"
-                  ref={avatarInputRef}
-                  style={{ display: 'none' }}
-                  onChange={handleAvatarSelect}
-                />
-                <button
-                  type="button"
-                  className="db-avatar-trigger"
-                  onClick={() => avatarInputRef.current?.click()}
-                  disabled={uploadingAvatar}
-                  title="Cambiar foto de perfil"
-                >
-                  {avatarUrl
-                    ? <img src={avatarUrl} alt={displayName} />
-                    : <div className="db-avatar-placeholder">{displayName?.charAt(0).toUpperCase()}</div>
-                  }
-                  <span className="db-avatar-edit-overlay">
-                    {uploadingAvatar ? '...' : 'Editar'}
-                  </span>
-                </button>
+                {avatarUrl
+                  ? <img src={avatarUrl} alt={displayName} />
+                  : <div className="db-avatar-placeholder">{displayName?.charAt(0).toUpperCase()}</div>
+                }
               </div>
-              {avatarError && <p className="error-msg" style={{ fontSize: '12px', marginTop: '4px' }}>{avatarError}</p>}
               <div className="db-sidebar-name">{displayName}</div>
               <span className={`user-type-badge user-type-${userType}`}>
                 {userTypeIcon} {t(`auth.${userType}`)}
@@ -548,8 +482,11 @@ export default function Dashboard({ user, onProfileUpdate }) {
                         </div>
                         <div className="form-group">
                           <label>País</label>
-                          <input type="text" className="input" value={realData.country} disabled={identityLocked}
-                            onChange={e => setRealData(p => ({ ...p, country: e.target.value }))} placeholder="Ej: Bolivia" />
+                          <select className="input" value={realData.country} disabled={identityLocked}
+                            onChange={e => setRealData(p => ({ ...p, country: e.target.value }))}>
+                            <option value="">Selecciona tu país</option>
+                            {COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
+                          </select>
                         </div>
                         <div className="form-group">
                           <label>Ciudad</label>
@@ -647,8 +584,8 @@ export default function Dashboard({ user, onProfileUpdate }) {
                       <strong>Nota del administrador:</strong> {verificationRequest.admin_note}
                     </div>
                   )}
-                  <button className="btn btn-primary btn-full" onClick={handleSubmitVerification} disabled={uploadingDocs || (!identityFiles.length && !businessFiles.length)}>
-                    {uploadingDocs ? 'Enviando...' : 'Enviar Solicitud de Verificación'}
+                  <button className="btn btn-primary btn-full" onClick={handleSubmitVerification} disabled={identityLocked || uploadingDocs || (!identityFiles.length && !businessFiles.length)}>
+                    {uploadingDocs ? 'Enviando...' : identityLocked ? 'Tu identidad está bloqueada por el administrador' : 'Enviar Solicitud de Verificación'}
                   </button>
                   {verifSaved && <p className="success-msg">✓ Solicitud enviada con éxito</p>}
                 </div>

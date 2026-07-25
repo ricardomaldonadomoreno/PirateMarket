@@ -4,14 +4,14 @@ import { supabase } from '../lib/supabase'
 import './MiPerfil.css'
 
 const USER_TYPE_LABELS = {
-  person:    { label: 'Persona',    icon: '👤', color: '#888888' },
-  shop:      { label: 'Tienda',     icon: '🏪', color: '#FFB703' },
+  person:    { label: 'Persona',    icon: '👤', color: 'var(--text-muted)' },
+  shop:      { label: 'Tienda',     icon: '🏪', color: 'var(--gold)' },
   wholesale: { label: 'Mayorista',  icon: '📦', color: '#2980B9' },
-  admin:     { label: 'Admin',      icon: '🔐', color: '#E63946' },
+  admin:     { label: 'Admin',      icon: '🔐', color: 'var(--danger)' },
 }
 
 const TRAFICANTE_LEVEL_LABELS = {
-  basico: { label: 'Básico', icon: '⚪', color: '#888888' },
+  basico: { label: 'Básico', icon: '⚪', color: 'var(--text-muted)' },
   medio:  { label: 'Medio',  icon: '🔵', color: '#2980B9' },
   pro:    { label: 'PRO',    icon: '🟣', color: '#8E44AD' },
   elite:  { label: 'Elite',  icon: '🟤', color: '#784212' },
@@ -259,7 +259,7 @@ export default function MiPerfil({ user, onProfileUpdate }) {
               {/* WhatsApp */}
               <div className="mp-field">
                 <label className="mp-label">WhatsApp</label>
-                <p className="mp-hint">Número registrado al crear tu cuenta. Para cambiarlo contacta a soporte.</p>
+                <p className="mp-hint">Número registrado al crear tu cuenta. Es visible públicamente en tus publicaciones.</p>
                 <div className="mp-readonly-field">
                   <span>📱</span>
                   <span>{profile?.whatsapp || 'No registrado'}</span>
