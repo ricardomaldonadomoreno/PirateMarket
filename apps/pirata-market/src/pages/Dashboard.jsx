@@ -40,15 +40,18 @@ export default function Dashboard({ user, profile: externalProfile }) {
 
   useEffect(() => {
     if (!user) return
-    const { data } = await supabase
-      .from('verification_requests')
-      .select('selfie_url')
-      .eq('user_id', user.id)
-      .eq('source', 'pirata')
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single()
-    if (data?.selfie_url) setVerificationSelfie(data.selfie_url)
+    const loadSelfie = async () => {
+      const { data } = await supabase
+        .from('verification_requests')
+        .select('selfie_url')
+        .eq('user_id', user.id)
+        .eq('source', 'pirata')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single()
+      if (data?.selfie_url) setVerificationSelfie(data.selfie_url)
+    }
+    loadSelfie()
   }, [user])
 
   // Cargar listings y stats (solo en la ruta /dashboard)
