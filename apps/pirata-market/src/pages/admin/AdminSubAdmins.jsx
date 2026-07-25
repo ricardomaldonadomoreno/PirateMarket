@@ -40,43 +40,83 @@ export default function AdminSubAdmins() {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
-        setError('No hay sesión activa. Por favor inicia sesión nuevamente.')
+        setError('No hay sesion activa. Por favor inicia sesion nuevamente.')
         setLoading(false)
         return
       }
 
-      // Verificar el rol del usuario actual
-      const { data: roleData, error: roleError } = await supabase
-        .from('admin_roles')
-        .select('role')
-        .eq('user_id', user.id)
-        .single()
-
-      if (roleError) {
-        // Si la tabla admin_roles no existe o el usuario no tiene rol
-        setError('No tienes acceso administrativo. Ejecuta el script backoffice_setup.sql en Supabase primero.')
-        setLoading(false)
-        return
+      // Intentar obtener rol desde admin_roles
+      let roleData = null
+      try {
+        const result = await supabase
+          .from('admin_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .single()
+        if (!result.error) {
+          roleData = result.data
+        }
+      } catch {
+        // admin_roles no existe o error de RLS
       }
 
-      setCurrentAdminRole(roleData?.role || '')
-
-      // Cargar todos los admins registrados
-      const { data: adminList, error: listError } = await supabase
-        .from('admin_roles')
-        .select('*, users:users(display_name, email)')
-        .order('created_at', { ascending: false })
-
-      if (listError) {
-        // Si no puede leer la lista (RLS), al menos mostrar error
-        console.error('Error loading admin list:', listError)
-        setAdmins([])
-      } else if (adminList) {
-        setAdmins(adminList)
+      // Si no se pudo obtener de admin_roles, usar fallback: user_type = 'admin' en tabla users
+      if (!roleData) {
+        try {
+          const { data: userData } = await supabase
+            .from('users')
+            .select('user_type')
+            .eq('id', user.id)
+            .single()
+          if (userData?.user_type === 'admin') {
+            // Es admin legacy, asumir super_admin para que pueda gestionar
+            setCurrentAdminRole('super_admin')
+          } else {
+            setError('No tienes acceso administrativo. Contacta al propietario del sistema.')
+            setLoading(false)
+            return
+          }
+        } catch {
+          setError('Error al verificar permisos.')
+          setLoading(false)
+          return
+        }
+      } else {
+        setCurrentAdminRole(roleData.role || '')
       }
+
+      // Cargar lista de admins
+      let adminList = []
+      try {
+        const result = await supabase
+          .from('admin_roles')
+          .select('*, users:users(display_name, email)')
+          .order('created_at', { ascending: false })
+        if (!result.error && result.data) {
+          adminList = result.data
+        }
+      } catch {
+        // Si no puede leer admin_roles, cargar desde tabla users
+        const { data: userData } = await supabase
+          .from('users')
+          .select('id, display_name, email, user_type')
+          .eq('user_type', 'admin')
+          .order('created_at', { ascending: false })
+        if (userData) {
+          adminList = userData.map(u => ({
+            id: u.id,
+            user_id: u.id,
+            role: 'super_admin',
+            app: 'pirata',
+            notes: 'Admin legacy',
+            users: { display_name: u.display_name, email: u.email },
+          }))
+        }
+      }
+      setAdmins(adminList)
     } catch (err) {
       console.error('Error loading:', err)
-      setError('Error al cargar la pagina. Verifica tu conexion.')
+      setError('Error al cargar la pagina.')
     } finally {
       setLoading(false)
     }
@@ -88,21 +128,21 @@ export default function AdminSubAdmins() {
     setError('')
     setSuccess('')
     if (!form.email || !form.password) {
-      setError('El email y la contraseña son obligatorios.')
+      setError('El email y la contrasena son obligatorios.')
       return
     }
     if (form.password.length < 6) {
-      setError('La contraseña debe tener al menos 6 caracteres.')
+      setError('La contrasena debe tener al menos 6 caracteres.')
       return
     }
     setSaving(true)
     try {
       // 1. Verificar que no existe ya un admin con ese email
-      const { data: existingRole, error: checkError } = await supabase
-        .from('admin_roles')
+      const { data: existingUser } = await supabase
+        .from('users')
         .select('id')
-        .eq('user_id', supabase.auth.getUser().data?.user?.id)
-        .single()
+        .ilike('email', form.email)
+        .maybeSingle()
 
       // 2. Crear nuevo usuario en Supabase Auth
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
@@ -111,7 +151,7 @@ export default function AdminSubAdmins() {
       })
       if (signUpError) throw signUpError
       if (!signUpData.user) {
-        setError('No se pudo crear la cuenta. Verifica el correo y la contraseña.')
+        setError('No se pudo crear la cuenta. Verifica el correo y la contrasena.')
         setSaving(false)
         return
       }
@@ -131,7 +171,7 @@ export default function AdminSubAdmins() {
         throw userError
       }
 
-      // 4. Actualizar nombre si se proporcionó
+      // 4. Actualizar nombre si se proporciono
       if (form.full_name) {
         await supabase.from('users').update({ display_name: form.full_name }).eq('id', adminId)
       }
@@ -144,14 +184,13 @@ export default function AdminSubAdmins() {
         notes: form.notes || null,
       }])
       if (roleError) {
-        // Si es error de RLS (no super_admin), intentar con RPC o mostrar mensaje claro
         if (roleError.code === '42501' || roleError.message?.includes('violates row-level')) {
           throw new Error('No tienes permisos para crear administradores. Solo el Super Admin puede hacerlo.')
         }
         throw roleError
       }
 
-      setSuccess(`Admin creado correctamente: ${form.email}`)
+      setSuccess('Admin creado correctamente: ' + form.email)
       setForm({ email: '', password: '', full_name: '', role: 'admin', app: 'pirata', notes: '' })
       await loadAll()
     } catch (err) {
@@ -204,7 +243,7 @@ export default function AdminSubAdmins() {
           </div>
         )}
 
-        {/* Formulario visible para cualquier admin, pero la acción de insertar requiere super_admin */}
+        {/* Formulario siempre visible */}
         <div className="admin-card" style={{ marginBottom: '1.5rem' }}>
           <h3 className="serif" style={{ color: 'var(--gold)', marginBottom: '0.25rem' }}>Crear Nuevo Admin</h3>
           <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
@@ -229,7 +268,7 @@ export default function AdminSubAdmins() {
               <input
                 type="password"
                 className="input"
-                placeholder="Mínimo 6 caracteres"
+                placeholder="Minimo 6 caracteres"
                 value={form.password}
                 onChange={e => setForm(p => ({ ...p, password: e.target.value }))}
                 minLength={6}
@@ -241,7 +280,7 @@ export default function AdminSubAdmins() {
               <input
                 type="text"
                 className="input"
-                placeholder="Juan Pérez"
+                placeholder="Juan Perez"
                 value={form.full_name}
                 onChange={e => setForm(p => ({ ...p, full_name: e.target.value }))}
               />
@@ -287,7 +326,7 @@ export default function AdminSubAdmins() {
             <div className="admin-loading">Cargando...</div>
           ) : admins.length === 0 ? (
             <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-              No hay administradores registrados aún.
+              No hay administradores registrados aun.
             </div>
           ) : (
             <div className="admin-table">
