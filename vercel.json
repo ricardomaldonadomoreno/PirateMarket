@@ -4,11 +4,11 @@
   "installCommand": "npm install",
   "rewrites": [
     {
-      "source": "/api/og/:slug",
+      "source": "/api/og/:slug(.*)",
       "destination": "/api/og/[slug].js"
     },
     {
-      "source": "/ficha/:slug",
+      "source": "/ficha/:slug(.*)",
       "destination": "/api/og/[slug].js",
       "has": [
         {
