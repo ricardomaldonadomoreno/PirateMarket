@@ -261,6 +261,7 @@ CREATE TABLE IF NOT EXISTS verification_requests (
 
   identity_docs TEXT[],
   business_docs TEXT[],
+  selfie_url TEXT,
 
   admin_note TEXT,
   reviewed_at TIMESTAMPTZ,

@@ -361,7 +361,9 @@ export default function Dashboard({ user, onProfileUpdate }) {
 
   const displayName = profile?.display_name || user.email?.split('@')[0]
   const userType = profile?.user_type || 'person'
-  const avatarUrl = profile?.avatar_url
+  // Sidebar: mostrar selfie de verificación si existe, sino placeholder
+  const verificationSelfie = verificationRequest?.selfie_url || null
+  const sidebarAvatar = verificationSelfie || null
   const userTypeIcon = userType === 'shop' ? '🏪' : userType === 'wholesale' ? '📦' : userType === 'admin' ? '🔐' : '👤'
   const isPremium = profile?.is_premium && profile?.premium_until && new Date(profile.premium_until) > new Date()
   const isShopOrWholesale = userType === 'shop' || userType === 'wholesale'
@@ -400,8 +402,8 @@ export default function Dashboard({ user, onProfileUpdate }) {
           <aside className="db-sidebar">
             <div className="db-sidebar-profile">
               <div className="db-avatar">
-                {avatarUrl
-                  ? <img src={avatarUrl} alt={displayName} />
+                {sidebarAvatar
+                  ? <img src={sidebarAvatar} alt={displayName} />
                   : <div className="db-avatar-placeholder">{displayName?.charAt(0).toUpperCase()}</div>
                 }
               </div>
