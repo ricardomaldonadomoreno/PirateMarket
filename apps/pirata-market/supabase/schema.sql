@@ -285,6 +285,7 @@ CREATE TABLE IF NOT EXISTS traficante_verification_requests (
   identity_docs TEXT[],
   domicile_docs TEXT[],
   bank_docs TEXT[],
+  selfie_url TEXT,
 
   admin_note TEXT,
   reviewed_at TIMESTAMPTZ
