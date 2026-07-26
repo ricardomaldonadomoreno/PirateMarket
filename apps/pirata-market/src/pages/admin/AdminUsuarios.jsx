@@ -34,6 +34,7 @@ export default function AdminUsuarios() {
           full_name, country, city, phone,
           identity_verified, identity_locked, business_verified, allow_identity_edit
         `)
+        .neq('user_type', 'collaborator')
         .order('created_at', { ascending: false })
 
       if (error) { console.error('loadUsers error:', error); setLoading(false); return }
