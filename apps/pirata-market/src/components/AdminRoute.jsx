@@ -3,9 +3,18 @@ import { Navigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
 // AdminRoute protege las rutas del backoffice.
-// Acepta dos tipos de acceso:
-// 1. Admin principal: autenticado con Supabase Auth + user_type='admin' en tabla users
-// 2. Colaborador: validado contra tabla colaborador, datos en sessionStorage
+// Tipos de acceso:
+// 1. Admin principal (user_type='admin'): acceso total a todo
+// 2. Colaborador con app_access='both': acceso a Pirata + Traficante (sin Sub-Admins)
+// 3. Colaborador con app_access='pirata': solo rutas /admin/pirata/*
+// 4. Colaborador con app_access='traficante': solo rutas /admin/traficante/*
+
+// Rutas que solo puede ver el super_admin
+const SUPER_ADMIN_ROUTES = ['/admin/sub-admins']
+
+// Prefijos de ruta por app
+const PIRATA_PREFIX = '/admin/pirata'
+const TRAFICANTE_PREFIX = '/admin/traficante'
 
 export default function AdminRoute({ children }) {
   const [status, setStatus] = useState('loading')
@@ -29,13 +38,16 @@ export default function AdminRoute({ children }) {
           }
         }
       } catch {
-        // Auth no disponible, intentar con colaborador
+        // Auth no disponible
       }
 
       // 2. Verificar si es colaborador (sessionStorage)
       const colabId = sessionStorage.getItem('colaborador_id')
       const colabEmail = sessionStorage.getItem('colaborador_email')
+      const colabAppAccess = sessionStorage.getItem('colaborador_app') || 'both'
+
       if (colabId && colabEmail) {
+        // Verificar que sigue activo
         try {
           const { data: colabData } = await supabase
             .from('colaboradores')
@@ -43,27 +55,45 @@ export default function AdminRoute({ children }) {
             .eq('id', colabId)
             .single()
 
-          if (colabData?.is_active) {
-            setStatus('allowed')
+          if (!colabData?.is_active) {
+            // Desactivado, limpiar
+            sessionStorage.clear()
+            setStatus('denied')
             return
           }
-          // Colaborador desactivado
-          sessionStorage.removeItem('colaborador_id')
-          sessionStorage.removeItem('colaborador_email')
-          sessionStorage.removeItem('colaborador_name')
-          sessionStorage.removeItem('colaborador_app')
         } catch {
-          // Error de query, asumir activo
-          setStatus('allowed')
+          // Error, asumir activo
+        }
+
+        // Verificar que la ruta actual está permitida según app_access
+        const currentPath = location.pathname
+
+        // Sub-Admins: solo super_admin
+        if (SUPER_ADMIN_ROUTES.some(route => currentPath.startsWith(route))) {
+          setStatus('denied')
           return
         }
+
+        // Verificar acceso por app
+        if (colabAppAccess === 'pirata' && !currentPath.startsWith(PIRATA_PREFIX) && currentPath !== '/admin/home') {
+          // Redirigir a pirata
+          setStatus('redirect_pirata')
+          return
+        }
+        if (colabAppAccess === 'traficante' && !currentPath.startsWith(TRAFICANTE_PREFIX) && currentPath !== '/admin/home') {
+          setStatus('redirect_traficante')
+          return
+        }
+
+        setStatus('allowed')
+        return
       }
 
       setStatus('denied')
     }
 
     check()
-  }, [])
+  }, [location.pathname])
 
   if (status === 'loading') {
     return (
@@ -74,6 +104,8 @@ export default function AdminRoute({ children }) {
   }
 
   if (status === 'denied') return <Navigate to="/admin" replace state={{ from: location }} />
+  if (status === 'redirect_pirata') return <Navigate to="/admin/pirata" replace />
+  if (status === 'redirect_traficante') return <Navigate to="/admin/traficante" replace />
 
   return children
 }

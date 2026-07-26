@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import './AdminNavbar.css'
@@ -5,19 +6,60 @@ import './AdminNavbar.css'
 export default function AdminNavbarTraficante() {
   const location = useLocation()
   const navigate = useNavigate()
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [colabApp, setColabApp] = useState('both')
+
+  useEffect(() => {
+    const check = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data } = await supabase
+          .from('users')
+          .select('user_type')
+          .eq('id', user.id)
+          .maybeSingle()
+        if (data?.user_type === 'admin') {
+          setIsAdmin(true)
+          return
+        }
+      }
+      const colab = sessionStorage.getItem('colaborador_app')
+      if (colab) {
+        setColabApp(colab)
+      }
+    }
+    check()
+  }, [])
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
+    sessionStorage.removeItem('colaborador_id')
+    sessionStorage.removeItem('colaborador_email')
+    sessionStorage.removeItem('colaborador_name')
+    sessionStorage.removeItem('colaborador_app')
     navigate('/admin')
   }
 
-  const links = [
+  // Links base para Traficante
+  const traficanteLinks = [
     { path: '/admin/traficante', icon: '📊', label: 'Dashboard' },
     { path: '/admin/traficante/viajes', icon: '🚛', label: 'Viajes' },
     { path: '/admin/traficante/verificaciones', icon: '✅', label: 'Verificaciones' },
     { path: '/admin/traficante/destacados', icon: '⭐', label: 'Destacados' },
-    { path: '/admin/sub-admins', icon: '🔐', label: 'Sub-Admins' },
   ]
+
+  // Sub-Admins solo para super_admin
+  const subAdminLinks = isAdmin
+    ? [{ path: '/admin/sub-admins', icon: '🔐', label: 'Sub-Admins' }]
+    : []
+
+  // Si el colaborador solo tiene acceso a pirata, no mostrar este navbar
+  if (!isAdmin && colabApp === 'pirata') {
+    navigate('/admin/pirata', { replace: true })
+    return null
+  }
+
+  const links = [...traficanteLinks, ...subAdminLinks]
 
   return (
     <nav className="admin-navbar">
@@ -42,9 +84,11 @@ export default function AdminNavbarTraficante() {
       </div>
 
       <div className="admin-navbar-actions">
-        <Link to="/admin" className="admin-nav-link">
-          🔄 Cambiar app
-        </Link>
+        {isAdmin && (
+          <Link to="/admin" className="admin-nav-link">
+            🔄 Cambiar app
+          </Link>
+        )}
         <Link to="/traficante" className="admin-nav-link" target="_blank">
           🌐 Ver traficante
         </Link>

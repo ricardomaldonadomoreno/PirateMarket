@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import './AdminNavbar.css'
@@ -5,19 +6,62 @@ import './AdminNavbar.css'
 export default function AdminNavbarPirata() {
   const location = useLocation()
   const navigate = useNavigate()
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [colabApp, setColabApp] = useState('both')
+
+  useEffect(() => {
+    // Determinar tipo de acceso
+    const check = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data } = await supabase
+          .from('users')
+          .select('user_type')
+          .eq('id', user.id)
+          .maybeSingle()
+        if (data?.user_type === 'admin') {
+          setIsAdmin(true)
+          return
+        }
+      }
+      // Si no es admin principal, verificar si es colaborador
+      const colab = sessionStorage.getItem('colaborador_app')
+      if (colab) {
+        setColabApp(colab)
+      }
+    }
+    check()
+  }, [])
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
+    sessionStorage.removeItem('colaborador_id')
+    sessionStorage.removeItem('colaborador_email')
+    sessionStorage.removeItem('colaborador_name')
+    sessionStorage.removeItem('colaborador_app')
     navigate('/admin')
   }
 
-  const links = [
+  // Links base para Pirata Market
+  const pirataLinks = [
     { path: '/admin/pirata', icon: '📊', label: 'Dashboard' },
     { path: '/admin/pirata/usuarios', icon: '👥', label: 'Usuarios' },
     { path: '/admin/pirata/anuncios', icon: '📋', label: 'Anuncios' },
     { path: '/admin/pirata/reportes', icon: '🚨', label: 'Reportes' },
-    { path: '/admin/sub-admins', icon: '🔐', label: 'Sub-Admins' },
   ]
+
+  // Sub-Admins solo para super_admin
+  const subAdminLinks = isAdmin
+    ? [{ path: '/admin/sub-admins', icon: '🔐', label: 'Sub-Admins' }]
+    : []
+
+  // Si el colaborador solo tiene acceso a traficante, no mostrar este navbar
+  if (!isAdmin && colabApp === 'traficante') {
+    navigate('/admin/traficante', { replace: true })
+    return null
+  }
+
+  const links = [...pirataLinks, ...subAdminLinks]
 
   return (
     <nav className="admin-navbar">
@@ -42,9 +86,11 @@ export default function AdminNavbarPirata() {
       </div>
 
       <div className="admin-navbar-actions">
-        <Link to="/admin" className="admin-nav-link">
-          🔄 Cambiar app
-        </Link>
+        {isAdmin && (
+          <Link to="/admin" className="admin-nav-link">
+            🔄 Cambiar app
+          </Link>
+        )}
         <Link to="/" className="admin-nav-link" target="_blank">
           🌐 Ver tienda
         </Link>
