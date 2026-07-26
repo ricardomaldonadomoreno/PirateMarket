@@ -32,11 +32,19 @@ export default function AdminSubAdmins() {
 
     setSaving(true)
     try {
-      // 1. Crear cuenta en Supabase Auth
+      // 1. Crear cuenta en Supabase Auth SIN verificacion de email
+      //    El sub-admin podra hacer login inmediatamente con estas credenciales
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: form.email,
         password: form.password,
+        options: {
+          emailRedirectTo: '',
+          data: {
+            display_name: form.full_name || form.email.split('@')[0],
+          },
+        },
       })
+
       if (signUpError) throw signUpError
       if (!signUpData.user) {
         throw new Error('No se pudo crear la cuenta en Supabase.')
@@ -46,7 +54,6 @@ export default function AdminSubAdmins() {
       const displayName = form.full_name || form.email.split('@')[0]
 
       // 2. Upsert en tabla users con user_type='collaborator'
-      //    onConflict en id para manejar si ya existe
       const { data: upsertData, error: upsertError } = await supabase
         .from('users')
         .upsert([{
@@ -119,7 +126,7 @@ export default function AdminSubAdmins() {
         <div className="admin-card">
           <h3 className="serif" style={{ color: 'var(--gold)', marginBottom: '0.25rem' }}>Crear Nuevo Sub-Admin</h3>
           <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
-            Completa los datos para crear una cuenta administrativa con acceso al backoffice.
+            Completa los datos para crear una cuenta administrativa con acceso al backoffice. El usuario podra iniciar sesion inmediatamente.
           </p>
           <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '500px' }}>
             <div>
