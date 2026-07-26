@@ -687,3 +687,221 @@
   width: 100%;
   justify-content: center;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/* MIS VIAJES */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+
+.mc-trip-stats {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.mc-trip-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: rgba(212, 175, 55, 0.08);
+  border-radius: 8px;
+  border: 1px solid rgba(212, 175, 55, 0.15);
+  flex: 1;
+}
+
+.mc-trip-stat-num {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.mc-trip-stat-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.mc-trip-filters {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.mc-trip-filter-btn {
+  padding: 0.4rem 1rem;
+  border-radius: 20px;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mc-trip-filter-btn:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.mc-trip-filter-btn.active {
+  background: var(--gold);
+  color: #000;
+  border-color: var(--gold);
+}
+
+.mc-trips-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.mc-trip-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(212, 175, 55, 0.15);
+  border-radius: 12px;
+  padding: 1.25rem;
+  transition: border-color 0.2s;
+}
+
+.mc-trip-card:hover {
+  border-color: rgba(212, 175, 55, 0.3);
+}
+
+.mc-trip-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.mc-trip-type {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--gold);
+}
+
+.mc-trip-status {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #fff;
+  padding: 0.2rem 0.75rem;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.mc-trip-route {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  font-size: 1.05rem;
+}
+
+.mc-trip-city {
+  font-weight: 600;
+  color: #fff;
+}
+
+.mc-trip-arrow {
+  color: var(--gold);
+  font-size: 1.2rem;
+}
+
+.mc-trip-details {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  margin-bottom: 0.75rem;
+}
+
+.mc-trip-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.mc-trip-detail-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.mc-trip-detail span:last-child {
+  font-size: 0.85rem;
+  color: #fff;
+}
+
+.mc-trip-desc {
+  margin-bottom: 0.75rem;
+}
+
+.mc-trip-desc p {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.mc-trip-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.mc-trip-status-select {
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  background: rgba(0, 0, 0, 0.3);
+  color: #fff;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.mc-trip-status-select:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+
+.mc-trip-delete-btn {
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid rgba(231, 76, 60, 0.3);
+  background: transparent;
+  color: #E74C3C;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mc-trip-delete-btn:hover {
+  background: rgba(231, 76, 60, 0.1);
+  border-color: #E74C3C;
+}
+
+@media (max-width: 768px) {
+  .mc-trip-stats {
+    gap: 0.5rem;
+  }
+  .mc-trip-stat {
+    padding: 0.5rem;
+  }
+  .mc-trip-stat-num {
+    font-size: 1.2rem;
+  }
+  .mc-trip-details {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .mc-trip-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

@@ -1,0 +1,30 @@
+Estructura de traficante_trips (deducida de código):
+- id UUID
+- user_id UUID (referencia a users)
+- type TEXT ('viajero' | 'compactador')
+- status TEXT ('activo' | 'pausado' | 'cancelado' | 'completado')
+- origin_city TEXT
+- origin_address TEXT
+- origin_lat DOUBLE PRECISION
+- origin_lng DOUBLE PRECISION
+- destination_city TEXT
+- destination_address TEXT
+- destination_lat DOUBLE PRECISION
+- destination_lng DOUBLE PRECISION
+- departure_date DATE
+- arrival_date DATE
+- schedule JSON (para compactador)
+- transport_mode TEXT
+- max_weight_kg NUMERIC
+- package_sizes TEXT[]
+- accepted_types TEXT[]
+- rejected_types TEXT[]
+- currency TEXT
+- description TEXT
+- price NUMERIC
+- price_table JSON
+- price_per_kg NUMERIC
+- price_per_unit NUMERIC
+- created_at TIMESTAMPTZ
+
+Campos visibles en AdminViajes: type, status, currency, transport_mode, origin_city, destination_city

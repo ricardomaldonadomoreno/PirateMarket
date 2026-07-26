@@ -5,6 +5,7 @@ import { supabase } from '../../../pirata-market/src/lib/supabase'
 import 'leaflet/dist/leaflet.css'
 import './MiCuenta.css'
 import MiCuentaSidebar from './MiCuentaSidebar'
+import MiCuentaMisViajes from './MiCuentaMisViajes'
 
 function MapPicker({ onSelect }) {
   useMapEvents({
@@ -354,8 +355,13 @@ export default function MiCuenta({ user, onProfileUpdate }) {
               </div>
             )}
 
+            {/* ══ MIS VIAJES ══ */}
+            {location.pathname === '/traficante/mi-cuenta/viajes' && (
+              <MiCuentaMisViajes user={user} />
+            )}
+
             {/* ══ RUTAS HIJAS (Verificación / Reseñas / Nivel) ══ */}
-            {showChildRoute && <Outlet />}
+            {location.pathname !== '/traficante/mi-cuenta' && location.pathname !== '/traficante/mi-cuenta/viajes' && <Outlet />}
 
           </main>
         </div>
