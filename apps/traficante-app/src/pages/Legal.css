@@ -1,0 +1,40 @@
+.traficante-legal {
+  min-height: 100vh;
+  background: var(--dark);
+  padding-top: 7rem;
+  padding-bottom: 4rem;
+}
+
+.t-legal-back {
+  background: transparent;
+  border: 1px solid var(--dark-border);
+  border-radius: var(--radius-full);
+  padding: 0.5rem 1.25rem;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  cursor: pointer;
+  margin-bottom: 2rem;
+  transition: all 0.2s ease;
+}
+
+.t-legal-back:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.t-legal-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  color: var(--text-light);
+  margin-bottom: 2rem;
+}
+
+.t-legal-content {
+  max-width: 720px;
+}
+
+.t-legal-content p {
+  color: var(--text-muted);
+  font-size: 1rem;
+  line-height: 1.8;
+}

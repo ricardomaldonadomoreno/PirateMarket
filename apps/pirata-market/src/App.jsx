@@ -29,6 +29,7 @@ import MiCuentaResenas from '../../traficante-app/src/pages/MiCuentaResenas'
 import MiCuentaNivel from '../../traficante-app/src/pages/MiCuentaNivel'
 import MiCuentaMisViajes from '../../traficante-app/src/pages/MiCuentaMisViajes'
 import TraficanteSolicitud from '../../traficante-app/src/pages/Solicitud'
+import TraficanteLegal from '../../traficante-app/src/pages/Legal'
 
 // Admin — Landing + SubAdmins
 import AdminLogin from './pages/admin/AdminLogin'
@@ -130,6 +131,7 @@ function App() {
           <Route path="nivel" element={<MiCuentaNivel user={user} />} />
         </Route>
         <Route path="/traficante/dashboard" element={<><TraficanteNavbar user={user} profile={profile} /><TraficanteDashboard user={user} /></>} />
+        <Route path="/traficante/legal" element={<><TraficanteNavbar user={user} profile={profile} /><TraficanteLegal /></>} />
 
         {/* ── ADMIN TRAFICANTE ── */}
         <Route path="/admin/traficante" element={<AdminRoute><TraficanteAdminDashboard /></AdminRoute>} />

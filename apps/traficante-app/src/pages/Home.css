@@ -5,12 +5,28 @@
   background: var(--dark);
 }
 
-/* ── HERO ── */
+/* ── Fade-in on scroll (ponytail: Intersection Observer + CSS) ── */
+.t-hero,
+.t-earn-section,
+.t-how-section,
+.t-levels-section,
+.t-guarantee-section,
+.t-register-section {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.fade-in-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── HERO SPLIT ── */
 .t-hero {
   position: relative;
   padding: 7rem 0 5rem;
   overflow: hidden;
-  text-align: center;
 }
 
 .t-hero-glow {
@@ -30,40 +46,96 @@
   z-index: 1;
 }
 
-.t-hero-badge {
-  display: inline-flex;
+.t-hero-split {
+  display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.4rem 1rem;
-  border: 1px solid rgba(212, 175, 55, 0.3);
-  border-radius: var(--radius-full);
-  font-size: 0.8rem;
-  color: var(--gold);
-  margin-bottom: 1.5rem;
-  background: rgba(212, 175, 55, 0.08);
+  gap: 3rem;
+}
+
+/* ── Hero Left (descriptivo) ── */
+.t-hero-left {
+  flex: 1 1 50%;
 }
 
 .t-hero-title {
-  font-size: clamp(2.2rem, 5vw, 4rem);
+  font-size: clamp(2.2rem, 5vw, 3.8rem);
   font-family: 'Playfair Display', serif;
   color: var(--text-light);
-  max-width: 800px;
-  margin: 0 auto 1.5rem;
+  margin-bottom: 1.25rem;
   line-height: 1.15;
 }
 
+/* ponytail: highlight "espacio en equipaje" inline sin hardcodeo */
 .t-hero-subtitle {
-  font-size: clamp(1rem, 2vw, 1.2rem);
+  font-size: clamp(1rem, 2vw, 1.15rem);
   color: var(--text-muted);
-  max-width: 600px;
-  margin: 0 auto 2.5rem;
+  margin-bottom: 2rem;
   line-height: 1.7;
 }
 
+.t-hero-subtitle .highlight {
+  color: var(--gold);
+  font-weight: 600;
+}
+
+/* ── Badges de confianza ── */
+.t-hero-badges {
+  display: flex;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+}
+
+.t-hero-badge-item {
+  font-size: 0.85rem;
+  color: var(--text-light);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+/* ── Hero Right (buscador) ── */
+.t-hero-right {
+  flex: 1 1 40%;
+}
+
+.t-search-card-hero {
+  background: var(--dark-surface);
+  border: 1px solid var(--dark-border);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.t-hero-search-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.t-field-hero {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.t-field-hero label {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.t-search-btn-hero {
+  width: 100%;
+  padding: 0.875rem;
+  font-size: 1rem;
+}
+
+/* ── Botones hero ── */
 .t-hero-actions {
   display: flex;
   gap: 1rem;
-  justify-content: center;
   flex-wrap: wrap;
 }
 
@@ -209,16 +281,9 @@
   color: var(--gold);
 }
 
-/* ── BUSCADOR ── */
-.t-search-section {
-  padding: 3rem 0;
-}
-
-.t-search-card {
-  background: var(--dark-surface);
-  border: 1px solid var(--dark-border);
-  border-radius: var(--radius-lg);
-  padding: 2.5rem;
+/* ── CÓMO FUNCIONA ── */
+.t-how-section {
+  padding: 5rem 0;
 }
 
 .t-section-title {
@@ -226,50 +291,6 @@
   font-size: clamp(1.4rem, 3vw, 2rem);
   color: var(--text-light);
   margin-bottom: 1.5rem;
-}
-
-.t-search-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.t-search-fields {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr 1fr;
-  gap: 1rem;
-  align-items: end;
-}
-
-.t-field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.t-field label {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  font-weight: 500;
-}
-
-.t-field-arrow {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--gold);
-  font-size: 1.5rem;
-  padding-bottom: 0.2rem;
-}
-
-.t-search-btn {
-  align-self: flex-start;
-  padding: 0.875rem 2.5rem;
-}
-
-/* ── CÓMO FUNCIONA ── */
-.t-how-section {
-  padding: 5rem 0;
 }
 
 .t-steps-grid {
@@ -420,36 +441,67 @@
   flex-wrap: wrap;
 }
 
-/* ── AVISO LEGAL ── */
-.t-legal-section {
-  padding: 2rem 0 4rem;
+/* ── FOOTER LEGAL ── */
+.t-footer-legal {
+  padding: 2.5rem 0;
+  border-top: 1px solid var(--dark-border);
 }
 
-.t-legal-text {
+.t-footer-legal .container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.t-footer-legal-text {
   font-size: 0.8rem;
   color: var(--text-muted);
   line-height: 1.6;
-  border: 1px solid var(--dark-border);
-  border-radius: var(--radius-md);
-  padding: 1rem 1.5rem;
+  margin: 0;
+  max-width: 520px;
   text-align: center;
+}
+
+.t-footer-legal-link {
+  background: transparent;
+  border: 1px solid var(--dark-border);
+  border-radius: var(--radius-full);
+  padding: 0.5rem 1.25rem;
+  color: var(--gold);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.t-footer-legal-link:hover {
+  border-color: var(--gold);
+  background: rgba(212, 175, 55, 0.08);
 }
 
 /* ── RESPONSIVE ── */
 @media (max-width: 1024px) {
   .t-levels-grid { grid-template-columns: repeat(2, 1fr); }
   .t-earn-grid { grid-template-columns: repeat(2, 1fr); }
+  .t-hero-split { gap: 2rem; }
 }
 
 @media (max-width: 768px) {
   .t-hero { padding: 5rem 0 3rem; }
+  .t-hero-split {
+    flex-direction: column;
+    text-align: center;
+  }
+  .t-hero-left { flex: 1 1 100%; }
+  .t-hero-right { flex: 1 1 100%; }
+  .t-hero-badges { justify-content: center; }
+  .t-hero-actions { justify-content: center; }
   .t-steps-grid { grid-template-columns: 1fr; }
   .t-earn-grid { grid-template-columns: 1fr; }
   .t-levels-grid { grid-template-columns: repeat(2, 1fr); }
-  .t-search-fields { grid-template-columns: 1fr; }
-  .t-field-arrow { display: none; }
   .t-guarantee-card { flex-direction: column; text-align: center; }
-  .t-search-btn { width: 100%; }
   .t-earn-cta-text { flex-direction: column; text-align: center; }
   .t-register-actions { flex-direction: column; align-items: center; }
+  .t-footer-legal .container { flex-direction: column; text-align: center; }
 }

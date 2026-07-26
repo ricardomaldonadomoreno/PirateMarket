@@ -1,5 +1,4 @@
-import { useState } from 'react'
-import { useTranslation } from 'react-i18next'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './Home.css'
 
@@ -11,9 +10,9 @@ const LEVELS = [
 ]
 
 const HOW_STEPS = [
-  { icon: '✈️', key: 'step1' },
-  { icon: '📦', key: 'step2' },
-  { icon: '📲', key: 'step3' },
+  { icon: '✈️', title: 'El viajero publica su ruta', desc: 'Define origen, destino, fecha y espacio disponible. Recibe paquetes en su domicilio verificado.' },
+  { icon: '📦', title: 'Tú encuentras y solicitas', desc: 'Busca por ruta y fecha, revisa el perfil y nivel del viajero, y envía tu solicitud con fotos del paquete.' },
+  { icon: '📲', title: 'Entrega segura con QR', desc: 'El receptor escanea el QR al recibir. El pago se libera automáticamente. Todo registrado.' },
 ]
 
 const EARN_PROFILES = [
@@ -40,12 +39,34 @@ const EARN_PROFILES = [
   },
 ]
 
+/* ── Fade-in on scroll (ponytail: CSS puro, sin librerías) ── */
+function useFadeIn() {
+  const ref = useRef(null)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { el.classList.add('fade-in-visible'); obs.disconnect() } },
+      { threshold: 0.15 }
+    )
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [])
+  return ref
+}
+
 export default function TraficanteHome({ user }) {
-  const { t } = useTranslation('traficante')
   const navigate = useNavigate()
   const [origin, setOrigin] = useState('')
   const [destination, setDestination] = useState('')
   const [date, setDate] = useState('')
+
+  const heroRef = useFadeIn()
+  const earnRef = useFadeIn()
+  const howRef = useFadeIn()
+  const levelsRef = useFadeIn()
+  const guaranteeRef = useFadeIn()
+  const registerRef = useFadeIn()
 
   const handleSearch = (e) => {
     e.preventDefault()
@@ -59,47 +80,94 @@ export default function TraficanteHome({ user }) {
   return (
     <div className="traficante-home">
 
-      {/* ── HERO ── */}
-      <section className="t-hero">
-        <div className="container">
-          <div className="t-hero-badge">
-            <span>🚐</span>
-            <span>{t('brand.by')}</span>
-          </div>
-          <h1 className="t-hero-title">
-            {t('home.hero_title')}
-          </h1>
-          <p className="t-hero-subtitle">
-            {t('home.hero_subtitle')}
-          </p>
-          <div className="t-hero-actions">
-            <button
-              className="btn btn-primary t-btn-primary"
-              onClick={() => navigate('/traficante/buscar')}
-            >
-              📦 {t('home.btn_send')}
-            </button>
-            <button
-              className="btn btn-outline t-btn-outline"
-              onClick={() => navigate('/traficante/publicar-viaje')}
-            >
-              ✈️ {t('home.btn_travel')}
-            </button>
-            {!user && (
+      {/* ── HERO SPLIT ── */}
+      <section className="t-hero" ref={heroRef}>
+        <div className="container t-hero-split">
+
+          {/* ── Izquierda: Descriptivo ── */}
+          <div className="t-hero-left">
+            <h1 className="t-hero-title">
+              Viajeros que transportan tu mercadería
+            </h1>
+            <p className="t-hero-subtitle">
+              Conectamos a personas que ya viajan con <span className="highlight">espacio en equipaje</span> con personas que necesitan enviar. Sin couriers, sin burocracia, con garantías reales.
+            </p>
+            <div className="t-hero-badges">
+              <span className="t-hero-badge-item">🛡️ Identidad verificada</span>
+              <span className="t-hero-badge-item">⭐ Sistema de reputación</span>
+              <span className="t-hero-badge-item">🚐 Flota comunitaria</span>
+            </div>
+            <div className="t-hero-actions">
               <button
-                className="btn btn-ghost t-btn-ghost"
-                onClick={() => navigate('/auth')}
+                className="btn btn-primary t-btn-primary"
+                onClick={() => navigate('/traficante/buscar')}
               >
-                👤 Crear cuenta gratis
+                📦 Quiero enviar algo
               </button>
-            )}
+              <button
+                className="btn btn-outline t-btn-outline"
+                onClick={() => navigate('/traficante/publicar-viaje')}
+              >
+                ✈️ Ofrecer mi espacio
+              </button>
+              {!user && (
+                <button
+                  className="btn btn-ghost t-btn-ghost"
+                  onClick={() => navigate('/auth')}
+                >
+                  👤 Crear cuenta gratis
+                </button>
+              )}
+            </div>
           </div>
+
+          {/* ── Derecha: Buscador ── */}
+          <div className="t-hero-right">
+            <div className="t-search-card-hero">
+              <form className="t-search-form-hero" onSubmit={handleSearch}>
+                <div className="t-hero-search-fields">
+                  <div className="t-field-hero">
+                    <label>📍 Ciudad de origen</label>
+                    <input
+                      className="input"
+                      type="text"
+                      placeholder="Ej: Santa Cruz, Bolivia"
+                      value={origin}
+                      onChange={e => setOrigin(e.target.value)}
+                    />
+                  </div>
+                  <div className="t-field-hero">
+                    <label>🎯 Ciudad de destino</label>
+                    <input
+                      className="input"
+                      type="text"
+                      placeholder="Ej: São Paulo, Brasil"
+                      value={destination}
+                      onChange={e => setDestination(e.target.value)}
+                    />
+                  </div>
+                  <div className="t-field-hero">
+                    <label>📅 Fecha estimada</label>
+                    <input
+                      className="input"
+                      type="date"
+                      value={date}
+                      onChange={e => setDate(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <button type="submit" className="btn btn-primary t-btn-primary t-search-btn-hero">
+                  🔍 Buscar transportadores
+                </button>
+              </form>
+            </div>
+          </div>
+
         </div>
-        <div className="t-hero-glow" />
       </section>
 
       {/* ── GANA DINERO ── */}
-      <section className="t-earn-section">
+      <section className="t-earn-section" ref={earnRef}>
         <div className="container">
           <div className="t-earn-header">
             <div className="t-earn-badge">💰 Para transportadores</div>
@@ -133,63 +201,17 @@ export default function TraficanteHome({ user }) {
         </div>
       </section>
 
-      {/* ── BUSCADOR ── */}
-      <section className="t-search-section">
-        <div className="container">
-          <div className="t-search-card">
-            <h2 className="t-section-title">{t('home.search_title')}</h2>
-            <form className="t-search-form" onSubmit={handleSearch}>
-              <div className="t-search-fields">
-                <div className="t-field">
-                  <label>📍 {t('home.origin')}</label>
-                  <input
-                    className="input"
-                    type="text"
-                    placeholder="Ej: Santa Cruz, Bolivia"
-                    value={origin}
-                    onChange={e => setOrigin(e.target.value)}
-                  />
-                </div>
-                <div className="t-field-arrow">→</div>
-                <div className="t-field">
-                  <label>🎯 {t('home.destination')}</label>
-                  <input
-                    className="input"
-                    type="text"
-                    placeholder="Ej: São Paulo, Brasil"
-                    value={destination}
-                    onChange={e => setDestination(e.target.value)}
-                  />
-                </div>
-                <div className="t-field">
-                  <label>📅 {t('home.date')}</label>
-                  <input
-                    className="input"
-                    type="date"
-                    value={date}
-                    onChange={e => setDate(e.target.value)}
-                  />
-                </div>
-              </div>
-              <button type="submit" className="btn btn-primary t-btn-primary t-search-btn">
-                🔍 {t('home.btn_search')}
-              </button>
-            </form>
-          </div>
-        </div>
-      </section>
-
       {/* ── CÓMO FUNCIONA ── */}
-      <section className="t-how-section">
+      <section className="t-how-section" ref={howRef}>
         <div className="container">
-          <h2 className="t-section-title text-center">{t('home.how_title')}</h2>
+          <h2 className="t-section-title text-center">¿Cómo funciona?</h2>
           <div className="t-steps-grid">
             {HOW_STEPS.map((step, i) => (
-              <div key={step.key} className="t-step-card card">
+              <div key={i} className="t-step-card card">
                 <div className="t-step-number">{i + 1}</div>
                 <div className="t-step-icon">{step.icon}</div>
-                <h3>{t(`home.${step.key}_title`)}</h3>
-                <p>{t(`home.${step.key}_desc`)}</p>
+                <h3>{step.title}</h3>
+                <p>{step.desc}</p>
               </div>
             ))}
           </div>
@@ -197,17 +219,24 @@ export default function TraficanteHome({ user }) {
       </section>
 
       {/* ── NIVELES ── */}
-      <section className="t-levels-section">
+      <section className="t-levels-section" ref={levelsRef}>
         <div className="container">
-          <h2 className="t-section-title text-center">{t('home.levels_title')}</h2>
+          <h2 className="t-section-title text-center">Niveles de confianza</h2>
           <div className="t-levels-grid">
             {LEVELS.map(level => (
               <div key={level.key} className="t-level-card card">
                 <div className="t-level-icon" style={{ color: level.color }}>
                   {level.icon}
                 </div>
-                <h4 style={{ color: level.color }}>{t(`home.level_${level.key}`)}</h4>
-                <p>{t(`home.level_${level.key}_desc`)}</p>
+                <h4 style={{ color: level.color }}>
+                  {level.key === 'basic' ? 'Básico' : level.key === 'mid' ? 'Medio' : level.key === 'pro' ? 'PRO' : 'Elite'}
+                </h4>
+                <p>
+                  {level.key === 'basic' && 'Identidad y dirección verificadas. Ideal para paquetes de bajo valor.'}
+                  {level.key === 'mid' && 'Agrega garantía por artículo y escrow. Puede comprar por encargo.'}
+                  {level.key === 'pro' && 'Oficina o domicilio habilitado. Rutas frecuentes. Paquetes de valor medio-alto.'}
+                  {level.key === 'elite' && 'Dirección verificada en dos países. Máxima confianza. Agente de logística.'}
+                </p>
               </div>
             ))}
           </div>
@@ -215,13 +244,13 @@ export default function TraficanteHome({ user }) {
       </section>
 
       {/* ── GARANTÍA ── */}
-      <section className="t-guarantee-section">
+      <section className="t-guarantee-section" ref={guaranteeRef}>
         <div className="container">
           <div className="t-guarantee-card">
             <div className="t-guarantee-icon">🔒</div>
             <div>
-              <h3>{t('home.guarantee_title')}</h3>
-              <p>{t('home.guarantee_desc')}</p>
+              <h3>Tu dinero siempre protegido</h3>
+              <p>El pago queda en escrow hasta que el receptor confirma la entrega. Nadie puede quedarse con tu dinero.</p>
             </div>
           </div>
         </div>
@@ -229,7 +258,7 @@ export default function TraficanteHome({ user }) {
 
       {/* ── REGISTRO CTA ── */}
       {!user && (
-        <section className="t-register-section">
+        <section className="t-register-section" ref={registerRef}>
           <div className="container">
             <div className="t-register-card">
               <h2>¿Listo para empezar?</h2>
@@ -253,12 +282,18 @@ export default function TraficanteHome({ user }) {
         </section>
       )}
 
-      {/* ── AVISO LEGAL ── */}
-      <section className="t-legal-section">
+      {/* ── FOOTER LEGAL ── */}
+      <footer className="t-footer-legal">
         <div className="container">
-          <p className="t-legal-text">⚖️ {t('home.legal_note')}</p>
+          <p className="t-footer-legal-text">⚖️ Cada viajero es responsable de cumplir la legislación aduanera del país de destino. Traficante no fomenta ni se hace responsable por el transporte de artículos ilegales.</p>
+          <button
+            className="t-footer-legal-link"
+            onClick={() => navigate('/traficante/legal')}
+          >
+            📄 Aviso legal completo
+          </button>
         </div>
-      </section>
+      </footer>
 
     </div>
   )

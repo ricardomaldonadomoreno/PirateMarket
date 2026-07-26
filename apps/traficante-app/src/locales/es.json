@@ -13,9 +13,9 @@
   },
   "home": {
     "hero_title": "Viajeros que transportan tu mercadería",
-    "hero_subtitle": "Conectamos a personas que ya viajan con personas que necesitan enviar. Sin couriers, sin burocracia, con garantías reales.",
+    "hero_subtitle": "Conectamos a personas que ya viajan con <highlight>espacio en equipaje</highlight> con personas que necesitan enviar. Sin couriers, sin burocracia, con garantías reales.",
     "btn_send": "Quiero enviar algo",
-    "btn_travel": "Tengo un viaje",
+    "btn_travel": "Ofrecer mi espacio",
     "search_title": "¿A dónde necesitas enviar?",
     "origin": "Ciudad de origen",
     "destination": "Ciudad de destino",
@@ -40,6 +40,14 @@
     "guarantee_title": "Tu dinero siempre protegido",
     "guarantee_desc": "El pago queda en escrow hasta que el receptor confirma la entrega. Nadie puede quedarse con tu dinero.",
     "legal_note": "Cada viajero es responsable de cumplir la legislación aduanera del país de destino. Traficante no fomenta ni se hace responsable por el transporte de artículos ilegales.",
-    "travelers_title": "Viajeros disponibles ahora"
+    "travelers_title": "Viajeros disponibles ahora",
+    "badge_identity": "Identidad verificada",
+    "badge_reputation": "Sistema de reputación",
+    "badge_community": "Flota comunitaria",
+    "btn_create_account": "Crear cuenta gratis",
+    "legal_link": "Aviso legal completo",
+    "legal_page_title": "Aviso Legal — Traficante",
+    "legal_page_content": "Contenido legal en construcción.",
+    "btn_back": "Volver al inicio"
   }
 }
