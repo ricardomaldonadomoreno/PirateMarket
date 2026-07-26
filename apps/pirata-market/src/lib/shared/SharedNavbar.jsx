@@ -85,7 +85,6 @@ export default function SharedNavbar({
                       {(profile?.display_name || user.email)?.charAt(0).toUpperCase()}
                     </div>
                 }
-                <span className="navbar-avatar-chevron">▾</span>
               </button>
 
               {menuOpen && (

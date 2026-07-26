@@ -36,7 +36,8 @@
 .logo-text {
   display: flex;
   flex-direction: column;
-  line-height: 1.2;
+  line-height: 1;
+  gap: 0;
 }
 
 .logo-brand {
@@ -48,11 +49,10 @@
 
 .logo-suffix {
   font-family: 'Inter', sans-serif;
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.15em;
-  margin-top: -0.2rem;
+  letter-spacing: 0.1em;
 }
 
 .navbar-actions {
@@ -80,21 +80,12 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  overflow: visible;
+  overflow: hidden;
   border: 2px solid var(--dark-border);
   transition: border-color 0.2s ease;
   text-decoration: none;
   flex-shrink: 0;
-  position: relative;
-}
-
-.navbar-avatar-chevron {
-  position: absolute;
-  bottom: -4px;
-  right: -6px;
-  font-size: 0.75rem;
-  color: var(--text-light);
-  font-weight: 700;
+  cursor: pointer;
 }
 
 .navbar-avatar-btn:hover {
