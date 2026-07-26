@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import './AdminUsuarios.css'
 
-// La SUPABASE_URL se usa para llamar directamente a la API de confirmacion
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || window.location.origin.replace(/\/?$/, '') + '/.netlify/functions/supabase'
+// SubAdmins: solo crea colaboradores en la tabla colaborador.
+// No usa Supabase Auth. No FK a users. No triggers. No email verification.
+// Solo: email + contraseña → se hashea en la función SQL → se guarda en colaborador.
 
 export default function AdminSubAdmins() {
   const [form, setForm] = useState({
@@ -35,79 +36,26 @@ export default function AdminSubAdmins() {
 
     setSaving(true)
     try {
-      // 1. Crear cuenta en Supabase Auth
-      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-        email: form.email,
-        password: form.password,
-        options: {
-          emailRedirectTo: '',
-          data: {
-            display_name: form.full_name || form.email.split('@')[0],
-          },
-        },
+      // Llamar a la función SQL que hashea la contraseña y crea el colaborador
+      const { data, error: rpcError } = await supabase.rpc('create_colaborador', {
+        p_email: form.email,
+        p_password: form.password,
+        p_full_name: form.full_name || form.email.split('@')[0],
+        p_app_access: form.app_access,
+        p_notes: form.notes || null,
       })
 
-      if (signUpError) throw signUpError
-      if (!signUpData.user) {
-        throw new Error('No se pudo crear la cuenta en Supabase.')
+      if (rpcError) {
+        console.error('create_colaborador error:', rpcError)
+        throw new Error('Error al crear colaborador: ' + rpcError.message)
       }
 
-      const userId = signUpData.user.id
-      const displayName = form.full_name || form.email.split('@')[0]
-
-      // 2. Marcar el email como confirmado llamando a la API de Supabase
-      //    Esto evita el error "Email not confirmed" al hacer login
-      const { error: confirmError } = await supabase.auth.admin.updateUserById(
-        userId,
-        { email_confirm: true }
-      )
-      if (confirmError) {
-        console.warn('No se pudo auto-confirmar email:', confirmError)
-        // No bloqueamos, continuamos con el registro
-      }
-
-      // 3. Upsert en tabla users con user_type='collaborator'
-      const { data: upsertData, error: upsertError } = await supabase
-        .from('users')
-        .upsert([{
-          id: userId,
-          email: form.email,
-          display_name: displayName,
-          user_type: 'collaborator',
-          whatsapp: '0000',
-        }], { onConflict: 'id' })
-        .select()
-
-      if (upsertError) {
-        console.error('upsert users error:', upsertError)
-        throw new Error('Error al registrar usuario: ' + upsertError.message)
-      }
-      console.log('users upsert result:', upsertData)
-
-      // 4. Insertar en sub_admins
-      const { data: { user: currentUser } } = await supabase.auth.getUser()
-      const { error: subError } = await supabase
-        .from('sub_admins')
-        .insert([{
-          user_id: userId,
-          created_by: currentUser.id,
-          full_name: form.full_name || null,
-          app_access: form.app_access,
-          notes: form.notes || null,
-          is_active: true,
-        }])
-
-      if (subError) {
-        console.error('sub_admins error:', subError)
-        throw new Error('Error al registrar sub-admin: ' + subError.message)
-      }
-
-      // 5. Limpiar formulario y mostrar exito
+      // Limpiar formulario y mostrar exito
       setForm({ email: '', password: '', full_name: '', app_access: 'both', notes: '' })
-      setSuccess('Sub-admin registrado correctamente: ' + form.email)
+      setSuccess('Colaborador registrado correctamente: ' + form.email)
     } catch (err) {
       console.error('handleCreate error:', err)
-      setError(err.message || 'Error al crear el sub-admin.')
+      setError(err.message || 'Error al crear el colaborador.')
     } finally {
       setSaving(false)
     }
@@ -118,7 +66,7 @@ export default function AdminSubAdmins() {
       <div className="admin-content">
         <div className="admin-page-header">
           <h1 className="serif luxury-gold">Sub-Administradores</h1>
-          <p className="admin-page-sub">Crear cuentas administrativas corporativas</p>
+          <p className="admin-page-sub">Crear cuentas de colaboradores con acceso al backoffice</p>
           <button onClick={() => navigate(-1)} className="btn-small btn-ghost" style={{ marginLeft: '1rem' }}>
             &larr; Volver
           </button>
@@ -135,11 +83,11 @@ export default function AdminSubAdmins() {
           </div>
         )}
 
-        {/* Formulario de crear sub-admin */}
+        {/* Formulario de crear colaborador */}
         <div className="admin-card">
-          <h3 className="serif" style={{ color: 'var(--gold)', marginBottom: '0.25rem' }}>Crear Nuevo Sub-Admin</h3>
+          <h3 className="serif" style={{ color: 'var(--gold)', marginBottom: '0.25rem' }}>Crear Nuevo Colaborador</h3>
           <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
-            Completa los datos para crear una cuenta administrativa con acceso al backoffice. El usuario podra iniciar sesion inmediatamente.
+            Completa los datos para crear una cuenta de colaborador con acceso al backoffice. El usuario podra iniciar sesion inmediatamente.
           </p>
           <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '500px' }}>
             <div>
@@ -147,7 +95,7 @@ export default function AdminSubAdmins() {
               <input
                 type="email"
                 className="input"
-                placeholder="admin@empresa.com"
+                placeholder="colaborador@empresa.com"
                 value={form.email}
                 onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
                 required
@@ -208,7 +156,7 @@ export default function AdminSubAdmins() {
               disabled={saving}
               style={{ marginTop: '0.5rem' }}
             >
-              {saving ? 'Registrando...' : 'Registrar Sub-Admin'}
+              {saving ? 'Registrando...' : 'Registrar Colaborador'}
             </button>
           </form>
         </div>

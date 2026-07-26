@@ -1,38 +1,69 @@
 import { useState, useEffect } from 'react'
-import { Navigate } from 'react-router-dom'
+import { Navigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
-// AdminRoute verifica user_type = 'admin' en la tabla users
-// No depende de admin_roles
+// AdminRoute protege las rutas del backoffice.
+// Acepta dos tipos de acceso:
+// 1. Admin principal: autenticado con Supabase Auth + user_type='admin' en tabla users
+// 2. Colaborador: validado contra tabla colaborador, datos en sessionStorage
+
 export default function AdminRoute({ children }) {
   const [status, setStatus] = useState('loading')
+  const location = useLocation()
 
   useEffect(() => {
-    checkAdmin()
-  }, [])
+    const check = async () => {
+      // 1. Verificar si es admin principal (Supabase Auth)
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          const { data: userData } = await supabase
+            .from('users')
+            .select('user_type')
+            .eq('id', user.id)
+            .maybeSingle()
 
-  const checkAdmin = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { setStatus('denied'); return }
-
-      // Verificar user_type = 'admin' en la tabla users
-      const { data: userData } = await supabase
-        .from('users')
-        .select('user_type')
-        .eq('id', user.id)
-        .single()
-
-      if (userData?.user_type !== 'admin') {
-        setStatus('denied')
-        return
+          if (userData?.user_type === 'admin') {
+            setStatus('allowed')
+            return
+          }
+        }
+      } catch {
+        // Auth no disponible, intentar con colaborador
       }
 
-      setStatus('allowed')
-    } catch {
+      // 2. Verificar si es colaborador (sessionStorage)
+      const colabId = sessionStorage.getItem('colaborador_id')
+      const colabEmail = sessionStorage.getItem('colaborador_email')
+      if (colabId && colabEmail) {
+        try {
+          const { data: colabData } = await supabase
+            .from('colaboradores')
+            .select('is_active')
+            .eq('id', colabId)
+            .single()
+
+          if (colabData?.is_active) {
+            setStatus('allowed')
+            return
+          }
+          // Colaborador desactivado
+          sessionStorage.removeItem('colaborador_id')
+          sessionStorage.removeItem('colaborador_email')
+          sessionStorage.removeItem('colaborador_name')
+          sessionStorage.removeItem('colaborador_app')
+        } catch {
+          // Error de query, asumir activo
+          setStatus('allowed')
+          return
+        }
+      }
+
       setStatus('denied')
     }
-  }
+
+    check()
+  }, [])
 
   if (status === 'loading') {
     return (
@@ -42,7 +73,7 @@ export default function AdminRoute({ children }) {
     )
   }
 
-  if (status === 'denied') return <Navigate to="/admin" replace />
+  if (status === 'denied') return <Navigate to="/admin" replace state={{ from: location }} />
 
   return children
 }
