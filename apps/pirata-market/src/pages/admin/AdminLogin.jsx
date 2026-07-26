@@ -19,20 +19,7 @@ export default function AdminLogin() {
       const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password })
       if (authError) throw authError
 
-      // Primero verificar en admin_roles (fuente de verdad segura)
-      const { data: roleData } = await supabase
-        .from('admin_roles')
-        .select('role')
-        .eq('user_id', data.user.id)
-        .single()
-
-      if (roleData) {
-        // Tiene rol admin — redirigir a la landing de selección
-        navigate('/admin/home')
-        return
-      }
-
-      // Fallback: verificar user_type = 'admin' (para admins legacy que no tienen admin_roles aún)
+      // Verificar user_type = 'admin' en la tabla users
       const { data: userData, error: userError } = await supabase
         .from('users')
         .select('user_type')
@@ -46,7 +33,7 @@ export default function AdminLogin() {
         throw new Error('No tienes permisos de administrador')
       }
 
-      // Admin legacy sin admin_roles — redirigir a la landing
+      // Es admin — redirigir a la landing de selección
       navigate('/admin/home')
     } catch (err) {
       setError(err.message)

@@ -3,12 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import './AdminUsuarios.css'
 
-const roleColors = {
-  super_admin: 'gold',
-  admin: 'success',
-  moderator: 'warning',
-}
-
 const appLabels = {
   pirata: 'Pirata Market',
   traficante: 'Traficante',
@@ -22,12 +16,10 @@ export default function AdminSubAdmins() {
     email: '',
     password: '',
     full_name: '',
-    role: 'admin',
-    app: 'pirata',
+    app_access: 'both',
     notes: '',
   })
   const [saving, setSaving] = useState(false)
-  const [currentAdminRole, setCurrentAdminRole] = useState('')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const navigate = useNavigate()
@@ -40,80 +32,23 @@ export default function AdminSubAdmins() {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
-        setError('No hay sesion activa. Por favor inicia sesion nuevamente.')
+        setError('No hay sesion activa. Inicia sesion nuevamente.')
         setLoading(false)
         return
       }
 
-      // Intentar obtener rol desde admin_roles
-      let roleData = null
-      try {
-        const result = await supabase
-          .from('admin_roles')
-          .select('role')
-          .eq('user_id', user.id)
-          .single()
-        if (!result.error) {
-          roleData = result.data
-        }
-      } catch {
-        // admin_roles no existe o error de RLS
-      }
+      // Cargar lista de sub-admins desde la tabla sub_admins
+      const { data: adminList, error: listError } = await supabase
+        .from('sub_admins')
+        .select('*, users:users(id, display_name, email, user_type)')
+        .order('created_at', { ascending: false })
 
-      // Si no se pudo obtener de admin_roles, usar fallback: user_type = 'admin' en tabla users
-      if (!roleData) {
-        try {
-          const { data: userData } = await supabase
-            .from('users')
-            .select('user_type')
-            .eq('id', user.id)
-            .single()
-          if (userData?.user_type === 'admin') {
-            // Es admin legacy, asumir super_admin para que pueda gestionar
-            setCurrentAdminRole('super_admin')
-          } else {
-            setError('No tienes acceso administrativo. Contacta al propietario del sistema.')
-            setLoading(false)
-            return
-          }
-        } catch {
-          setError('Error al verificar permisos.')
-          setLoading(false)
-          return
-        }
+      if (listError) {
+        console.error('Error loading sub_admins:', listError)
+        setAdmins([])
       } else {
-        setCurrentAdminRole(roleData.role || '')
+        setAdmins(adminList || [])
       }
-
-      // Cargar lista de admins
-      let adminList = []
-      try {
-        const result = await supabase
-          .from('admin_roles')
-          .select('*, users:users(display_name, email)')
-          .order('created_at', { ascending: false })
-        if (!result.error && result.data) {
-          adminList = result.data
-        }
-      } catch {
-        // Si no puede leer admin_roles, cargar desde tabla users
-        const { data: userData } = await supabase
-          .from('users')
-          .select('id, display_name, email, user_type')
-          .eq('user_type', 'admin')
-          .order('created_at', { ascending: false })
-        if (userData) {
-          adminList = userData.map(u => ({
-            id: u.id,
-            user_id: u.id,
-            role: 'super_admin',
-            app: 'pirata',
-            notes: 'Admin legacy',
-            users: { display_name: u.display_name, email: u.email },
-          }))
-        }
-      }
-      setAdmins(adminList)
     } catch (err) {
       console.error('Error loading:', err)
       setError('Error al cargar la pagina.')
@@ -122,7 +57,7 @@ export default function AdminSubAdmins() {
     }
   }
 
-  // Crear nuevo admin corporativo (email + contraseña)
+  // Crear nuevo sub-admin (email + contraseña)
   const handleCreateAdmin = async (e) => {
     e.preventDefault()
     setError('')
@@ -137,14 +72,7 @@ export default function AdminSubAdmins() {
     }
     setSaving(true)
     try {
-      // 1. Verificar que no existe ya un admin con ese email
-      const { data: existingUser } = await supabase
-        .from('users')
-        .select('id')
-        .ilike('email', form.email)
-        .maybeSingle()
-
-      // 2. Crear nuevo usuario en Supabase Auth
+      // 1. Crear usuario en Supabase Auth
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: form.email,
         password: form.password,
@@ -158,68 +86,100 @@ export default function AdminSubAdmins() {
 
       const adminId = signUpData.user.id
 
-      // 3. Insertar en tabla users (con user_type admin)
+      // 2. Insertar en tabla users con user_type='admin'
       const { error: userError } = await supabase.from('users').insert([{
         id: adminId,
         email: form.email,
         display_name: form.full_name || form.email.split('@')[0],
         user_type: 'admin',
+        whatsapp: '0000',
         created_at: new Date().toISOString(),
       }])
-      // Si ya existe en users (por trigger de auth), ignorar error de duplicado
       if (userError && !userError.message?.includes('duplicate') && !userError.message?.includes('Already')) {
         throw userError
       }
 
-      // 4. Actualizar nombre si se proporciono
+      // 3. Actualizar nombre si se proporciono
       if (form.full_name) {
         await supabase.from('users').update({ display_name: form.full_name }).eq('id', adminId)
       }
 
-      // 5. Asignar rol en admin_roles
-      const { error: roleError } = await supabase.from('admin_roles').insert([{
+      // 4. Registrar en tabla sub_admins
+      const { error: subError } = await supabase.from('sub_admins').insert([{
         user_id: adminId,
-        role: form.role,
-        app: form.app,
+        created_by: (await supabase.auth.getUser()).data?.user?.id,
+        full_name: form.full_name || null,
+        app_access: form.app_access,
         notes: form.notes || null,
       }])
-      if (roleError) {
-        if (roleError.code === '42501' || roleError.message?.includes('violates row-level')) {
-          throw new Error('No tienes permisos para crear administradores. Solo el Super Admin puede hacerlo.')
-        }
-        throw roleError
-      }
+      if (subError) throw subError
 
-      setSuccess('Admin creado correctamente: ' + form.email)
-      setForm({ email: '', password: '', full_name: '', role: 'admin', app: 'pirata', notes: '' })
+      setSuccess('Sub-admin creado correctamente: ' + form.email)
+      setForm({ email: '', password: '', full_name: '', app_access: 'both', notes: '' })
       await loadAll()
     } catch (err) {
-      setError(err.message || 'Error al crear el admin.')
+      setError(err.message || 'Error al crear el sub-admin.')
     } finally {
       setSaving(false)
     }
   }
 
-  const handleRemove = async (id) => {
-    if (!confirm('Eliminar este sub-admin?')) return
-    const { error } = await supabase.from('admin_roles').delete().eq('id', id)
-    if (error) {
-      setError('No tienes permisos para eliminar. Solo el Super Admin puede hacerlo.')
-      return
+  const handleDeactivate = async (id) => {
+    if (!confirm('Desactivar este sub-admin? Perdera acceso al backoffice.')) return
+    setError('')
+    setSuccess('')
+    try {
+      // Desactivar en sub_admins
+      const { error: subError } = await supabase
+        .from('sub_admins')
+        .update({ is_active: false })
+        .eq('id', id)
+      if (subError) throw subError
+
+      // Cambiar user_type a 'person' para quitar acceso
+      const { data: record } = await supabase
+        .from('sub_admins')
+        .select('user_id')
+        .eq('id', id)
+        .single()
+      if (record) {
+        await supabase.from('users').update({ user_type: 'person' }).eq('id', record.user_id)
+      }
+
+      setSuccess('Sub-admin desactivado.')
+      await loadAll()
+    } catch (err) {
+      setError(err.message || 'Error al desactivar.')
     }
-    await loadAll()
   }
 
-  const handleChangeRole = async (id, newRole) => {
-    const { error } = await supabase.from('admin_roles').update({ role: newRole }).eq('id', id)
-    if (error) {
-      setError('No tienes permisos para cambiar roles. Solo el Super Admin puede hacerlo.')
-      return
-    }
-    await loadAll()
-  }
+  const handleReactivate = async (id) => {
+    setError('')
+    setSuccess('')
+    try {
+      const { data: record } = await supabase
+        .from('sub_admins')
+        .select('user_id')
+        .eq('id', id)
+        .single()
+      if (!record) throw new Error('Registro no encontrado.')
 
-  const isSuperAdmin = currentAdminRole === 'super_admin'
+      // Reactivar en sub_admins
+      const { error: subError } = await supabase
+        .from('sub_admins')
+        .update({ is_active: true })
+        .eq('id', id)
+      if (subError) throw subError
+
+      // Restaurar user_type a 'admin'
+      await supabase.from('users').update({ user_type: 'admin' }).eq('id', record.user_id)
+
+      setSuccess('Sub-admin reactivado.')
+      await loadAll()
+    } catch (err) {
+      setError(err.message || 'Error al reactivar.')
+    }
+  }
 
   return (
     <div className="admin-page">
@@ -243,13 +203,11 @@ export default function AdminSubAdmins() {
           </div>
         )}
 
-        {/* Formulario siempre visible */}
+        {/* Formulario de crear sub-admin */}
         <div className="admin-card" style={{ marginBottom: '1.5rem' }}>
-          <h3 className="serif" style={{ color: 'var(--gold)', marginBottom: '0.25rem' }}>Crear Nuevo Admin</h3>
+          <h3 className="serif" style={{ color: 'var(--gold)', marginBottom: '0.25rem' }}>Crear Nuevo Sub-Admin</h3>
           <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
-            {isSuperAdmin
-              ? 'Como Super Admin puedes crear administradores.'
-              : 'Solo el Super Admin puede crear nuevos administradores. Tu rol actual: ' + (currentAdminRole || 'sin rol')}
+            Crea una cuenta administrativa con acceso al backoffice. El usuario podra ver y gestionar datos de la plataforma.
           </p>
           <form onSubmit={handleCreateAdmin} style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
             <div style={{ flex: 1, minWidth: '200px' }}>
@@ -286,18 +244,11 @@ export default function AdminSubAdmins() {
               />
             </div>
             <div style={{ minWidth: '140px' }}>
-              <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>Rol</label>
-              <select className="input" value={form.role} onChange={e => setForm(p => ({ ...p, role: e.target.value }))}>
-                <option value="admin">Admin</option>
-                <option value="moderator">Moderador</option>
-              </select>
-            </div>
-            <div style={{ minWidth: '140px' }}>
               <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>App</label>
-              <select className="input" value={form.app} onChange={e => setForm(p => ({ ...p, app: e.target.value }))}>
+              <select className="input" value={form.app_access} onChange={e => setForm(p => ({ ...p, app_access: e.target.value }))}>
+                <option value="both">Ambas</option>
                 <option value="pirata">Pirata Market</option>
                 <option value="traficante">Traficante</option>
-                <option value="both">Ambas</option>
               </select>
             </div>
             <div style={{ flex: 1, minWidth: '180px' }}>
@@ -313,64 +264,67 @@ export default function AdminSubAdmins() {
             <button
               type="submit"
               className="btn btn-primary"
-              disabled={saving || !form.email || !form.password || !isSuperAdmin}
-              title={!isSuperAdmin ? 'Solo el Super Admin puede crear admins' : ''}
+              disabled={saving || !form.email || !form.password}
             >
-              {saving ? 'Creando...' : '+ Crear Admin'}
+              {saving ? 'Creando...' : '+ Crear Sub-Admin'}
             </button>
           </form>
         </div>
 
+        {/* Lista de sub-admins */}
         <div className="admin-card">
+          <h3 className="serif" style={{ color: 'var(--gold)', marginBottom: '1rem' }}>Sub-Administradores Registrados</h3>
           {loading ? (
             <div className="admin-loading">Cargando...</div>
           ) : admins.length === 0 ? (
             <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-              No hay administradores registrados aun.
+              No hay sub-administradores registrados aun.
             </div>
           ) : (
             <div className="admin-table">
               <div className="admin-listings-header">
-                <span>Admin</span>
-                <span>Rol</span>
+                <span>Nombre</span>
+                <span>Email</span>
                 <span>App</span>
+                <span>Estado</span>
                 <span>Notas</span>
                 <span>Acciones</span>
               </div>
-              {admins.map(r => (
-                <div key={r.id} className="admin-listing-row">
+              {admins.map(a => (
+                <div key={a.id} className="admin-listing-row">
                   <div className="admin-listing-info">
-                    <div>
-                      <div className="admin-listing-title">{r.users?.display_name || '—'}</div>
-                      <div className="admin-listing-meta" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                        {r.users?.email}
-                      </div>
-                    </div>
+                    <div className="admin-listing-title">{a.users?.display_name || a.full_name || '—'}</div>
                   </div>
+                  <div style={{ fontSize: '0.85rem' }}>{a.users?.email || '—'}</div>
                   <div>
-                    <select
-                      className="admin-type-select"
-                      value={r.role}
-                      onChange={e => isSuperAdmin && handleChangeRole(r.id, e.target.value)}
-                      disabled={!isSuperAdmin || r.role === 'super_admin'}
-                    >
-                      <option value="super_admin">Super Admin</option>
-                      <option value="admin">Admin</option>
-                      <option value="moderator">Moderador</option>
-                    </select>
-                  </div>
-                  <div>
-                    <span className={`admin-badge badge-${roleColors[r.role] || 'free'}`}>
-                      {appLabels[r.app] || r.app}
+                    <span className={`admin-badge badge-${a.is_active ? 'success' : 'warning'}`}>
+                      {appLabels[a.app_access] || a.app_access}
                     </span>
                   </div>
-                  <div className="admin-cell-muted" style={{ fontSize: '0.8rem' }}>
-                    {r.notes || '—'}
+                  <div>
+                    <span style={{
+                      display: 'inline-block',
+                      padding: '0.15rem 0.5rem',
+                      borderRadius: 'var(--radius-sm)',
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      background: a.is_active ? 'rgba(6,214,160,0.15)' : 'rgba(230,57,70,0.15)',
+                      color: a.is_active ? 'var(--success)' : 'var(--danger)',
+                    }}>
+                      {a.is_active ? 'Activo' : 'Inactivo'}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                    {a.notes || '—'}
                   </div>
                   <div className="admin-user-actions">
-                    {r.role !== 'super_admin' && isSuperAdmin && (
-                      <button className="btn-small btn-danger" onClick={() => handleRemove(r.id)}>
-                        Eliminar
+                    {a.is_active ? (
+                      <button className="btn-small btn-danger" onClick={() => handleDeactivate(a.id)}>
+                        Desactivar
+                      </button>
+                    ) : (
+                      <button className="btn-small" style={{ background: 'var(--gold)', color: '#000' }} onClick={() => handleReactivate(a.id)}>
+                        Reactivar
                       </button>
                     )}
                   </div>

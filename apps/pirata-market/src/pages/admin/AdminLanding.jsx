@@ -15,19 +15,7 @@ export default function AdminLanding() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setLoading(false); return }
 
-    // Verificar en admin_roles (fuente de verdad segura)
-    const { data: roleData } = await supabase
-      .from('admin_roles')
-      .select('role')
-      .eq('user_id', user.id)
-      .single()
-
-    if (roleData) {
-      setLoading(false)
-      return
-    }
-
-    // Fallback: verificar user_type = 'admin'
+    // Verificar user_type = 'admin' en la tabla users
     const { data } = await supabase
       .from('users')
       .select('user_type')
