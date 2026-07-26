@@ -4,7 +4,7 @@ export default function Navbar(props) {
   return (
     <SharedNavbar
       {...props}
-      brandName={<><span className="luxury-gold">Pirata Market</span><span className="logo-suffix">By Buses App</span></>}
+      brandName={<><span className="luxury-gold">Pirata Market</span><br /><span className="logo-suffix">By Buses App</span></>}
       brandLogo="/logo-ico.png"
       homeRoute="/"
       logoutRoute="/"
