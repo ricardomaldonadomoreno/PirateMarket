@@ -33,9 +33,13 @@ export default function AdminSubAdmins() {
     setSaving(true)
     try {
       // 1. Crear cuenta en Supabase Auth
+      //    El trigger handle_new_user auto-crea el registro en la tabla users
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: form.email,
         password: form.password,
+        options: {
+          data: { display_name: form.full_name || form.email.split('@')[0] },
+        },
       })
       if (signUpError) throw signUpError
       if (!signUpData.user) {
@@ -44,19 +48,40 @@ export default function AdminSubAdmins() {
 
       const userId = signUpData.user.id
 
-      // 2. Insertar en tabla users con user_type='admin'
-      const { error: userError } = await supabase.from('users').insert([{
-        id: userId,
-        email: form.email,
-        display_name: form.full_name || form.email.split('@')[0],
-        user_type: 'admin',
-        whatsapp: '0000',
-      }])
-      if (userError && !userError.message?.includes('duplicate') && !userError.message?.includes('Already')) {
-        throw userError
+      // 2. Esperar brevemente para que el trigger cree el registro en users
+      await new Promise(r => setTimeout(r, 1500))
+
+      // 3. Actualizar user_type a 'admin' en la tabla users (el trigger ya lo creo)
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ user_type: 'admin', display_name: form.full_name || form.email.split('@')[0] })
+        .eq('id', userId)
+
+      if (updateError) {
+        console.error('Error actualizando user_type:', updateError)
+        // Intentar insertar directamente si el update falla (trigger no funciono)
+        const { error: insertError } = await supabase.from('users').upsert([{
+          id: userId,
+          email: form.email,
+          display_name: form.full_name || form.email.split('@')[0],
+          user_type: 'admin',
+          whatsapp: '0000',
+        }])
+        if (insertError) throw insertError
       }
 
-      // 3. Registrar en sub_admins
+      // 4. Verificar que el usuario existe en users antes de insertar en sub_admins
+      const { data: userCheck } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', userId)
+        .maybeSingle()
+
+      if (!userCheck) {
+        throw new Error('El usuario no se registro en la base de datos. Verifica que el trigger de Supabase este activo.')
+      }
+
+      // 5. Registrar en sub_admins
       const { data: { user: currentUser } } = await supabase.auth.getUser()
       const { error: subError } = await supabase.from('sub_admins').insert([{
         user_id: userId,
@@ -68,7 +93,7 @@ export default function AdminSubAdmins() {
       }])
       if (subError) throw subError
 
-      // 4. Limpiar formulario y mostrar exito
+      // 6. Limpiar formulario y mostrar exito
       setForm({ email: '', password: '', full_name: '', app_access: 'both', notes: '' })
       setSuccess('Sub-admin registrado correctamente: ' + form.email)
     } catch (err) {
