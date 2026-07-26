@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import './AdminUsuarios.css'
 
+// La SUPABASE_URL se usa para llamar directamente a la API de confirmacion
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || window.location.origin.replace(/\/?$/, '') + '/.netlify/functions/supabase'
+
 export default function AdminSubAdmins() {
   const [form, setForm] = useState({
     email: '',
@@ -32,8 +35,7 @@ export default function AdminSubAdmins() {
 
     setSaving(true)
     try {
-      // 1. Crear cuenta en Supabase Auth SIN verificacion de email
-      //    El sub-admin podra hacer login inmediatamente con estas credenciales
+      // 1. Crear cuenta en Supabase Auth
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: form.email,
         password: form.password,
@@ -53,7 +55,18 @@ export default function AdminSubAdmins() {
       const userId = signUpData.user.id
       const displayName = form.full_name || form.email.split('@')[0]
 
-      // 2. Upsert en tabla users con user_type='collaborator'
+      // 2. Marcar el email como confirmado llamando a la API de Supabase
+      //    Esto evita el error "Email not confirmed" al hacer login
+      const { error: confirmError } = await supabase.auth.admin.updateUserById(
+        userId,
+        { email_confirm: true }
+      )
+      if (confirmError) {
+        console.warn('No se pudo auto-confirmar email:', confirmError)
+        // No bloqueamos, continuamos con el registro
+      }
+
+      // 3. Upsert en tabla users con user_type='collaborator'
       const { data: upsertData, error: upsertError } = await supabase
         .from('users')
         .upsert([{
@@ -71,7 +84,7 @@ export default function AdminSubAdmins() {
       }
       console.log('users upsert result:', upsertData)
 
-      // 3. Insertar en sub_admins
+      // 4. Insertar en sub_admins
       const { data: { user: currentUser } } = await supabase.auth.getUser()
       const { error: subError } = await supabase
         .from('sub_admins')
@@ -89,7 +102,7 @@ export default function AdminSubAdmins() {
         throw new Error('Error al registrar sub-admin: ' + subError.message)
       }
 
-      // 4. Limpiar formulario y mostrar exito
+      // 5. Limpiar formulario y mostrar exito
       setForm({ email: '', password: '', full_name: '', app_access: 'both', notes: '' })
       setSuccess('Sub-admin registrado correctamente: ' + form.email)
     } catch (err) {
