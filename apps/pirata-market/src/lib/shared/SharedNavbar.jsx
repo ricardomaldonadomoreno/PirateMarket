@@ -85,6 +85,7 @@ export default function SharedNavbar({
                       {(profile?.display_name || user.email)?.charAt(0).toUpperCase()}
                     </div>
                 }
+                <span className="navbar-avatar-chevron">▾</span>
               </button>
 
               {menuOpen && (
@@ -106,13 +107,13 @@ export default function SharedNavbar({
 
                   <div className="navbar-dropdown-divider" />
 
-                  <Link to="/dashboard" className="navbar-dropdown-item navbar-dropdown-item-active"
+                  <Link to="/dashboard" className="navbar-dropdown-item"
                     onClick={() => setMenuOpen(false)}>
                     <span>🏴‍☠️</span>
                     <span>Panel Pirata</span>
                   </Link>
 
-                  <Link to="/traficante/mi-cuenta" className="navbar-dropdown-item"
+                  <Link to="/traficante/mi-cuenta/viajes" className="navbar-dropdown-item"
                     onClick={() => setMenuOpen(false)}>
                     <span>🚐</span>
                     <span>Panel Traficante</span>
