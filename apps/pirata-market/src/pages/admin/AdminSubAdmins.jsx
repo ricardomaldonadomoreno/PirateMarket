@@ -86,16 +86,16 @@ export default function AdminSubAdmins() {
 
       const adminId = signUpData.user.id
 
-      // 2. Llamar a la function SQL que maneja users + sub_admins en una sola operacion
-      const { data: rpcData, error: rpcError } = await supabase.rpc('create_sub_admin', {
-        p_email: form.email,
-        p_display_name: form.full_name || form.email.split('@')[0],
-        p_app_access: form.app_access,
-        p_notes: form.notes || null,
-      })
-      if (rpcError) {
-        // Si la funcion no existe, hacerlo manualmente
-        const { error: userError } = await supabase.from('users').upsert([{
+      // 2. Verificar que el usuario existe en la tabla users
+      const { data: userExists } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', adminId)
+        .maybeSingle()
+
+      if (!userExists) {
+        // Insertar en tabla users
+        const { error: userError } = await supabase.from('users').insert([{
           id: adminId,
           email: form.email,
           display_name: form.full_name || form.email.split('@')[0],
@@ -105,16 +105,32 @@ export default function AdminSubAdmins() {
         if (userError && !userError.message?.includes('duplicate') && !userError.message?.includes('Already')) {
           throw userError
         }
-        // Insertar en sub_admins manualmente
-        const { data: { user: currentUser } } = await supabase.auth.getUser()
-        const { error: subError } = await supabase.from('sub_admins').insert([{
-          user_id: adminId,
-          created_by: currentUser.id,
-          full_name: form.full_name || null,
-          app_access: form.app_access,
-          notes: form.notes || null,
-        }])
-        if (subError) throw subError
+      }
+
+      // 3. Verificar que el usuario esta en users antes de insertar en sub_admins
+      const { data: userConfirmed } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', adminId)
+        .maybeSingle()
+
+      if (!userConfirmed) {
+        throw new Error('No se pudo registrar el usuario en la base de datos. Intenta de nuevo.')
+      }
+
+      // 4. Registrar en tabla sub_admins (usar upsert para evitar duplicados)
+      const { data: { user: currentUser } } = await supabase.auth.getUser()
+      const { error: subError } = await supabase.from('sub_admins').upsert([{
+        user_id: adminId,
+        created_by: currentUser.id,
+        full_name: form.full_name || null,
+        app_access: form.app_access,
+        notes: form.notes || null,
+        is_active: true,
+      }], { onConflict: 'user_id' })
+      if (subError) {
+        console.error('sub_admins error:', subError)
+        throw new Error('Error al registrar el sub-admin en la base de datos: ' + subError.message)
       }
 
       setSuccess('Sub-admin creado correctamente: ' + form.email)
