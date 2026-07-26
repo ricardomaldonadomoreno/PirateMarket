@@ -37,7 +37,6 @@
   display: flex;
   flex-direction: column;
   line-height: 1;
-  gap: 0;
 }
 
 .logo-brand {
@@ -53,6 +52,9 @@
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.1em;
+  display: block;
+  line-height: 1;
+  margin: 0;
 }
 
 .navbar-actions {
@@ -146,6 +148,9 @@
 /* ── MENÚ DESPLEGABLE ── */
 .navbar-user-menu {
   position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .navbar-dropdown {
