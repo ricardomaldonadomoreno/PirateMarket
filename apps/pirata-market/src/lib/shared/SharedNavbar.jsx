@@ -76,6 +76,13 @@ export default function SharedNavbar({
           {user ? (
             <div className="navbar-user-menu" ref={menuRef}>
               <button
+                className="navbar-menu-btn"
+                onClick={() => setMenuOpen(!menuOpen)}
+                aria-label="Menú"
+              >
+                ☰
+              </button>
+              <button
                 className="navbar-avatar-btn"
                 onClick={() => setMenuOpen(!menuOpen)}
               >

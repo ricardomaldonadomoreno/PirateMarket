@@ -49,10 +49,6 @@
   border-color: rgba(212, 175, 55, 0.3);
 }
 
-.traficante-navbar .navbar-avatar-btn:hover {
-  border-color: var(--gold);
-}
-
 .traficante-navbar .navbar-avatar-placeholder {
   color: var(--gold);
 }
