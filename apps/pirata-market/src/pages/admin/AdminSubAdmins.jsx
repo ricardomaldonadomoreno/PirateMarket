@@ -86,33 +86,36 @@ export default function AdminSubAdmins() {
 
       const adminId = signUpData.user.id
 
-      // 2. Insertar en tabla users con user_type='admin'
-      const { error: userError } = await supabase.from('users').insert([{
-        id: adminId,
-        email: form.email,
-        display_name: form.full_name || form.email.split('@')[0],
-        user_type: 'admin',
-        whatsapp: '0000',
-        created_at: new Date().toISOString(),
-      }])
-      if (userError && !userError.message?.includes('duplicate') && !userError.message?.includes('Already')) {
-        throw userError
+      // 2. Llamar a la function SQL que maneja users + sub_admins en una sola operacion
+      const { data: rpcData, error: rpcError } = await supabase.rpc('create_sub_admin', {
+        p_email: form.email,
+        p_display_name: form.full_name || form.email.split('@')[0],
+        p_app_access: form.app_access,
+        p_notes: form.notes || null,
+      })
+      if (rpcError) {
+        // Si la funcion no existe, hacerlo manualmente
+        const { error: userError } = await supabase.from('users').upsert([{
+          id: adminId,
+          email: form.email,
+          display_name: form.full_name || form.email.split('@')[0],
+          user_type: 'admin',
+          whatsapp: '0000',
+        }])
+        if (userError && !userError.message?.includes('duplicate') && !userError.message?.includes('Already')) {
+          throw userError
+        }
+        // Insertar en sub_admins manualmente
+        const { data: { user: currentUser } } = await supabase.auth.getUser()
+        const { error: subError } = await supabase.from('sub_admins').insert([{
+          user_id: adminId,
+          created_by: currentUser.id,
+          full_name: form.full_name || null,
+          app_access: form.app_access,
+          notes: form.notes || null,
+        }])
+        if (subError) throw subError
       }
-
-      // 3. Actualizar nombre si se proporciono
-      if (form.full_name) {
-        await supabase.from('users').update({ display_name: form.full_name }).eq('id', adminId)
-      }
-
-      // 4. Registrar en tabla sub_admins
-      const { error: subError } = await supabase.from('sub_admins').insert([{
-        user_id: adminId,
-        created_by: (await supabase.auth.getUser()).data?.user?.id,
-        full_name: form.full_name || null,
-        app_access: form.app_access,
-        notes: form.notes || null,
-      }])
-      if (subError) throw subError
 
       setSuccess('Sub-admin creado correctamente: ' + form.email)
       setForm({ email: '', password: '', full_name: '', app_access: 'both', notes: '' })
