@@ -322,6 +322,76 @@
   color: var(--text-muted);
 }
 
+.pub-address-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.pub-gps-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+
+.pub-gps-btn {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.75rem;
+  background: transparent;
+  border: 1px solid var(--dark-border);
+  border-radius: var(--radius-sm);
+  color: var(--text-light);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pub-gps-btn:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.pub-coords-badge {
+  font-size: 0.75rem;
+  color: var(--gold);
+  background: rgba(212, 175, 55, 0.08);
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--radius-sm);
+}
+
+.pub-map {
+  margin-top: 0.5rem;
+}
+
+.pub-map-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 0.5rem;
+}
+
+.pub-blocked-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 1.5rem;
+  background: rgba(231, 76, 60, 0.1);
+  border-radius: 50%;
+  color: #e74c3c;
+}
+
+.pub-verified-hint-warn {
+  color: #e74c3c;
+}
+
+.pub-verified-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* ── Responsive ── */
 @media (max-width: 900px) {
   .pub-layout {

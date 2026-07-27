@@ -1,12 +1,22 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet'
 import { supabase } from '../../../pirata-market/src/lib/supabase'
 import CityAutocomplete from '../../../pirata-market/src/components/CityAutocomplete'
+import L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
 import {
   Plane, MapPin, Calendar, Weight, DollarSign, FileText,
   AlertTriangle, CheckCircle2, Info, ShieldAlert, ArrowRight
 } from 'lucide-react'
 import './PublicarService.css'
+
+delete L.Icon.Default.prototype._getIconUrl
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+})
 
 const CURRENCIES = ['USD', 'BOB', 'BRL', 'ARS', 'PEN', 'CLP', 'PYG']
 const TRANSPORT_MODES = [
@@ -30,10 +40,25 @@ const WARNINGS = [
   'Tu nivel de confianza sube con cada entrega exitosa.',
 ]
 
+function MapPicker({ onSelect }) {
+  useMapEvents({
+    click(e) { onSelect({ lat: e.latlng.lat, lng: e.latlng.lng }) }
+  })
+  return null
+}
+
 export default function PublicarViajero({ user }) {
   const navigate = useNavigate()
-  const [origin, setOrigin] = useState(null)
-  const [destination, setDestination] = useState(null)
+  const [originCity, setOriginCity] = useState(null)
+  const [originAddress, setOriginAddress] = useState('')
+  const [originCoords, setOriginCoords] = useState(null)
+  const [showOriginMap, setShowOriginMap] = useState(false)
+
+  const [destinationCity, setDestinationCity] = useState(null)
+  const [destinationAddress, setDestinationAddress] = useState('')
+  const [destinationCoords, setDestinationCoords] = useState(null)
+  const [showDestMap, setShowDestMap] = useState(false)
+
   const [departureDate, setDepartureDate] = useState('')
   const [arrivalDate, setArrivalDate] = useState('')
   const [transportMode, setTransportMode] = useState('')
@@ -44,17 +69,22 @@ export default function PublicarViajero({ user }) {
   const [description, setDescription] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [identityVerified, setIdentityVerified] = useState(false)
   const [verifiedAddr, setVerifiedAddr] = useState(null)
+  const [loadingProfile, setLoadingProfile] = useState(true)
 
   useEffect(() => {
-    if (user?.id) {
-      supabase
-        .from('users')
-        .select('traficante_address_city, traficante_address_country, traficante_address_text, traficante_address_lat, traficante_address_lng, traficante_address_locked')
-        .eq('id', user.id)
-        .single()
-        .then(({ data }) => {
-          if (data && data.traficante_address_city && data.traficante_address_locked) {
+    if (!user) { navigate('/auth'); return }
+    setLoadingProfile(true)
+    supabase
+      .from('users')
+      .select('traficante_address_city, traficante_address_country, traficante_address_text, traficante_address_lat, traficante_address_lng, traficante_address_locked, traficante_identity_verified')
+      .eq('id', user.id)
+      .single()
+      .then(({ data }) => {
+        if (data) {
+          setIdentityVerified(!!data.traficante_identity_verified)
+          if (data.traficante_address_city && data.traficante_address_locked) {
             setVerifiedAddr({
               city: data.traficante_address_city,
               country: data.traficante_address_country,
@@ -62,21 +92,37 @@ export default function PublicarViajero({ user }) {
               lng: data.traficante_address_lng,
             })
           }
-        })
-    }
+        }
+        setLoadingProfile(false)
+      })
   }, [user])
 
-  // Botón que rellena origen y destino con la dirección oficial del usuario
+  const getGPS = (setCoords) => {
+    if (!navigator.geolocation) return
+    navigator.geolocation.getCurrentPosition(pos => {
+      setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude })
+    })
+  }
+
   const fillWithVerifiedAddress = () => {
     if (!verifiedAddr) return
-    if (!origin) setOrigin({ city: verifiedAddr.city, country: verifiedAddr.country, lat: verifiedAddr.lat, lng: verifiedAddr.lng })
-    if (!destination) setDestination({ city: verifiedAddr.city, country: verifiedAddr.country, lat: verifiedAddr.lat, lng: verifiedAddr.lng })
+    if (!originCity) {
+      setOriginCity({ city: verifiedAddr.city, country: verifiedAddr.country, lat: verifiedAddr.lat, lng: verifiedAddr.lng })
+      setOriginCoords({ lat: verifiedAddr.lat, lng: verifiedAddr.lng })
+    }
+    if (!destinationCity) {
+      setDestinationCity({ city: verifiedAddr.city, country: verifiedAddr.country, lat: verifiedAddr.lat, lng: verifiedAddr.lng })
+      setDestinationCoords({ lat: verifiedAddr.lat, lng: verifiedAddr.lng })
+    }
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!user) return navigate('/auth')
-    if (!origin || !destination) {
+    if (!identityVerified) {
+      setError('Debes verificar tu identidad antes de publicar un servicio. Ve a Mi Cuenta > Verificación.')
+      return
+    }
+    if (!originCity || !destinationCity) {
       setError('Completa el origen y destino')
       return
     }
@@ -92,14 +138,16 @@ export default function PublicarViajero({ user }) {
       user_id: user.id,
       type: 'viajero',
       status: 'activo',
-      origin_city: origin.city,
-      origin_country: origin.country,
-      origin_lat: origin.lat,
-      origin_lng: origin.lng,
-      destination_city: destination.city,
-      destination_country: destination.country,
-      destination_lat: destination.lat,
-      destination_lng: destination.lng,
+      origin_city: originCity.city,
+      origin_country: originCity.country,
+      origin_lat: originCoords?.lat || originCity.lat,
+      origin_lng: originCoords?.lng || originCity.lng,
+      origin_address: originAddress,
+      destination_city: destinationCity.city,
+      destination_country: destinationCity.country,
+      destination_lat: destinationCoords?.lat || destinationCity.lat,
+      destination_lng: destinationCoords?.lng || destinationCity.lng,
+      destination_address: destinationAddress,
       currency,
       description,
       price: price ? parseFloat(price) : null,
@@ -120,6 +168,30 @@ export default function PublicarViajero({ user }) {
     } else {
       navigate('/traficante/mi-cuenta/viajes')
     }
+  }
+
+  if (loadingProfile) return <div className="pub-page"><div className="loading" style={{ width: 40, height: 40, margin: '4rem auto' }} /></div>
+
+  if (!identityVerified) {
+    return (
+      <div className="pub-page">
+        <div className="container" style={{ maxWidth: 600, textAlign: 'center', paddingTop: '4rem' }}>
+          <div className="pub-blocked-icon">
+            <ShieldAlert size={48} />
+          </div>
+          <h2 style={{ color: 'var(--text-light)', fontSize: '1.4rem', marginBottom: '0.75rem' }}>
+            Identidad no verificada
+          </h2>
+          <p style={{ color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: '2rem' }}>
+            Para publicar servicios de transporte necesitas verificar tu identidad primero.
+            Ve a <strong style={{ color: 'var(--gold)' }}>Mi Cuenta → Verificación</strong> para completar el proceso.
+          </p>
+          <button className="btn btn-primary t-btn-primary" onClick={() => navigate('/traficante/mi-cuenta/verificacion')}>
+            Ir a verificación
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -162,40 +234,108 @@ export default function PublicarViajero({ user }) {
         <div className="pub-form-col">
           <form onSubmit={handleSubmit} className="pub-form">
 
-            {verifiedAddr && (
-              <div className="pub-verified-row">
-                <button type="button" className="btn pub-verified-btn" onClick={fillWithVerifiedAddress}>
-                  <MapPin size={14} /> Usar mi dirección oficial
-                </button>
+            {/* ── BOTÓN USAR DIRECCIÓN OFICIAL ── */}
+            <div className="pub-verified-row">
+              <button type="button" className="pub-verified-btn" onClick={fillWithVerifiedAddress} disabled={!verifiedAddr}>
+                <MapPin size={14} /> Usar mi dirección oficial
+              </button>
+              {verifiedAddr ? (
                 <span className="pub-verified-hint">Rellena origen y destino con tu ciudad verificada</span>
-              </div>
-            )}
+              ) : (
+                <span className="pub-verified-hint pub-verified-hint-warn">No tienes dirección fijada. Fíjala en Mi Cuenta primero.</span>
+              )}
+            </div>
 
-            {/* Origen */}
+            {/* ORIGEN */}
             <div className="pub-section">
               <div className="pub-section-label"><MapPin size={14} /> ¿Dónde puedes recibir el paquete?</div>
-              <CityAutocomplete
-                label="Ciudad de origen"
-                placeholder="Escribe la ciudad de origen"
-                value={origin}
-                onChange={setOrigin}
-              />
+              <p className="pub-hint">Indica tu domicilio o un punto de encuentro cercano donde el remitente te entregará el paquete.</p>
+              <div className="pub-address-block">
+                <CityAutocomplete
+                  label="Ciudad y país"
+                  placeholder="Escribe la ciudad de origen"
+                  value={originCity}
+                  onChange={setOriginCity}
+                />
+                <div className="pub-field" style={{ marginTop: '0.75rem' }}>
+                  <label>Dirección exacta</label>
+                  <input className="input" placeholder="Ej: Av. Roca y Coronado #450, Villa 1ro de Mayo"
+                    value={originAddress} onChange={e => setOriginAddress(e.target.value)} />
+                </div>
+                <div className="pub-gps-row">
+                  <button type="button" className="btn btn-secondary pub-gps-btn" onClick={() => getGPS(setOriginCoords)}>
+                    Usar mi ubicación actual
+                  </button>
+                  <button type="button" className="btn btn-secondary pub-gps-btn" onClick={() => setShowOriginMap(!showOriginMap)}>
+                    {showOriginMap ? 'Cerrar mapa' : 'Pinchar en mapa'}
+                  </button>
+                  {originCoords && (
+                    <span className="pub-coords-badge">
+                      {originCoords.lat.toFixed(5)}, {originCoords.lng.toFixed(5)}
+                    </span>
+                  )}
+                </div>
+                {showOriginMap && (
+                  <div className="pub-map">
+                    <MapContainer center={originCoords || [-17.8, -63.18]} zoom={13}
+                      style={{ height: '280px', borderRadius: '12px' }}>
+                      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                      <MapPicker onSelect={(coords) => { setOriginCoords(coords); setShowOriginMap(false) }} />
+                      {originCoords && <Marker position={[originCoords.lat, originCoords.lng]} />}
+                    </MapContainer>
+                    <p className="pub-map-hint">Haz clic en el mapa para marcar el punto exacto</p>
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* Destino */}
+            {/* DESTINO */}
             <div className="pub-section">
               <div className="pub-section-label"><MapPin size={14} /> ¿Dónde entregarás el paquete?</div>
-              <CityAutocomplete
-                label="Ciudad de destino"
-                placeholder="Escribe la ciudad de destino"
-                value={destination}
-                onChange={setDestination}
-              />
+              <p className="pub-hint">Indica dónde estarás al llegar — tu hotel, domicilio o un punto acordado donde el receptor pueda recoger.</p>
+              <div className="pub-address-block">
+                <CityAutocomplete
+                  label="Ciudad y país"
+                  placeholder="Escribe la ciudad de destino"
+                  value={destinationCity}
+                  onChange={setDestinationCity}
+                />
+                <div className="pub-field" style={{ marginTop: '0.75rem' }}>
+                  <label>Dirección exacta</label>
+                  <input className="input" placeholder="Ej: Terminal Tietê / Mi hotel en Liberdade"
+                    value={destinationAddress} onChange={e => setDestinationAddress(e.target.value)} />
+                </div>
+                <div className="pub-gps-row">
+                  <button type="button" className="btn btn-secondary pub-gps-btn" onClick={() => getGPS(setDestinationCoords)}>
+                    Usar mi ubicación actual
+                  </button>
+                  <button type="button" className="btn btn-secondary pub-gps-btn" onClick={() => setShowDestMap(!showDestMap)}>
+                    {showDestMap ? 'Cerrar mapa' : 'Pinchar en mapa'}
+                  </button>
+                  {destinationCoords && (
+                    <span className="pub-coords-badge">
+                      {destinationCoords.lat.toFixed(5)}, {destinationCoords.lng.toFixed(5)}
+                    </span>
+                  )}
+                </div>
+                {showDestMap && (
+                  <div className="pub-map">
+                    <MapContainer center={destinationCoords || [-17.8, -63.18]} zoom={13}
+                      style={{ height: '280px', borderRadius: '12px' }}>
+                      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                      <MapPicker onSelect={(coords) => { setDestinationCoords(coords); setShowDestMap(false) }} />
+                      {destinationCoords && <Marker position={[destinationCoords.lat, destinationCoords.lng]} />}
+                    </MapContainer>
+                    <p className="pub-map-hint">Haz clic en el mapa para marcar el punto exacto</p>
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* Fechas */}
+            {/* FECHAS */}
             <div className="pub-section">
               <div className="pub-section-label"><Calendar size={14} /> Fechas del viaje</div>
+              <p className="pub-hint">La fecha de llegada ayuda al receptor a saber cuándo estará disponible su paquete.</p>
               <div className="pub-row">
                 <div className="pub-field">
                   <label>Fecha de salida</label>
@@ -208,7 +348,7 @@ export default function PublicarViajero({ user }) {
               </div>
             </div>
 
-            {/* Transporte */}
+            {/* TRANSPORTE */}
             <div className="pub-section">
               <div className="pub-section-label"><Plane size={14} /> ¿Cómo viajas?</div>
               <div className="pub-chips">
@@ -225,7 +365,7 @@ export default function PublicarViajero({ user }) {
               </div>
             </div>
 
-            {/* Peso */}
+            {/* PESO */}
             <div className="pub-section">
               <div className="pub-section-label"><Weight size={14} /> Peso disponible</div>
               <div className="pub-field">
@@ -234,7 +374,7 @@ export default function PublicarViajero({ user }) {
               </div>
             </div>
 
-            {/* Precio */}
+            {/* PRECIO */}
             <div className="pub-section">
               <div className="pub-section-label"><DollarSign size={14} /> Precio</div>
               <div className="pub-row">
@@ -255,7 +395,7 @@ export default function PublicarViajero({ user }) {
               </div>
             </div>
 
-            {/* Descripción */}
+            {/* DESCRIPCIÓN */}
             <div className="pub-section">
               <div className="pub-section-label"><FileText size={14} /> Descripción y condiciones</div>
               <textarea
