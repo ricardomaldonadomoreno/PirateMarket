@@ -6,6 +6,13 @@ import './CityAutocomplete.css'
   Autocompletado de ciudades usando Nominatim (OpenStreetMap).
   Debounce 500ms, mínimo 3 caracteres, 1 request/seg.
   Devuelve: { city, country, lat, lng, displayName }
+
+  Props extra para dirección verificada:
+  - useVerifiedAddress: bool (mostrar botón)
+  - verifiedAddress: { country, city, lat, lng, address }
+  - verifiedFieldUsed: string | null — 'origin' o 'destination' si ya se usó en otro campo
+  - fieldKey: 'origin' | 'destination' — identificador del campo actual
+  - onVerifiedUsed: (fieldKey) => void — notifica al padre que se usó aquí
 */
 
 const DEBOUNCE_MS = 500
@@ -17,7 +24,10 @@ export default function CityAutocomplete({
   value,
   onChange,
   useVerifiedAddress,
-  verifiedAddress, // { country, city, lat, lng, address }
+  verifiedAddress,
+  verifiedFieldUsed,
+  fieldKey,
+  onVerifiedUsed,
 }) {
   const [input, setInput] = useState('')
   const [results, setResults] = useState([])
@@ -90,6 +100,9 @@ export default function CityAutocomplete({
     setInput(`${v.city || ''}, ${v.country || ''}`.trim())
     onChange({ city: v.city, country: v.country, lat: v.lat, lng: v.lng, address: v.address })
     setShowDropdown(false)
+    if (onVerifiedUsed && fieldKey) {
+      onVerifiedUsed(fieldKey)
+    }
   }
 
   const clear = () => {
@@ -97,6 +110,9 @@ export default function CityAutocomplete({
     onChange(null)
     setResults([])
   }
+
+  // Botón disponible solo si no se usó en otro campo
+  const verifiedBtnEnabled = useVerifiedAddress && verifiedAddress && verifiedFieldUsed !== fieldKey
 
   return (
     <div className="ca-wrapper" ref={wrapperRef}>
@@ -119,10 +135,15 @@ export default function CityAutocomplete({
           )}
           {loading && <span className="ca-loading" />}
         </div>
-        {useVerifiedAddress && verifiedAddress && (
-          <button type="button" className="ca-use-verified" onClick={useVerified} title="Usar mi dirección verificada">
+        {verifiedBtnEnabled && (
+          <button type="button" className="ca-use-verified" onClick={useVerified} title="Usar mi dirección oficial">
             <MapPin size={13} />
           </button>
+        )}
+        {useVerifiedAddress && verifiedAddress && verifiedFieldUsed === fieldKey && (
+          <span className="ca-verified-badge" title="Dirección oficial aplicada">
+            <MapPin size={13} />
+          </span>
         )}
       </div>
 

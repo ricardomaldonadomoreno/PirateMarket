@@ -6,9 +6,25 @@
   padding: 3rem 0;
 }
 
-.pub-card {
-  max-width: 720px;
+/* ── Split Layout ── */
+.pub-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  align-items: start;
+  max-width: 1200px;
   margin: 0 auto;
+}
+
+.pub-info-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  position: sticky;
+  top: 100px;
+}
+
+.pub-form-col {
   background: var(--dark-surface);
   border: 1px solid var(--dark-border);
   border-radius: var(--radius-lg);
@@ -20,7 +36,6 @@
   display: flex;
   align-items: center;
   gap: 1rem;
-  margin-bottom: 2rem;
   padding-bottom: 1.5rem;
   border-bottom: 1px solid var(--dark-border);
 }
@@ -47,17 +62,17 @@
 
 .pub-subtitle {
   font-size: 0.9rem;
-  color: var(--text-muted);
+  color: var(--text-light);
   margin: 0.25rem 0 0;
   line-height: 1.4;
+  opacity: 0.85;
 }
 
 /* ── Ventajas / Info grid ── */
 .pub-info-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
 .pub-info-card {
@@ -83,8 +98,9 @@
 
 .pub-info-desc {
   font-size: 0.8rem;
-  color: var(--text-muted);
+  color: var(--text-light);
   line-height: 1.4;
+  opacity: 0.75;
 }
 
 /* ── Advertencias ── */
@@ -93,7 +109,6 @@
   border: 1px solid rgba(231, 76, 60, 0.15);
   border-radius: var(--radius-md);
   padding: 1rem 1.25rem;
-  margin-bottom: 2rem;
 }
 
 .pub-warnings-title {
@@ -102,8 +117,9 @@
   gap: 0.5rem;
   font-size: 0.85rem;
   font-weight: 600;
-  color: rgba(231, 76, 60, 0.8);
+  color: var(--text-light);
   margin: 0 0 0.5rem;
+  opacity: 0.9;
 }
 
 .pub-warnings-list {
@@ -120,8 +136,9 @@
   align-items: flex-start;
   gap: 0.5rem;
   font-size: 0.8rem;
-  color: var(--text-muted);
+  color: var(--text-light);
   line-height: 1.4;
+  opacity: 0.75;
 }
 
 .pub-warn-icon {
@@ -156,15 +173,17 @@
 
 .pub-hint {
   font-size: 0.8rem;
-  color: var(--text-muted);
+  color: var(--text-light);
   margin: 0;
+  opacity: 0.65;
 }
 
 .pub-field label {
   display: block;
   font-size: 0.8rem;
-  color: var(--text-muted);
+  color: var(--text-light);
   margin-bottom: 0.4rem;
+  opacity: 0.7;
 }
 
 .pub-row {
@@ -185,7 +204,7 @@
   background: transparent;
   border: 1px solid var(--dark-border);
   border-radius: var(--radius-sm);
-  color: var(--text-muted);
+  color: var(--text-light);
   font-size: 0.8rem;
   font-weight: 500;
   cursor: pointer;
@@ -194,7 +213,6 @@
 
 .pub-chip:hover {
   border-color: rgba(212, 175, 55, 0.3);
-  color: var(--text-light);
 }
 
 .pub-chip.active {
@@ -266,8 +284,23 @@
 }
 
 /* ── Responsive ── */
+@media (max-width: 900px) {
+  .pub-layout {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .pub-info-col {
+    position: static;
+  }
+}
+
 @media (max-width: 640px) {
-  .pub-card {
+  .pub-page {
+    padding: 1.5rem 0;
+  }
+
+  .pub-form-col {
     padding: 1.25rem;
   }
 
@@ -275,10 +308,6 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 0.75rem;
-  }
-
-  .pub-info-grid {
-    grid-template-columns: 1fr;
   }
 
   .pub-row {

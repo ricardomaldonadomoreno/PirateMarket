@@ -50,27 +50,32 @@ export default function PublicarCompactador({ user }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [verifiedAddr, setVerifiedAddr] = useState(null)
+  const [verifiedFieldUsed, setVerifiedFieldUsed] = useState(null)
 
   useEffect(() => {
     if (user?.id) {
       supabase
-        .from('traficante_profiles')
-        .select('address_country, address_city, address_lat, address_lng, address_line')
+        .from('users')
+        .select('traficante_address_city, traficante_address_text, traficante_address_lat, traficante_address_lng, traficante_address_locked')
         .eq('id', user.id)
         .single()
         .then(({ data }) => {
-          if (data && data.address_city) {
+          if (data && data.traficante_address_city && data.traficante_address_locked) {
             setVerifiedAddr({
-              country: data.address_country,
-              city: data.address_city,
-              lat: data.address_lat,
-              lng: data.address_lng,
-              address: data.address_line,
+              country: '',
+              city: data.traficante_address_city,
+              lat: data.traficante_address_lat,
+              lng: data.traficante_address_lng,
+              address: data.traficante_address_text,
             })
           }
         })
     }
   }, [user])
+
+  const handleVerifiedUsed = (fieldKey) => {
+    setVerifiedFieldUsed(fieldKey)
+  }
 
   const toggleDay = (i) => {
     setSchedule(prev => prev.map((d, idx) => idx === i ? { ...d, active: !d.active } : d))
@@ -120,8 +125,6 @@ export default function PublicarCompactador({ user }) {
       rejected_types: [],
     }
 
-    // Guardar horario en un formato que encaje en las columnas existentes
-    // Usamos description para incluir el horario si no hay columna dedicated
     if (activeDays.length > 0) {
       const scheduleStr = activeDays
         .map(d => `${DAYS[schedule.indexOf(d)]}: ${d.open}-${d.close}`)
@@ -143,17 +146,15 @@ export default function PublicarCompactador({ user }) {
 
   return (
     <div className="pub-page">
-      <div className="container">
-        <div className="pub-card">
-
-          {/* ── Header ── */}
+      <div className="pub-layout container">
+        {/* ── Columna izquierda: descripción ── */}
+        <div className="pub-info-col">
           <div className="pub-header">
             <div className="pub-header-icon"><Package size={24} /></div>
             <h1 className="pub-title">Publicar servicio de compactación</h1>
             <p className="pub-subtitle">Recibes paquetes en tu casa, los juntas y envías un solo envío consolidado.</p>
           </div>
 
-          {/* ── Ventajas ── */}
           <div className="pub-info-grid">
             {ADVANTAGES.map((a, i) => (
               <div key={i} className="pub-info-card">
@@ -164,7 +165,6 @@ export default function PublicarCompactador({ user }) {
             ))}
           </div>
 
-          {/* ── Advertencias ── */}
           <div className="pub-warnings">
             <h3 className="pub-warnings-title">
               <ShieldAlert size={15} /> Lo que debes saber
@@ -178,8 +178,10 @@ export default function PublicarCompactador({ user }) {
               ))}
             </ul>
           </div>
+        </div>
 
-          {/* ── Formulario ── */}
+        {/* ── Columna derecha: formulario ── */}
+        <div className="pub-form-col">
           <form onSubmit={handleSubmit} className="pub-form">
 
             {/* Origen (punto de recepción) */}
@@ -192,6 +194,9 @@ export default function PublicarCompactador({ user }) {
                 onChange={setOrigin}
                 useVerifiedAddress
                 verifiedAddress={verifiedAddr}
+                fieldKey="origin"
+                verifiedFieldUsed={verifiedFieldUsed}
+                onVerifiedUsed={handleVerifiedUsed}
               />
             </div>
 
@@ -203,6 +208,11 @@ export default function PublicarCompactador({ user }) {
                 placeholder="Ej: La Paz, Bolivia"
                 value={destination}
                 onChange={setDestination}
+                useVerifiedAddress
+                verifiedAddress={verifiedAddr}
+                fieldKey="destination"
+                verifiedFieldUsed={verifiedFieldUsed}
+                onVerifiedUsed={handleVerifiedUsed}
               />
             </div>
 
