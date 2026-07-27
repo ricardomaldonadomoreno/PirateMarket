@@ -1,11 +1,18 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
+import { Plane, Package, Truck, User, Shield, Star, Trophy } from 'lucide-react'
 
 const SECTIONS = [
-  { key: 'viajes',       icon: '🚐', label: 'Mis viajes', path: '/traficante/mi-cuenta/viajes' },
-  { key: 'personal',     icon: '👤', label: 'Información personal', path: '/traficante/mi-cuenta' },
-  { key: 'verificacion', icon: '🔒', label: 'Verificación', path: '/traficante/mi-cuenta/verificacion' },
-  { key: 'resenas',      icon: '⭐', label: 'Mis reseñas', path: '/traficante/mi-cuenta/resenas' },
-  { key: 'nivel',        icon: '🏆', label: 'Mi nivel', path: '/traficante/mi-cuenta/nivel' },
+  { key: 'viajes',       icon: Plane, label: 'Mis viajes', path: '/traficante/mi-cuenta/viajes' },
+  { key: 'personal',     icon: User, label: 'Información personal', path: '/traficante/mi-cuenta' },
+  { key: 'verificacion', icon: Shield, label: 'Verificación', path: '/traficante/mi-cuenta/verificacion' },
+  { key: 'resenas',      icon: Star, label: 'Mis reseñas', path: '/traficante/mi-cuenta/resenas' },
+  { key: 'nivel',        icon: Trophy, label: 'Mi nivel', path: '/traficante/mi-cuenta/nivel' },
+]
+
+const PUBLISH_OPTIONS = [
+  { type: 'viajero', label: 'Publicar viaje', icon: Plane, path: '/traficante/publicar?type=viajero' },
+  { type: 'compactador', label: 'Publicar compactación', icon: Package, path: '/traficante/publicar?type=compactador' },
+  { type: 'flete', label: 'Publicar flete', icon: Truck, path: '/traficante/publicar?type=flete' },
 ]
 
 export default function MiCuentaSidebar({ user, profile, verifRequest, avgRating, reviewsCount }) {
@@ -29,15 +36,17 @@ export default function MiCuentaSidebar({ user, profile, verifRequest, avgRating
         <div className="mc-sidebar-email">{user?.email}</div>
         {avgRating && (
           <div className="mc-sidebar-rating">
-            ⭐ {avgRating} <span>({reviewsCount} reseñas)</span>
+            <Star size={13} className="mc-star-icon" /> {avgRating} <span>({reviewsCount} reseñas)</span>
           </div>
         )}
       </div>
 
       <div className="mc-sidebar-cta">
-        <Link to="/traficante/publicar-viaje" className="mc-cta-btn">
-          + Publicar servicio
-        </Link>
+        {PUBLISH_OPTIONS.map(opt => (
+          <Link key={opt.type} to={opt.path} className="mc-cta-sub-btn">
+            <opt.icon size={13} /> {opt.label}
+          </Link>
+        ))}
       </div>
 
       <nav className="mc-nav">
@@ -46,7 +55,7 @@ export default function MiCuentaSidebar({ user, profile, verifRequest, avgRating
             to={s.path}
             className={`mc-nav-item ${location.pathname === s.path ? 'active' : ''}`}
           >
-            <span>{s.icon}</span>
+            <s.icon size={16} />
             <span>{s.label}</span>
           </Link>
         ))}

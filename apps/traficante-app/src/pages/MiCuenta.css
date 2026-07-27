@@ -124,6 +124,42 @@
   background: var(--gold-light);
 }
 
+/* Sub-botones de publicación */
+.mc-sidebar-cta {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--dark-border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.mc-cta-sub-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: transparent;
+  border: 1px solid var(--dark-border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.mc-cta-sub-btn svg {
+  color: var(--gold);
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.mc-cta-sub-btn:hover {
+  border-color: rgba(212, 175, 55, 0.3);
+  color: var(--text-light);
+  background: rgba(212, 175, 55, 0.04);
+}
+
 /* ── NAV ── */
 .mc-nav {
   padding: 0.75rem 0;

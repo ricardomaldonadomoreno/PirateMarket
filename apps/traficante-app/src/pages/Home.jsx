@@ -109,7 +109,7 @@ export default function TraficanteHome({ user }) {
               </button>
               <button
                 className="btn btn-outline t-btn-outline"
-                onClick={() => navigate('/traficante/publicar-viaje')}
+                onClick={() => navigate('/traficante/publicar?type=viajero')}
               >
                 <Plane size={14} /> Ofrecer mi espacio
               </button>

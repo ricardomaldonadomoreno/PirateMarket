@@ -20,7 +20,7 @@ import MiPerfil from './pages/MiPerfil'
 // Pages — Traficante
 import TraficanteHome from '../../traficante-app/src/pages/Home'
 import TraficanteBuscar from '../../traficante-app/src/pages/Buscar'
-import TraficantePublicarViaje from '../../traficante-app/src/pages/PublicarViaje'
+import TraficantePublicar from '../../traficante-app/src/pages/Publicar'
 import TraficanteDashboard from '../../traficante-app/src/pages/Dashboard'
 import TraficanteViajeDetalle from '../../traficante-app/src/pages/ViajeDetalle'
 import MiCuenta from '../../traficante-app/src/pages/MiCuenta'
@@ -121,7 +121,7 @@ function App() {
         {/* ── TRAFICANTE ── */}
         <Route path="/traficante" element={<><TraficanteNavbar user={user} profile={profile} /><TraficanteHome user={user} /></>} />
         <Route path="/traficante/buscar" element={<><TraficanteNavbar user={user} profile={profile} /><TraficanteBuscar user={user} /></>} />
-        <Route path="/traficante/publicar-viaje" element={<><TraficanteNavbar user={user} profile={profile} /><TraficantePublicarViaje user={user} /></>} />
+        <Route path="/traficante/publicar" element={<><TraficanteNavbar user={user} profile={profile} /><TraficantePublicar user={user} /></>} />
         <Route path="/traficante/viaje/:id" element={<><TraficanteNavbar user={user} profile={profile} /><TraficanteViajeDetalle user={user} /></>} />
         <Route path="/traficante/solicitud/:id" element={<><TraficanteNavbar user={user} profile={profile} /><TraficanteSolicitud user={user} /></>} />
         <Route path="/traficante/mi-cuenta" element={<><TraficanteNavbar user={user} profile={profile} /><MiCuenta user={user} onProfileUpdate={setProfile} /></>}>
