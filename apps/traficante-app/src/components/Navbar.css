@@ -43,12 +43,3 @@
 .btn-primary.traficante-btn:hover {
   background: var(--gold-light);
 }
-
-/* ── AVATAR ── */
-.traficante-navbar .navbar-avatar-btn {
-  border-color: rgba(212, 175, 55, 0.3);
-}
-
-.traficante-navbar .navbar-avatar-placeholder {
-  color: var(--gold);
-}

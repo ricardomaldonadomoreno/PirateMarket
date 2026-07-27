@@ -2,18 +2,9 @@ import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../supabase'
+import { Globe, Menu, User, Star, LogOut } from 'lucide-react'
 import LanguageSelector from '../../components/LanguageSelector'
 import '../../components/Navbar.css'
-
-/*
-  ponytail: un solo Navbar para ambas apps.
-  Props que cambian entre Pirata y Traficante:
-    brandName, brandLogo, homeRoute, logoutRoute, i18nNamespace,
-    primaryCta { to, labelKey, className },
-    secondaryCta { to, labelKey, className },
-    navClass — clase extra para overrides de tema (ej: "traficante-navbar")
-  El resto (avatar, dropdown, idioma, login) es idéntico.
-*/
 
 export default function SharedNavbar({
   user,
@@ -61,37 +52,19 @@ export default function SharedNavbar({
         <div className="navbar-actions">
           <LanguageSelector />
 
-          {primaryCta && (
-            <Link to={primaryCta.to} className={`btn ${primaryCta.className || 'btn-primary'}`}>
-              {t(primaryCta.labelKey)}
-            </Link>
-          )}
-
-          {secondaryCta && (
-            <Link to={secondaryCta.to} className={`btn ${secondaryCta.className || 'btn-primary'}`}>
-              {t(secondaryCta.labelKey)}
-            </Link>
-          )}
-
           {user ? (
             <div className="navbar-user-menu" ref={menuRef}>
               <button
-                className="navbar-menu-btn"
+                className="navbar-avatar-btn"
                 onClick={() => setMenuOpen(!menuOpen)}
                 aria-label="Menú"
               >
-                ☰
-              </button>
-              <button
-                className="navbar-avatar-btn"
-                onClick={() => setMenuOpen(!menuOpen)}
-              >
-                {profile?.avatar_url
-                  ? <img src={profile.avatar_url} alt="perfil" className="navbar-avatar-img" />
-                  : <div className="navbar-avatar-placeholder">
-                      {(profile?.display_name || user.email)?.charAt(0).toUpperCase()}
-                    </div>
-                }
+                <img
+                  src={profile?.avatar_url || ''}
+                  alt="perfil"
+                  className="navbar-avatar-img"
+                />
+                <Menu className="navbar-avatar-menu-icon" size={18} />
               </button>
 
               {menuOpen && (
@@ -107,7 +80,7 @@ export default function SharedNavbar({
 
                   <Link to="/mi-perfil" className="navbar-dropdown-item"
                     onClick={() => setMenuOpen(false)}>
-                    <span>⚙️</span>
+                    <User size={16} />
                     <span>Perfil y Ayuda</span>
                   </Link>
 
@@ -115,13 +88,13 @@ export default function SharedNavbar({
 
                   <Link to="/dashboard" className="navbar-dropdown-item"
                     onClick={() => setMenuOpen(false)}>
-                    <span>🏴‍☠️</span>
+                    <Star size={16} />
                     <span>Panel Pirata</span>
                   </Link>
 
                   <Link to="/traficante/mi-cuenta/viajes" className="navbar-dropdown-item"
                     onClick={() => setMenuOpen(false)}>
-                    <span>🚐</span>
+                    <Star size={16} />
                     <span>Panel Traficante</span>
                   </Link>
 
@@ -129,7 +102,7 @@ export default function SharedNavbar({
 
                   <button className="navbar-dropdown-item navbar-dropdown-logout"
                     onClick={handleLogout}>
-                    <span>🚪</span>
+                    <LogOut size={16} />
                     <span>{t('navbar.logout')}</span>
                   </button>
                 </div>

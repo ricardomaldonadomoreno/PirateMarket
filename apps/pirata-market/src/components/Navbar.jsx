@@ -9,7 +9,6 @@ export default function Navbar(props) {
       homeRoute="/"
       logoutRoute="/"
       i18nNamespace={undefined}
-      primaryCta={{ to: '/publicar', labelKey: 'navbar.publish', className: 'btn-primary' }}
     />
   )
 }

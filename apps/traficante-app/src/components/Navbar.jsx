@@ -11,8 +11,6 @@ export default function TraficanteNavbar(props) {
       logoutRoute="/traficante"
       i18nNamespace="traficante"
       navClass="traficante-navbar"
-      primaryCta={{ to: '/traficante/publicar-viaje', labelKey: 'navbar.travel', className: 'btn-outline traficante-btn-outline' }}
-      secondaryCta={{ to: '/traficante/buscar', labelKey: 'navbar.send', className: 'btn-primary t-btn-primary' }}
     />
   )
 }

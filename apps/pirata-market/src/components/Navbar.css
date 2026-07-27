@@ -74,30 +74,9 @@
   font-size: 0.9rem;
 }
 
-/* ── AVATAR ── */
-/* ── HAMBURGUESA ── */
-.navbar-menu-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  background: transparent;
-  border: none;
-  color: var(--text-muted);
-  font-size: 1.1rem;
-  cursor: pointer;
-  transition: color 0.2s ease;
-  padding: 0;
-  line-height: 1;
-}
-
-.navbar-menu-btn:hover {
-  color: var(--text-light);
-}
-
-/* ── AVATAR ── */
+/* ── AVATAR + MENÚ UNIFICADO ── */
 .navbar-avatar-btn {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -106,16 +85,34 @@
   border-radius: 50%;
   overflow: hidden;
   border: 2px solid rgba(212, 175, 55, 0.3);
-  transition: none;
-  text-decoration: none;
-  flex-shrink: 0;
+  background: var(--dark-surface);
   cursor: pointer;
+  padding: 0;
+}
+
+.navbar-avatar-btn:hover .navbar-avatar-img {
+  opacity: 0;
+}
+
+.navbar-avatar-btn:hover .navbar-avatar-menu-icon {
+  opacity: 1;
 }
 
 .navbar-avatar-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: opacity 0.2s ease;
+}
+
+.navbar-avatar-menu-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  color: var(--text-light);
 }
 
 .navbar-avatar-placeholder {
