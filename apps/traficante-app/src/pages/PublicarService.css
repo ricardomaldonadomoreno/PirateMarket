@@ -1,0 +1,295 @@
+/* ── PublicarService.css — shared styles for Viajero, Compactador, Flete ── */
+
+.pub-page {
+  min-height: 100vh;
+  background: var(--dark);
+  padding: 3rem 0;
+}
+
+.pub-card {
+  max-width: 720px;
+  margin: 0 auto;
+  background: var(--dark-surface);
+  border: 1px solid var(--dark-border);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+}
+
+/* ── Header ── */
+.pub-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--dark-border);
+}
+
+.pub-header-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: rgba(212, 175, 55, 0.1);
+  border-radius: var(--radius-md);
+  color: var(--gold);
+  flex-shrink: 0;
+}
+
+.pub-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-light);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.pub-subtitle {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin: 0.25rem 0 0;
+  line-height: 1.4;
+}
+
+/* ── Ventajas / Info grid ── */
+.pub-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.pub-info-card {
+  background: rgba(212, 175, 55, 0.04);
+  border: 1px solid var(--dark-border);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.pub-info-icon {
+  color: var(--gold);
+  opacity: 0.8;
+}
+
+.pub-info-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-light);
+}
+
+.pub-info-desc {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* ── Advertencias ── */
+.pub-warnings {
+  background: rgba(231, 76, 60, 0.06);
+  border: 1px solid rgba(231, 76, 60, 0.15);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.pub-warnings-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: rgba(231, 76, 60, 0.8);
+  margin: 0 0 0.5rem;
+}
+
+.pub-warnings-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.pub-warnings-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.pub-warn-icon {
+  color: rgba(231, 76, 60, 0.6);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* ── Formulario ── */
+.pub-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.pub-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.pub-section-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--gold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.pub-hint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.pub-field label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 0.4rem;
+}
+
+.pub-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+}
+
+/* ── Chips ── */
+.pub-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.pub-chip {
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: 1px solid var(--dark-border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pub-chip:hover {
+  border-color: rgba(212, 175, 55, 0.3);
+  color: var(--text-light);
+}
+
+.pub-chip.active {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: var(--dark);
+  font-weight: 600;
+}
+
+/* ── Días de horario ── */
+.pub-days-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.pub-day-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.pub-day-chip {
+  min-width: 100px;
+}
+
+.pub-day-hours {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pub-time-input {
+  padding: 0.4rem 0.5rem;
+  font-size: 0.8rem;
+  background: var(--dark);
+  border: 1px solid var(--dark-border);
+  border-radius: var(--radius-sm);
+  color: var(--text-light);
+  width: 110px;
+}
+
+.pub-time-sep {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+/* ── Error ── */
+.pub-error {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: rgba(231, 76, 60, 0.08);
+  border: 1px solid rgba(231, 76, 60, 0.2);
+  border-radius: var(--radius-sm);
+  color: #e74c3c;
+  font-size: 0.85rem;
+}
+
+/* ── Acciones ── */
+.pub-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--dark-border);
+}
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  .pub-card {
+    padding: 1.25rem;
+  }
+
+  .pub-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .pub-info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pub-row {
+    grid-template-columns: 1fr;
+  }
+
+  .pub-actions {
+    flex-direction: column;
+  }
+
+  .pub-actions button {
+    width: 100%;
+  }
+}

@@ -20,7 +20,9 @@ import MiPerfil from './pages/MiPerfil'
 // Pages — Traficante
 import TraficanteHome from '../../traficante-app/src/pages/Home'
 import TraficanteBuscar from '../../traficante-app/src/pages/Buscar'
-import TraficantePublicar from '../../traficante-app/src/pages/Publicar'
+import TraficantePublicarViajero from '../../traficante-app/src/pages/PublicarViajero'
+import TraficantePublicarCompactador from '../../traficante-app/src/pages/PublicarCompactador'
+import TraficantePublicarFlete from '../../traficante-app/src/pages/PublicarFlete'
 import TraficanteDashboard from '../../traficante-app/src/pages/Dashboard'
 import TraficanteViajeDetalle from '../../traficante-app/src/pages/ViajeDetalle'
 import MiCuenta from '../../traficante-app/src/pages/MiCuenta'
@@ -121,7 +123,9 @@ function App() {
         {/* ── TRAFICANTE ── */}
         <Route path="/traficante" element={<><TraficanteNavbar user={user} profile={profile} /><TraficanteHome user={user} /></>} />
         <Route path="/traficante/buscar" element={<><TraficanteNavbar user={user} profile={profile} /><TraficanteBuscar user={user} /></>} />
-        <Route path="/traficante/publicar" element={<><TraficanteNavbar user={user} profile={profile} /><TraficantePublicar user={user} /></>} />
+        <Route path="/traficante/publicar-viajero" element={<><TraficanteNavbar user={user} profile={profile} /><TraficantePublicarViajero user={user} /></>} />
+        <Route path="/traficante/publicar-compactador" element={<><TraficanteNavbar user={user} profile={profile} /><TraficantePublicarCompactador user={user} /></>} />
+        <Route path="/traficante/publicar-flete" element={<><TraficanteNavbar user={user} profile={profile} /><TraficantePublicarFlete user={user} /></>} />
         <Route path="/traficante/viaje/:id" element={<><TraficanteNavbar user={user} profile={profile} /><TraficanteViajeDetalle user={user} /></>} />
         <Route path="/traficante/solicitud/:id" element={<><TraficanteNavbar user={user} profile={profile} /><TraficanteSolicitud user={user} /></>} />
         <Route path="/traficante/mi-cuenta" element={<><TraficanteNavbar user={user} profile={profile} /><MiCuenta user={user} onProfileUpdate={setProfile} /></>}>

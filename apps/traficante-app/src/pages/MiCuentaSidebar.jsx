@@ -10,9 +10,9 @@ const SECTIONS = [
 ]
 
 const PUBLISH_OPTIONS = [
-  { type: 'viajero', label: 'Publicar viaje', icon: Plane, path: '/traficante/publicar?type=viajero' },
-  { type: 'compactador', label: 'Publicar compactación', icon: Package, path: '/traficante/publicar?type=compactador' },
-  { type: 'flete', label: 'Publicar flete', icon: Truck, path: '/traficante/publicar?type=flete' },
+  { type: 'viajero', label: 'Publicar viaje', icon: Plane, path: '/traficante/publicar-viajero' },
+  { type: 'compactador', label: 'Publicar compactación', icon: Package, path: '/traficante/publicar-compactador' },
+  { type: 'flete', label: 'Publicar flete', icon: Truck, path: '/traficante/publicar-flete' },
 ]
 
 export default function MiCuentaSidebar({ user, profile, verifRequest, avgRating, reviewsCount }) {
