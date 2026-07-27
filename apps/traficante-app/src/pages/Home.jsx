@@ -1,37 +1,42 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import {
+  Shield, Star, Users, Package, Plane, Car, Search,
+  MapPin, Calendar, Lock, Scale, FileText, Zap,
+  Circle, CircleDot, ShieldCheck, Crown
+} from 'lucide-react'
 import './Home.css'
 
 const LEVELS = [
-  { key: 'basic',  icon: '⚪', color: '#888888' },
-  { key: 'mid',    icon: '🔵', color: '#2980B9' },
-  { key: 'pro',    icon: '🟣', color: '#8E44AD' },
-  { key: 'elite',  icon: '🟤', color: '#784212' },
+  { key: 'basic',  Icon: Circle,    color: '#888888' },
+  { key: 'mid',    Icon: CircleDot, color: '#2980B9' },
+  { key: 'pro',    Icon: ShieldCheck, color: '#8E44AD' },
+  { key: 'elite',  Icon: Crown,     color: '#784212' },
 ]
 
 const HOW_STEPS = [
-  { icon: '✈️', title: 'El viajero publica su ruta', desc: 'Define origen, destino, fecha y espacio disponible. Recibe paquetes en su domicilio verificado.' },
-  { icon: '📦', title: 'Tú encuentras y solicitas', desc: 'Busca por ruta y fecha, revisa el perfil y nivel del viajero, y envía tu solicitud con fotos del paquete.' },
-  { icon: '📲', title: 'Entrega segura con QR', desc: 'El receptor escanea el QR al recibir. El pago se libera automáticamente. Todo registrado.' },
+  { Icon: Plane, title: 'El viajero publica su ruta', desc: 'Define origen, destino, fecha y espacio disponible. Recibe paquetes en su domicilio verificado.' },
+  { Icon: Search, title: 'Tú encuentras y solicitas', desc: 'Busca por ruta y fecha, revisa el perfil y nivel del viajero, y envía tu solicitud con fotos del paquete.' },
+  { Icon: Package, title: 'Entrega segura con QR', desc: 'El receptor escanea el QR al recibir. El pago se libera automáticamente. Todo registrado.' },
 ]
 
 const EARN_PROFILES = [
   {
-    icon: '🧳',
+    Icon: Package,
     title: 'Viajero',
     desc: 'Tienes un viaje programado y espacio libre en tu maleta. Cada paquete que llevas es dinero extra sin esfuerzo adicional.',
     cta: 'Publicar mi viaje',
     route: '/traficante/publicar-viaje'
   },
   {
-    icon: '📦',
+    Icon: Package,
     title: 'Compactador',
     desc: 'Recibes paquetes en tu domicilio, los consolidas en una caja y los envías. Sin viajar, desde tu casa, con horarios propios.',
     cta: 'Ser compactador',
     route: '/traficante/publicar-viaje'
   },
   {
-    icon: '🚗',
+    Icon: Car,
     title: 'Fletero',
     desc: 'Tienes vehículo y viajas entre ciudades. Llena tu auto o camioneta con carga y convierte cada viaje en un negocio.',
     cta: 'Ofrecer mi vehículo',
@@ -64,8 +69,8 @@ export default function TraficanteHome({ user }) {
   const heroRef = useFadeIn()
   const earnRef = useFadeIn()
   const howRef = useFadeIn()
+  const escrowRef = useFadeIn()
   const levelsRef = useFadeIn()
-  const guaranteeRef = useFadeIn()
   const registerRef = useFadeIn()
 
   const handleSearch = (e) => {
@@ -93,29 +98,29 @@ export default function TraficanteHome({ user }) {
               Conectamos viajeros con <span className="highlight">espacio en su equipaje</span> y personas que necesitan enviar. Sin couriers, sin burocracia, con garantías reales.
             </p>
             <div className="t-hero-badges">
-              <span className="t-hero-badge-item">🛡️ Identidad verificada</span>
-              <span className="t-hero-badge-item">⭐ Sistema de reputación</span>
-              <span className="t-hero-badge-item">🚐 Flota comunitaria</span>
+              <span className="t-hero-badge-item"><Shield size={14} /> Identidad verificada</span>
+              <span className="t-hero-badge-item"><Star size={14} /> Sistema de reputación</span>
+              <span className="t-hero-badge-item"><Users size={14} /> Flota comunitaria</span>
             </div>
             <div className="t-hero-actions">
               <button
                 className="btn btn-primary t-btn-primary"
                 onClick={() => navigate('/traficante/buscar')}
               >
-                📦 Quiero enviar algo
+                <Package size={14} /> Quiero enviar algo
               </button>
               <button
                 className="btn btn-outline t-btn-outline"
                 onClick={() => navigate('/traficante/publicar-viaje')}
               >
-                ✈️ Ofrecer mi espacio
+                <Plane size={14} /> Ofrecer mi espacio
               </button>
               {!user && (
                 <button
                   className="btn btn-ghost t-btn-ghost"
                   onClick={() => navigate('/auth')}
                 >
-                  👤 Crear cuenta gratis
+                  <Users size={14} /> Crear cuenta gratis
                 </button>
               )}
             </div>
@@ -127,7 +132,7 @@ export default function TraficanteHome({ user }) {
               <form className="t-search-form-hero" onSubmit={handleSearch}>
                 <div className="t-hero-search-fields">
                   <div className="t-field-hero">
-                    <label>📍 Ciudad de origen</label>
+                    <label><MapPin size={13} /> Ciudad de origen</label>
                     <input
                       className="input"
                       type="text"
@@ -137,7 +142,7 @@ export default function TraficanteHome({ user }) {
                     />
                   </div>
                   <div className="t-field-hero">
-                    <label>🎯 Ciudad de destino</label>
+                    <label><MapPin size={13} /> Ciudad de destino</label>
                     <input
                       className="input"
                       type="text"
@@ -147,7 +152,7 @@ export default function TraficanteHome({ user }) {
                     />
                   </div>
                   <div className="t-field-hero">
-                    <label>📅 Fecha estimada</label>
+                    <label><Calendar size={13} /> Fecha estimada</label>
                     <input
                       className="input"
                       type="date"
@@ -157,7 +162,7 @@ export default function TraficanteHome({ user }) {
                   </div>
                 </div>
                 <button type="submit" className="btn btn-primary t-btn-primary t-search-btn-hero">
-                  🔍 Buscar transportadores
+                  <Search size={14} /> Buscar transportadores
                 </button>
               </form>
             </div>
@@ -170,7 +175,7 @@ export default function TraficanteHome({ user }) {
       <section className="t-earn-section" ref={earnRef}>
         <div className="container">
           <div className="t-earn-header">
-            <div className="t-earn-badge">💰 Para transportadores</div>
+            <div className="t-earn-badge"><Zap size={13} /> Para transportadores</div>
             <h2 className="t-section-title">¿Viajas seguido? Cada viaje puede generarte ingresos</h2>
             <p className="t-earn-subtitle">
               Convierte tus viajes, tu vehículo o tu domicilio en una fuente de ingresos.
@@ -180,21 +185,20 @@ export default function TraficanteHome({ user }) {
           <div className="t-earn-grid">
             {EARN_PROFILES.map((profile) => (
               <div key={profile.title} className="t-earn-card card">
-                <div className="t-earn-icon">{profile.icon}</div>
+                <div className="t-earn-icon"><profile.Icon size={32} /></div>
                 <h3>{profile.title}</h3>
                 <p>{profile.desc}</p>
                 <button
                   className="btn btn-outline t-btn-outline t-earn-btn"
                   onClick={() => navigate(user ? profile.route : '/auth')}
                 >
-                  {user ? profile.cta : '→ Registrarme y empezar'}
+                  {user ? profile.cta : 'Registrarme y empezar'}
                 </button>
               </div>
             ))}
           </div>
           <div className="t-earn-cta">
             <div className="t-earn-cta-text">
-              <span>🏴‍☠️</span>
               <p>Somos competencia directa de las empresas de paquetería. La diferencia: <strong>el dinero va a las personas, no a las corporaciones.</strong></p>
             </div>
           </div>
@@ -209,7 +213,7 @@ export default function TraficanteHome({ user }) {
             {HOW_STEPS.map((step, i) => (
               <div key={i} className="t-step-card card">
                 <div className="t-step-number">{i + 1}</div>
-                <div className="t-step-icon">{step.icon}</div>
+                <div className="t-step-icon"><step.Icon size={32} /></div>
                 <h3>{step.title}</h3>
                 <p>{step.desc}</p>
               </div>
@@ -218,40 +222,55 @@ export default function TraficanteHome({ user }) {
         </div>
       </section>
 
-      {/* ── NIVELES ── */}
-      <section className="t-levels-section" ref={levelsRef}>
+      {/* ── EVITA SER ESTAFADO (ESCROW) ── */}
+      <section className="t-escrow-section" ref={escrowRef}>
         <div className="container">
-          <h2 className="t-section-title text-center">Niveles de confianza</h2>
-          <div className="t-levels-grid">
-            {LEVELS.map(level => (
-              <div key={level.key} className="t-level-card card">
-                <div className="t-level-icon" style={{ color: level.color }}>
-                  {level.icon}
-                </div>
-                <h4 style={{ color: level.color }}>
-                  {level.key === 'basic' ? 'Básico' : level.key === 'mid' ? 'Medio' : level.key === 'pro' ? 'PRO' : 'Elite'}
-                </h4>
-                <p>
-                  {level.key === 'basic' && 'Identidad y dirección verificadas. Ideal para paquetes de bajo valor.'}
-                  {level.key === 'mid' && 'Agrega garantía por artículo y escrow. Puede comprar por encargo.'}
-                  {level.key === 'pro' && 'Oficina o domicilio habilitado. Rutas frecuentes. Paquetes de valor medio-alto.'}
-                  {level.key === 'elite' && 'Dirección verificada en dos países. Máxima confianza. Agente de logística.'}
-                </p>
-              </div>
-            ))}
+          <div className="t-escrow-header">
+            <h2 className="t-section-title">Evita ser estafado</h2>
+            <p className="t-escrow-subtitle">
+              Tu dinero nunca llega directamente al transportador. El sistema lo retiene de forma segura hasta que confirmes que todo salió bien.
+            </p>
+          </div>
+          <div className="t-escrow-grid">
+            <div className="t-escrow-step">
+              <Lock size={24} className="t-escrow-icon" />
+              <h4>Depósito seguro</h4>
+              <p>Pagas al momento de confirmar el envío. El dinero queda en nuestra cuenta de escrow, no en manos del transportador.</p>
+            </div>
+            <div className="t-escrow-step">
+              <ShieldCheck size={24} className="t-escrow-icon" />
+              <h4>Verificación de entrega</h4>
+              <p>El receptor escanea un código QR al recibir el paquete. Esto confirma que la entrega se realizó correctamente.</p>
+            </div>
+            <div className="t-escrow-step">
+              <Zap size={24} className="t-escrow-icon" />
+              <h4>Liberación automática</h4>
+              <p>Una vez confirmada la entrega, el dinero se libera al transportador. Si algo sale mal, se abre una disputa.</p>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ── GARANTÍA ── */}
-      <section className="t-guarantee-section" ref={guaranteeRef}>
+      {/* ── NIVELES DE CONFIANZA ── */}
+      <section className="t-levels-section" ref={levelsRef}>
         <div className="container">
-          <div className="t-guarantee-card">
-            <div className="t-guarantee-icon">🔒</div>
-            <div>
-              <h3>Tu dinero siempre protegido</h3>
-              <p>El pago queda en escrow hasta que el receptor confirma la entrega. Nadie puede quedarse con tu dinero.</p>
-            </div>
+          <h2 className="t-section-title text-center">Niveles de confianza</h2>
+          <p className="t-levels-intro">Cada transportador asciende de nivel al completar verificaciones. Más verificaciones = más confianza.</p>
+          <div className="t-levels-grid">
+            {LEVELS.map(level => (
+              <div key={level.key} className="t-level-card card">
+                <level.Icon size={24} className="t-level-icon-svg" style={{ color: level.color }} />
+                <h4 style={{ color: level.color }}>
+                  {level.key === 'basic' ? 'Básico' : level.key === 'mid' ? 'Medio' : level.key === 'pro' ? 'PRO' : 'Elite'}
+                </h4>
+                <p>
+                  {level.key === 'basic' && 'Identidad y dirección verificadas.'}
+                  {level.key === 'mid' && 'Garantía por artículo y escrow habilitado.'}
+                  {level.key === 'pro' && 'Domicilio verificado. Rutas frecuentes.'}
+                  {level.key === 'elite' && 'Verificado en dos países. Agente de logística.'}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -268,13 +287,13 @@ export default function TraficanteHome({ user }) {
                   className="btn btn-primary t-btn-primary"
                   onClick={() => navigate('/auth')}
                 >
-                  🚀 Crear cuenta gratis
+                  <Zap size={14} /> Crear cuenta gratis
                 </button>
                 <button
                   className="btn btn-outline t-btn-outline"
                   onClick={() => navigate('/traficante/buscar')}
                 >
-                  🔍 Buscar transportadores
+                  <Search size={14} /> Buscar transportadores
                 </button>
               </div>
             </div>
@@ -285,13 +304,21 @@ export default function TraficanteHome({ user }) {
       {/* ── FOOTER LEGAL ── */}
       <footer className="t-footer-legal">
         <div className="container">
-          <p className="t-footer-legal-text">⚖️ Cada viajero es responsable de cumplir la legislación aduanera del país de destino. Traficante no fomenta ni se hace responsable por el transporte de artículos ilegales.</p>
-          <button
-            className="t-footer-legal-link"
-            onClick={() => navigate('/traficante/legal')}
-          >
-            📄 Aviso legal completo
-          </button>
+          <div className="t-footer-legal-content">
+            <div className="t-footer-legal-brand">
+              <span className="t-footer-legal-name">Traficante</span>
+              <span className="t-footer-legal-by">by Buses App</span>
+            </div>
+            <div className="t-footer-legal-right">
+              <p className="t-footer-legal-text"><Scale size={13} /> Cada viajero es responsable de cumplir la legislación aduanera del país de destino.</p>
+              <button
+                className="t-footer-legal-link"
+                onClick={() => navigate('/traficante/legal')}
+              >
+                <FileText size={12} /> Aviso legal completo
+              </button>
+            </div>
+          </div>
         </div>
       </footer>
 
