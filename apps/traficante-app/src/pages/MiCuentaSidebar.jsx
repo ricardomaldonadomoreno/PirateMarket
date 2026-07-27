@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import { Plane, Package, Truck, User, Shield, Star, Trophy } from 'lucide-react'
+import { Plane, User, Shield, Star, Trophy } from 'lucide-react'
 
 const SECTIONS = [
   { key: 'viajes',       icon: Plane, label: 'Mis viajes', path: '/traficante/mi-cuenta/viajes' },
@@ -7,12 +7,6 @@ const SECTIONS = [
   { key: 'verificacion', icon: Shield, label: 'Verificación', path: '/traficante/mi-cuenta/verificacion' },
   { key: 'resenas',      icon: Star, label: 'Mis reseñas', path: '/traficante/mi-cuenta/resenas' },
   { key: 'nivel',        icon: Trophy, label: 'Mi nivel', path: '/traficante/mi-cuenta/nivel' },
-]
-
-const PUBLISH_OPTIONS = [
-  { type: 'viajero', label: 'Publicar viaje', icon: Plane, path: '/traficante/publicar-viajero' },
-  { type: 'compactador', label: 'Publicar compactación', icon: Package, path: '/traficante/publicar-compactador' },
-  { type: 'flete', label: 'Publicar flete', icon: Truck, path: '/traficante/publicar-flete' },
 ]
 
 export default function MiCuentaSidebar({ user, profile, verifRequest, avgRating, reviewsCount }) {
@@ -39,14 +33,6 @@ export default function MiCuentaSidebar({ user, profile, verifRequest, avgRating
             <Star size={13} className="mc-star-icon" /> {avgRating} <span>({reviewsCount} reseñas)</span>
           </div>
         )}
-      </div>
-
-      <div className="mc-sidebar-cta">
-        {PUBLISH_OPTIONS.map(opt => (
-          <Link key={opt.type} to={opt.path} className="mc-cta-sub-btn">
-            <opt.icon size={13} /> {opt.label}
-          </Link>
-        ))}
       </div>
 
       <nav className="mc-nav">

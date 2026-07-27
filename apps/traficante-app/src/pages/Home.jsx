@@ -26,21 +26,21 @@ const EARN_PROFILES = [
     title: 'Viajero',
     desc: 'Tienes un viaje programado y espacio libre en tu maleta. Cada paquete que llevas es dinero extra sin esfuerzo adicional.',
     cta: 'Publicar mi viaje',
-    route: '/traficante/publicar-viaje'
+    route: '/traficante/publicar-viajero'
   },
   {
     Icon: Package,
     title: 'Compactador',
     desc: 'Recibes paquetes en tu domicilio, los consolidas en una caja y los envías. Sin viajar, desde tu casa, con horarios propios.',
     cta: 'Ser compactador',
-    route: '/traficante/publicar-viaje'
+    route: '/traficante/publicar-compactador'
   },
   {
     Icon: Car,
     title: 'Fletero',
     desc: 'Tienes vehículo y viajas entre ciudades. Llena tu auto o camioneta con carga y convierte cada viaje en un negocio.',
     cta: 'Ofrecer mi vehículo',
-    route: '/traficante/publicar-viaje'
+    route: '/traficante/publicar-flete'
   },
 ]
 

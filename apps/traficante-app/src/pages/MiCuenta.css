@@ -782,6 +782,44 @@
   letter-spacing: 0.5px;
 }
 
+.mc-publish-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-left: auto;
+  align-items: center;
+}
+
+.mc-publish-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.75rem;
+  background: transparent;
+  border: 1px solid rgba(var(--gold-rgb), 0.3);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mc-publish-btn svg {
+  color: var(--gold);
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.mc-publish-btn:hover {
+  border-color: rgba(var(--gold-rgb), 0.6);
+  color: var(--text-light);
+  background: rgba(var(--gold-rgb), 0.06);
+}
+
+.mc-publish-btn:hover svg {
+  opacity: 1;
+}
+
 .mc-trip-filters {
   display: flex;
   gap: 0.5rem;
@@ -949,6 +987,12 @@
 @media (max-width: 768px) {
   .mc-trip-stats {
     gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .mc-publish-actions {
+    width: 100%;
+    margin-left: 0;
+    justify-content: center;
   }
   .mc-trip-stat {
     padding: 0.5rem;

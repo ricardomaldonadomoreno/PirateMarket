@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../../pirata-market/src/lib/supabase'
+import { Plane, Package, Truck } from 'lucide-react'
 import './MiCuenta.css'
 
 const STATUS_LABELS = {
@@ -20,11 +22,22 @@ const TRANSPORT_LABELS = {
   avion: 'Avión',
   bus: 'Bus',
   auto: 'Auto',
+  camioneta: 'Camioneta',
+  van: 'Van / Minibús',
+  camion: 'Camión',
+  moto: 'Moto',
   tren: 'Tren',
   otro: 'Otro',
 }
 
+const TYPE_LABELS = {
+  viajero: 'Viajero',
+  compactador: 'Compactador',
+  flete: 'Flete',
+}
+
 export default function MiCuentaMisViajes({ user }) {
+  const navigate = useNavigate()
   const [trips, setTrips] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('all')
@@ -108,7 +121,7 @@ export default function MiCuentaMisViajes({ user }) {
         <p>Gestiona los servicios que has publicado. Activa, pausa o elimina los que necesites.</p>
       </div>
 
-      {/* Resumen */}
+      {/* Resumen + Botones de publicación */}
       <div className="mc-trip-stats">
         <div className="mc-trip-stat">
           <span className="mc-trip-stat-num">{tripStats.total}</span>
@@ -125,6 +138,19 @@ export default function MiCuentaMisViajes({ user }) {
         <div className="mc-trip-stat">
           <span className="mc-trip-stat-num" style={{ color: '#2980B9' }}>{tripStats.completado}</span>
           <span className="mc-trip-stat-label">Completados</span>
+        </div>
+
+        {/* Botones de publicación nuevos */}
+        <div className="mc-publish-actions">
+          <button className="mc-publish-btn" onClick={() => navigate('/traficante/publicar-viajero')}>
+            <Plane size={14} /> Viajero
+          </button>
+          <button className="mc-publish-btn" onClick={() => navigate('/traficante/publicar-compactador')}>
+            <Package size={14} /> Compactador
+          </button>
+          <button className="mc-publish-btn" onClick={() => navigate('/traficante/publicar-flete')}>
+            <Truck size={14} /> Flete
+          </button>
         </div>
       </div>
 
@@ -162,7 +188,7 @@ export default function MiCuentaMisViajes({ user }) {
             <div key={trip.id} className="mc-trip-card">
               <div className="mc-trip-card-header">
                 <div className="mc-trip-type">
-                  {trip.type === 'viajero' ? 'Viajero' : 'Compactador'}
+                  {TYPE_LABELS[trip.type] || trip.type}
                 </div>
                 <div className="mc-trip-status" style={{ background: STATUS_COLORS[trip.status] }}>
                   {STATUS_LABELS[trip.status] || trip.status}
