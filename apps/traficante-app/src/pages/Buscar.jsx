@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
-import { supabase } from '../../lib/supabaseClient'
+import { supabase } from '../../../pirata-market/src/lib/supabase'
 import {
   Search, MapPin, Calendar, Plane, Car, Package,
   Shield, ShieldCheck, Star, Check, ArrowRight,
