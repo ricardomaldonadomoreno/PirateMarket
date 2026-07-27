@@ -171,18 +171,15 @@ export default function MiPerfil({ user, onProfileUpdate }) {
     if (deleteConfirmText !== 'ELIMINAR') return
     setDeleting(true)
     try {
-      // Eliminar avatar
-      if (profile?.avatar_url) {
-        const oldPath = profile.avatar_url.split('/avatars/')[1]?.split('?')[0]
-        if (oldPath) await supabase.storage.from('avatars').remove([oldPath])
-      }
-      // Eliminar user
-      await supabase.from('users').delete().eq('id', user.id)
-      // Eliminar session
+      // Llamar función SQL que borra TODO del usuario
+      const { error: rpcError } = await supabase
+        .rpc('delete_user_account', { p_user_id: user.id })
+      if (rpcError) throw rpcError
+      // Cerrar sesión local
       await supabase.auth.signOut()
       navigate('/')
     } catch (err) {
-      setError('Error al eliminar la cuenta: ' + err.message)
+      setError('Error al eliminar la cuenta: ' + (err.message || err))
     }
     setDeleting(false)
   }
