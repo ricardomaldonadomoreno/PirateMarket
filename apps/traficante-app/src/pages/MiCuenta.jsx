@@ -6,6 +6,7 @@ import 'leaflet/dist/leaflet.css'
 import './MiCuenta.css'
 import MiCuentaSidebar from './MiCuentaSidebar'
 import MiCuentaMisViajes from './MiCuentaMisViajes'
+import CityAutocomplete from '../../../pirata-market/src/components/CityAutocomplete'
 
 function MapPicker({ onSelect }) {
   useMapEvents({
@@ -34,6 +35,8 @@ export default function MiCuenta({ user, onProfileUpdate }) {
   const [fullName, setFullName] = useState('')
   const [phone, setPhone] = useState('')
   const [addressCity, setAddressCity] = useState('')
+  const [addressCountry, setAddressCountry] = useState('')
+  const [addressCityObj, setAddressCityObj] = useState(null) // { city, country, lat, lng }
   const [addressText, setAddressText] = useState('')
   const [addressCoords, setAddressCoords] = useState(null)
 
@@ -55,7 +58,7 @@ export default function MiCuenta({ user, onProfileUpdate }) {
       .select(`
         display_name, avatar_url,
         traficante_full_name, traficante_phone,
-        traficante_address_city, traficante_address_text,
+        traficante_address_city, traficante_address_country, traficante_address_text,
         traficante_address_lat, traficante_address_lng,
         traficante_address_locked, traficante_phone_locked,
         traficante_bio, traficante_frequent_routes,
@@ -71,7 +74,11 @@ export default function MiCuenta({ user, onProfileUpdate }) {
       setFullName(data.traficante_full_name || '')
       setPhone(data.traficante_phone || '')
       setAddressCity(data.traficante_address_city || '')
+      setAddressCountry(data.traficante_address_country || '')
       setAddressText(data.traficante_address_text || '')
+      if (data.traficante_address_city) {
+        setAddressCityObj({ city: data.traficante_address_city, country: data.traficante_address_country, lat: data.traficante_address_lat, lng: data.traficante_address_lng })
+      }
       if (data.traficante_address_lat && data.traficante_address_lng) {
         setAddressCoords({ lat: data.traficante_address_lat, lng: data.traficante_address_lng })
       }
@@ -140,10 +147,11 @@ export default function MiCuenta({ user, onProfileUpdate }) {
     setSaving(true)
     setError('')
     const { error: err } = await supabase.from('users').update({
-      traficante_address_city: addressCity,
+      traficante_address_city: addressCityObj?.city || addressCity,
+      traficante_address_country: addressCityObj?.country || addressCountry,
       traficante_address_text: addressText,
-      traficante_address_lat: addressCoords?.lat || null,
-      traficante_address_lng: addressCoords?.lng || null,
+      traficante_address_lat: addressCityObj?.lat || addressCoords?.lat || null,
+      traficante_address_lng: addressCityObj?.lng || addressCoords?.lng || null,
       traficante_address_locked: true,
     }).eq('id', user.id)
     setSaving(false)
@@ -294,10 +302,20 @@ export default function MiCuenta({ user, onProfileUpdate }) {
                 ) : (
                   <>
                     <div className="mc-field-group">
-                      <label className="mc-label">Ciudad *</label>
-                      <input className="input" value={addressCity}
-                        onChange={e => setAddressCity(e.target.value)}
-                        placeholder="Ej: Santa Cruz de la Sierra, Bolivia" />
+                      <label className="mc-label">Ciudad y país *</label>
+                      <CityAutocomplete
+                        label=""
+                        placeholder="Escribe tu ciudad para buscarla"
+                        value={addressCityObj}
+                        onChange={(val) => {
+                          setAddressCityObj(val)
+                          setAddressCity(val?.city || '')
+                          setAddressCountry(val?.country || '')
+                          if (val?.lat && val?.lng) {
+                            setAddressCoords({ lat: val.lat, lng: val.lng })
+                          }
+                        }}
+                      />
                     </div>
 
                     <div className="mc-field-group">

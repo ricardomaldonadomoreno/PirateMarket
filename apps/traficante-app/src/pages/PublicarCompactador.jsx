@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../../pirata-market/src/lib/supabase'
-import CityAutocomplete from '../components/CityAutocomplete'
+import CityAutocomplete from '../../../pirata-market/src/components/CityAutocomplete'
 import {
   Package, MapPin, Clock, DollarSign, FileText,
   AlertTriangle, CheckCircle2, Info, ShieldAlert,
@@ -50,31 +50,31 @@ export default function PublicarCompactador({ user }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [verifiedAddr, setVerifiedAddr] = useState(null)
-  const [verifiedFieldUsed, setVerifiedFieldUsed] = useState(null)
 
   useEffect(() => {
     if (user?.id) {
       supabase
         .from('users')
-        .select('traficante_address_city, traficante_address_text, traficante_address_lat, traficante_address_lng, traficante_address_locked')
+        .select('traficante_address_city, traficante_address_country, traficante_address_text, traficante_address_lat, traficante_address_lng, traficante_address_locked')
         .eq('id', user.id)
         .single()
         .then(({ data }) => {
           if (data && data.traficante_address_city && data.traficante_address_locked) {
             setVerifiedAddr({
-              country: '',
               city: data.traficante_address_city,
+              country: data.traficante_address_country,
               lat: data.traficante_address_lat,
               lng: data.traficante_address_lng,
-              address: data.traficante_address_text,
             })
           }
         })
     }
   }, [user])
 
-  const handleVerifiedUsed = (fieldKey) => {
-    setVerifiedFieldUsed(fieldKey)
+  const fillWithVerifiedAddress = () => {
+    if (!verifiedAddr) return
+    if (!origin) setOrigin({ city: verifiedAddr.city, country: verifiedAddr.country, lat: verifiedAddr.lat, lng: verifiedAddr.lng })
+    if (!destination) setDestination({ city: verifiedAddr.city, country: verifiedAddr.country, lat: verifiedAddr.lat, lng: verifiedAddr.lng })
   }
 
   const toggleDay = (i) => {
@@ -184,6 +184,15 @@ export default function PublicarCompactador({ user }) {
         <div className="pub-form-col">
           <form onSubmit={handleSubmit} className="pub-form">
 
+            {verifiedAddr && (
+              <div className="pub-verified-row">
+                <button type="button" className="btn pub-verified-btn" onClick={fillWithVerifiedAddress}>
+                  <MapPin size={14} /> Usar mi dirección oficial
+                </button>
+                <span className="pub-verified-hint">Rellena tu punto de recepción con tu ciudad verificada</span>
+              </div>
+            )}
+
             {/* Origen (punto de recepción) */}
             <div className="pub-section">
               <div className="pub-section-label"><Home size={14} /> ¿Dónde recibes los paquetes?</div>
@@ -192,11 +201,6 @@ export default function PublicarCompactador({ user }) {
                 placeholder="Escribe tu ciudad"
                 value={origin}
                 onChange={setOrigin}
-                useVerifiedAddress
-                verifiedAddress={verifiedAddr}
-                fieldKey="origin"
-                verifiedFieldUsed={verifiedFieldUsed}
-                onVerifiedUsed={handleVerifiedUsed}
               />
             </div>
 
@@ -208,11 +212,6 @@ export default function PublicarCompactador({ user }) {
                 placeholder="Ej: La Paz, Bolivia"
                 value={destination}
                 onChange={setDestination}
-                useVerifiedAddress
-                verifiedAddress={verifiedAddr}
-                fieldKey="destination"
-                verifiedFieldUsed={verifiedFieldUsed}
-                onVerifiedUsed={handleVerifiedUsed}
               />
             </div>
 

@@ -283,6 +283,45 @@
   border-top: 1px solid var(--dark-border);
 }
 
+/* ── Dirección verificada ── */
+.pub-verified-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: rgba(212, 175, 55, 0.06);
+  border: 1px solid rgba(212, 175, 55, 0.15);
+  border-radius: var(--radius-sm);
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.pub-verified-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.75rem;
+  background: rgba(212, 175, 55, 0.1);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: var(--radius-sm);
+  color: var(--gold);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.pub-verified-btn:hover {
+  background: rgba(212, 175, 55, 0.2);
+  border-color: var(--gold);
+}
+
+.pub-verified-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
 /* ── Responsive ── */
 @media (max-width: 900px) {
   .pub-layout {
