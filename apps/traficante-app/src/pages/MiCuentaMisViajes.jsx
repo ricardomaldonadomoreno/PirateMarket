@@ -40,27 +40,21 @@ export default function MiCuentaMisViajes({ user }) {
   const navigate = useNavigate()
   const [trips, setTrips] = useState([])
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState('all')
 
   useEffect(() => {
     if (!user) return
     loadTrips()
-  }, [user, filter])
+  }, [user])
 
   const loadTrips = async () => {
     setLoading(true)
     try {
-      let query = supabase
+      const { data, error } = await supabase
         .from('traficante_trips')
         .select('id, type, status, origin_city, destination_city, departure_date, transport_mode, currency, description, created_at')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
 
-      if (filter !== 'all') {
-        query = query.eq('status', filter)
-      }
-
-      const { data, error } = await query
       if (error) {
         console.error('Error loading trips:', error)
       } else {
@@ -106,14 +100,6 @@ export default function MiCuentaMisViajes({ user }) {
     ? new Date(date).toLocaleDateString('es-BO', { day: '2-digit', month: '2-digit', year: 'numeric' })
     : '—'
 
-  const tripStats = {
-    total: trips.length,
-    activo: trips.filter(t => t.status === 'activo').length,
-    pausado: trips.filter(t => t.status === 'pausado').length,
-    cancelado: trips.filter(t => t.status === 'cancelado').length,
-    completado: trips.filter(t => t.status === 'completado').length,
-  }
-
   return (
     <div className="mc-section">
       <div className="mc-section-header">
@@ -121,53 +107,33 @@ export default function MiCuentaMisViajes({ user }) {
         <p>Gestiona los servicios que has publicado. Activa, pausa o elimina los que necesites.</p>
       </div>
 
-      {/* Resumen + Botones de publicación */}
-      <div className="mc-trip-stats">
-        <div className="mc-trip-stat">
-          <span className="mc-trip-stat-num">{tripStats.total}</span>
-          <span className="mc-trip-stat-label">Total</span>
-        </div>
-        <div className="mc-trip-stat">
-          <span className="mc-trip-stat-num" style={{ color: '#27AE60' }}>{tripStats.activo}</span>
-          <span className="mc-trip-stat-label">Activos</span>
-        </div>
-        <div className="mc-trip-stat">
-          <span className="mc-trip-stat-num" style={{ color: '#F39C12' }}>{tripStats.pausado}</span>
-          <span className="mc-trip-stat-label">Pausados</span>
-        </div>
-        <div className="mc-trip-stat">
-          <span className="mc-trip-stat-num" style={{ color: '#2980B9' }}>{tripStats.completado}</span>
-          <span className="mc-trip-stat-label">Completados</span>
-        </div>
-
-        {/* Botones de publicación nuevos */}
-        <div className="mc-publish-actions">
-          <button className="mc-publish-btn" onClick={() => navigate('/traficante/publicar-viajero')}>
-            <Plane size={14} /> Viajero
-          </button>
-          <button className="mc-publish-btn" onClick={() => navigate('/traficante/publicar-compactador')}>
-            <Package size={14} /> Compactador
-          </button>
-          <button className="mc-publish-btn" onClick={() => navigate('/traficante/publicar-flete')}>
-            <Truck size={14} /> Flete
-          </button>
-        </div>
+      {/* Botones de publicación prominentes */}
+      <div className="mc-publish-row">
+        <button className="mc-publish-btn-lg" onClick={() => navigate('/traficante/publicar-viajero')}>
+          <Plane size={18} /> Publicar viaje
+        </button>
+        <button className="mc-publish-btn-lg" onClick={() => navigate('/traficante/publicar-compactador')}>
+          <Package size={18} /> Publicar compactación
+        </button>
+        <button className="mc-publish-btn-lg" onClick={() => navigate('/traficante/publicar-flete')}>
+          <Truck size={18} /> Publicar flete
+        </button>
       </div>
 
-      {/* Filtros */}
-      <div className="mc-trip-filters">
-        <button className={`mc-trip-filter-btn ${filter === 'all' ? 'active' : ''}`} onClick={() => setFilter('all')}>
-          Todos ({tripStats.total})
-        </button>
-        <button className={`mc-trip-filter-btn ${filter === 'activo' ? 'active' : ''}`} onClick={() => setFilter('activo')}>
-          Activos ({tripStats.activo})
-        </button>
-        <button className={`mc-trip-filter-btn ${filter === 'pausado' ? 'active' : ''}`} onClick={() => setFilter('pausado')}>
-          Pausados ({tripStats.pausado})
-        </button>
-        <button className={`mc-trip-filter-btn ${filter === 'completado' ? 'active' : ''}`} onClick={() => setFilter('completado')}>
-          Completados ({tripStats.completado})
-        </button>
+      {/* Estadísticas compactas */}
+      <div className="mc-trip-stats-compact">
+        <span className="mc-stat-mini">
+          <strong>{trips.length}</strong> Total
+        </span>
+        <span className="mc-stat-mini">
+          <strong style={{ color: '#27AE60' }}>{trips.filter(t => t.status === 'activo').length}</strong> Activos
+        </span>
+        <span className="mc-stat-mini">
+          <strong style={{ color: '#F39C12' }}>{trips.filter(t => t.status === 'pausado').length}</strong> Pausados
+        </span>
+        <span className="mc-stat-mini">
+          <strong style={{ color: '#2980B9' }}>{trips.filter(t => t.status === 'completado').length}</strong> Completados
+        </span>
       </div>
 
       {/* Lista */}
