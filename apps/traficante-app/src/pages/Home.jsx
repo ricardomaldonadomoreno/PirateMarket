@@ -64,7 +64,6 @@ export default function TraficanteHome({ user }) {
   const navigate = useNavigate()
   const [origin, setOrigin] = useState('')
   const [destination, setDestination] = useState('')
-  const [date, setDate] = useState('')
 
   const heroRef = useFadeIn()
   const earnRef = useFadeIn()
@@ -78,7 +77,6 @@ export default function TraficanteHome({ user }) {
     const params = new URLSearchParams()
     if (origin) params.set('origen', origin)
     if (destination) params.set('destino', destination)
-    if (date) params.set('fecha', date)
     navigate(`/traficante/buscar?${params.toString()}`)
   }
 
@@ -149,15 +147,6 @@ export default function TraficanteHome({ user }) {
                       placeholder="Ej: São Paulo, Brasil"
                       value={destination}
                       onChange={e => setDestination(e.target.value)}
-                    />
-                  </div>
-                  <div className="t-field-hero">
-                    <label><Calendar size={13} /> Fecha estimada</label>
-                    <input
-                      className="input"
-                      type="date"
-                      value={date}
-                      onChange={e => setDate(e.target.value)}
                     />
                   </div>
                 </div>
