@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 
 const SECTIONS = [
   { key: 'viajes',       icon: '🚐', label: 'Mis viajes', path: '/traficante/mi-cuenta/viajes' },
@@ -32,6 +32,12 @@ export default function MiCuentaSidebar({ user, profile, verifRequest, avgRating
             ⭐ {avgRating} <span>({reviewsCount} reseñas)</span>
           </div>
         )}
+      </div>
+
+      <div className="mc-sidebar-cta">
+        <Link to="/traficante/publicar-viaje" className="mc-cta-btn">
+          + Publicar servicio
+        </Link>
       </div>
 
       <nav className="mc-nav">
