@@ -90,7 +90,7 @@ export default function TraficanteHome({ user }) {
               Viajeros que transportan tu mercadería
             </h1>
             <p className="t-hero-subtitle">
-              Conectamos a personas que ya viajan con <span className="highlight">espacio en equipaje</span> con personas que necesitan enviar. Sin couriers, sin burocracia, con garantías reales.
+              Conectamos viajeros con <span className="highlight">espacio en su equipaje</span> y personas que necesitan enviar. Sin couriers, sin burocracia, con garantías reales.
             </p>
             <div className="t-hero-badges">
               <span className="t-hero-badge-item">🛡️ Identidad verificada</span>
