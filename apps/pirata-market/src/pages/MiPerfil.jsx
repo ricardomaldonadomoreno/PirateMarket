@@ -1,20 +1,24 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import {
+  Camera, Trash2, Lock, Eye, EyeOff, AlertTriangle,
+  User, ShieldCheck, Mail, Phone, ShieldAlert, LogOut
+} from 'lucide-react'
 import './MiPerfil.css'
 
 const USER_TYPE_LABELS = {
-  person:    { label: 'Persona',    icon: '👤', color: 'var(--text-muted)' },
-  shop:      { label: 'Tienda',     icon: '🏪', color: 'var(--gold)' },
-  wholesale: { label: 'Mayorista',  icon: '📦', color: '#2980B9' },
-  admin:     { label: 'Admin',      icon: '🔐', color: 'var(--danger)' },
+  person:    { label: 'Persona',    color: 'var(--text-muted)' },
+  shop:      { label: 'Tienda',     color: 'var(--gold)' },
+  wholesale: { label: 'Mayorista',  color: '#2980B9' },
+  admin:     { label: 'Admin',      color: 'var(--danger)' },
 }
 
 const TRAFICANTE_LEVEL_LABELS = {
-  basico: { label: 'Básico', icon: '⚪', color: 'var(--text-muted)' },
-  medio:  { label: 'Medio',  icon: '🔵', color: '#2980B9' },
-  pro:    { label: 'PRO',    icon: '🟣', color: '#8E44AD' },
-  elite:  { label: 'Elite',  icon: '🟤', color: '#784212' },
+  basico: { label: 'Básico', color: 'var(--text-muted)' },
+  medio:  { label: 'Medio',  color: '#2980B9' },
+  pro:    { label: 'PRO',    color: '#8E44AD' },
+  elite:  { label: 'Elite',  color: '#784212' },
 }
 
 export default function MiPerfil({ user, onProfileUpdate }) {
@@ -28,8 +32,6 @@ export default function MiPerfil({ user, onProfileUpdate }) {
   const [savingName, setSavingName] = useState(false)
   const [savedName, setSavedName] = useState(false)
   const [error, setError] = useState('')
-
-  // Contraseña
   const [showPassword, setShowPassword] = useState(false)
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
@@ -37,6 +39,9 @@ export default function MiPerfil({ user, onProfileUpdate }) {
   const [savingPassword, setSavingPassword] = useState(false)
   const [passwordError, setPasswordError] = useState('')
   const [passwordSaved, setPasswordSaved] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleteConfirmText, setDeleteConfirmText] = useState('')
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     if (!user) return navigate('/auth')
@@ -46,20 +51,16 @@ export default function MiPerfil({ user, onProfileUpdate }) {
   const loadProfile = async () => {
     setLoading(true)
     try {
-      // Datos de users
       const { data: userData } = await supabase
         .from('users')
         .select('display_name, avatar_url, whatsapp, user_type')
         .eq('id', user.id)
         .single()
-
-      // Nivel de Traficante
       const { data: trafData } = await supabase
         .from('traficante_profiles')
         .select('level')
         .eq('id', user.id)
         .single()
-
       if (userData) {
         setProfile(userData)
         setDisplayName(userData.display_name || '')
@@ -165,6 +166,27 @@ export default function MiPerfil({ user, onProfileUpdate }) {
     setSavingPassword(false)
   }
 
+  // ── ELIMINAR CUENTA ──
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== 'ELIMINAR') return
+    setDeleting(true)
+    try {
+      // Eliminar avatar
+      if (profile?.avatar_url) {
+        const oldPath = profile.avatar_url.split('/avatars/')[1]?.split('?')[0]
+        if (oldPath) await supabase.storage.from('avatars').remove([oldPath])
+      }
+      // Eliminar user
+      await supabase.from('users').delete().eq('id', user.id)
+      // Eliminar session
+      await supabase.auth.signOut()
+      navigate('/')
+    } catch (err) {
+      setError('Error al eliminar la cuenta: ' + err.message)
+    }
+    setDeleting(false)
+  }
+
   const userTypeInfo = USER_TYPE_LABELS[profile?.user_type] || USER_TYPE_LABELS['person']
   const trafLevelInfo = TRAFICANTE_LEVEL_LABELS[trafLevel] || null
 
@@ -180,18 +202,21 @@ export default function MiPerfil({ user, onProfileUpdate }) {
         <div className="mp-card">
 
           <div className="mp-header">
-            <h1>👤 Mi Perfil</h1>
-            <p>Gestiona tu identidad y configuración de cuenta.</p>
+            <h1>Perfil Público</h1>
+            <p>Tu información visible para otros usuarios en las aplicaciones.</p>
           </div>
 
           <div className="mp-body">
 
-            {/* ══ SECCIÓN 1 — IDENTIDAD ══ */}
+            {/* ══ SECCIÓN 1 — DATOS PÚBLICOS ══ */}
             <div className="mp-section">
-              <div className="mp-section-title">Identidad</div>
+              <div className="mp-section-header">
+                <User size={16} className="mp-section-icon" />
+                <span>Datos públicos</span>
+              </div>
 
-              {/* Avatar */}
-              <div className="mp-avatar-row">
+              <div className="mp-data-public">
+                {/* Avatar */}
                 <div className="mp-avatar-wrap">
                   {profile?.avatar_url
                     ? <img src={profile.avatar_url} alt="avatar" className="mp-avatar" />
@@ -205,20 +230,35 @@ export default function MiPerfil({ user, onProfileUpdate }) {
                     </div>
                   )}
                 </div>
-                <div className="mp-avatar-info">
-                  <div className="mp-avatar-name">{displayName || user.email?.split('@')[0]}</div>
-                  <div className="mp-avatar-email">{user.email}</div>
-                  <div className="mp-avatar-btns">
-                    <button className="btn btn-secondary mp-btn-sm"
+
+                {/* Nombre + acciones */}
+                <div className="mp-data-public-info">
+                  <label className="mp-label">Nombre de perfil</label>
+                  <p className="mp-hint">Visible públicamente en tus publicaciones.</p>
+                  <div className="mp-name-row">
+                    <input className="input" value={displayName}
+                      onChange={e => setDisplayName(e.target.value)}
+                      placeholder="Ej: Ricardo M." />
+                    <button className="btn btn-primary mp-save-btn"
+                      onClick={handleSaveName} disabled={savingName}>
+                      {savingName
+                        ? <span className="loading" style={{ width: 16, height: 16 }} />
+                        : 'Guardar'}
+                    </button>
+                  </div>
+                  <div className="mp-avatar-actions">
+                    <button className="mp-icon-btn"
                       onClick={() => fileInputRef.current?.click()}
-                      disabled={uploadingAvatar}>
-                      📷 {profile?.avatar_url ? 'Cambiar foto' : 'Subir foto'}
+                      disabled={uploadingAvatar}
+                      title="Subir foto">
+                      <Camera size={14} />
                     </button>
                     {profile?.avatar_url && (
-                      <button className="btn btn-ghost mp-btn-sm mp-btn-danger"
+                      <button className="mp-icon-btn mp-icon-btn-danger"
                         onClick={handleDeleteAvatar}
-                        disabled={uploadingAvatar}>
-                        🗑️ Eliminar
+                        disabled={uploadingAvatar}
+                        title="Eliminar foto">
+                        <Trash2 size={14} />
                       </button>
                     )}
                     <input ref={fileInputRef} type="file" accept="image/*"
@@ -227,99 +267,87 @@ export default function MiPerfil({ user, onProfileUpdate }) {
                 </div>
               </div>
 
-              {/* Nombre */}
-              <div className="mp-field">
-                <label className="mp-label">Nombre de perfil</label>
-                <p className="mp-hint">Este nombre se usa para publicar en ambas apps.</p>
-                <div className="mp-field-row">
-                  <input className="input" value={displayName}
-                    onChange={e => setDisplayName(e.target.value)}
-                    placeholder="Ej: Ricardo M." />
-                  <button className="btn btn-primary mp-save-btn"
-                    onClick={handleSaveName} disabled={savingName}>
-                    {savingName
-                      ? <span className="loading" style={{ width: 16, height: 16 }} />
-                      : '💾 Guardar'}
-                  </button>
-                </div>
-                {error && <div className="mp-error">⚠️ {error}</div>}
-                {savedName && <div className="mp-success">✅ Nombre actualizado</div>}
-              </div>
-
-              {/* Email */}
-              <div className="mp-field">
-                <label className="mp-label">Correo electrónico</label>
-                <p className="mp-hint">El correo con el que creaste tu cuenta.</p>
-                <div className="mp-readonly-field">
-                  <span>✉️</span>
-                  <span>{user.email}</span>
-                </div>
-              </div>
-
-              {/* WhatsApp */}
-              <div className="mp-field">
-                <label className="mp-label">WhatsApp</label>
-                <p className="mp-hint">Número registrado al crear tu cuenta. Es visible públicamente en tus publicaciones.</p>
-                <div className="mp-readonly-field">
-                  <span>📱</span>
-                  <span>{profile?.whatsapp || 'No registrado'}</span>
-                </div>
-              </div>
+              {error && <div className="mp-error"><AlertTriangle size={14} /> {error}</div>}
+              {savedName && <div className="mp-success">Nombre actualizado</div>}
             </div>
 
             {/* ══ SECCIÓN 2 — ESTADO EN APPS ══ */}
             <div className="mp-section">
-              <div className="mp-section-title">Estado en aplicaciones</div>
-              <p className="mp-hint" style={{ marginBottom: '1.25rem' }}>
-                Tu categoría y nivel se asignan desde cada app según tus verificaciones.
+              <div className="mp-section-header">
+                <ShieldCheck size={16} className="mp-section-icon" />
+                <span>Estado en aplicaciones</span>
+              </div>
+              <p className="mp-hint">
+                Tu categoría y nivel se asignan según tus verificaciones.
               </p>
 
               <div className="mp-apps-status">
-                {/* Pirata Market */}
                 <div className="mp-app-status-card">
                   <div className="mp-app-status-header">
-                    <span className="mp-app-status-logo">🏴‍☠️</span>
                     <span className="mp-app-status-name">Pirata Market</span>
                   </div>
                   <div className="mp-app-status-badge"
                     style={{ color: userTypeInfo.color, borderColor: userTypeInfo.color, background: `${userTypeInfo.color}15` }}>
-                    {userTypeInfo.icon} {userTypeInfo.label}
+                    {userTypeInfo.label}
                   </div>
                 </div>
 
-                {/* Traficante */}
                 <div className="mp-app-status-card">
                   <div className="mp-app-status-header">
-                    <span className="mp-app-status-logo">🚐</span>
                     <span className="mp-app-status-name">Traficante</span>
                   </div>
                   {trafLevelInfo ? (
                     <div className="mp-app-status-badge"
                       style={{ color: trafLevelInfo.color, borderColor: trafLevelInfo.color, background: `${trafLevelInfo.color}15` }}>
-                      {trafLevelInfo.icon} Nivel {trafLevelInfo.label}
+                      Nivel {trafLevelInfo.label}
                     </div>
                   ) : (
                     <div className="mp-app-status-badge mp-app-status-none">
-                      ⚪ Sin nivel asignado
+                      Sin nivel asignado
                     </div>
                   )}
                 </div>
               </div>
             </div>
 
-            {/* ══ SECCIÓN 3 — SEGURIDAD ══ */}
+            {/* ══ SECCIÓN 3 — DATOS DE ACCESO ══ */}
             <div className="mp-section">
-              <div className="mp-section-title">Seguridad</div>
+              <div className="mp-section-header">
+                <Lock size={16} className="mp-section-icon" />
+                <span>Mis datos de acceso</span>
+              </div>
+              <p className="mp-hint">
+                Estos datos no se pueden modificar porque son tus credenciales de acceso a la plataforma.
+              </p>
+
+              <div className="mp-access-data">
+                <div className="mp-readonly-field">
+                  <Mail size={14} />
+                  <span>{user.email}</span>
+                </div>
+                <div className="mp-readonly-field">
+                  <Phone size={14} />
+                  <span>{profile?.whatsapp || 'No registrado'}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* ══ SECCIÓN 4 — SEGURIDAD ══ */}
+            <div className="mp-section">
+              <div className="mp-section-header">
+                <ShieldAlert size={16} className="mp-section-icon" />
+                <span>Seguridad</span>
+              </div>
 
               {!showPassword ? (
                 <div className="mp-password-row">
                   <div>
                     <div className="mp-label">Contraseña</div>
-                    <p className="mp-hint">Cambia tu contraseña cuando quieras.</p>
+                    <p className="mp-hint" style={{ marginBottom: 0 }}>Cambia tu contraseña cuando quieras.</p>
                   </div>
                   <button className="btn btn-secondary mp-btn-sm"
                     onClick={() => setShowPassword(true)}>
-                    🔑 Cambiar contraseña
+                    Cambiar contraseña
                   </button>
                 </div>
               ) : (
@@ -345,8 +373,8 @@ export default function MiPerfil({ user, onProfileUpdate }) {
                       onChange={e => setConfirmPassword(e.target.value)}
                       placeholder="Repite la nueva contraseña" />
                   </div>
-                  {passwordError && <div className="mp-error">⚠️ {passwordError}</div>}
-                  {passwordSaved && <div className="mp-success">✅ Contraseña actualizada correctamente</div>}
+                  {passwordError && <div className="mp-error"><AlertTriangle size={14} /> {passwordError}</div>}
+                  {passwordSaved && <div className="mp-success">Contraseña actualizada correctamente</div>}
                   <div className="mp-password-actions">
                     <button className="btn btn-secondary mp-btn-sm"
                       onClick={() => {
@@ -362,30 +390,51 @@ export default function MiPerfil({ user, onProfileUpdate }) {
                       onClick={handleChangePassword} disabled={savingPassword}>
                       {savingPassword
                         ? <span className="loading" style={{ width: 16, height: 16 }} />
-                        : '🔒 Actualizar contraseña'}
+                        : 'Actualizar'}
                     </button>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* ══ SECCIÓN 4 — SOPORTE ══ */}
-            <div className="mp-section">
-              <div className="mp-section-title">Soporte</div>
+            {/* ══ SECCIÓN 5 — ELIMINAR CUENTA ══ */}
+            <div className="mp-section mp-danger-zone">
+              <div className="mp-section-header mp-danger-header">
+                <LogOut size={16} />
+                <span>Eliminar cuenta</span>
+              </div>
               <p className="mp-hint">
-                ¿Tienes algún problema con tu cuenta o necesitas ayuda? Escríbenos directamente.
+                Al eliminar tu cuenta se borrarán permanentemente todos tus datos, publicaciones y verificaciones. Esta acción no se puede deshacer, conforme a políticas internacionales de protección de datos.
               </p>
-              <a
-                href={`mailto:busesapp55@gmail.com?subject=Soporte — ${user.email}`}
-                className="mp-support-btn"
-              >
-                <span className="mp-support-icon">✉️</span>
-                <div>
-                  <div className="mp-support-label">Contactar soporte</div>
-                  <div className="mp-support-email">busesapp55@gmail.com</div>
+
+              {!showDeleteConfirm ? (
+                <button className="btn btn-ghost mp-btn-danger-text"
+                  onClick={() => setShowDeleteConfirm(true)}>
+                  <AlertTriangle size={14} />
+                  Solicitar eliminación de cuenta
+                </button>
+              ) : (
+                <div className="mp-delete-confirm">
+                  <p className="mp-delete-warning">
+                    Escribe <strong>ELIMINAR</strong> para confirmar:
+                  </p>
+                  <input className="input mp-delete-input"
+                    value={deleteConfirmText}
+                    onChange={e => setDeleteConfirmText(e.target.value)}
+                    placeholder="Escribe ELIMINAR" />
+                  <div className="mp-delete-actions">
+                    <button className="btn btn-secondary mp-btn-sm"
+                      onClick={() => { setShowDeleteConfirm(false); setDeleteConfirmText('') }}>
+                      Cancelar
+                    </button>
+                    <button className="btn btn-danger mp-btn-sm"
+                      onClick={handleDeleteAccount}
+                      disabled={deleteConfirmText !== 'ELIMINAR' || deleting}>
+                      {deleting ? <span className="loading" style={{ width: 16, height: 16 }} /> : 'Eliminar mi cuenta'}
+                    </button>
+                  </div>
                 </div>
-                <span className="mp-support-arrow">→</span>
-              </a>
+              )}
             </div>
 
           </div>
