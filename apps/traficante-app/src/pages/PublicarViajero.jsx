@@ -270,7 +270,7 @@ export default function PublicarViajero({ user }) {
                     <MapContainer center={originCoords || originCoordsFromCity || [-17.8, -63.18]} zoom={13}
                       style={{ height: '280px', borderRadius: '12px' }}>
                       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                      <MapPicker onSelect={(coords) => { setOriginCoords(coords); setShowOriginMap(false) }} />
+                      <MapPicker onSelect={(coords) => setOriginCoords(coords)} />
                       {(originCoords || originCoordsFromCity) && <Marker position={[(originCoords || originCoordsFromCity).lat, (originCoords || originCoordsFromCity).lng]} />}
                     </MapContainer>
                     <p className="pub-map-hint">Haz clic en el mapa para marcar el punto exacto</p>
@@ -319,7 +319,7 @@ export default function PublicarViajero({ user }) {
                     <MapContainer center={destinationCoords || destinationCoordsFromCity || [-17.8, -63.18]} zoom={13}
                       style={{ height: '280px', borderRadius: '12px' }}>
                       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                      <MapPicker onSelect={(coords) => { setDestinationCoords(coords); setShowDestMap(false) }} />
+                      <MapPicker onSelect={(coords) => setDestinationCoords(coords)} />
                       {(destinationCoords || destinationCoordsFromCity) && <Marker position={[(destinationCoords || destinationCoordsFromCity).lat, (destinationCoords || destinationCoordsFromCity).lng]} />}
                     </MapContainer>
                     <p className="pub-map-hint">Haz clic en el mapa para marcar el punto exacto</p>
