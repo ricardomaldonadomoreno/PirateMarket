@@ -199,28 +199,6 @@ export default function PublicarFlete({ user }) {
 
   if (loadingProfile) return <div className="pub-page"><div className="loading" style={{ width: 40, height: 40, margin: '4rem auto' }} /></div>
 
-  if (!identityVerified) {
-    return (
-      <div className="pub-page">
-        <div className="container" style={{ maxWidth: 600, textAlign: 'center', paddingTop: '4rem' }}>
-          <div className="pub-blocked-icon">
-            <ShieldAlert size={48} />
-          </div>
-          <h2 style={{ color: 'var(--text-light)', fontSize: '1.4rem', marginBottom: '0.75rem' }}>
-            Identidad no verificada
-          </h2>
-          <p style={{ color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: '2rem' }}>
-            Para publicar servicios de flete necesitas verificar tu identidad primero.
-            Ve a <strong style={{ color: 'var(--gold)' }}>Mi Cuenta → Verificación</strong> para completar el proceso.
-          </p>
-          <button className="btn btn-primary t-btn-primary" onClick={() => navigate('/traficante/mi-cuenta/verificacion')}>
-            Ir a verificación
-          </button>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="pub-page">
       <div className="pub-layout container">
