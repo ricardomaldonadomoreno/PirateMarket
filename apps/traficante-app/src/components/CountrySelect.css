@@ -1,0 +1,120 @@
+.country-select-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.country-select-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 0.4rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.country-select-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1rem;
+  background: rgba(34, 34, 34, 0.5);
+  border: 1.5px solid var(--dark-border);
+  border-radius: var(--radius-md);
+  transition: border-color 0.2s;
+}
+
+.country-select-input-wrap.active {
+  border-color: var(--gold);
+}
+
+.country-select-icon {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.country-select-input {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--text-light);
+  font-size: 0.95rem;
+  outline: none;
+  font-family: 'Inter', sans-serif;
+}
+
+.country-select-input::placeholder {
+  color: var(--text-muted);
+}
+
+.country-select-clear {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.2rem;
+  display: flex;
+  align-items: center;
+  border-radius: 50%;
+  transition: color 0.2s;
+  flex-shrink: 0;
+}
+
+.country-select-clear:hover {
+  color: var(--danger);
+}
+
+.country-select-chevron {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.country-select-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: var(--dark-surface);
+  border: 1px solid var(--dark-border);
+  border-radius: var(--radius-md);
+  margin-top: 0.25rem;
+  max-height: 220px;
+  overflow-y: auto;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.country-select-option {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.65rem 1rem;
+  background: none;
+  border: none;
+  color: var(--text-light);
+  font-size: 0.875rem;
+  cursor: pointer;
+  text-align: left;
+  font-family: 'Inter', sans-serif;
+  transition: background 0.15s;
+}
+
+.country-select-option:hover {
+  background: rgba(212, 175, 55, 0.08);
+}
+
+.country-select-option.selected {
+  background: rgba(212, 175, 55, 0.15);
+  color: var(--gold);
+}
+
+.country-select-flag {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: var(--dark);
+  padding: 0.15rem 0.4rem;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}

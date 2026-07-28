@@ -7,6 +7,7 @@ import './MiCuenta.css'
 import MiCuentaSidebar from './MiCuentaSidebar'
 import MiCuentaMisViajes from './MiCuentaMisViajes'
 import CityAutocomplete from '../../../pirata-market/src/components/CityAutocomplete'
+import CountrySelect from '../components/CountrySelect'
 
 function MapPicker({ onSelect }) {
   useMapEvents({
@@ -270,9 +271,11 @@ export default function MiCuenta({ user, onProfileUpdate }) {
                       <div className="form-group">
                         <label>País de nacimiento *</label>
                         <p className="verif-hint">País donde naciste según tu documento.</p>
-                        <input className="input" value={birthCountry}
-                          onChange={e => setBirthCountry(e.target.value)}
-                          placeholder="Ej: Bolivia" />
+                        <CountrySelect
+                          label=""
+                          value={birthCountry}
+                          onChange={(val) => setBirthCountry(val)}
+                        />
                       </div>
                       <div className="form-group">
                         <label>Tipo de documento *</label>
