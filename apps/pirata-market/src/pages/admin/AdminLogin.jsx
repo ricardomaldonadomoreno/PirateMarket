@@ -34,7 +34,10 @@ export default function AdminLogin() {
           .single()
 
         if (userData?.user_type === 'admin') {
-          // Es el admin principal → entra al backoffice
+          // Es el admin principal → guarda marker en sessionStorage
+          sessionStorage.setItem('admin_principal', 'true')
+          sessionStorage.setItem('admin_user_id', authData.user.id)
+          sessionStorage.setItem('admin_email', email)
           navigate('/admin/home')
           return
         }

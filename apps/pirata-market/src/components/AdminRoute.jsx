@@ -23,6 +23,7 @@ export default function AdminRoute({ children }) {
   useEffect(() => {
     const check = async () => {
       // 1. Verificar si es admin principal (Supabase Auth)
+      let isAdmin = false
       try {
         const { data: { user } } = await supabase.auth.getUser()
         if (user) {
@@ -33,12 +34,21 @@ export default function AdminRoute({ children }) {
             .maybeSingle()
 
           if (userData?.user_type === 'admin') {
-            setStatus('allowed')
-            return
+            isAdmin = true
           }
         }
       } catch {
         // Auth no disponible
+      }
+
+      // 2. Verificar si es admin principal por sessionStorage (fallback si Supabase Auth expiró)
+      if (!isAdmin && sessionStorage.getItem('admin_principal') === 'true') {
+        isAdmin = true
+      }
+
+      if (isAdmin) {
+        setStatus('allowed')
+        return
       }
 
       // 2. Verificar si es colaborador (sessionStorage)
