@@ -261,7 +261,6 @@ export default function PublicarViajero({ user }) {
                   value={originCountry}
                   onChange={(val) => {
                     setOriginCountry(val)
-                    // Al cambiar país, limpiar ciudad seleccionada
                     setOriginCity(null)
                   }}
                 />
@@ -276,10 +275,13 @@ export default function PublicarViajero({ user }) {
                     if (val?.lat) setOriginCoords({ lat: val.lat, lng: val.lng })
                   }}
                   countryFilter={originCountry?.country_code?.toLowerCase()}
-                  showVerifiedBtn={true}
-                  onVerifiedClick={() => fillWithVerified('origin')}
-                  hasVerifiedAddress={!!verifiedAddr}
                 />
+
+                {/* Botón dirección oficial */}
+                <button type="button" className="pub-verified-text-btn" onClick={() => fillWithVerified('origin')} disabled={!verifiedAddr}>
+                  <MapPin size={13} /> Usar mi dirección oficial
+                  {!verifiedAddr && <span className="pub-verified-text-hint"> (configúrala en Mi Cuenta)</span>}
+                </button>
 
                 {/* Detalles adicionales */}
                 <div className="pub-field">
@@ -344,10 +346,13 @@ export default function PublicarViajero({ user }) {
                     if (val?.lat) setDestinationCoords({ lat: val.lat, lng: val.lng })
                   }}
                   countryFilter={destinationCountry?.country_code?.toLowerCase()}
-                  showVerifiedBtn={true}
-                  onVerifiedClick={() => fillWithVerified('destination')}
-                  hasVerifiedAddress={!!verifiedAddr}
                 />
+
+                {/* Botón dirección oficial */}
+                <button type="button" className="pub-verified-text-btn" onClick={() => fillWithVerified('destination')} disabled={!verifiedAddr}>
+                  <MapPin size={13} /> Usar mi dirección oficial
+                  {!verifiedAddr && <span className="pub-verified-text-hint"> (configúrala en Mi Cuenta)</span>}
+                </button>
 
                 {/* Detalles adicionales */}
                 <div className="pub-field">
