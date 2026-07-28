@@ -28,9 +28,10 @@ const TRANSPORT_MODES = [
 ]
 
 const ADVANTAGES = [
-  { Icon: DollarSign, title: 'Monetiza tu equipaje', desc: 'Tienes espacio libre en tu maleta y ya ibas a viajar de todas formas. Cada paquete es ingreso extra.' },
-  { Icon: CheckCircle2, title: 'Verificación te da confianza', desc: 'Tu dirección verificada es tu garantía. El remitente sabe exactamente desde dónde sale el paquete.' },
-  { Icon: ArrowRight, title: 'Sin complicaciones', desc: 'Publicas tu ruta, recibes solicitudes, aceptas las que quieras. Tú decides cuánto llevas y a qué precio.' },
+  { Icon: DollarSign, title: 'Monetiza tu equipaje', desc: 'Tienes espacio libre en tu maleta y ya ibas a viajar. Cada paquete es ingreso extra.' },
+  { Icon: CheckCircle2, title: 'Tu dirección verificada', desc: 'Es tu garantía. El remitente sabe exactamente desde dónde sale el paquete.' },
+  { Icon: ArrowRight, title: 'Sin complicaciones', desc: 'Publicas tu ruta, recibes solicitudes, aceptas las que quieras. Tú decides el precio.' },
+  { Icon: DollarSign, title: 'Dedícate a esto', desc: 'Viaja de ciudad a ciudad transportando cosas de valor con garantía y gana excelente.' },
 ]
 
 const WARNINGS = [
@@ -185,9 +186,11 @@ export default function PublicarViajero({ user }) {
 
           <div className="pub-info-grid">
             {ADVANTAGES.map((a, i) => (
-              <div key={i} className="pub-info-card">
-                <a.Icon size={18} className="pub-info-icon" />
-                <strong className="pub-info-title">{a.title}</strong>
+              <div key={i} className={`pub-info-card ${a.title === 'Dedícate a esto' ? 'pub-info-card-highlight' : ''}`}>
+                <div className="pub-info-card-inner">
+                  <a.Icon size={14} className="pub-info-icon" />
+                  <strong className="pub-info-title">{a.title}</strong>
+                </div>
                 <span className="pub-info-desc">{a.desc}</span>
               </div>
             ))}

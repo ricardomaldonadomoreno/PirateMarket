@@ -70,19 +70,25 @@
 
 /* ── Ventajas / Info grid ── */
 .pub-info-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
 }
 
 .pub-info-card {
   background: rgba(212, 175, 55, 0.04);
   border: 1px solid var(--dark-border);
   border-radius: var(--radius-md);
-  padding: 1rem;
+  padding: 0.6rem 0.75rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.35rem;
+}
+
+.pub-info-card-inner {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
 }
 
 .pub-info-icon {
@@ -91,16 +97,27 @@
 }
 
 .pub-info-title {
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--text-light);
 }
 
 .pub-info-desc {
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   color: var(--text-light);
-  line-height: 1.4;
-  opacity: 0.75;
+  line-height: 1.35;
+  opacity: 0.7;
+}
+
+.pub-info-card-highlight {
+  grid-column: 1 / -1;
+  background: rgba(212, 175, 55, 0.08);
+  border-color: rgba(212, 175, 55, 0.25);
+}
+
+.pub-info-card-highlight .pub-info-title {
+  color: var(--gold);
+  font-size: 0.8rem;
 }
 
 /* ── Advertencias ── */
@@ -401,6 +418,22 @@
 
   .pub-info-col {
     position: static;
+  }
+
+  .pub-info-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .pub-info-card {
+    padding: 0.5rem 0.6rem;
+  }
+
+  .pub-info-title {
+    font-size: 0.7rem;
+  }
+
+  .pub-info-desc {
+    font-size: 0.65rem;
   }
 }
 
