@@ -207,10 +207,9 @@ export default function CityAutocomplete({
 
   return (
     <div className="ca-wrapper" ref={wrapperRef}>
-      <label className="ca-label">{label}</label>
-
       {/* País */}
       <div className="ca-input-container">
+        <label className="ca-label">País</label>
         <Search size={13} className="ca-icon" />
         <input
           className="input ca-input"
@@ -243,6 +242,7 @@ export default function CityAutocomplete({
       {/* Departamento/Estado */}
       {selectedCountry && (
         <div className="ca-input-container">
+          <label className="ca-label">Departamento / Estado</label>
           <ChevronDown size={13} className="ca-icon" />
           <input
             className="input ca-input"
@@ -276,6 +276,7 @@ export default function CityAutocomplete({
       {/* Ciudad */}
       {selectedState && (
         <div className="ca-input-container">
+          <label className="ca-label">Ciudad</label>
           <Search size={13} className="ca-icon" />
           <input
             className="input ca-input"
