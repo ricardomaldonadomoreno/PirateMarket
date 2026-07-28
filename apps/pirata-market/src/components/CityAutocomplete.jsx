@@ -99,6 +99,7 @@ export default function CityAutocomplete({
       const cities = City.getCitiesOfState(selectedCountry.isoCode, selectedState.isoCode)
       setCityResults(cities)
       setCityInput('')
+      setShowCityDropdown(true)
     } else {
       setCityResults([])
       setCityInput('')
