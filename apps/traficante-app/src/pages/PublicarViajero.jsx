@@ -10,6 +10,7 @@ import {
   AlertTriangle, CheckCircle2, Info, ShieldAlert, ArrowRight,
   Navigation, Navigation2
 } from 'lucide-react'
+import { Country, State } from 'country-state-city'
 import './PublicarService.css'
 
 delete L.Icon.Default.prototype._getIconUrl
@@ -49,40 +50,17 @@ function MapPicker({ onSelect }) {
   return null
 }
 
-/* Country code mapping for Nominatim filter */
-function getCountryCode(countryName) {
-  if (!countryName) return ''
-  const map = {
-    'Bolivia': 'bo', 'Bolivien': 'bo',
-    'Brasil': 'br', 'Brazil': 'br', 'Brasilien': 'br',
-    'Argentina': 'ar', 'Argentinien': 'ar',
-    'Perú': 'pe', 'Peru': 'pe',
-    'Chile': 'cl',
-    'Paraguay': 'py',
-    'Uruguay': 'uy',
-    'Ecuador': 'ec',
-    'Colombia': 'co',
-  }
-  const lower = countryName.toLowerCase()
-  for (const [key, code] of Object.entries(map)) {
-    if (key.toLowerCase() === lower) return code
-  }
-  return ''
-}
-
 export default function PublicarViajero({ user }) {
   const navigate = useNavigate()
 
-  // Origin state
-  const [originCountry, setOriginCountry] = useState(null)
-  const [originCity, setOriginCity] = useState(null)
+  // Origin state — ahora son objetos completos del selector jerárquico
+  const [originLoc, setOriginLoc] = useState(null) // { city, country, country_code, state, state_code, lat, lng }
   const [originDetails, setOriginDetails] = useState('')
   const [originCoords, setOriginCoords] = useState(null)
   const [showOriginMap, setShowOriginMap] = useState(false)
 
   // Destination state
-  const [destinationCountry, setDestinationCountry] = useState(null)
-  const [destinationCity, setDestinationCity] = useState(null)
+  const [destLoc, setDestLoc] = useState(null)
   const [destinationDetails, setDestinationDetails] = useState('')
   const [destinationCoords, setDestinationCoords] = useState(null)
   const [showDestMap, setShowDestMap] = useState(false)
@@ -113,9 +91,28 @@ export default function PublicarViajero({ user }) {
         if (data) {
           setIdentityVerified(!!data.traficante_identity_verified)
           if (data.traficante_address_city && data.traficante_address_locked) {
+            // Buscar el país y estado por nombre para reconstruir el objeto del selector
+            const countryName = data.traficante_address_country || ''
+            const allCountries = Country.getAllCountries()
+            const matchedCountry = allCountries.find(c => c.name.toLowerCase() === countryName.toLowerCase())
+            const countryCode = matchedCountry?.isoCode || ''
+            let stateCode = ''
+            let stateName = ''
+            if (countryCode) {
+              const states = State.getStatesOfCountry(countryCode)
+              // Intentar match por nombre de ciudad o texto de dirección
+              const stateMatch = states.find(s => data.traficante_address_text?.toLowerCase().includes(s.name.toLowerCase()) || s.name.toLowerCase() === countryName.toLowerCase())
+              if (stateMatch) {
+                stateCode = stateMatch.isoCode
+                stateName = stateMatch.name
+              }
+            }
             setVerifiedAddr({
               city: data.traficante_address_city,
-              country: data.traficante_address_country,
+              country: countryName,
+              country_code: countryCode,
+              state: stateName,
+              state_code: stateCode,
               lat: data.traficante_address_lat,
               lng: data.traficante_address_lng,
             })
@@ -135,18 +132,12 @@ export default function PublicarViajero({ user }) {
   /* Fill a single address block with verified address data */
   const fillWithVerified = (target) => {
     if (!verifiedAddr) return
-    if (target === 'origin') {
-      if (!originCity) {
-        setOriginCountry(verifiedAddr.country ? { city: verifiedAddr.country, country: '', country_code: getCountryCode(verifiedAddr.country).toUpperCase(), lat: 0, lng: 0 } : null)
-        setOriginCity({ city: verifiedAddr.city, country: verifiedAddr.country, country_code: getCountryCode(verifiedAddr.country).toUpperCase(), lat: verifiedAddr.lat, lng: verifiedAddr.lng })
-        setOriginCoords({ lat: verifiedAddr.lat, lng: verifiedAddr.lng })
-      }
-    } else {
-      if (!destinationCity) {
-        setDestinationCountry(verifiedAddr.country ? { city: verifiedAddr.country, country: '', country_code: getCountryCode(verifiedAddr.country).toUpperCase(), lat: 0, lng: 0 } : null)
-        setDestinationCity({ city: verifiedAddr.city, country: verifiedAddr.country, country_code: getCountryCode(verifiedAddr.country).toUpperCase(), lat: verifiedAddr.lat, lng: verifiedAddr.lng })
-        setDestinationCoords({ lat: verifiedAddr.lat, lng: verifiedAddr.lng })
-      }
+    if (target === 'origin' && !originLoc) {
+      setOriginLoc(verifiedAddr)
+      setOriginCoords({ lat: verifiedAddr.lat, lng: verifiedAddr.lng })
+    } else if (target === 'destination' && !destLoc) {
+      setDestLoc(verifiedAddr)
+      setDestinationCoords({ lat: verifiedAddr.lat, lng: verifiedAddr.lng })
     }
   }
 
@@ -156,7 +147,7 @@ export default function PublicarViajero({ user }) {
       setError('Debes verificar tu identidad antes de publicar un servicio. Ve a Mi Cuenta > Verificación.')
       return
     }
-    if (!originCity || !destinationCity) {
+    if (!originLoc || !destLoc) {
       setError('Completa el origen y destino')
       return
     }
@@ -172,15 +163,21 @@ export default function PublicarViajero({ user }) {
       user_id: user.id,
       type: 'viajero',
       status: 'activo',
-      origin_city: originCity.city,
-      origin_country: originCity.country,
-      origin_lat: originCoords?.lat || originCity.lat,
-      origin_lng: originCoords?.lng || originCity.lng,
+      origin_city: originLoc.city,
+      origin_country: originLoc.country,
+      origin_state: originLoc.state || null,
+      origin_state_code: originLoc.state_code || null,
+      origin_country_code: originLoc.country_code || null,
+      origin_lat: originCoords?.lat || originLoc.lat,
+      origin_lng: originCoords?.lng || originLoc.lng,
       origin_address: originDetails,
-      destination_city: destinationCity.city,
-      destination_country: destinationCity.country,
-      destination_lat: destinationCoords?.lat || destinationCity.lat,
-      destination_lng: destinationCoords?.lng || destinationCity.lng,
+      destination_city: destLoc.city,
+      destination_country: destLoc.country,
+      destination_state: destLoc.state || null,
+      destination_state_code: destLoc.state_code || null,
+      destination_country_code: destLoc.country_code || null,
+      destination_lat: destinationCoords?.lat || destLoc.lat,
+      destination_lng: destinationCoords?.lng || destLoc.lng,
       destination_address: destinationDetails,
       currency,
       description,
@@ -254,43 +251,22 @@ export default function PublicarViajero({ user }) {
               <p className="pub-hint">Indica tu domicilio o un punto de encuentro cercano donde el remitente te entregará el paquete.</p>
               <div className="pub-address-block">
 
-                {/* País */}
                 <CityAutocomplete
-                  label="País"
-                  placeholder="Escribe el país de origen"
-                  value={originCountry}
-                  onChange={(val) => {
-                    setOriginCountry(val)
-                    setOriginCity(null)
-                  }}
+                  label="País, departamento y ciudad"
+                  placeholder="Selecciona ubicación"
+                  value={originLoc}
+                  onChange={setOriginLoc}
+                  showVerifiedBtn={true}
+                  onVerifiedClick={() => fillWithVerified('origin')}
+                  hasVerifiedAddress={!!verifiedAddr}
                 />
 
-                {/* Ciudad (filtrada por país) */}
-                <CityAutocomplete
-                  label="Ciudad"
-                  placeholder="Escribe la ciudad de origen"
-                  value={originCity}
-                  onChange={(val) => {
-                    setOriginCity(val)
-                    if (val?.lat) setOriginCoords({ lat: val.lat, lng: val.lng })
-                  }}
-                  countryFilter={originCountry?.country_code?.toLowerCase()}
-                />
-
-                {/* Botón dirección oficial */}
-                <button type="button" className="pub-verified-text-btn" onClick={() => fillWithVerified('origin')} disabled={!verifiedAddr}>
-                  <MapPin size={13} /> Usar mi dirección oficial
-                  {!verifiedAddr && <span className="pub-verified-text-hint"> (configúrala en Mi Cuenta)</span>}
-                </button>
-
-                {/* Detalles adicionales */}
                 <div className="pub-field">
                   <label>Detalles adicionales</label>
                   <input className="input" placeholder="Ej: Árbol en la entrada, al lado de la tienda X, portón azul"
                     value={originDetails} onChange={e => setOriginDetails(e.target.value)} />
                 </div>
 
-                {/* GPS + Mapa + Coords */}
                 <div className="pub-gps-row">
                   <button type="button" className="btn btn-secondary pub-gps-btn" onClick={() => getGPS(setOriginCoords)}>
                     <Navigation2 size={13} /> Usar mi ubicación actual
@@ -325,43 +301,22 @@ export default function PublicarViajero({ user }) {
               <p className="pub-hint">Indica dónde estarás al llegar — tu hotel, domicilio o un punto acordado donde el receptor pueda recoger.</p>
               <div className="pub-address-block">
 
-                {/* País */}
                 <CityAutocomplete
-                  label="País"
-                  placeholder="Escribe el país de destino"
-                  value={destinationCountry}
-                  onChange={(val) => {
-                    setDestinationCountry(val)
-                    setDestinationCity(null)
-                  }}
+                  label="País, departamento y ciudad"
+                  placeholder="Selecciona ubicación"
+                  value={destLoc}
+                  onChange={setDestLoc}
+                  showVerifiedBtn={true}
+                  onVerifiedClick={() => fillWithVerified('destination')}
+                  hasVerifiedAddress={!!verifiedAddr}
                 />
 
-                {/* Ciudad (filtrada por país) */}
-                <CityAutocomplete
-                  label="Ciudad"
-                  placeholder="Escribe la ciudad de destino"
-                  value={destinationCity}
-                  onChange={(val) => {
-                    setDestinationCity(val)
-                    if (val?.lat) setDestinationCoords({ lat: val.lat, lng: val.lng })
-                  }}
-                  countryFilter={destinationCountry?.country_code?.toLowerCase()}
-                />
-
-                {/* Botón dirección oficial */}
-                <button type="button" className="pub-verified-text-btn" onClick={() => fillWithVerified('destination')} disabled={!verifiedAddr}>
-                  <MapPin size={13} /> Usar mi dirección oficial
-                  {!verifiedAddr && <span className="pub-verified-text-hint"> (configúrala en Mi Cuenta)</span>}
-                </button>
-
-                {/* Detalles adicionales */}
                 <div className="pub-field">
                   <label>Detalles adicionales</label>
                   <input className="input" placeholder="Ej: Terminal Tietê, mi hotel en Liberdade, portón azul"
                     value={destinationDetails} onChange={e => setDestinationDetails(e.target.value)} />
                 </div>
 
-                {/* GPS + Mapa + Coords */}
                 <div className="pub-gps-row">
                   <button type="button" className="btn btn-secondary pub-gps-btn" onClick={() => getGPS(setDestinationCoords)}>
                     <Navigation2 size={13} /> Usar mi ubicación actual
@@ -390,96 +345,90 @@ export default function PublicarViajero({ user }) {
               </div>
             </div>
 
-            {/* FECHAS */}
+            {/* ══════ FECHAS ══════ */}
             <div className="pub-section">
               <div className="pub-section-label"><Calendar size={14} /> Fechas del viaje</div>
-              <p className="pub-hint">La fecha de llegada ayuda al receptor a saber cuándo estará disponible su paquete.</p>
-              <div className="pub-row">
+              <div className="pub-date-row">
                 <div className="pub-field">
-                  <label>Fecha de salida</label>
-                  <input className="input" type="date" value={departureDate} onChange={e => setDepartureDate(e.target.value)} />
+                  <label>Fecha de salida *</label>
+                  <input className="input" type="date" value={departureDate}
+                    onChange={e => setDepartureDate(e.target.value)} />
                 </div>
                 <div className="pub-field">
                   <label>Fecha de llegada</label>
-                  <input className="input" type="date" value={arrivalDate} onChange={e => setArrivalDate(e.target.value)} />
+                  <input className="input" type="date" value={arrivalDate}
+                    onChange={e => setArrivalDate(e.target.value)} />
                 </div>
               </div>
             </div>
 
-            {/* TRANSPORTE */}
+            {/* ══════ TRANSPORTE ══════ */}
             <div className="pub-section">
               <div className="pub-section-label"><Plane size={14} /> ¿Cómo viajas?</div>
-              <div className="pub-chips">
+              <div className="pub-chip-row">
                 {TRANSPORT_MODES.map(m => (
-                  <button
-                    key={m.value}
-                    type="button"
-                    className={`pub-chip ${transportMode === m.value ? 'active' : ''}`}
-                    onClick={() => setTransportMode(m.value)}
-                  >
+                  <button key={m.value} type="button"
+                    className={`pub-chip ${transportMode === m.value ? 'pub-chip-active' : ''}`}
+                    onClick={() => setTransportMode(m.value)}>
                     {m.label}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* PESO */}
+            {/* ══════ PESO ══════ */}
             <div className="pub-section">
               <div className="pub-section-label"><Weight size={14} /> Peso disponible</div>
               <div className="pub-field">
-                <label>Peso máximo que puedes llevar (kg)</label>
-                <input className="input" type="number" min="0" step="0.5" placeholder="Ej: 10" value={maxWeight} onChange={e => setMaxWeight(e.target.value)} />
+                <label>Máximo kg que puedes transportar</label>
+                <input className="input" type="number" placeholder="Ej: 15"
+                  value={maxWeight} onChange={e => setMaxWeight(e.target.value)} />
               </div>
             </div>
 
-            {/* PRECIO */}
+            {/* ══════ PRECIO ══════ */}
             <div className="pub-section">
-              <div className="pub-section-label"><DollarSign size={14} /> Precio</div>
-              <div className="pub-row">
-                <div className="pub-field">
+              <div className="pub-section-label"><DollarSign size={14} /> Precio del servicio</div>
+              <div className="pub-price-row">
+                <div className="pub-field" style={{ flex: 2 }}>
+                  <label>Precio total</label>
+                  <input className="input" type="number" placeholder="0.00"
+                    value={price} onChange={e => setPrice(e.target.value)} />
+                </div>
+                <div className="pub-field" style={{ flex: 1 }}>
                   <label>Moneda</label>
                   <select className="input" value={currency} onChange={e => setCurrency(e.target.value)}>
                     {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
-                <div className="pub-field">
-                  <label>Precio por paquete</label>
-                  <input className="input" type="number" min="0" step="0.5" placeholder="Ej: 15" value={price} onChange={e => setPrice(e.target.value)} />
-                </div>
-                <div className="pub-field">
-                  <label>Precio por kg (opcional)</label>
-                  <input className="input" type="number" min="0" step="0.5" placeholder="Ej: 5" value={pricePerKg} onChange={e => setPricePerKg(e.target.value)} />
+                <div className="pub-field" style={{ flex: 2 }}>
+                  <label>Por kg (opcional)</label>
+                  <input className="input" type="number" placeholder="0.00 / kg"
+                    value={pricePerKg} onChange={e => setPricePerKg(e.target.value)} />
                 </div>
               </div>
             </div>
 
-            {/* DESCRIPCIÓN */}
+            {/* ══════ DESCRIPCIÓN ══════ */}
             <div className="pub-section">
-              <div className="pub-section-label"><FileText size={14} /> Descripción y condiciones</div>
-              <textarea
-                className="input textarea"
-                rows={4}
-                placeholder="Ej: Solo acepto paquetes bien embalados. Me reúno en el aeropuerto 2 horas antes del vuelo. No acepto líquidos ni electrónicos."
-                value={description}
-                onChange={e => setDescription(e.target.value)}
-              />
+              <div className="pub-section-label"><FileText size={14} /> Descripción del viaje</div>
+              <div className="pub-field">
+                <label>Detalles adicionales (opcional)</label>
+                <textarea className="input" rows={4} placeholder="Describe tu viaje, qué tipo de paquetes aceptas, restricciones, etc."
+                  value={description} onChange={e => setDescription(e.target.value)} />
+              </div>
             </div>
 
-            {error && (
-              <div className="pub-error">
-                <AlertTriangle size={14} /> {error}
-              </div>
-            )}
+            {/* Error */}
+            {error && <div className="pub-error">{error}</div>}
 
+            {/* Acciones */}
             <div className="pub-actions">
-              <button type="button" className="btn btn-secondary" onClick={() => navigate('/traficante')}>
-                Cancelar
-              </button>
-              <button type="submit" className="btn btn-primary t-btn-primary" disabled={loading}>
+              <button type="button" className="btn btn-secondary" onClick={() => navigate(-1)}>Cancelar</button>
+              <button type="submit" className="btn btn-primary" disabled={loading}>
                 {loading ? 'Publicando...' : 'Publicar viaje'}
               </button>
             </div>
-
           </form>
         </div>
       </div>

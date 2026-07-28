@@ -7,9 +7,10 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import {
   Package, MapPin, Clock, DollarSign, FileText,
-  AlertTriangle, CheckCircle2, Info, ShieldAlert,
-  Home, Truck, Users
+  CheckCircle2, Info, ShieldAlert, Home, Truck, Users,
+  Navigation, Navigation2
 } from 'lucide-react'
+import { Country, State } from 'country-state-city'
 import './PublicarService.css'
 
 delete L.Icon.Default.prototype._getIconUrl
@@ -23,21 +24,9 @@ const CURRENCIES = ['USD', 'BOB', 'BRL', 'ARS', 'PEN', 'CLP', 'PYG']
 const DAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
 
 const ADVANTAGES = [
-  {
-    Icon: Home,
-    title: 'Recibes paquetes en tu casa',
-    desc: 'Juntas todo y haces un solo envío consolidado. No necesitas viajar, todo desde tu domicilio verificado.'
-  },
-  {
-    Icon: Users,
-    title: 'Facilitas la vida de otros',
-    desc: 'Tu punto de compactación ayuda a muchas personas que no tienen que ir hasta una terminal. Puedes recibir entregas por delivery y ellos se olvidan del protocolo de ir personalmente.'
-  },
-  {
-    Icon: Truck,
-    title: 'Envíos locales son menos exigentes',
-    desc: 'Este servicio es ideal para envíos dentro de un mismo país. Menos burocracia, menos costos, más velocidad.'
-  },
+  { Icon: Home, title: 'Recibes paquetes en tu casa', desc: 'Juntas todo y haces un solo envío consolidado. No necesitas viajar, todo desde tu domicilio verificado.' },
+  { Icon: Users, title: 'Facilitas la vida de otros', desc: 'Tu punto de compactación ayuda a muchas personas que no tienen que ir hasta una terminal. Puedes recibir entregas por delivery y ellos se olvidan del protocolo de ir personalmente.' },
+  { Icon: Truck, title: 'Envíos locales son menos exigentes', desc: 'Este servicio es ideal para envíos dentro de un mismo país. Menos burocracia, menos costos, más velocidad.' },
 ]
 
 const WARNINGS = [
@@ -59,17 +48,17 @@ function MapPicker({ onSelect }) {
 export default function PublicarCompactador({ user }) {
   const navigate = useNavigate()
 
-  // Origen (punto de recepción)
-  const [originCity, setOriginCity] = useState(null)
-  const [originAddress, setOriginAddress] = useState('')
-  const [originCoords, setOriginCoords] = useState(null)
-  const [showOriginMap, setShowOriginMap] = useState(false)
+  // Recepción (origen)
+  const [receptionLoc, setReceptionLoc] = useState(null)
+  const [receptionDetails, setReceptionDetails] = useState('')
+  const [receptionCoords, setReceptionCoords] = useState(null)
+  const [showReceptionMap, setShowReceptionMap] = useState(false)
 
-  // Destino (opcional)
-  const [destinationCity, setDestinationCity] = useState(null)
-  const [destinationAddress, setDestinationAddress] = useState('')
-  const [destinationCoords, setDestinationCoords] = useState(null)
-  const [showDestMap, setShowDestMap] = useState(false)
+  // Envío consolidado (destino)
+  const [shipmentLoc, setShipmentLoc] = useState(null)
+  const [shipmentDetails, setShipmentDetails] = useState('')
+  const [shipmentCoords, setShipmentCoords] = useState(null)
+  const [showShipmentMap, setShowShipmentMap] = useState(false)
 
   const [schedule, setSchedule] = useState(DEFAULT_SCHEDULE)
   const [price, setPrice] = useState('')
@@ -93,9 +82,23 @@ export default function PublicarCompactador({ user }) {
         if (data) {
           setIdentityVerified(!!data.traficante_identity_verified)
           if (data.traficante_address_city && data.traficante_address_locked) {
+            const countryName = data.traficante_address_country || ''
+            const allCountries = Country.getAllCountries()
+            const matchedCountry = allCountries.find(c => c.name.toLowerCase() === countryName.toLowerCase())
+            const countryCode = matchedCountry?.isoCode || ''
+            let stateCode = ''
+            let stateName = ''
+            if (countryCode) {
+              const states = State.getStatesOfCountry(countryCode)
+              const stateMatch = states.find(s => data.traficante_address_text?.toLowerCase().includes(s.name.toLowerCase()) || s.name.toLowerCase() === countryName.toLowerCase())
+              if (stateMatch) { stateCode = stateMatch.isoCode; stateName = stateMatch.name }
+            }
             setVerifiedAddr({
               city: data.traficante_address_city,
-              country: data.traficante_address_country,
+              country: countryName,
+              country_code: countryCode,
+              state: stateName,
+              state_code: stateCode,
               lat: data.traficante_address_lat,
               lng: data.traficante_address_lng,
             })
@@ -112,15 +115,14 @@ export default function PublicarCompactador({ user }) {
     })
   }
 
-  const fillWithVerifiedAddress = () => {
+  const fillWithVerified = (target) => {
     if (!verifiedAddr) return
-    if (!originCity) {
-      setOriginCity({ city: verifiedAddr.city, country: verifiedAddr.country, lat: verifiedAddr.lat, lng: verifiedAddr.lng })
-      setOriginCoords({ lat: verifiedAddr.lat, lng: verifiedAddr.lng })
-    }
-    if (!destinationCity) {
-      setDestinationCity({ city: verifiedAddr.city, country: verifiedAddr.country, lat: verifiedAddr.lat, lng: verifiedAddr.lng })
-      setDestinationCoords({ lat: verifiedAddr.lat, lng: verifiedAddr.lng })
+    if (target === 'reception' && !receptionLoc) {
+      setReceptionLoc(verifiedAddr)
+      setReceptionCoords({ lat: verifiedAddr.lat, lng: verifiedAddr.lng })
+    } else if (target === 'shipment' && !shipmentLoc) {
+      setShipmentLoc(verifiedAddr)
+      setShipmentCoords({ lat: verifiedAddr.lat, lng: verifiedAddr.lng })
     }
   }
 
@@ -138,7 +140,7 @@ export default function PublicarCompactador({ user }) {
       setError('Debes verificar tu identidad antes de publicar un servicio. Ve a Mi Cuenta > Verificación.')
       return
     }
-    if (!originCity) {
+    if (!receptionLoc) {
       setError('Completa tu punto de recepción')
       return
     }
@@ -163,16 +165,22 @@ export default function PublicarCompactador({ user }) {
       user_id: user.id,
       type: 'compactador',
       status: 'activo',
-      origin_city: originCity.city,
-      origin_country: originCity.country,
-      origin_lat: originCoords?.lat || originCity.lat,
-      origin_lng: originCoords?.lng || originCity.lng,
-      origin_address: originAddress,
-      destination_city: destinationCity?.city || null,
-      destination_country: destinationCity?.country || null,
-      destination_lat: destinationCoords?.lat || destinationCity?.lat || null,
-      destination_lng: destinationCoords?.lng || destinationCity?.lng || null,
-      destination_address: destinationAddress,
+      origin_city: receptionLoc.city,
+      origin_country: receptionLoc.country,
+      origin_state: receptionLoc.state || null,
+      origin_state_code: receptionLoc.state_code || null,
+      origin_country_code: receptionLoc.country_code || null,
+      origin_lat: receptionCoords?.lat || receptionLoc.lat,
+      origin_lng: receptionCoords?.lng || receptionLoc.lng,
+      origin_address: receptionDetails,
+      destination_city: shipmentLoc?.city || null,
+      destination_country: shipmentLoc?.country || null,
+      destination_state: shipmentLoc?.state || null,
+      destination_state_code: shipmentLoc?.state_code || null,
+      destination_country_code: shipmentLoc?.country_code || null,
+      destination_lat: shipmentCoords?.lat || shipmentLoc?.lat || null,
+      destination_lng: shipmentCoords?.lng || shipmentLoc?.lng || null,
+      destination_address: shipmentDetails || null,
       currency,
       description: fullDesc,
       price: price ? parseFloat(price) : null,
@@ -210,23 +218,20 @@ export default function PublicarCompactador({ user }) {
           <div className="pub-info-grid">
             {ADVANTAGES.map((a, i) => (
               <div key={i} className="pub-info-card">
-                <a.Icon size={18} className="pub-info-icon" />
-                <strong className="pub-info-title">{a.title}</strong>
+                <div className="pub-info-card-inner">
+                  <a.Icon size={14} className="pub-info-icon" />
+                  <strong className="pub-info-title">{a.title}</strong>
+                </div>
                 <span className="pub-info-desc">{a.desc}</span>
               </div>
             ))}
           </div>
 
           <div className="pub-warnings">
-            <h3 className="pub-warnings-title">
-              <ShieldAlert size={15} /> Lo que debes sabes
-            </h3>
+            <h3 className="pub-warnings-title"><ShieldAlert size={15} /> Lo que debes saber</h3>
             <ul className="pub-warnings-list">
               {WARNINGS.map((w, i) => (
-                <li key={i}>
-                  <Info size={13} className="pub-warn-icon" />
-                  {w}
-                </li>
+                <li key={i}><Info size={13} className="pub-warn-icon" />{w}</li>
               ))}
             </ul>
           </div>
@@ -236,54 +241,46 @@ export default function PublicarCompactador({ user }) {
         <div className="pub-form-col">
           <form onSubmit={handleSubmit} className="pub-form">
 
-            {/* ── BOTÓN USAR DIRECCIÓN OFICIAL ── */}
-            <div className="pub-verified-row">
-              <button type="button" className="pub-verified-btn" onClick={fillWithVerifiedAddress} disabled={!verifiedAddr}>
-                <MapPin size={14} /> Usar mi dirección oficial
-              </button>
-              {verifiedAddr ? (
-                <span className="pub-verified-hint">Rellena tu punto de recepción con tu ciudad verificada</span>
-              ) : (
-                <span className="pub-verified-hint pub-verified-hint-warn">No tienes dirección fijada. Fíjala en Mi Cuenta primero.</span>
-              )}
-            </div>
-
-            {/* ORIGEN (punto de recepción) */}
+            {/* ══════ RECEPCIÓN ══════ */}
             <div className="pub-section">
               <div className="pub-section-label"><Home size={14} /> ¿Dónde recibes los paquetes?</div>
-              <p className="pub-hint">Esta es la dirección donde los remitentes llevarán sus paquetes para que tú los consolides y envíes.</p>
+              <p className="pub-hint">Tu punto de recepción. Esta es la dirección donde los remitentes llevarán sus paquetes.</p>
               <div className="pub-address-block">
+
                 <CityAutocomplete
-                  label="Ciudad y país"
-                  placeholder="Escribe tu ciudad"
-                  value={originCity}
-                  onChange={setOriginCity}
+                  label="País, departamento y ciudad"
+                  placeholder="Selecciona ubicación"
+                  value={receptionLoc}
+                  onChange={setReceptionLoc}
+                  showVerifiedBtn={true}
+                  onVerifiedClick={() => fillWithVerified('reception')}
+                  hasVerifiedAddress={!!verifiedAddr}
                 />
-                <div className="pub-field" style={{ marginTop: '0.75rem' }}>
-                  <label>Dirección exacta</label>
+
+                <div className="pub-field">
+                  <label>Detalles adicionales</label>
                   <input className="input" placeholder="Ej: Av. Roca y Coronado #450, Villa 1ro de Mayo"
-                    value={originAddress} onChange={e => setOriginAddress(e.target.value)} />
+                    value={receptionDetails} onChange={e => setReceptionDetails(e.target.value)} />
                 </div>
+
                 <div className="pub-gps-row">
-                  <button type="button" className="btn btn-secondary pub-gps-btn" onClick={() => getGPS(setOriginCoords)}>
-                    Usar mi ubicación actual
+                  <button type="button" className="btn btn-secondary pub-gps-btn" onClick={() => getGPS(setReceptionCoords)}>
+                    <Navigation2 size={13} /> Usar mi ubicación actual
                   </button>
-                  <button type="button" className="btn btn-secondary pub-gps-btn" onClick={() => setShowOriginMap(!showOriginMap)}>
-                    {showOriginMap ? 'Cerrar mapa' : 'Pinchar en mapa'}
+                  <button type="button" className="btn btn-secondary pub-gps-btn" onClick={() => setShowReceptionMap(!showReceptionMap)}>
+                    <Navigation size={13} /> {showReceptionMap ? 'Cerrar mapa' : 'Pinchar en mapa'}
                   </button>
-                  {originCoords && (
-                    <span className="pub-coords-badge">
-                      {originCoords.lat.toFixed(5)}, {originCoords.lng.toFixed(5)}
-                    </span>
+                  {receptionCoords && (
+                    <span className="pub-coords-badge">{receptionCoords.lat.toFixed(5)}, {receptionCoords.lng.toFixed(5)}</span>
                   )}
                 </div>
-                {showOriginMap && (
+
+                {showReceptionMap && (
                   <div className="pub-map">
-                    <MapContainer center={originCoords || [-17.8, -63.18]} zoom={13}
-                      style={{ height: '280px', borderRadius: '12px' }}>
+                    <MapContainer center={receptionCoords || [-17.8, -63.18]} zoom={13} style={{ height: '280px', borderRadius: '12px' }}>
                       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                      <MapPicker onSelect={(coords) => { setOriginCoords(coords); setShowOriginMap(false) }} />
-                      {originCoords && <Marker position={[originCoords.lat, originCoords.lng]} />}
+                      <MapPicker onSelect={(coords) => { setReceptionCoords(coords); setShowReceptionMap(false) }} />
+                      {receptionCoords && <Marker position={[receptionCoords.lat, receptionCoords.lng]} />}
                     </MapContainer>
                     <p className="pub-map-hint">Haz clic en el mapa para marcar el punto exacto</p>
                   </div>
@@ -291,41 +288,41 @@ export default function PublicarCompactador({ user }) {
               </div>
             </div>
 
-            {/* DESTINO (opcional) */}
+            {/* ══════ ENVÍO CONSOLIDADO (opcional) ══════ */}
             <div className="pub-section">
-              <div className="pub-section-label"><MapPin size={14} /> ¿A dónde envías consolidado? <small style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(opcional)</small></div>
+              <div className="pub-section-label"><MapPin size={14} /> ¿A dónde envías consolidado? <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>(opcional)</span></div>
               <div className="pub-address-block">
                 <CityAutocomplete
-                  label="Ciudad y país"
-                  placeholder="Ej: La Paz, Bolivia"
-                  value={destinationCity}
-                  onChange={setDestinationCity}
+                  label="País, departamento y ciudad"
+                  placeholder="Selecciona ubicación"
+                  value={shipmentLoc}
+                  onChange={setShipmentLoc}
+                  showVerifiedBtn={true}
+                  onVerifiedClick={() => fillWithVerified('shipment')}
+                  hasVerifiedAddress={!!verifiedAddr}
                 />
-                <div className="pub-field" style={{ marginTop: '0.75rem' }}>
-                  <label>Dirección exacta</label>
+                <div className="pub-field">
+                  <label>Detalles adicionales</label>
                   <input className="input" placeholder="Ej: Terminal Tietê / Punto de distribución"
-                    value={destinationAddress} onChange={e => setDestinationAddress(e.target.value)} />
+                    value={shipmentDetails} onChange={e => setShipmentDetails(e.target.value)} />
                 </div>
                 <div className="pub-gps-row">
-                  <button type="button" className="btn btn-secondary pub-gps-btn" onClick={() => getGPS(setDestinationCoords)}>
-                    Usar mi ubicación actual
+                  <button type="button" className="btn btn-secondary pub-gps-btn" onClick={() => getGPS(setShipmentCoords)}>
+                    <Navigation2 size={13} /> Usar mi ubicación actual
                   </button>
-                  <button type="button" className="btn btn-secondary pub-gps-btn" onClick={() => setShowDestMap(!showDestMap)}>
-                    {showDestMap ? 'Cerrar mapa' : 'Pinchar en mapa'}
+                  <button type="button" className="btn btn-secondary pub-gps-btn" onClick={() => setShowShipmentMap(!showShipmentMap)}>
+                    <Navigation size={13} /> {showShipmentMap ? 'Cerrar mapa' : 'Pinchar en mapa'}
                   </button>
-                  {destinationCoords && (
-                    <span className="pub-coords-badge">
-                      {destinationCoords.lat.toFixed(5)}, {destinationCoords.lng.toFixed(5)}
-                    </span>
+                  {shipmentCoords && (
+                    <span className="pub-coords-badge">{shipmentCoords.lat.toFixed(5)}, {shipmentCoords.lng.toFixed(5)}</span>
                   )}
                 </div>
-                {showDestMap && (
+                {showShipmentMap && (
                   <div className="pub-map">
-                    <MapContainer center={destinationCoords || [-17.8, -63.18]} zoom={13}
-                      style={{ height: '280px', borderRadius: '12px' }}>
+                    <MapContainer center={shipmentCoords || [-17.8, -63.18]} zoom={13} style={{ height: '280px', borderRadius: '12px' }}>
                       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                      <MapPicker onSelect={(coords) => { setDestinationCoords(coords); setShowDestMap(false) }} />
-                      {destinationCoords && <Marker position={[destinationCoords.lat, destinationCoords.lng]} />}
+                      <MapPicker onSelect={(coords) => { setShipmentCoords(coords); setShowShipmentMap(false) }} />
+                      {shipmentCoords && <Marker position={[shipmentCoords.lat, shipmentCoords.lng]} />}
                     </MapContainer>
                     <p className="pub-map-hint">Haz clic en el mapa para marcar el punto exacto</p>
                   </div>
@@ -333,7 +330,7 @@ export default function PublicarCompactador({ user }) {
               </div>
             </div>
 
-            {/* HORARIO */}
+            {/* ══════ HORARIO ══════ */}
             <div className="pub-section">
               <div className="pub-section-label"><Clock size={14} /> Horario de recepción</div>
               <p className="pub-hint">Selecciona los días y horas que recibes paquetes en tu domicilio.</p>
@@ -363,7 +360,7 @@ export default function PublicarCompactador({ user }) {
               </div>
             </div>
 
-            {/* PRECIO */}
+            {/* ══════ PRECIO ══════ */}
             <div className="pub-section">
               <div className="pub-section-label"><DollarSign size={14} /> Precio</div>
               <div className="pub-row">
@@ -380,7 +377,7 @@ export default function PublicarCompactador({ user }) {
               </div>
             </div>
 
-            {/* DESCRIPCIÓN */}
+            {/* ══════ DESCRIPCIÓN ══════ */}
             <div className="pub-section">
               <div className="pub-section-label"><FileText size={14} /> Descripción y condiciones</div>
               <textarea
@@ -392,21 +389,14 @@ export default function PublicarCompactador({ user }) {
               />
             </div>
 
-            {error && (
-              <div className="pub-error">
-                <AlertTriangle size={14} /> {error}
-              </div>
-            )}
+            {error && <div className="pub-error"><Info size={14} /> {error}</div>}
 
             <div className="pub-actions">
-              <button type="button" className="btn btn-secondary" onClick={() => navigate('/traficante')}>
-                Cancelar
-              </button>
-              <button type="submit" className="btn btn-primary t-btn-primary" disabled={loading}>
+              <button type="button" className="btn btn-secondary" onClick={() => navigate('/traficante')}>Cancelar</button>
+              <button type="submit" className="btn btn-primary" disabled={loading}>
                 {loading ? 'Publicando...' : 'Publicar compactación'}
               </button>
             </div>
-
           </form>
         </div>
       </div>
