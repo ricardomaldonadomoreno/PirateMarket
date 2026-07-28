@@ -58,9 +58,7 @@ export default function MiCuenta({ user, onProfileUpdate }) {
       .select(`
         display_name, avatar_url,
         traficante_full_name, traficante_phone,
-        traficante_address_city, traficante_address_country, traficante_address_state,
-        traficante_address_state_code, traficante_address_country_code,
-        traficante_address_text,
+        traficante_address_city, traficante_address_country, traficante_address_text,
         traficante_address_lat, traficante_address_lng,
         traficante_address_locked, traficante_phone_locked,
         traficante_bio, traficante_frequent_routes,
@@ -79,7 +77,7 @@ export default function MiCuenta({ user, onProfileUpdate }) {
       setAddressCountry(data.traficante_address_country || '')
       setAddressText(data.traficante_address_text || '')
       if (data.traficante_address_city) {
-        setAddressCityObj({ city: data.traficante_address_city, country: data.traficante_address_country, country_code: data.traficante_address_country_code, state: data.traficante_address_state, state_code: data.traficante_address_state_code, lat: data.traficante_address_lat, lng: data.traficante_address_lng })
+        setAddressCityObj({ city: data.traficante_address_city, country: data.traficante_address_country, lat: data.traficante_address_lat, lng: data.traficante_address_lng })
       }
       if (data.traficante_address_lat && data.traficante_address_lng) {
         setAddressCoords({ lat: data.traficante_address_lat, lng: data.traficante_address_lng })
@@ -145,18 +143,15 @@ export default function MiCuenta({ user, onProfileUpdate }) {
   // ── GUARDAR DIRECCIÓN ──
   const saveAddress = async () => {
     if (profile?.traficante_address_locked) return
-    if (!addressCityObj || !addressText) return setError('Completa la ciudad y dirección')
+    if (!addressCity || !addressText) return setError('Completa la ciudad y dirección')
     setSaving(true)
     setError('')
     const { error: err } = await supabase.from('users').update({
-      traficante_address_city: addressCityObj.city,
-      traficante_address_country: addressCityObj.country,
+      traficante_address_city: addressCityObj?.city || addressCity,
+      traficante_address_country: addressCityObj?.country || addressCountry,
       traficante_address_text: addressText,
-      traficante_address_lat: addressCityObj.lat || addressCoords?.lat || null,
-      traficante_address_lng: addressCityObj.lng || addressCoords?.lng || null,
-      traficante_address_state: addressCityObj.state || null,
-      traficante_address_state_code: addressCityObj.state_code || null,
-      traficante_address_country_code: addressCityObj.country_code || null,
+      traficante_address_lat: addressCityObj?.lat || addressCoords?.lat || null,
+      traficante_address_lng: addressCityObj?.lng || addressCoords?.lng || null,
       traficante_address_locked: true,
     }).eq('id', user.id)
     setSaving(false)
