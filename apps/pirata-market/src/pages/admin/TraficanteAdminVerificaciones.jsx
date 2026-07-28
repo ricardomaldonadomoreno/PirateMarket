@@ -23,10 +23,11 @@ export default function TraficanteAdminVerificaciones() {
           user:users(
             display_name, email, whatsapp,
             traficante_full_name, traficante_phone,
+            traficante_birth_country, traficante_doc_type, traficante_doc_number,
+            traficante_personal_locked, traficante_phone_locked,
             traficante_address_city, traficante_address_country, traficante_address_text,
             traficante_address_lat, traficante_address_lng,
-            traficante_address_locked, traficante_phone_locked,
-            traficante_bio, traficante_frequent_routes,
+            traficante_address_locked,
             traficante_identity_verified, traficante_address_verified, traficante_bank_verified,
             is_verified, avatar_url
           )
@@ -267,6 +268,9 @@ export default function TraficanteAdminVerificaciones() {
               {/* ── DATOS PERSONALES (de /traficante/mi-cuenta) ── */}
               <div className="docs-section">
                 <h4>Datos personales</h4>
+                {detailModal.user?.traficante_personal_locked && (
+                  <div className="traf-locked-banner">Datos personales fijados por el usuario</div>
+                )}
                 <div className="traf-data-grid">
                   {detailModal.user?.traficante_full_name && (
                     <div className="traf-data-item">
@@ -277,24 +281,25 @@ export default function TraficanteAdminVerificaciones() {
                   {detailModal.user?.traficante_phone && (
                     <div className="traf-data-item">
                       <label>Teléfono</label>
-                      <span>
-                        {detailModal.user.traficante_phone}
-                        {detailModal.user.traficante_phone_locked && (
-                          <span className="traf-locked-tag">Fijo</span>
-                        )}
-                      </span>
+                      <span>{detailModal.user.traficante_phone}</span>
                     </div>
                   )}
-                  {detailModal.user?.traficante_bio && (
-                    <div className="traf-data-item traf-data-full">
-                      <label>Bio pública</label>
-                      <span>{detailModal.user.traficante_bio}</span>
+                  {detailModal.user?.traficante_birth_country && (
+                    <div className="traf-data-item">
+                      <label>País de nacimiento</label>
+                      <span>{detailModal.user.traficante_birth_country}</span>
                     </div>
                   )}
-                  {detailModal.user?.traficante_frequent_routes && (
+                  {detailModal.user?.traficante_doc_type && (
+                    <div className="traf-data-item">
+                      <label>Tipo de documento</label>
+                      <span>{detailModal.user.traficante_doc_type === 'ci' ? 'Cédula de Identidad (CI)' : detailModal.user.traficante_doc_type === 'pasaporte' ? 'Pasaporte' : detailModal.user.traficante_doc_type}</span>
+                    </div>
+                  )}
+                  {detailModal.user?.traficante_doc_number && (
                     <div className="traf-data-item traf-data-full">
-                      <label>Rutas frecuentes</label>
-                      <span>{detailModal.user.traficante_frequent_routes}</span>
+                      <label>Número de documento</label>
+                      <span>{detailModal.user.traficante_doc_number}</span>
                     </div>
                   )}
                 </div>
