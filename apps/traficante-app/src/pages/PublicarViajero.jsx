@@ -267,11 +267,11 @@ export default function PublicarViajero({ user }) {
                 </div>
                 {showOriginMap && (
                   <div className="pub-map">
-                    <MapContainer center={originCoords || [-17.8, -63.18]} zoom={13}
+                    <MapContainer center={originCoords || originCoordsFromCity || [-17.8, -63.18]} zoom={13}
                       style={{ height: '280px', borderRadius: '12px' }}>
                       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                       <MapPicker onSelect={(coords) => { setOriginCoords(coords); setShowOriginMap(false) }} />
-                      {originCoords && <Marker position={[originCoords.lat, originCoords.lng]} />}
+                      {(originCoords || originCoordsFromCity) && <Marker position={[(originCoords || originCoordsFromCity).lat, (originCoords || originCoordsFromCity).lng]} />}
                     </MapContainer>
                     <p className="pub-map-hint">Haz clic en el mapa para marcar el punto exacto</p>
                   </div>
@@ -316,11 +316,11 @@ export default function PublicarViajero({ user }) {
                 </div>
                 {showDestMap && (
                   <div className="pub-map">
-                    <MapContainer center={destinationCoords || [-17.8, -63.18]} zoom={13}
+                    <MapContainer center={destinationCoords || destinationCoordsFromCity || [-17.8, -63.18]} zoom={13}
                       style={{ height: '280px', borderRadius: '12px' }}>
                       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                       <MapPicker onSelect={(coords) => { setDestinationCoords(coords); setShowDestMap(false) }} />
-                      {destinationCoords && <Marker position={[destinationCoords.lat, destinationCoords.lng]} />}
+                      {(destinationCoords || destinationCoordsFromCity) && <Marker position={[(destinationCoords || destinationCoordsFromCity).lat, (destinationCoords || destinationCoordsFromCity).lng]} />}
                     </MapContainer>
                     <p className="pub-map-hint">Haz clic en el mapa para marcar el punto exacto</p>
                   </div>
