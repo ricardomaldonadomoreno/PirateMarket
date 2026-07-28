@@ -98,6 +98,22 @@ export default function PublicarViajero({ user }) {
       })
   }, [user])
 
+  // Al seleccionar ciudad, mostrar sus coords como referencia (solo si no hay coords manuales previas)
+  const [originCoordsFromCity, setOriginCoordsFromCity] = useState(null)
+  const [destinationCoordsFromCity, setDestinationCoordsFromCity] = useState(null)
+
+  useEffect(() => {
+    if (originCity?.lat && originCity?.lng) {
+      setOriginCoordsFromCity({ lat: originCity.lat, lng: originCity.lng })
+    }
+  }, [originCity])
+
+  useEffect(() => {
+    if (destinationCity?.lat && destinationCity?.lng) {
+      setDestinationCoordsFromCity({ lat: destinationCity.lat, lng: destinationCity.lng })
+    }
+  }, [destinationCity])
+
   const getGPS = (setCoords) => {
     if (!navigator.geolocation) return
     navigator.geolocation.getCurrentPosition(pos => {
@@ -243,9 +259,9 @@ export default function PublicarViajero({ user }) {
                   <button type="button" className="btn btn-secondary pub-gps-btn" onClick={() => setShowOriginMap(!showOriginMap)}>
                     {showOriginMap ? 'Cerrar mapa' : 'Pinchar en mapa'}
                   </button>
-                  {originCoords && (
+                  {(originCoords || originCoordsFromCity) && (
                     <span className="pub-coords-badge">
-                      {originCoords.lat.toFixed(5)}, {originCoords.lng.toFixed(5)}
+                      {(originCoords || originCoordsFromCity).lat.toFixed(5)}, {(originCoords || originCoordsFromCity).lng.toFixed(5)}
                     </span>
                   )}
                 </div>
@@ -292,9 +308,9 @@ export default function PublicarViajero({ user }) {
                   <button type="button" className="btn btn-secondary pub-gps-btn" onClick={() => setShowDestMap(!showDestMap)}>
                     {showDestMap ? 'Cerrar mapa' : 'Pinchar en mapa'}
                   </button>
-                  {destinationCoords && (
+                  {(destinationCoords || destinationCoordsFromCity) && (
                     <span className="pub-coords-badge">
-                      {destinationCoords.lat.toFixed(5)}, {destinationCoords.lng.toFixed(5)}
+                      {(destinationCoords || destinationCoordsFromCity).lat.toFixed(5)}, {(destinationCoords || destinationCoordsFromCity).lng.toFixed(5)}
                     </span>
                   )}
                 </div>
