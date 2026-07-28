@@ -1,15 +1,13 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
-import { Search, MapPin, X } from 'lucide-react'
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import { Search, MapPin, X, ChevronDown } from 'lucide-react'
+import { Country, State, City } from 'country-state-city'
 import './CityAutocomplete.css'
-
 /*
-  Autocompletado de ciudades usando Nominatim (OpenStreetMap).
-  Debounce 500ms, mínimo 3 caracteres, 1 request/seg.
-  Devuelve: { city, country, lat, lng, displayName }
+  Selector jerárquico de ubicación: País → Departamento/Estado → Ciudad.
+  Usa country-state-city (datos locales, sin API, sin rate limits).
+  Devuelve: { city, country, country_code, state, state_code, lat, lng, displayName }
+  Manteniendo la misma API de props: label, placeholder, value, onChange
 */
-
-const DEBOUNCE_MS = 500
-const MIN_CHARS = 3
 
 export default function CityAutocomplete({
   label,
@@ -17,108 +15,291 @@ export default function CityAutocomplete({
   value,
   onChange,
 }) {
-  const [input, setInput] = useState('')
-  const [results, setResults] = useState([])
-  const [showDropdown, setShowDropdown] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const timerRef = useRef(null)
+  const allCountries = useMemo(() => Country.getAllCountries(), [])
+
+  // Filtro de países
+  const [countryInput, setCountryInput] = useState('')
+  const [countryResults, setCountryResults] = useState([])
+  const [showCountryDropdown, setShowCountryDropdown] = useState(false)
+  const [selectedCountry, setSelectedCountry] = useState(null)
+
+  // Filtro de estados
+  const [stateInput, setStateInput] = useState('')
+  const [stateResults, setStateResults] = useState([])
+  const [showStateDropdown, setShowStateDropdown] = useState(false)
+  const [selectedState, setSelectedState] = useState(null)
+
+  // Filtro de ciudades
+  const [cityInput, setCityInput] = useState('')
+  const [cityResults, setCityResults] = useState([])
+  const [showCityDropdown, setShowCityDropdown] = useState(false)
+
   const wrapperRef = useRef(null)
 
-  // Sincronizar input con value prop
+  // Sincronizar desde value (cuando viene de loadProfile)
   useEffect(() => {
-    if (value?.city && !input) {
-      setInput(`${value.city}${value.country ? ', ' + value.country : ''}`)
+    if (value?.city && !selectedCountry) {
+      // Buscar país por nombre
+      const country = allCountries.find(c => c.name === value.country) || allCountries.find(c => c.name.toLowerCase().includes(value.country?.toLowerCase()))
+      if (country) {
+        setSelectedCountry(country)
+        setCountryInput(country.name)
+        const states = State.getStatesOfCountry(country.isoCode)
+        // Buscar estado por ciudad
+        for (const s of states) {
+          const cities = City.getCitiesOfState(country.isoCode, s.isoCode)
+          if (cities.find(c => c.name === value.city)) {
+            setSelectedState(s)
+            setStateInput(s.name)
+            setCityInput(value.city)
+            break
+          }
+        }
+      } else if (value.country) {
+        setCountryInput(value.country)
+        setCityInput(value.city)
+      }
     }
-  }, []) // eslint-disable-line
+  }, [value]) // eslint-disable-line
 
-  // Cerrar dropdown al hacer click fuera
+  // Cerrar dropdowns al click fuera
   useEffect(() => {
     const handler = (e) => {
       if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
-        setShowDropdown(false)
+        setShowCountryDropdown(false)
+        setShowStateDropdown(false)
+        setShowCityDropdown(false)
       }
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
-  const doSearch = useCallback(async (query) => {
-    if (query.length < MIN_CHARS) {
-      setResults([])
+  // Al cambiar país seleccionado
+  useEffect(() => {
+    if (selectedCountry) {
+      const states = State.getStatesOfCountry(selectedCountry.isoCode)
+      setStateResults(states)
+      setStateInput('')
+      setSelectedState(null)
+      setCityInput('')
+      setCityResults([])
+    } else {
+      setStateResults([])
+      setStateInput('')
+      setSelectedState(null)
+      setCityInput('')
+      setCityResults([])
+    }
+  }, [selectedCountry])
+
+  // Al cambiar estado seleccionado
+  useEffect(() => {
+    if (selectedState && selectedCountry) {
+      const cities = City.getCitiesOfState(selectedCountry.isoCode, selectedState.isoCode)
+      setCityResults(cities)
+      setCityInput('')
+    } else {
+      setCityResults([])
+      setCityInput('')
+    }
+  }, [selectedState, selectedCountry])
+
+  // Filtrar países al escribir
+  const handleCountryInput = (e) => {
+    const val = e.target.value
+    setCountryInput(val)
+    setSelectedCountry(null)
+    setSelectedState(null)
+    setCityInput('')
+    onChange(null)
+    if (val.length < 1) {
+      setCountryResults([])
+      setShowCountryDropdown(false)
       return
     }
-    setLoading(true)
-    try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=5&accept-language=es`
-      )
-      const data = await res.json()
-      setResults(data.map(r => ({
-        city: r.address?.city || r.address?.town || r.address?.village || r.name,
-        country: r.address?.country,
-        country_code: r.address?.country_code?.toUpperCase(),
-        lat: parseFloat(r.lat),
-        lng: parseFloat(r.lon),
-        displayName: r.display_name,
-      })))
-      setShowDropdown(true)
-    } catch {
-      setResults([])
-    }
-    setLoading(false)
-  }, [])
-
-  const handleInput = (e) => {
-    const val = e.target.value
-    setInput(val)
-    setShowDropdown(false)
-    clearTimeout(timerRef.current)
-    timerRef.current = setTimeout(() => doSearch(val), DEBOUNCE_MS)
+    const filtered = allCountries.filter(c =>
+      c.name.toLowerCase().includes(val.toLowerCase())
+    ).slice(0, 15)
+    setCountryResults(filtered)
+    setShowCountryDropdown(true)
   }
 
-  const selectResult = (r) => {
-    setInput(`${r.city}, ${r.country}`)
-    onChange({ city: r.city, country: r.country, country_code: r.country_code, lat: r.lat, lng: r.lng, displayName: r.displayName })
-    setShowDropdown(false)
+  // Filtrar estados al escribir
+  const handleStateInput = (e) => {
+    const val = e.target.value
+    setStateInput(val)
+    setSelectedState(null)
+    setCityInput('')
+    onChange(null)
+    if (!selectedCountry) return
+    const states = State.getStatesOfCountry(selectedCountry.isoCode)
+    if (val.length < 1) {
+      setStateResults(states)
+      setShowStateDropdown(true)
+      return
+    }
+    const filtered = states.filter(s =>
+      s.name.toLowerCase().includes(val.toLowerCase())
+    )
+    setStateResults(filtered)
+    setShowStateDropdown(true)
+  }
+
+  // Filtrar ciudades al escribir
+  const handleCityInput = (e) => {
+    const val = e.target.value
+    setCityInput(val)
+    if (!selectedState || !selectedCountry) return
+    const cities = City.getCitiesOfState(selectedCountry.isoCode, selectedState.isoCode)
+    if (val.length < 1) {
+      setCityResults(cities)
+      setShowCityDropdown(true)
+      return
+    }
+    const filtered = cities.filter(c =>
+      c.name.toLowerCase().includes(val.toLowerCase())
+    )
+    setCityResults(filtered)
+    setShowCityDropdown(true)
+  }
+
+  const selectCountry = (c) => {
+    setSelectedCountry(c)
+    setCountryInput(c.name)
+    setShowCountryDropdown(false)
+    onChange(null)
+  }
+
+  const selectState = (s) => {
+    setSelectedState(s)
+    setStateInput(s.name)
+    setShowStateDropdown(false)
+    onChange(null)
+  }
+
+  const selectCity = (c) => {
+    setCityInput(c.name)
+    setShowCityDropdown(false)
+    const result = {
+      city: c.name,
+      country: selectedCountry.name,
+      country_code: selectedCountry.isoCode,
+      state: selectedState ? selectedState.name : null,
+      state_code: selectedState ? selectedState.isoCode : null,
+      lat: parseFloat(c.latitude),
+      lng: parseFloat(c.longitude),
+    }
+    onChange(result)
   }
 
   const clear = () => {
-    setInput('')
+    setCountryInput('')
+    setStateInput('')
+    setCityInput('')
+    setSelectedCountry(null)
+    setSelectedState(null)
+    setCountryResults([])
+    setStateResults([])
+    setCityResults([])
     onChange(null)
-    setResults([])
   }
 
   return (
     <div className="ca-wrapper" ref={wrapperRef}>
       <label className="ca-label">{label}</label>
-      <div className="ca-input-row">
+
+      {/* País */}
+      <div className="ca-input-container">
+        <Search size={13} className="ca-icon" />
+        <input
+          className="input ca-input"
+          type="text"
+          placeholder="País"
+          value={countryInput}
+          onChange={handleCountryInput}
+          onFocus={() => countryInput.length >= 1 && setShowCountryDropdown(true)}
+          readOnly={!!selectedCountry && !showCountryDropdown}
+        />
+        {selectedCountry && !showCountryDropdown && (
+          <button type="button" className="ca-clear" onClick={() => { setSelectedCountry(null); setCountryInput(''); setStateInput(''); setCityInput(''); setSelectedState(null); onChange(null) }}>
+            <X size={13} />
+          </button>
+        )}
+        {showCountryDropdown && countryResults.length > 0 && (
+          <ul className="ca-dropdown">
+            {countryResults.map((c, i) => (
+              <li key={`${c.isoCode}-${i}`} className="ca-dropdown-item" onClick={() => selectCountry(c)}>
+                <MapPin size={13} className="ca-item-icon" />
+                <div className="ca-item-text">
+                  <span className="ca-item-city">{c.name}</span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {/* Departamento/Estado */}
+      {selectedCountry && (
+        <div className="ca-input-container">
+          <ChevronDown size={13} className="ca-icon" />
+          <input
+            className="input ca-input"
+            type="text"
+            placeholder="Departamento / Estado"
+            value={stateInput}
+            onChange={handleStateInput}
+            onFocus={() => setShowStateDropdown(true)}
+            readOnly={!!selectedState && !showStateDropdown}
+          />
+          {selectedState && !showStateDropdown && (
+            <button type="button" className="ca-clear" onClick={() => { setSelectedState(null); setStateInput(''); setCityInput(''); onChange(null) }}>
+              <X size={13} />
+            </button>
+          )}
+          {showStateDropdown && stateResults.length > 0 && (
+            <ul className="ca-dropdown">
+              {stateResults.slice(0, 20).map((s, i) => (
+                <li key={`${s.isoCode}-${i}`} className="ca-dropdown-item" onClick={() => selectState(s)}>
+                  <MapPin size={13} className="ca-item-icon" />
+                  <div className="ca-item-text">
+                    <span className="ca-item-city">{s.name}</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
+      {/* Ciudad */}
+      {selectedState && (
         <div className="ca-input-container">
           <Search size={13} className="ca-icon" />
           <input
             className="input ca-input"
             type="text"
-            placeholder={placeholder}
-            value={input}
-            onChange={handleInput}
-            onFocus={() => results.length > 0 && setShowDropdown(true)}
+            placeholder="Ciudad"
+            value={cityInput}
+            onChange={handleCityInput}
+            onFocus={() => cityInput.length >= 1 && setShowCityDropdown(true)}
+            readOnly={!!value && value.city && !showCityDropdown}
           />
-          {input && (
+          {value?.city && !showCityDropdown && (
             <button type="button" className="ca-clear" onClick={clear}>
               <X size={13} />
             </button>
           )}
-          {loading && <span className="ca-loading" />}
         </div>
-      </div>
-
-      {showDropdown && results.length > 0 && (
+      )}
+      {showCityDropdown && cityResults.length > 0 && (
         <ul className="ca-dropdown">
-          {results.map((r, i) => (
-            <li key={i} className="ca-dropdown-item" onClick={() => selectResult(r)}>
+          {cityResults.slice(0, 15).map((c, i) => (
+            <li key={`${c.stateCode}-${c.name}-${i}`} className="ca-dropdown-item" onClick={() => selectCity(c)}>
               <MapPin size={13} className="ca-item-icon" />
               <div className="ca-item-text">
-                <span className="ca-item-city">{r.city}</span>
-                <span className="ca-item-country">{r.country}</span>
+                <span className="ca-item-city">{c.name}</span>
               </div>
             </li>
           ))}

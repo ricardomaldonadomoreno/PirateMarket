@@ -20,6 +20,11 @@
   gap: 0.5rem;
 }
 
+/* ── Inputs jerárquicos ── */
+.ca-input-container + .ca-input-container {
+  margin-top: 0.5rem;
+}
+
 .ca-input-container {
   position: relative;
   flex: 1;
