@@ -235,6 +235,14 @@ export default function PublicarViajero({ user }) {
             <div className="pub-section">
               <div className="pub-section-label"><MapPin size={14} /> ¿Dónde puedes recibir el paquete?</div>
               <p className="pub-hint">Indica tu domicilio o un punto de encuentro cercano donde el remitente te entregará el paquete.</p>
+              <div className="pub-verified-section-row">
+                <button type="button" className="pub-verified-section-btn" onClick={() => fillWithVerifiedAddress('origin')} disabled={!verifiedAddr || verifiedUsedFor === 'destination'}>
+                  <MapPin size={13} /> Usar mi dirección oficial
+                </button>
+                {verifiedUsedFor === 'destination' && verifiedAddr && (
+                  <span className="pub-verified-inline-used">Ya usada en destino</span>
+                )}
+              </div>
               <div className="pub-address-block">
                 <CityAutocomplete
                   label="Ciudad y país"
@@ -242,12 +250,6 @@ export default function PublicarViajero({ user }) {
                   value={originCity}
                   onChange={setOriginCity}
                 />
-                <button type="button" className="pub-verified-inline-btn" onClick={() => fillWithVerifiedAddress('origin')} disabled={!verifiedAddr || verifiedUsedFor === 'destination'}>
-                  <MapPin size={12} /> Usar mi dirección oficial
-                </button>
-                {verifiedUsedFor === 'destination' && verifiedAddr && (
-                  <span className="pub-verified-inline-used">Ya usada en destino</span>
-                )}
                 <div className="pub-field" style={{ marginTop: '0.75rem' }}>
                   <label>Dirección exacta</label>
                   <input className="input" placeholder="Ej: Av. Roca y Coronado #450, Villa 1ro de Mayo"
@@ -284,6 +286,14 @@ export default function PublicarViajero({ user }) {
             <div className="pub-section">
               <div className="pub-section-label"><MapPin size={14} /> ¿Dónde entregarás el paquete?</div>
               <p className="pub-hint">Indica dónde estarás al llegar — tu hotel, domicilio o un punto acordado donde el receptor pueda recoger.</p>
+              <div className="pub-verified-section-row">
+                <button type="button" className="pub-verified-section-btn" onClick={() => fillWithVerifiedAddress('destination')} disabled={!verifiedAddr || verifiedUsedFor === 'origin'}>
+                  <MapPin size={13} /> Usar mi dirección oficial
+                </button>
+                {verifiedUsedFor === 'origin' && verifiedAddr && (
+                  <span className="pub-verified-inline-used">Ya usada en origen</span>
+                )}
+              </div>
               <div className="pub-address-block">
                 <CityAutocomplete
                   label="Ciudad y país"
@@ -291,12 +301,6 @@ export default function PublicarViajero({ user }) {
                   value={destinationCity}
                   onChange={setDestinationCity}
                 />
-                <button type="button" className="pub-verified-inline-btn" onClick={() => fillWithVerifiedAddress('destination')} disabled={!verifiedAddr || verifiedUsedFor === 'origin'}>
-                  <MapPin size={12} /> Usar mi dirección oficial
-                </button>
-                {verifiedUsedFor === 'origin' && verifiedAddr && (
-                  <span className="pub-verified-inline-used">Ya usada en origen</span>
-                )}
                 <div className="pub-field" style={{ marginTop: '0.75rem' }}>
                   <label>Dirección exacta</label>
                   <input className="input" placeholder="Ej: Terminal Tietê / Mi hotel en Liberdade"
