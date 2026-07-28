@@ -31,6 +31,7 @@ const ADVANTAGES = [
   { Icon: DollarSign, title: 'Monetiza tu equipaje', desc: 'Tienes espacio libre en tu maleta y ya ibas a viajar de todas formas. Cada paquete es ingreso extra.' },
   { Icon: CheckCircle2, title: 'Verificación te da confianza', desc: 'Tu dirección verificada es tu garantía. El remitente sabe exactamente desde dónde sale el paquete.' },
   { Icon: ArrowRight, title: 'Sin complicaciones', desc: 'Publicas tu ruta, recibes solicitudes, aceptas las que quieras. Tú decides cuánto llevas y a qué precio.' },
+  { Icon: ShieldAlert, title: 'Dedícate a esto', desc: 'Transporta objetos de valor de ciudad a ciudad. Gana dinero fijo ofreciendo garantía a través de nuestra plataforma.' },
 ]
 
 const WARNINGS = [
