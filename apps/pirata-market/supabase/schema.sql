@@ -702,3 +702,61 @@ GRANT USAGE ON SCHEMA public TO authenticated;
 GRANT USAGE ON SCHEMA public TO anon;
 GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO authenticated;
 GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon;
+-- ================================================
+-- MIGRATIONS (aplicar en orden en Supabase SQL Editor)
+-- ================================================
+
+-- Migration: Agregar columnas de documento a users
+ALTER TABLE users ADD COLUMN IF NOT EXISTS traficante_birth_country TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS traficante_doc_type TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS traficante_doc_number TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS traficante_personal_locked BOOLEAN DEFAULT FALSE;
+
+-- Migration: Corregir policies de traficante_verification_requests
+-- (las policies actuales no permiten INSERT porque usan EXCEPTION y no se reemplazan)
+
+DO $$ BEGIN
+  DROP POLICY IF EXISTS "Users can view own traficante verifications" ON traficante_verification_requests;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  DROP POLICY IF EXISTS "Users can create own traficante verification" ON traficante_verification_requests;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  DROP POLICY IF EXISTS "Users can update own traficante verification" ON traficante_verification_requests;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  DROP POLICY IF EXISTS "Admins can manage traficante verifications" ON traficante_verification_requests;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+
+CREATE POLICY "Users can view own traficante verifications"
+  ON traficante_verification_requests FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can create own traficante verification"
+  ON traficante_verification_requests FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own traficante verification"
+  ON traficante_verification_requests FOR UPDATE
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Admins can manage traficante verifications"
+  ON traficante_verification_requests FOR ALL
+  USING (
+    EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND user_type = 'admin')
+  );
+
+-- Migration: Corregir policy de SELECT en traficante_verification_requests para admin
+-- (el admin necesita poder seleccionar TODAS las solicitudes, no solo las suyas)
+CREATE POLICY "Admins can select all traficante verifications"
+  ON traficante_verification_requests FOR SELECT
+  USING (
+    EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND user_type = 'admin')
+  );
