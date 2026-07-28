@@ -7,7 +7,8 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import {
   Plane, MapPin, Calendar, Weight, DollarSign, FileText,
-  AlertTriangle, CheckCircle2, Info, ShieldAlert, ArrowRight
+  AlertTriangle, CheckCircle2, Info, ShieldAlert, ArrowRight,
+  Navigation, Navigation2
 } from 'lucide-react'
 import './PublicarService.css'
 
@@ -48,15 +49,41 @@ function MapPicker({ onSelect }) {
   return null
 }
 
+/* Country code mapping for Nominatim filter */
+function getCountryCode(countryName) {
+  if (!countryName) return ''
+  const map = {
+    'Bolivia': 'bo', 'Bolivien': 'bo',
+    'Brasil': 'br', 'Brazil': 'br', 'Brasilien': 'br',
+    'Argentina': 'ar', 'Argentinien': 'ar',
+    'Perú': 'pe', 'Peru': 'pe',
+    'Chile': 'cl',
+    'Paraguay': 'py',
+    'Uruguay': 'uy',
+    'Ecuador': 'ec',
+    'Colombia': 'co',
+  }
+  const lower = countryName.toLowerCase()
+  for (const [key, code] of Object.entries(map)) {
+    if (key.toLowerCase() === lower) return code
+  }
+  return ''
+}
+
 export default function PublicarViajero({ user }) {
   const navigate = useNavigate()
+
+  // Origin state
+  const [originCountry, setOriginCountry] = useState(null)
   const [originCity, setOriginCity] = useState(null)
-  const [originAddress, setOriginAddress] = useState('')
+  const [originDetails, setOriginDetails] = useState('')
   const [originCoords, setOriginCoords] = useState(null)
   const [showOriginMap, setShowOriginMap] = useState(false)
 
+  // Destination state
+  const [destinationCountry, setDestinationCountry] = useState(null)
   const [destinationCity, setDestinationCity] = useState(null)
-  const [destinationAddress, setDestinationAddress] = useState('')
+  const [destinationDetails, setDestinationDetails] = useState('')
   const [destinationCoords, setDestinationCoords] = useState(null)
   const [showDestMap, setShowDestMap] = useState(false)
 
@@ -105,15 +132,21 @@ export default function PublicarViajero({ user }) {
     })
   }
 
-  const fillWithVerifiedAddress = () => {
+  /* Fill a single address block with verified address data */
+  const fillWithVerified = (target) => {
     if (!verifiedAddr) return
-    if (!originCity) {
-      setOriginCity({ city: verifiedAddr.city, country: verifiedAddr.country, lat: verifiedAddr.lat, lng: verifiedAddr.lng })
-      setOriginCoords({ lat: verifiedAddr.lat, lng: verifiedAddr.lng })
-    }
-    if (!destinationCity) {
-      setDestinationCity({ city: verifiedAddr.city, country: verifiedAddr.country, lat: verifiedAddr.lat, lng: verifiedAddr.lng })
-      setDestinationCoords({ lat: verifiedAddr.lat, lng: verifiedAddr.lng })
+    if (target === 'origin') {
+      if (!originCity) {
+        setOriginCountry(verifiedAddr.country ? { city: verifiedAddr.country, country: '', country_code: getCountryCode(verifiedAddr.country).toUpperCase(), lat: 0, lng: 0 } : null)
+        setOriginCity({ city: verifiedAddr.city, country: verifiedAddr.country, country_code: getCountryCode(verifiedAddr.country).toUpperCase(), lat: verifiedAddr.lat, lng: verifiedAddr.lng })
+        setOriginCoords({ lat: verifiedAddr.lat, lng: verifiedAddr.lng })
+      }
+    } else {
+      if (!destinationCity) {
+        setDestinationCountry(verifiedAddr.country ? { city: verifiedAddr.country, country: '', country_code: getCountryCode(verifiedAddr.country).toUpperCase(), lat: 0, lng: 0 } : null)
+        setDestinationCity({ city: verifiedAddr.city, country: verifiedAddr.country, country_code: getCountryCode(verifiedAddr.country).toUpperCase(), lat: verifiedAddr.lat, lng: verifiedAddr.lng })
+        setDestinationCoords({ lat: verifiedAddr.lat, lng: verifiedAddr.lng })
+      }
     }
   }
 
@@ -143,12 +176,12 @@ export default function PublicarViajero({ user }) {
       origin_country: originCity.country,
       origin_lat: originCoords?.lat || originCity.lat,
       origin_lng: originCoords?.lng || originCity.lng,
-      origin_address: originAddress,
+      origin_address: originDetails,
       destination_city: destinationCity.city,
       destination_country: destinationCity.country,
       destination_lat: destinationCoords?.lat || destinationCity.lat,
       destination_lng: destinationCoords?.lng || destinationCity.lng,
-      destination_address: destinationAddress,
+      destination_address: destinationDetails,
       currency,
       description,
       price: price ? parseFloat(price) : null,
@@ -215,40 +248,53 @@ export default function PublicarViajero({ user }) {
         <div className="pub-form-col">
           <form onSubmit={handleSubmit} className="pub-form">
 
-            {/* ── BOTÓN USAR DIRECCIÓN OFICIAL ── */}
-            <div className="pub-verified-row">
-              <button type="button" className="pub-verified-btn" onClick={fillWithVerifiedAddress} disabled={!verifiedAddr}>
-                <MapPin size={14} /> Usar mi dirección oficial
-              </button>
-              {verifiedAddr ? (
-                <span className="pub-verified-hint">Rellena origen y destino con tu ciudad verificada</span>
-              ) : (
-                <span className="pub-verified-hint pub-verified-hint-warn">No tienes dirección fijada. Fíjala en Mi Cuenta primero.</span>
-              )}
-            </div>
-
-            {/* ORIGEN */}
+            {/* ══════ ORIGEN ══════ */}
             <div className="pub-section">
               <div className="pub-section-label"><MapPin size={14} /> ¿Dónde puedes recibir el paquete?</div>
               <p className="pub-hint">Indica tu domicilio o un punto de encuentro cercano donde el remitente te entregará el paquete.</p>
               <div className="pub-address-block">
+
+                {/* País */}
                 <CityAutocomplete
-                  label="Ciudad y país"
+                  label="País"
+                  placeholder="Escribe el país de origen"
+                  value={originCountry}
+                  onChange={(val) => {
+                    setOriginCountry(val)
+                    // Al cambiar país, limpiar ciudad seleccionada
+                    setOriginCity(null)
+                  }}
+                />
+
+                {/* Ciudad (filtrada por país) */}
+                <CityAutocomplete
+                  label="Ciudad"
                   placeholder="Escribe la ciudad de origen"
                   value={originCity}
-                  onChange={setOriginCity}
+                  onChange={(val) => {
+                    setOriginCity(val)
+                    if (val?.lat) setOriginCoords({ lat: val.lat, lng: val.lng })
+                  }}
+                  countryFilter={originCountry?.country_code?.toLowerCase()}
+                  showVerifiedBtn={true}
+                  onVerifiedClick={() => fillWithVerified('origin')}
+                  hasVerifiedAddress={!!verifiedAddr}
                 />
-                <div className="pub-field" style={{ marginTop: '0.75rem' }}>
-                  <label>Dirección exacta</label>
-                  <input className="input" placeholder="Ej: Av. Roca y Coronado #450, Villa 1ro de Mayo"
-                    value={originAddress} onChange={e => setOriginAddress(e.target.value)} />
+
+                {/* Detalles adicionales */}
+                <div className="pub-field">
+                  <label>Detalles adicionales</label>
+                  <input className="input" placeholder="Ej: Árbol en la entrada, al lado de la tienda X, portón azul"
+                    value={originDetails} onChange={e => setOriginDetails(e.target.value)} />
                 </div>
+
+                {/* GPS + Mapa + Coords */}
                 <div className="pub-gps-row">
                   <button type="button" className="btn btn-secondary pub-gps-btn" onClick={() => getGPS(setOriginCoords)}>
-                    Usar mi ubicación actual
+                    <Navigation2 size={13} /> Usar mi ubicación actual
                   </button>
                   <button type="button" className="btn btn-secondary pub-gps-btn" onClick={() => setShowOriginMap(!showOriginMap)}>
-                    {showOriginMap ? 'Cerrar mapa' : 'Pinchar en mapa'}
+                    <Navigation size={13} /> {showOriginMap ? 'Cerrar mapa' : 'Pinchar en mapa'}
                   </button>
                   {originCoords && (
                     <span className="pub-coords-badge">
@@ -256,6 +302,7 @@ export default function PublicarViajero({ user }) {
                     </span>
                   )}
                 </div>
+
                 {showOriginMap && (
                   <div className="pub-map">
                     <MapContainer center={originCoords || [-17.8, -63.18]} zoom={13}
@@ -270,28 +317,52 @@ export default function PublicarViajero({ user }) {
               </div>
             </div>
 
-            {/* DESTINO */}
+            {/* ══════ DESTINO ══════ */}
             <div className="pub-section">
               <div className="pub-section-label"><MapPin size={14} /> ¿Dónde entregarás el paquete?</div>
               <p className="pub-hint">Indica dónde estarás al llegar — tu hotel, domicilio o un punto acordado donde el receptor pueda recoger.</p>
               <div className="pub-address-block">
+
+                {/* País */}
                 <CityAutocomplete
-                  label="Ciudad y país"
+                  label="País"
+                  placeholder="Escribe el país de destino"
+                  value={destinationCountry}
+                  onChange={(val) => {
+                    setDestinationCountry(val)
+                    setDestinationCity(null)
+                  }}
+                />
+
+                {/* Ciudad (filtrada por país) */}
+                <CityAutocomplete
+                  label="Ciudad"
                   placeholder="Escribe la ciudad de destino"
                   value={destinationCity}
-                  onChange={setDestinationCity}
+                  onChange={(val) => {
+                    setDestinationCity(val)
+                    if (val?.lat) setDestinationCoords({ lat: val.lat, lng: val.lng })
+                  }}
+                  countryFilter={destinationCountry?.country_code?.toLowerCase()}
+                  showVerifiedBtn={true}
+                  onVerifiedClick={() => fillWithVerified('destination')}
+                  hasVerifiedAddress={!!verifiedAddr}
                 />
-                <div className="pub-field" style={{ marginTop: '0.75rem' }}>
-                  <label>Dirección exacta</label>
-                  <input className="input" placeholder="Ej: Terminal Tietê / Mi hotel en Liberdade"
-                    value={destinationAddress} onChange={e => setDestinationAddress(e.target.value)} />
+
+                {/* Detalles adicionales */}
+                <div className="pub-field">
+                  <label>Detalles adicionales</label>
+                  <input className="input" placeholder="Ej: Terminal Tietê, mi hotel en Liberdade, portón azul"
+                    value={destinationDetails} onChange={e => setDestinationDetails(e.target.value)} />
                 </div>
+
+                {/* GPS + Mapa + Coords */}
                 <div className="pub-gps-row">
                   <button type="button" className="btn btn-secondary pub-gps-btn" onClick={() => getGPS(setDestinationCoords)}>
-                    Usar mi ubicación actual
+                    <Navigation2 size={13} /> Usar mi ubicación actual
                   </button>
                   <button type="button" className="btn btn-secondary pub-gps-btn" onClick={() => setShowDestMap(!showDestMap)}>
-                    {showDestMap ? 'Cerrar mapa' : 'Pinchar en mapa'}
+                    <Navigation size={13} /> {showDestMap ? 'Cerrar mapa' : 'Pinchar en mapa'}
                   </button>
                   {destinationCoords && (
                     <span className="pub-coords-badge">
@@ -299,6 +370,7 @@ export default function PublicarViajero({ user }) {
                     </span>
                   )}
                 </div>
+
                 {showDestMap && (
                   <div className="pub-map">
                     <MapContainer center={destinationCoords || [-17.8, -63.18]} zoom={13}

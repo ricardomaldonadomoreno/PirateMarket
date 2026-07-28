@@ -5,7 +5,18 @@ import './CityAutocomplete.css'
 /*
   Autocompletado de ciudades usando Nominatim (OpenStreetMap).
   Debounce 500ms, mínimo 3 caracteres, 1 request/seg.
-  Devuelve: { city, country, lat, lng, displayName }
+  Devuelve: { city, country, country_code, lat, lng, displayName }
+
+  Props:
+    label          — texto del label
+    placeholder    — placeholder del input
+    value          — { city, country, country_code, lat, lng, displayName } o null
+    onChange       — callback con el objeto seleccionado o null
+    countryFilter  — (opcional) country_code para limitar búsqueda (ej: 'bo', 'br')
+                     se agrega como &countrycodes=XX en la query de Nominatim
+    showVerifiedBtn — (opcional) si true, muestra botón compacto "Usar mi dirección oficial"
+    onVerifiedClick — (opcional) callback cuando se pulsa el botón verificado
+    hasVerifiedAddress — (opcional) si el usuario tiene dirección verificada
 */
 
 const DEBOUNCE_MS = 500
@@ -16,6 +27,10 @@ export default function CityAutocomplete({
   placeholder,
   value,
   onChange,
+  countryFilter,
+  showVerifiedBtn,
+  onVerifiedClick,
+  hasVerifiedAddress,
 }) {
   const [input, setInput] = useState('')
   const [results, setResults] = useState([])
@@ -49,12 +64,14 @@ export default function CityAutocomplete({
     }
     setLoading(true)
     try {
+      // countrycodes limita la búsqueda a un país específico (ej: 'bo' = Bolivia)
+      const countrycodes = countryFilter ? `&countrycodes=${countryFilter.toLowerCase()}` : ''
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=5&accept-language=es`
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=5&accept-language=es${countrycodes}`
       )
       const data = await res.json()
       setResults(data.map(r => ({
-        city: r.address?.city || r.address?.town || r.address?.village || r.name,
+        city: r.address?.city || r.address?.town || r.address?.village || r.address?.county || r.name,
         country: r.address?.country,
         country_code: r.address?.country_code?.toUpperCase(),
         lat: parseFloat(r.lat),
@@ -66,7 +83,7 @@ export default function CityAutocomplete({
       setResults([])
     }
     setLoading(false)
-  }, [])
+  }, [countryFilter])
 
   const handleInput = (e) => {
     const val = e.target.value
@@ -109,6 +126,17 @@ export default function CityAutocomplete({
           )}
           {loading && <span className="ca-loading" />}
         </div>
+        {showVerifiedBtn && (
+          <button
+            type="button"
+            className="ca-verified-btn"
+            onClick={onVerifiedClick}
+            disabled={!hasVerifiedAddress}
+            title={hasVerifiedAddress ? 'Usar mi dirección oficial' : 'Configura tu dirección en Mi Cuenta'}
+          >
+            <MapPin size={12} />
+          </button>
+        )}
       </div>
 
       {showDropdown && results.length > 0 && (

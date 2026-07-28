@@ -121,3 +121,30 @@
   font-size: 0.75rem;
   color: var(--text-muted);
 }
+
+/* ── Botón verificado compacto ── */
+.ca-verified-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: rgba(212, 175, 55, 0.1);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: var(--radius-sm);
+  color: var(--gold);
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.ca-verified-btn:hover:not(:disabled) {
+  background: rgba(212, 175, 55, 0.2);
+  border-color: var(--gold);
+}
+
+.ca-verified-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  border-color: var(--dark-border);
+}
