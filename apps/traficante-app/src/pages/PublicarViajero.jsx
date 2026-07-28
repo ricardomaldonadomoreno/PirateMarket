@@ -71,6 +71,7 @@ export default function PublicarViajero({ user }) {
   const [error, setError] = useState('')
   const [identityVerified, setIdentityVerified] = useState(false)
   const [verifiedAddr, setVerifiedAddr] = useState(null)
+  const [verifiedUsedFor, setVerifiedUsedFor] = useState(null) // 'origin' | 'destination' | null
   const [loadingProfile, setLoadingProfile] = useState(true)
 
   useEffect(() => {
@@ -104,15 +105,16 @@ export default function PublicarViajero({ user }) {
     })
   }
 
-  const fillWithVerifiedAddress = () => {
+  const fillWithVerifiedAddress = (target) => {
     if (!verifiedAddr) return
-    if (!originCity) {
+    if (target === 'origin' && !originCity) {
       setOriginCity({ city: verifiedAddr.city, country: verifiedAddr.country, lat: verifiedAddr.lat, lng: verifiedAddr.lng })
       setOriginCoords({ lat: verifiedAddr.lat, lng: verifiedAddr.lng })
-    }
-    if (!destinationCity) {
+      setVerifiedUsedFor('origin')
+    } else if (target === 'destination' && !destinationCity) {
       setDestinationCity({ city: verifiedAddr.city, country: verifiedAddr.country, lat: verifiedAddr.lat, lng: verifiedAddr.lng })
       setDestinationCoords({ lat: verifiedAddr.lat, lng: verifiedAddr.lng })
+      setVerifiedUsedFor('destination')
     }
   }
 
@@ -212,18 +214,6 @@ export default function PublicarViajero({ user }) {
         <div className="pub-form-col">
           <form onSubmit={handleSubmit} className="pub-form">
 
-            {/* ── BOTÓN USAR DIRECCIÓN OFICIAL ── */}
-            <div className="pub-verified-row">
-              <button type="button" className="pub-verified-btn" onClick={fillWithVerifiedAddress} disabled={!verifiedAddr}>
-                <MapPin size={14} /> Usar mi dirección oficial
-              </button>
-              {verifiedAddr ? (
-                <span className="pub-verified-hint">Rellena origen y destino con tu ciudad verificada</span>
-              ) : (
-                <span className="pub-verified-hint pub-verified-hint-warn">No tienes dirección fijada. Fíjala en Mi Cuenta primero.</span>
-              )}
-            </div>
-
             {/* ORIGEN */}
             <div className="pub-section">
               <div className="pub-section-label"><MapPin size={14} /> ¿Dónde puedes recibir el paquete?</div>
@@ -235,6 +225,12 @@ export default function PublicarViajero({ user }) {
                   value={originCity}
                   onChange={setOriginCity}
                 />
+                <button type="button" className="pub-verified-inline-btn" onClick={() => fillWithVerifiedAddress('origin')} disabled={!verifiedAddr || verifiedUsedFor === 'destination'}>
+                  <MapPin size={12} /> Usar mi dirección oficial
+                </button>
+                {verifiedUsedFor === 'destination' && verifiedAddr && (
+                  <span className="pub-verified-inline-used">Ya usada en destino</span>
+                )}
                 <div className="pub-field" style={{ marginTop: '0.75rem' }}>
                   <label>Dirección exacta</label>
                   <input className="input" placeholder="Ej: Av. Roca y Coronado #450, Villa 1ro de Mayo"
@@ -278,6 +274,12 @@ export default function PublicarViajero({ user }) {
                   value={destinationCity}
                   onChange={setDestinationCity}
                 />
+                <button type="button" className="pub-verified-inline-btn" onClick={() => fillWithVerifiedAddress('destination')} disabled={!verifiedAddr || verifiedUsedFor === 'origin'}>
+                  <MapPin size={12} /> Usar mi dirección oficial
+                </button>
+                {verifiedUsedFor === 'origin' && verifiedAddr && (
+                  <span className="pub-verified-inline-used">Ya usada en origen</span>
+                )}
                 <div className="pub-field" style={{ marginTop: '0.75rem' }}>
                   <label>Dirección exacta</label>
                   <input className="input" placeholder="Ej: Terminal Tietê / Mi hotel en Liberdade"

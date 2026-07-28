@@ -392,6 +392,43 @@
   cursor: not-allowed;
 }
 
+.pub-verified-inline-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.6rem;
+  background: rgba(212, 175, 55, 0.08);
+  border: 1px dashed rgba(212, 175, 55, 0.3);
+  border-radius: var(--radius-sm);
+  color: var(--gold);
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: fit-content;
+  align-self: flex-start;
+}
+
+.pub-verified-inline-btn:hover:not(:disabled) {
+  background: rgba(212, 175, 55, 0.15);
+  border-style: solid;
+  border-color: var(--gold);
+}
+
+.pub-verified-inline-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  border-style: solid;
+  border-color: var(--dark-border);
+  color: var(--text-muted);
+}
+
+.pub-verified-inline-used {
+  font-size: 0.7rem;
+  color: var(--gold);
+  opacity: 0.7;
+}
+
 /* ── Responsive ── */
 @media (max-width: 900px) {
   .pub-layout {
