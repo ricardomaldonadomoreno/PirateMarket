@@ -39,6 +39,7 @@ export default function MiCuenta({ user, onProfileUpdate }) {
   const [addressCityObj, setAddressCityObj] = useState(null) // { city, country, lat, lng }
   const [addressText, setAddressText] = useState('')
   const [addressCoords, setAddressCoords] = useState(null)
+  const [addressCoordsFromCity, setAddressCoordsFromCity] = useState(null)
 
   // Para sidebar (cargados aquí, pasados por props)
   const [verifRequest, setVerifRequest] = useState(null)
@@ -150,8 +151,8 @@ export default function MiCuenta({ user, onProfileUpdate }) {
       traficante_address_city: addressCityObj?.city || addressCity,
       traficante_address_country: addressCityObj?.country || addressCountry,
       traficante_address_text: addressText,
-      traficante_address_lat: addressCityObj?.lat || addressCoords?.lat || null,
-      traficante_address_lng: addressCityObj?.lng || addressCoords?.lng || null,
+      traficante_address_lat: addressCoords?.lat || addressCoordsFromCity?.lat || addressCityObj?.lat || null,
+      traficante_address_lng: addressCoords?.lng || addressCoordsFromCity?.lng || addressCityObj?.lng || null,
       traficante_address_locked: true,
     }).eq('id', user.id)
     setSaving(false)
@@ -160,6 +161,13 @@ export default function MiCuenta({ user, onProfileUpdate }) {
     setSaved('address')
     setTimeout(() => setSaved(''), 3000)
   }
+
+  // Sincronizar coords de referencia cuando cambia la ciudad seleccionada
+  useEffect(() => {
+    if (addressCityObj?.lat && addressCityObj?.lng && !addressCoords) {
+      setAddressCoordsFromCity({ lat: addressCityObj.lat, lng: addressCityObj.lng })
+    }
+  }, [addressCityObj])
 
   const getGPS = () => {
     if (!navigator.geolocation) return
@@ -337,19 +345,19 @@ export default function MiCuenta({ user, onProfileUpdate }) {
                           onClick={() => setShowMap(!showMap)}>
                           {showMap ? 'Cerrar mapa' : 'Pinchar en mapa'}
                         </button>
-                        {addressCoords && (
+                        {(addressCoords || addressCoordsFromCity) && (
                           <span className="mc-coords-badge">
-                            {addressCoords.lat.toFixed(5)}, {addressCoords.lng.toFixed(5)}
+                            {(addressCoords || addressCoordsFromCity).lat.toFixed(5)}, {(addressCoords || addressCoordsFromCity).lng.toFixed(5)}
                           </span>
                         )}
                       </div>
                       {showMap && (
                         <div className="mc-map">
-                          <MapContainer center={addressCoords || [-17.8, -63.18]} zoom={13}
+                          <MapContainer center={addressCoords || addressCoordsFromCity || [-17.8, -63.18]} zoom={13}
                             style={{ height: '280px', borderRadius: '12px' }}>
                             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                             <MapPicker onSelect={(coords) => { setAddressCoords(coords) }} />
-                            {addressCoords && <Marker position={[addressCoords.lat, addressCoords.lng]} />}
+                            {(addressCoords || addressCoordsFromCity) && <Marker position={[(addressCoords || addressCoordsFromCity).lat, (addressCoords || addressCoordsFromCity).lng]} />}
                           </MapContainer>
                           <p className="mc-map-hint">Haz clic en el mapa para marcar el punto exacto</p>
                         </div>
