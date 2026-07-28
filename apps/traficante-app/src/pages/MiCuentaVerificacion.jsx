@@ -219,17 +219,25 @@ export default function MiCuentaVerificacion({ user, profile }) {
       <div className="verif-layer">
         <div className="layer-header">
           <h3>Tu Foto Personal</h3>
-          <span className="layer-status">Sube una foto clara de tu rostro</span>
+          <span className={`layer-status ${verifRequest?.selfie_url ? 'approved' : ''}`}>
+            {verifRequest?.selfie_url ? 'Enviado' : 'Pendiente'}
+          </span>
         </div>
-        <p className="verif-hint">Se usará para verificar que eres la misma persona del documento. Las imágenes se comprimen automáticamente.</p>
-        <input type="file" accept="image/*" id="selfie-input" style={{ display: 'none' }} onChange={handleSelfieChange} />
-        {selfiePreview
-          ? <div className="verif-preview-single">
-              <img src={selfiePreview} alt="selfie" />
-              <button className="verif-preview-remove" onClick={removeSelfie} type="button">X</button>
-            </div>
-          : <label htmlFor="selfie-input" className="btn btn-secondary">Seleccionar foto</label>
-        }
+        <p className="verif-hint">Se usará para verificar que eres la misma persona del documento.</p>
+        {verifRequest && verifRequest.status !== 'rejected' ? (
+          <div className="verif-locked-notice">Documentos ya enviados. No se pueden modificar hasta revisión del admin.</div>
+        ) : (
+          <>
+            <input type="file" accept="image/*" id="selfie-input" style={{ display: 'none' }} onChange={handleSelfieChange} />
+            {selfiePreview
+              ? <div className="verif-preview-single">
+                  <img src={selfiePreview} alt="selfie" />
+                  <button className="verif-preview-remove" onClick={removeSelfie} type="button">X</button>
+                </div>
+              : <label htmlFor="selfie-input" className="btn btn-secondary">Seleccionar foto</label>
+            }
+          </>
+        )}
       </div>
 
       {/* Documento de identidad */}
@@ -237,24 +245,30 @@ export default function MiCuentaVerificacion({ user, profile }) {
         <div className="layer-header">
           <h3>Documento de Identidad (CI/Pasaporte)</h3>
           <span className={`layer-status ${profile?.traficante_identity_verified ? 'approved' : ''}`}>
-            {profile?.traficante_identity_verified ? 'Verificado' : 'Pendiente'}
+            {profile?.traficante_identity_verified ? 'Verificado' : verifRequest?.identity_docs?.length ? 'Enviado' : 'Pendiente'}
           </span>
         </div>
         <p className="verif-hint">Sube fotos de tu documento: Anverso y Reverso. Las imágenes se comprimen automáticamente.</p>
-        <input type="file" accept="image/*" multiple id="identity-input" style={{ display: 'none' }}
-          onChange={e => setIdentityFiles(Array.from(e.target.files))} />
-        <label htmlFor="identity-input" className="btn btn-secondary">
-          Seleccionar documentos ({identityFiles.length} archivo{identityFiles.length !== 1 ? 's' : ''})
-        </label>
-        {identityFiles.length > 0 && (
-          <div className="verif-preview-grid">
-            {identityFiles.map((f, i) => (
-              <div key={i} className="verif-preview-item">
-                <img src={URL.createObjectURL(f)} alt={`id-${i}`} />
-                <button className="verif-preview-remove" onClick={() => removeFile(setIdentityFiles, i)} type="button">X</button>
+        {verifRequest && verifRequest.status !== 'rejected' ? (
+          <div className="verif-locked-notice">Documentos ya enviados. No se pueden modificar hasta revisión del admin.</div>
+        ) : (
+          <>
+            <input type="file" accept="image/*" multiple id="identity-input" style={{ display: 'none' }}
+              onChange={e => setIdentityFiles(Array.from(e.target.files))} />
+            <label htmlFor="identity-input" className="btn btn-secondary">
+              Seleccionar documentos ({identityFiles.length} archivo{identityFiles.length !== 1 ? 's' : ''})
+            </label>
+            {identityFiles.length > 0 && (
+              <div className="verif-preview-grid">
+                {identityFiles.map((f, i) => (
+                  <div key={i} className="verif-preview-item">
+                    <img src={URL.createObjectURL(f)} alt={`id-${i}`} />
+                    <button className="verif-preview-remove" onClick={() => removeFile(setIdentityFiles, i)} type="button">X</button>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </div>
 
@@ -263,24 +277,30 @@ export default function MiCuentaVerificacion({ user, profile }) {
         <div className="layer-header">
           <h3>Comprobante de Domicilio</h3>
           <span className={`layer-status ${profile?.traficante_address_verified ? 'approved' : ''}`}>
-            {profile?.traficante_address_verified ? 'Verificado' : 'Pendiente'}
+            {profile?.traficante_address_verified ? 'Verificado' : verifRequest?.domicile_docs?.length ? 'Enviado' : 'Pendiente'}
           </span>
         </div>
         <p className="verif-hint">Factura de agua, luz, teléfono, internet o cable con tu nombre y dirección. Las imágenes se comprimen automáticamente.</p>
-        <input type="file" accept="image/*" multiple id="domicile-input" style={{ display: 'none' }}
-          onChange={e => setDomicileFiles(Array.from(e.target.files))} />
-        <label htmlFor="domicile-input" className="btn btn-secondary">
-          Seleccionar documentos ({domicileFiles.length} archivo{domicileFiles.length !== 1 ? 's' : ''})
-        </label>
-        {domicileFiles.length > 0 && (
-          <div className="verif-preview-grid">
-            {domicileFiles.map((f, i) => (
-              <div key={i} className="verif-preview-item">
-                <img src={URL.createObjectURL(f)} alt={`dom-${i}`} />
-                <button className="verif-preview-remove" onClick={() => removeFile(setDomicileFiles, i)} type="button">X</button>
+        {verifRequest && verifRequest.status !== 'rejected' ? (
+          <div className="verif-locked-notice">Documentos ya enviados. No se pueden modificar hasta revisión del admin.</div>
+        ) : (
+          <>
+            <input type="file" accept="image/*" multiple id="domicile-input" style={{ display: 'none' }}
+              onChange={e => setDomicileFiles(Array.from(e.target.files))} />
+            <label htmlFor="domicile-input" className="btn btn-secondary">
+              Seleccionar documentos ({domicileFiles.length} archivo{domicileFiles.length !== 1 ? 's' : ''})
+            </label>
+            {domicileFiles.length > 0 && (
+              <div className="verif-preview-grid">
+                {domicileFiles.map((f, i) => (
+                  <div key={i} className="verif-preview-item">
+                    <img src={URL.createObjectURL(f)} alt={`dom-${i}`} />
+                    <button className="verif-preview-remove" onClick={() => removeFile(setDomicileFiles, i)} type="button">X</button>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </div>
 
@@ -289,27 +309,33 @@ export default function MiCuentaVerificacion({ user, profile }) {
         <div className="layer-header">
           <h3>Extracto Bancario</h3>
           <span className={`layer-status ${profile?.traficante_bank_verified ? 'approved' : ''}`}>
-            {profile?.traficante_bank_verified ? 'Verificado' : 'Pendiente'}
+            {profile?.traficante_bank_verified ? 'Verificado' : verifRequest?.bank_docs?.length ? 'Enviado' : 'Pendiente'}
           </span>
         </div>
         <p className="verif-hint">El extracto puede contener una sola transacción. Lo importante es que sea visible tu nombre completo y dirección, igual que en tus documentos de identidad y domicilio. Acepta imágenes y PDFs.</p>
-        <input type="file" accept="image/*,application/pdf,.pdf" multiple id="bank-input" style={{ display: 'none' }}
-          onChange={e => setBankFiles(Array.from(e.target.files))} />
-        <label htmlFor="bank-input" className="btn btn-secondary">
-          Seleccionar documentos ({bankFiles.length} archivo{bankFiles.length !== 1 ? 's' : ''})
-        </label>
-        {bankFiles.length > 0 && (
-          <div className="verif-preview-grid">
-            {bankFiles.map((f, i) => (
-              <div key={i} className={`verif-preview-item ${f.type.startsWith('image/') ? '' : 'verif-preview-nonimage'}`}>
-                {f.type.startsWith('image/')
-                  ? <img src={URL.createObjectURL(f)} alt={`bank-${i}`} />
-                  : <div className="verif-nonimage-icon">📄 {f.name}</div>
-                }
-                <button className="verif-preview-remove" onClick={() => removeFile(setBankFiles, i)} type="button">X</button>
+        {verifRequest && verifRequest.status !== 'rejected' ? (
+          <div className="verif-locked-notice">Documentos ya enviados. No se pueden modificar hasta revisión del admin.</div>
+        ) : (
+          <>
+            <input type="file" accept="image/*,application/pdf,.pdf" multiple id="bank-input" style={{ display: 'none' }}
+              onChange={e => setBankFiles(Array.from(e.target.files))} />
+            <label htmlFor="bank-input" className="btn btn-secondary">
+              Seleccionar documentos ({bankFiles.length} archivo{bankFiles.length !== 1 ? 's' : ''})
+            </label>
+            {bankFiles.length > 0 && (
+              <div className="verif-preview-grid">
+                {bankFiles.map((f, i) => (
+                  <div key={i} className={`verif-preview-item ${f.type.startsWith('image/') ? '' : 'verif-preview-nonimage'}`}>
+                    {f.type.startsWith('image/')
+                      ? <img src={URL.createObjectURL(f)} alt={`bank-${i}`} />
+                      : <div className="verif-nonimage-icon">📄 {f.name}</div>
+                    }
+                    <button className="verif-preview-remove" onClick={() => removeFile(setBankFiles, i)} type="button">X</button>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </div>
 
@@ -328,7 +354,8 @@ export default function MiCuentaVerificacion({ user, profile }) {
       {verifError && <div className="mc-error">{verifError}</div>}
       {verifSaved && <div className="mc-success">Documentos enviados — en revisión</div>}
 
-      {verifRequest?.status !== 'pending' && (
+      {/* Botón enviar: solo si no hay request o si fue rechazado (para corregir) */}
+      {(!verifRequest || verifRequest.status === 'rejected') && (
         <div className="verif-footer">
           <button className="btn btn-primary t-btn-primary"
             onClick={handleSubmitVerification}
@@ -337,6 +364,18 @@ export default function MiCuentaVerificacion({ user, profile }) {
               ? <><span className="loading" style={{ width: 16, height: 16 }} /> Enviando...</>
               : 'Enviar documentos'}
           </button>
+        </div>
+      )}
+
+      {/* Mensaje si está bloqueado (pending o approved) */}
+      {verifRequest && verifRequest.status === 'pending' && (
+        <div className="verif-footer">
+          <button className="btn btn-primary t-btn-primary" disabled>Tu solicitud está en revisión</button>
+        </div>
+      )}
+      {verifRequest && verifRequest.status === 'approved' && (
+        <div className="verif-footer">
+          <button className="btn btn-primary t-btn-primary" disabled>Verificación completada</button>
         </div>
       )}
     </div>

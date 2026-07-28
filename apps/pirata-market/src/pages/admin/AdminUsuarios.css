@@ -247,3 +247,143 @@
 }
 .lightbox-nav-btn:hover:not(:disabled) { background: rgba(255,255,255,0.18); }
 .lightbox-nav-btn:disabled { opacity: 0.2; cursor: default; }
+/* ═══════════════════════════════════════════════════════════════════
+   MODAL TRAFICANTE VERIFICACIONES
+   ═══════════════════════════════════════════════════════════════════ */
+
+.traficante-detail-modal {
+  max-width: 720px;
+}
+
+.traf-modal-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--dark);
+  border-radius: var(--radius-md);
+  margin-bottom: 0.5rem;
+}
+
+/* Grid de datos personales y dirección */
+.traf-data-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+.traf-data-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.65rem 0.85rem;
+  background: var(--dark);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--dark-border);
+}
+
+.traf-data-item.traf-data-full {
+  grid-column: 1 / -1;
+}
+
+.traf-data-item label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.traf-data-item span {
+  font-size: 0.875rem;
+  color: var(--text-light);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  word-break: break-word;
+}
+
+/* Tag de datos fijos */
+.traf-locked-tag {
+  display: inline-block;
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 0.15rem 0.45rem;
+  background: rgba(212,175,55,0.15);
+  color: var(--gold);
+  border: 1px solid rgba(212,175,55,0.3);
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+
+/* Selfie más grande */
+.doc-card-selfie {
+  max-width: 180px;
+}
+
+.doc-thumb-selfie {
+  aspect-ratio: 3/4;
+  border-radius: var(--radius-md);
+}
+
+/* Nota admin actual */
+.traf-admin-note-current {
+  background: rgba(184,152,95,0.07);
+  border: 1px solid rgba(184,152,95,0.2);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+/* Acciones del modal */
+.traf-modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--dark-border);
+}
+
+.traf-btn-approve {
+  background: rgba(6,214,160,0.15) !important;
+  color: var(--success) !important;
+  border: 1.5px solid var(--success) !important;
+  font-weight: 700;
+}
+
+.traf-btn-approve:hover {
+  background: var(--success) !important;
+  color: var(--dark) !important;
+}
+
+.traf-btn-reject {
+  background: rgba(230,57,70,0.15) !important;
+  color: var(--danger) !important;
+  border: 1.5px solid var(--danger) !important;
+  white-space: nowrap;
+}
+
+.traf-btn-reject:hover {
+  background: var(--danger) !important;
+  color: white !important;
+}
+
+.traf-reject-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .traf-data-grid {
+    grid-template-columns: 1fr;
+  }
+  .traf-modal-actions {
+    flex-direction: column;
+  }
+  .traf-reject-row {
+    flex-direction: column;
+  }
+}

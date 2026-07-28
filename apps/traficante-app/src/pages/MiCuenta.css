@@ -966,3 +966,60 @@
     align-items: stretch;
   }
 }
+/* ── DOCUMENTOS BLOQUEADOS ── */
+.verif-locked-notice {
+  padding: 1rem 1.25rem;
+  background: rgba(149, 165, 166, 0.08);
+  border: 1px solid rgba(149, 165, 166, 0.25);
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
+/* ── DATOS PERSONALES FIJOS ── */
+.mc-locked-personal {
+  background: rgba(6, 214, 160, 0.06);
+  border: 1px solid rgba(6, 214, 160, 0.2);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+}
+
+.mc-locked-personal .mc-locked-badge-lg {
+  margin: 0 0 1rem;
+}
+
+.mc-locked-personal .real-data-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.mc-locked-personal .data-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.6rem 0.85rem;
+  background: var(--dark);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--dark-border);
+}
+
+.mc-locked-personal .data-item label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.mc-locked-personal .data-item span {
+  font-size: 0.875rem;
+  color: var(--text-light);
+  word-break: break-word;
+}
+
+.traf-data-full {
+  grid-column: 1 / -1;
+}
