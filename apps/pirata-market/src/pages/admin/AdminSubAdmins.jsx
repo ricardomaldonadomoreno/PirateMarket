@@ -3,44 +3,49 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import './AdminUsuarios.css'
 
+// AdminSubAdmins: crear y gestionar sub-admins en la tabla `admins`
+// Usa la Edge Function `create-admin` para crear nuevos admins
+// y Supabase REST directamente para listar/eliminar/activar/desactivar
+
+const CREATE_ADMIN_URL = 'https://pfoxxzuxdujyjytegsaz.supabase.co/functions/v1/create-admin'
+
 export default function AdminSubAdmins() {
   const [form, setForm] = useState({
     email: '',
     password: '',
     full_name: '',
-    app_access: 'both',
-    notes: '',
+    scope: 'both',
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
-  const [colaboradores, setColaboradores] = useState([])
-  const [loadingColabs, setLoadingColabs] = useState(true)
+  const [admins, setAdmins] = useState([])
+  const [loadingAdmins, setLoadingAdmins] = useState(true)
   const navigate = useNavigate()
 
-  // Cargar lista de colaboradores al montar
+  // Cargar lista de admins al montar
   useEffect(() => {
-    loadColaboradores()
+    loadAdmins()
   }, [])
 
-  const loadColaboradores = async () => {
-    setLoadingColabs(true)
+  const loadAdmins = async () => {
+    setLoadingAdmins(true)
     try {
-      // Intentar con la función RPC primero
-      const { data, error: rpcError } = await supabase
-        .from('colaboradores')
-        .select('id, email, full_name, app_access, notes, is_active, created_at')
+      const { data, error } = await supabase
+        .from('admins')
+        .select('id, email, full_name, scope, active, created_at')
         .order('created_at', { ascending: false })
 
-      if (rpcError) {
-        console.error('loadColaboradores error:', rpcError)
+      if (error) {
+        console.error('loadAdmins error:', error)
       } else if (data) {
-        setColaboradores(data)
+        // Filtrar el superadmin (scope='all') para no mostrarlo en la lista
+        setAdmins(data.filter(a => a.scope !== 'all'))
       }
     } catch (err) {
-      console.error('loadColaboradores error:', err)
+      console.error('loadAdmins error:', err)
     } finally {
-      setLoadingColabs(false)
+      setLoadingAdmins(false)
     }
   }
 
@@ -50,35 +55,39 @@ export default function AdminSubAdmins() {
     setSuccess('')
 
     if (!form.email || !form.password) {
-      setError('El email y la contrasena son obligatorios.')
+      setError('El email y la contraseña son obligatorios.')
       return
     }
     if (form.password.length < 6) {
-      setError('La contrasena debe tener al menos 6 caracteres.')
+      setError('La contraseña debe tener al menos 6 caracteres.')
       return
     }
 
     setSaving(true)
     try {
-      const { data, error: rpcError } = await supabase.rpc('create_colaborador', {
-        p_email: form.email,
-        p_password: form.password,
-        p_full_name: form.full_name || form.email.split('@')[0],
-        p_app_access: form.app_access,
-        p_notes: form.notes || null,
+      const res = await fetch(CREATE_ADMIN_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: form.email,
+          password: form.password,
+          full_name: form.full_name || form.email.split('@')[0],
+          scope: form.scope,
+        }),
       })
 
-      if (rpcError) {
-        console.error('create_colaborador error:', rpcError)
-        throw new Error('Error al crear colaborador: ' + rpcError.message)
+      const data = await res.json()
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Error al crear sub-admin')
       }
 
-      setForm({ email: '', password: '', full_name: '', app_access: 'both', notes: '' })
-      setSuccess('Colaborador registrado correctamente: ' + form.email)
-      loadColaboradores() // Recargar lista
+      setForm({ email: '', password: '', full_name: '', scope: 'both' })
+      setSuccess('Sub-admin registrado correctamente: ' + form.email)
+      loadAdmins()
     } catch (err) {
       console.error('handleCreate error:', err)
-      setError(err.message || 'Error al crear el colaborador.')
+      setError(err.message || 'Error al crear el sub-admin.')
     } finally {
       setSaving(false)
     }
@@ -88,40 +97,42 @@ export default function AdminSubAdmins() {
     if (!confirm('Estas seguro de eliminar a ' + email + '?')) return
     try {
       const { error } = await supabase
-        .from('colaboradores')
+        .from('admins')
         .delete()
         .eq('id', id)
 
       if (error) {
         throw new Error('Error al eliminar: ' + error.message)
       }
-      setSuccess('Colaborador eliminado: ' + email)
-      loadColaboradores()
+      setSuccess('Sub-admin eliminado: ' + email)
+      loadAdmins()
     } catch (err) {
       console.error('handleDelete error:', err)
-      setError(err.message || 'Error al eliminar el colaborador.')
+      setError(err.message || 'Error al eliminar.')
     }
   }
 
   const handleToggle = async (id, currentActive) => {
     try {
       const { error } = await supabase
-        .from('colaboradores')
-        .update({ is_active: !currentActive })
+        .from('admins')
+        .update({ active: !currentActive })
         .eq('id', id)
 
       if (error) throw new Error('Error: ' + error.message)
-      setSuccess(currentActive ? 'Colaborador desactivado' : 'Colaborador reactivado')
-      loadColaboradores()
+      setSuccess(currentActive ? 'Sub-admin desactivado' : 'Sub-admin reactivado')
+      loadAdmins()
     } catch (err) {
       setError(err.message || 'Error al cambiar estado.')
     }
   }
 
-  const appLabel = (app) => {
-    if (app === 'pirata') return 'Pirata Market'
-    if (app === 'traficante') return 'Traficante'
-    return 'Ambas'
+  const scopeLabel = (scope) => {
+    if (scope === 'pirata') return 'Pirata Market'
+    if (scope === 'traficante') return 'Traficante'
+    if (scope === 'both') return 'Ambas'
+    if (scope === 'all') return 'SuperAdmin'
+    return scope
   }
 
   return (
@@ -129,7 +140,7 @@ export default function AdminSubAdmins() {
       <div className="admin-content">
         <div className="admin-page-header">
           <h1 className="serif luxury-gold">Sub-Administradores</h1>
-          <p className="admin-page-sub">Crear y gestionar cuentas de colaboradores con acceso al backoffice</p>
+          <p className="admin-page-sub">Crear y gestionar cuentas de sub-administradores con acceso al backoffice</p>
           <button onClick={() => navigate(-1)} className="btn-small btn-ghost" style={{ marginLeft: '1rem' }}>
             &larr; Volver
           </button>
@@ -146,11 +157,11 @@ export default function AdminSubAdmins() {
           </div>
         )}
 
-        {/* Formulario de crear colaborador */}
+        {/* Formulario de crear sub-admin */}
         <div className="admin-card" style={{ marginBottom: '2rem' }}>
-          <h3 className="serif" style={{ color: 'var(--gold)', marginBottom: '0.25rem' }}>Crear Nuevo Colaborador</h3>
+          <h3 className="serif" style={{ color: 'var(--gold)', marginBottom: '0.25rem' }}>Crear Nuevo Sub-Admin</h3>
           <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
-            Completa los datos para crear una cuenta de colaborador con acceso al backoffice.
+            Completa los datos para crear una cuenta de sub-administrador con acceso al backoffice.
           </p>
           <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '500px' }}>
             <div>
@@ -158,7 +169,7 @@ export default function AdminSubAdmins() {
               <input
                 type="email"
                 className="input"
-                placeholder="colaborador@empresa.com"
+                placeholder="subadmin@empresa.com"
                 value={form.email}
                 onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
                 required
@@ -191,7 +202,7 @@ export default function AdminSubAdmins() {
             </div>
             <div>
               <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.35rem' }}>Plataforma</label>
-              <select className="input" value={form.app_access} onChange={e => setForm(p => ({ ...p, app_access: e.target.value }))} disabled={saving}>
+              <select className="input" value={form.scope} onChange={e => setForm(p => ({ ...p, scope: e.target.value }))} disabled={saving}>
                 <option value="both">Ambas plataformas</option>
                 <option value="pirata">Solo Pirata Market</option>
                 <option value="traficante">Solo Traficante</option>
@@ -209,22 +220,22 @@ export default function AdminSubAdmins() {
               />
             </div>
             <button type="submit" className="btn btn-primary" disabled={saving} style={{ marginTop: '0.5rem' }}>
-              {saving ? 'Registrando...' : 'Registrar Colaborador'}
+              {saving ? 'Registrando...' : 'Registrar Sub-Admin'}
             </button>
           </form>
         </div>
 
-        {/* Lista de colaboradores registrados */}
+        {/* Lista de sub-admins registrados */}
         <div className="admin-card">
           <h3 className="serif" style={{ color: 'var(--gold)', marginBottom: '1rem' }}>
-            Colaboradores Registrados ({colaboradores.length})
+            Sub-Administradores ({admins.length})
           </h3>
 
-          {loadingColabs ? (
+          {loadingAdmins ? (
             <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>Cargando...</p>
-          ) : colaboradores.length === 0 ? (
+          ) : admins.length === 0 ? (
             <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>
-              No hay colaboradores registrados.
+              No hay sub-administradores registrados.
             </p>
           ) : (
             <div style={{ overflowX: 'auto' }}>
@@ -240,26 +251,23 @@ export default function AdminSubAdmins() {
                   </tr>
                 </thead>
                 <tbody>
-                  {colaboradores.map(colab => (
-                    <tr key={colab.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                      <td style={{ padding: '0.75rem 1rem' }}>{colab.email}</td>
-                      <td style={{ padding: '0.75rem 1rem' }}>{colab.full_name}</td>
+                  {admins.map(admin => (
+                    <tr key={admin.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                      <td style={{ padding: '0.75rem 1rem' }}>{admin.email}</td>
+                      <td style={{ padding: '0.75rem 1rem' }}>{admin.full_name}</td>
                       <td style={{ padding: '0.75rem 1rem' }}>
                         <span className="badge" style={{ background: 'rgba(212,175,55,0.15)', color: 'var(--gold)', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem' }}>
-                          {appLabel(colab.app_access)}
+                          {scopeLabel(admin.scope)}
                         </span>
                       </td>
                       <td style={{ padding: '0.75rem 1rem' }}>
-                        <span style={{ color: colab.is_active ? 'var(--success)' : 'var(--danger)', fontSize: '0.8rem' }}>
-                          {colab.is_active ? 'Activo' : 'Inactivo'}
+                        <span style={{ color: admin.active ? 'var(--success)' : 'var(--danger)', fontSize: '0.8rem' }}>
+                          {admin.active ? 'Activo' : 'Inactivo'}
                         </span>
-                      </td>
-                      <td style={{ padding: '0.75rem 1rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
-                        {colab.notes || '—'}
                       </td>
                       <td style={{ padding: '0.75rem 1rem', textAlign: 'right', whiteSpace: 'nowrap' }}>
                         <button
-                          onClick={() => handleToggle(colab.id, colab.is_active)}
+                          onClick={() => handleToggle(admin.id, admin.active)}
                           className="btn-small"
                           style={{
                             background: colab.is_active ? 'rgba(230,57,70,0.15)' : 'rgba(6,214,160,0.15)',
@@ -275,7 +283,7 @@ export default function AdminSubAdmins() {
                           {colab.is_active ? 'Desactivar' : 'Reactivar'}
                         </button>
                         <button
-                          onClick={() => handleDelete(colab.id, colab.email)}
+                          onClick={() => handleDelete(admin.id, admin.email)}
                           className="btn-small"
                           style={{
                             background: 'rgba(230,57,70,0.15)',

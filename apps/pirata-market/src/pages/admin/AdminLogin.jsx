@@ -1,13 +1,18 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { supabase } from '../../lib/supabase'
 import './AdminLogin.css'
 
-// AdminLogin maneja dos tipos de acceso:
-// 1. Admin principal (tú): usa Supabase Auth + tabla users (user_type='admin')
-// 2. Colaboradores: valida directamente contra tabla colaboradores
-//    Sin Supabase Auth, sin emails de confirmación, sin nada.
-//    Email + contraseña → coincide en la tabla → entra al backoffice.
+// AdminLogin usa la tabla `admins` (completamente separada de users y Supabase Auth)
+// + Edge Function `login-admin` para verificar credenciales.
+//
+// Flujo:
+// 1. Email + contraseña → POST a Edge Function
+// 2. Si success: guarda admin_id, admin_email, admin_name, admin_scope en sessionStorage
+// 3. Redirige a /admin/home
+// 4. Si scope='all': acceso total a todo (superadmin)
+// 5. Si scope específico: acceso limitado (sub-admin)
+
+const EDGE_FUNCTION_URL = 'https://pfoxxzuxdujyjytegsaz.supabase.co/functions/v1/login-admin'
 
 export default function AdminLogin() {
   const navigate = useNavigate()
@@ -22,50 +27,32 @@ export default function AdminLogin() {
     setError(null)
 
     try {
-      // Intento 1: Supabase Auth (admin principal con user_type='admin')
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password })
-
-      if (!authError && authData.user) {
-        // Verificar que es admin en la tabla users
-        const { data: userData } = await supabase
-          .from('users')
-          .select('user_type')
-          .eq('id', authData.user.id)
-          .single()
-
-        if (userData?.user_type === 'admin') {
-          // Es el admin principal → guarda marker en sessionStorage
-          sessionStorage.setItem('admin_principal', 'true')
-          sessionStorage.setItem('admin_user_id', authData.user.id)
-          sessionStorage.setItem('admin_email', email)
-          navigate('/admin/home')
-          return
-        }
-      }
-
-      // Intento 2: Validar contra tabla colaboradores
-      const { data: colabData, error: colabError } = await supabase.rpc('validate_colaborador', {
-        p_email: email,
-        p_password: password,
+      const res = await fetch(EDGE_FUNCTION_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
       })
 
-      if (colabError) {
-        throw colabError
+      const data = await res.json()
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Credenciales invalidas')
       }
 
-      if (colabData && colabData.length > 0) {
-        const colab = colabData[0]
-        // Guardar datos del colaborador en sessionStorage para que AdminRoute lo reconozca
-        sessionStorage.setItem('colaborador_id', colab.id)
-        sessionStorage.setItem('colaborador_email', colab.email)
-        sessionStorage.setItem('colaborador_name', colab.full_name)
-        sessionStorage.setItem('colaborador_app', colab.app_access)
-        navigate('/admin/home')
-        return
+      const { id, email: adminEmail, full_name, scope, active } = data.admin
+
+      if (!active) {
+        throw new Error('Esta cuenta de administrador esta desactivada')
       }
 
-      // Ningún intento funcionó
-      throw new Error('Email o contrasena incorrectos')
+      // Guardar datos del admin en sessionStorage
+      sessionStorage.setItem('admin_id', id)
+      sessionStorage.setItem('admin_email', adminEmail)
+      sessionStorage.setItem('admin_name', full_name)
+      sessionStorage.setItem('admin_scope', scope)
+
+      // Redirigir al landing del backoffice
+      navigate('/admin/home')
     } catch (err) {
       setError(err.message)
     } finally {
@@ -82,7 +69,7 @@ export default function AdminLogin() {
         <div className="admin-login-header">
           <img src="/logo-ico.png" alt="Pirata Market" className="admin-login-logo" />
           <h1 className="serif">Backoffice</h1>
-          <p>Acceso restringido — Solo administradores y colaboradores</p>
+          <p>Acceso restringido — Solo administradores</p>
         </div>
 
         {error && <div className="admin-error">⚠️ {error}</div>}

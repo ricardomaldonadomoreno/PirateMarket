@@ -1,42 +1,29 @@
 import { useState, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
 import './AdminNavbar.css'
 
 export default function AdminNavbarTraficante() {
   const location = useLocation()
   const navigate = useNavigate()
   const [isAdmin, setIsAdmin] = useState(false)
-  const [colabApp, setColabApp] = useState('both')
+  const [adminScope, setAdminScope] = useState('all')
 
   useEffect(() => {
-    const check = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const { data } = await supabase
-          .from('users')
-          .select('user_type')
-          .eq('id', user.id)
-          .maybeSingle()
-        if (data?.user_type === 'admin') {
-          setIsAdmin(true)
-          return
-        }
-      }
-      const colab = sessionStorage.getItem('colaborador_app')
-      if (colab) {
-        setColabApp(colab)
-      }
+    // Determinar tipo de acceso por sessionStorage (tabla admins)
+    const adminId = sessionStorage.getItem('admin_id')
+    const scope = sessionStorage.getItem('admin_scope')
+
+    if (adminId) {
+      setIsAdmin(true)
+      setAdminScope(scope || 'all')
     }
-    check()
   }, [])
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut()
-    sessionStorage.removeItem('colaborador_id')
-    sessionStorage.removeItem('colaborador_email')
-    sessionStorage.removeItem('colaborador_name')
-    sessionStorage.removeItem('colaborador_app')
+  const handleLogout = () => {
+    sessionStorage.removeItem('admin_id')
+    sessionStorage.removeItem('admin_email')
+    sessionStorage.removeItem('admin_name')
+    sessionStorage.removeItem('admin_scope')
     navigate('/admin')
   }
 
@@ -48,13 +35,13 @@ export default function AdminNavbarTraficante() {
     { path: '/admin/traficante/destacados', icon: '⭐', label: 'Destacados' },
   ]
 
-  // Sub-Admins solo para super_admin
-  const subAdminLinks = isAdmin
+  // Sub-Admins solo para super_admin (scope='all')
+  const subAdminLinks = adminScope === 'all'
     ? [{ path: '/admin/sub-admins', icon: '🔐', label: 'Sub-Admins' }]
     : []
 
-  // Si el colaborador solo tiene acceso a pirata, no mostrar este navbar
-  if (!isAdmin && colabApp === 'pirata') {
+  // Si el sub-admin solo tiene acceso a pirata, redirigir
+  if (isAdmin && adminScope === 'pirata') {
     navigate('/admin/pirata', { replace: true })
     return null
   }
@@ -84,7 +71,7 @@ export default function AdminNavbarTraficante() {
       </div>
 
       <div className="admin-navbar-actions">
-        {isAdmin && (
+        {adminScope === 'all' && (
           <Link to="/admin" className="admin-nav-link">
             🔄 Cambiar app
           </Link>

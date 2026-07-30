@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
 
 // AdminRoute protege las rutas del backoffice.
+// Usa la tabla `admins` (completamente separada de users y Supabase Auth).
 // Tipos de acceso:
-// 1. Admin principal (user_type='admin'): acceso total a todo
-// 2. Colaborador con app_access='both': acceso a Pirata + Traficante (sin Sub-Admins)
-// 3. Colaborador con app_access='pirata': solo rutas /admin/pirata/*
-// 4. Colaborador con app_access='traficante': solo rutas /admin/traficante/*
+// 1. SuperAdmin (scope='all'): acceso total a todo
+// 2. Sub-admin con scope='pirata': solo rutas /admin/pirata/*
+// 3. Sub-admin con scope='traficante': solo rutas /admin/traficante/*
+// 4. Sub-admin con scope='both': acceso a Pirata + Traficante (sin Sub-Admins)
 
 // Rutas que solo puede ver el super_admin
 const SUPER_ADMIN_ROUTES = ['/admin/sub-admins']
@@ -21,85 +21,43 @@ export default function AdminRoute({ children }) {
   const location = useLocation()
 
   useEffect(() => {
-    const check = async () => {
-      // 1. Verificar si es admin principal (Supabase Auth)
-      let isAdmin = false
-      try {
-        const { data: { user } } = await supabase.auth.getUser()
-        if (user) {
-          const { data: userData } = await supabase
-            .from('users')
-            .select('user_type')
-            .eq('id', user.id)
-            .maybeSingle()
+    const check = () => {
+      // Verificar si hay admin logueado en sessionStorage
+      const adminId = sessionStorage.getItem('admin_id')
+      const adminEmail = sessionStorage.getItem('admin_email')
+      const adminScope = sessionStorage.getItem('admin_scope')
 
-          if (userData?.user_type === 'admin') {
-            isAdmin = true
-          }
-        }
-      } catch {
-        // Auth no disponible
+      if (!adminId || !adminEmail) {
+        setStatus('denied')
+        return
       }
 
-      // 2. Verificar si es admin principal por sessionStorage (fallback si Supabase Auth expiró)
-      if (!isAdmin && sessionStorage.getItem('admin_principal') === 'true') {
-        isAdmin = true
-      }
-
-      if (isAdmin) {
+      // SuperAdmin (scope='all'): acceso total a todo
+      if (adminScope === 'all') {
         setStatus('allowed')
         return
       }
 
-      // 2. Verificar si es colaborador (sessionStorage)
-      const colabId = sessionStorage.getItem('colaborador_id')
-      const colabEmail = sessionStorage.getItem('colaborador_email')
-      const colabAppAccess = sessionStorage.getItem('colaborador_app') || 'both'
+      // Sub-admin con scope limitado
+      const currentPath = location.pathname
 
-      if (colabId && colabEmail) {
-        // Verificar que sigue activo
-        try {
-          const { data: colabData } = await supabase
-            .from('colaboradores')
-            .select('is_active')
-            .eq('id', colabId)
-            .single()
-
-          if (!colabData?.is_active) {
-            // Desactivado, limpiar
-            sessionStorage.clear()
-            setStatus('denied')
-            return
-          }
-        } catch {
-          // Error, asumir activo
-        }
-
-        // Verificar que la ruta actual está permitida según app_access
-        const currentPath = location.pathname
-
-        // Sub-Admins: solo super_admin
-        if (SUPER_ADMIN_ROUTES.some(route => currentPath.startsWith(route))) {
-          setStatus('denied')
-          return
-        }
-
-        // Verificar acceso por app
-        if (colabAppAccess === 'pirata' && !currentPath.startsWith(PIRATA_PREFIX) && currentPath !== '/admin/home') {
-          // Redirigir a pirata
-          setStatus('redirect_pirata')
-          return
-        }
-        if (colabAppAccess === 'traficante' && !currentPath.startsWith(TRAFICANTE_PREFIX) && currentPath !== '/admin/home') {
-          setStatus('redirect_traficante')
-          return
-        }
-
-        setStatus('allowed')
+      // Sub-Admins: solo super_admin (scope='all')
+      if (SUPER_ADMIN_ROUTES.some(route => currentPath.startsWith(route))) {
+        setStatus('denied')
         return
       }
 
-      setStatus('denied')
+      // Verificar acceso por scope/app
+      if (adminScope === 'pirata' && !currentPath.startsWith(PIRATA_PREFIX) && currentPath !== '/admin/home') {
+        setStatus('redirect_pirata')
+        return
+      }
+      if (adminScope === 'traficante' && !currentPath.startsWith(TRAFICANTE_PREFIX) && currentPath !== '/admin/home') {
+        setStatus('redirect_traficante')
+        return
+      }
+
+      setStatus('allowed')
     }
 
     check()

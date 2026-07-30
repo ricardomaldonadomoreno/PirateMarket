@@ -1,54 +1,41 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { supabase } from '../../lib/supabase'
 import './AdminLogin.css'
 
 export default function AdminLanding() {
   const [loading, setLoading] = useState(true)
-  const [isColaborador, setIsColaborador] = useState(false)
-  const [colabApp, setColabApp] = useState('both')
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [adminScope, setAdminScope] = useState('all')
   const navigate = useNavigate()
 
   useEffect(() => {
     checkAuth()
   }, [])
 
-  const checkAuth = async () => {
-    // 1. Verificar si es admin principal (Supabase Auth)
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const { data } = await supabase
-          .from('users')
-          .select('user_type')
-          .eq('id', user.id)
-          .maybeSingle()
+  const checkAuth = () => {
+    // Verificar admin logueado en sessionStorage
+    const adminId = sessionStorage.getItem('admin_id')
+    const adminEmail = sessionStorage.getItem('admin_email')
+    const adminName = sessionStorage.getItem('admin_name')
+    const scope = sessionStorage.getItem('admin_scope')
 
-        if (data?.user_type === 'admin') {
-          setLoading(false)
-          return
-        }
-      }
-    } catch {
-      // Auth no disponible
+    if (!adminId || !adminEmail) {
+      // No hay admin logueado, redirigir a login
+      navigate('/admin', { replace: true })
+      return
     }
 
-    // 2. Verificar si es colaborador (sessionStorage)
-    const colabId = sessionStorage.getItem('colaborador_id')
-    const colabAppAccess = sessionStorage.getItem('colaborador_app')
-    if (colabId && colabAppAccess) {
-      setIsColaborador(true)
-      setColabApp(colabAppAccess)
+    setIsAdmin(true)
+    setAdminScope(scope || 'all')
 
-      // Si solo tiene acceso a una plataforma, redirigir directamente
-      if (colabAppAccess === 'pirata') {
-        navigate('/admin/pirata', { replace: true })
-        return
-      }
-      if (colabAppAccess === 'traficante') {
-        navigate('/admin/traficante', { replace: true })
-        return
-      }
+    // Si solo tiene acceso a una plataforma, redirigir directamente
+    if (scope === 'pirata') {
+      navigate('/admin/pirata', { replace: true })
+      return
+    }
+    if (scope === 'traficante') {
+      navigate('/admin/traficante', { replace: true })
+      return
     }
 
     setLoading(false)
@@ -62,15 +49,15 @@ export default function AdminLanding() {
     )
   }
 
-  // Si es colaborador, solo mostrar la(s) plataforma(s) que tiene acceso
-  if (isColaborador) {
+  // Si es sub-admin con acceso limitado, solo mostrar la plataforma permitida
+  if (isAdmin && adminScope !== 'all') {
     return (
       <div className="admin-page">
         <div style={{ maxWidth: '700px', margin: '0 auto', padding: '4rem 2rem', textAlign: 'center' }}>
           <img src="/logo-ico.png" alt="Pirata Market" style={{ width: '80px', height: '80px', marginBottom: '1rem' }} />
           <h1 className="serif luxury-gold" style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>Backoffice</h1>
           <p style={{ color: 'var(--text-muted)', marginBottom: '0.25rem' }}>
-            Bienvenido, {sessionStorage.getItem('colaborador_name') || 'Colaborador'}
+            Bienvenido, {sessionStorage.getItem('admin_name') || 'Administrador'}
           </p>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '3rem' }}>
             Selecciona la plataforma que deseas administrar
@@ -142,7 +129,7 @@ export default function AdminLanding() {
     )
   }
 
-  // Admin principal: mostrar landing normal
+  // SuperAdmin (scope='all'): mostrar landing normal
   return (
     <div className="admin-page">
       <div style={{ maxWidth: '700px', margin: '0 auto', padding: '4rem 2rem', textAlign: 'center' }}>
