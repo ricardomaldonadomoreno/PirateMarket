@@ -55,9 +55,9 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
   const loadRealData = async () => {
     try {
       const { data } = await supabase
-        .from('users')
+        .from('pirata_profiles')
         .select('full_name, country, city, phone, identity_verified, business_verified, identity_locked, allow_identity_edit')
-        .eq('id', user.id)
+        .eq('user_id', user.id)
         .single()
       if (data) {
         setRealData({
@@ -162,10 +162,8 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
 
     setChangingType(true)
     try {
-      await supabase.from('users').update({
-        user_type: newType,
-        business_verified: false,
-      }).eq('id', user.id)
+      await supabase.from('users').update({ user_type: newType }).eq('id', user.id)
+      await supabase.from('pirata_profiles').update({ business_verified: false }).eq('user_id', user.id)
 
       if (verificationRequest) {
         await supabase.from('verification_requests').update({
@@ -227,12 +225,12 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
         selfie_url: selfieUrl,
       }
 
-      await supabase.from('users').update({
+      await supabase.from('pirata_profiles').update({
         full_name: realData.full_name,
         country: realData.country,
         city: realData.city,
         phone: realData.phone,
-      }).eq('id', user.id)
+      }).eq('user_id', user.id)
 
       if (verificationRequest) {
         await supabase.from('verification_requests').update(payload).eq('id', verificationRequest.id)

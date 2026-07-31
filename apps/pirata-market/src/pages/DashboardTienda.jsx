@@ -64,7 +64,7 @@ export default function DashboardTienda({ user, profile }) {
   const handleShopSave = async () => {
     setSavingShop(true)
     try {
-      await supabase.from('users').update({
+      await supabase.from('pirata_profiles').update({
         shop_name: shopForm.shop_name || null,
         shop_bio: shopForm.shop_bio || null,
         shop_link: shopForm.shop_link || null,
@@ -72,7 +72,7 @@ export default function DashboardTienda({ user, profile }) {
         shop_color: shopForm.shop_color || '#D4AF37',
         shop_logo_url: shopForm.shop_logo_url || null,
         shop_banner_url: shopForm.shop_banner_url || null,
-      }).eq('id', user.id)
+      }).eq('user_id', user.id)
       setShopSaved(true)
       setTimeout(() => setShopSaved(false), 3000)
     } catch (error) { alert('Error al guardar: ' + error.message) }

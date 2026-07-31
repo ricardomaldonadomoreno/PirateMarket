@@ -34,10 +34,17 @@ export default function SellerCatalog() {
     try {
       const { data: sellerData } = await supabase
         .from('users')
-        .select('id, display_name, user_type, is_verified, avatar_url, created_at, whatsapp, is_premium, premium_until, shop_name, shop_bio, shop_link, shop_hours, shop_color, shop_logo_url, shop_banner_url')
+        .select('id, display_name, user_type, is_verified, avatar_url, created_at, whatsapp, is_premium, premium_until, pirata_profiles(shop_name, shop_bio, shop_link, shop_hours, shop_color, shop_logo_url, shop_banner_url)')
         .eq('id', userId)
         .single()
-      if (sellerData) setSeller(sellerData)
+      if (sellerData && sellerData.pirata_profiles) {
+        setSeller({
+          ...sellerData,
+          ...sellerData.pirata_profiles,
+        })
+      } else if (sellerData) {
+        setSeller(sellerData)
+      }
 
       // Cargar fotos del negocio si está verificado
       const { data: verifData } = await supabase

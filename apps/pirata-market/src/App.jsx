@@ -64,10 +64,17 @@ function App() {
     if (!userId) return setProfile(null)
     const { data } = await supabase
       .from('users')
-      .select('display_name, avatar_url, user_type, is_premium, premium_until')
+      .select('display_name, avatar_url, user_type, is_premium, premium_until, pirata_profiles(full_name, country, city, phone, shop_name, identity_verified, business_verified, identity_locked, allow_identity_edit)')
       .eq('id', userId)
       .single()
-    setProfile(data || null)
+    if (data && data.pirata_profiles) {
+      setProfile({
+        ...data,
+        ...data.pirata_profiles,
+      })
+    } else {
+      setProfile(data || null)
+    }
   }
 
   useEffect(() => {
