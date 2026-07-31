@@ -468,6 +468,24 @@
 
 .verif-preview-item img { width: 100%; height: 100%; object-fit: cover; }
 
+.verif-id-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.verif-id-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--dark-border);
+}
+
 .verif-footer {
   padding: 1.5rem;
   background: var(--dark);

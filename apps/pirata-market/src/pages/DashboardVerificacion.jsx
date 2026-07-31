@@ -3,14 +3,8 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { compressImage } from '../lib/utils'
+import CityAutocomplete from '../components/CityAutocomplete'
 import './Dashboard.css'
-
-const COUNTRIES = [
-  'Argentina', 'Bolivia', 'Brasil', 'Canadá', 'Chile', 'Colombia', 'Costa Rica',
-  'Cuba', 'República Dominicana', 'Ecuador', 'El Salvador', 'Guatemala',
-  'Honduras', 'Jamaica', 'México', 'Nicaragua', 'Panamá', 'Paraguay', 'Perú',
-  'Puerto Rico', 'Trinidad y Tobago', 'Estados Unidos', 'Uruguay', 'Venezuela'
-]
 
 const ACCOUNT_TYPES = [
   { value: 'person',    label: 'Persona',   icon: '👤' },
@@ -22,7 +16,6 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
   const { t } = useTranslation()
   const [verificationRequest, setVerificationRequest] = useState(null)
   const [uploadingDocs, setUploadingDocs] = useState(false)
-  const [identityFiles, setIdentityFiles] = useState([])
   const [businessFiles, setBusinessFiles] = useState([])
   const [selfieFiles, setSelfieFiles] = useState([])
   const [verifSaved, setVerifSaved] = useState(false)
@@ -32,6 +25,8 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
   const [realData, setRealData] = useState({
     full_name: '', country: '', city: '', phone: ''
   })
+  const [anversoFile, setAnversoFile] = useState(null)
+  const [reversoFile, setReversoFile] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -83,32 +78,54 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
     if (data) setVerificationRequest(data)
   }
 
-  const validateImageType = (files) => {
+  const validateImageType = (file) => {
     const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
-    const invalid = files.filter(f => !validTypes.includes(f.type))
-    if (invalid.length > 0) {
+    if (!validTypes.includes(file.type)) {
       setFileError('Solo se permiten imágenes JPG, PNG o WebP')
+      return false
+    }
+    if (file.size > 4 * 1024 * 1024) {
+      setFileError('La imagen no puede superar 4MB')
       return false
     }
     setFileError('')
     return true
   }
 
-  const handleIdentityFiles = async (e) => {
-    const files = Array.from(e.target.files)
-    if (!validateImageType(files)) return
+  const handleAnversoFile = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    if (!validateImageType(file)) return
     try {
       setComprError('')
-      const compressed = await Promise.all(files.map(f => compressImage(f)))
-      setIdentityFiles(compressed)
+      const compressed = await compressImage(file)
+      setAnversoFile(compressed)
     } catch (err) {
-      setComprError('Error al comprimir imágenes: ' + err.message)
+      setComprError('Error al comprimir imagen: ' + err.message)
     }
   }
 
+  const handleReversoFile = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    if (!validateImageType(file)) return
+    try {
+      setComprError('')
+      const compressed = await compressImage(file)
+      setReversoFile(compressed)
+    } catch (err) {
+      setComprError('Error al comprimir imagen: ' + err.message)
+    }
+  }
+
+  const removeAnversoFile = () => setAnversoFile(null)
+  const removeReversoFile = () => setReversoFile(null)
+
   const handleBusinessFiles = async (e) => {
     const files = Array.from(e.target.files)
-    if (!validateImageType(files)) return
+    for (const f of files) {
+      if (!validateImageType(f)) return
+    }
     try {
       setComprError('')
       const compressed = await Promise.all(files.map(f => compressImage(f)))
@@ -121,7 +138,7 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
   const handleSelfieFiles = async (e) => {
     const file = e.target.files[0]
     if (!file) return
-    if (!validateImageType([file])) return
+    if (!validateImageType(file)) return
     try {
       setComprError('')
       const compressed = await compressImage(file)
@@ -131,24 +148,19 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
     }
   }
 
-  const removeIdentityFile = (index) => setIdentityFiles(prev => prev.filter((_, i) => i !== index))
   const removeBusinessFile = (index) => setBusinessFiles(prev => prev.filter((_, i) => i !== index))
   const removeSelfieFile = () => setSelfieFiles([])
 
-  const uploadDocFiles = async (files, folder) => {
-    const urls = []
-    for (const file of files) {
-      const fileExt = file.type === 'image/png' ? 'png' : 'jpg'
-      const path = `${user.id}/${folder}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${fileExt}`
-      const compressed = await compressImage(file)
-      const { error } = await supabase.storage
-        .from('verification-docs').upload(path, compressed, { contentType: 'image/jpeg' })
-      if (error) throw error
-      const { data: { publicUrl } } = supabase.storage
-        .from('verification-docs').getPublicUrl(path)
-      urls.push(publicUrl)
-    }
-    return urls
+  const uploadSingleFile = async (file, folder, suffix) => {
+    const fileExt = file.type === 'image/png' ? 'png' : 'jpg'
+    const path = `${user.id}/${folder}/${Date.now()}_${suffix}_${Math.random().toString(36).slice(2, 8)}.${fileExt}`
+    const compressed = await compressImage(file)
+    const { error } = await supabase.storage
+      .from('verification-docs').upload(path, compressed, { contentType: 'image/jpeg' })
+    if (error) throw error
+    const { data: { publicUrl } } = supabase.storage
+      .from('verification-docs').getPublicUrl(path)
+    return publicUrl
   }
 
   const handleChangeType = async (newType) => {
@@ -175,12 +187,14 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
           user_id: user.id,
           status: 'pending',
           source: 'pirata',
-          identity_docs: [],
+          identity_docs: [null, null],
           business_docs: [],
         }])
       }
 
       setBusinessFiles([])
+      setAnversoFile(null)
+      setReversoFile(null)
       if (onProfileUpdate) await onProfileUpdate(user.id)
       loadVerification()
     } catch (error) { alert('Error al cambiar tipo: ' + error.message) }
@@ -193,27 +207,37 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
       if (!realData.full_name || !realData.country || !realData.city || !realData.phone) {
         alert('Completa todos tus datos personales para la verificación.'); return
       }
-      if (identityFiles.length < 1) {
-        alert('Sube al menos una foto de tu documento de identidad.'); return
+      if (!anversoFile || !reversoFile) {
+        alert('Sube ambos lados de tu documento de identidad (Anverso y Reverso).'); return
       }
     }
 
     setUploadingDocs(true)
     try {
-      let identityUrls = verificationRequest?.identity_docs || []
-      if (identityFiles.length > 0) {
-        identityUrls = await uploadDocFiles(identityFiles, 'identity')
+      // Anverso y Reverso: [anverso_url, reverso_url]
+      let identityUrls = [null, null]
+      if (anversoFile) {
+        identityUrls[0] = await uploadSingleFile(anversoFile, 'identity', 'anverso')
+      } else if (verificationRequest?.identity_docs?.[0]) {
+        identityUrls[0] = verificationRequest.identity_docs[0]
+      }
+      if (reversoFile) {
+        identityUrls[1] = await uploadSingleFile(reversoFile, 'identity', 'reverso')
+      } else if (verificationRequest?.identity_docs?.[1]) {
+        identityUrls[1] = verificationRequest.identity_docs[1]
       }
 
       let businessUrls = verificationRequest?.business_docs || []
       if (businessFiles.length > 0) {
-        businessUrls = await uploadDocFiles(businessFiles, 'business')
+        for (const file of businessFiles) {
+          const url = await uploadSingleFile(file, 'business', `biz_${Date.now()}`)
+          businessUrls.push(url)
+        }
       }
 
       let selfieUrl = verificationRequest?.selfie_url || null
       if (selfieFiles.length > 0) {
-        const urls = await uploadDocFiles(selfieFiles, 'selfie')
-        selfieUrl = urls[0] || null
+        selfieUrl = await uploadSingleFile(selfieFiles[0], 'selfie', 'selfie')
       }
 
       const payload = {
@@ -225,10 +249,13 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
         selfie_url: selfieUrl,
       }
 
+      // Guardar datos reales en pirata_profiles
+      const cityValue = typeof realData.city === 'string' ? realData.city : (realData.city?.city || '')
+      const countryValue = typeof realData.country === 'string' ? realData.country : (realData.city?.country || '')
       await supabase.from('pirata_profiles').update({
         full_name: realData.full_name,
-        country: realData.country,
-        city: realData.city,
+        country: countryValue,
+        city: cityValue,
         phone: realData.phone,
       }).eq('user_id', user.id)
 
@@ -239,7 +266,8 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
       }
 
       setVerifSaved(true)
-      setIdentityFiles([])
+      setAnversoFile(null)
+      setReversoFile(null)
       setBusinessFiles([])
       setSelfieFiles([])
       setTimeout(() => setVerifSaved(false), 4000)
@@ -313,19 +341,17 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
                 <input type="text" className="input" value={realData.full_name} disabled={identityLocked}
                   onChange={e => setRealData(p => ({ ...p, full_name: e.target.value }))} placeholder="Como figura en tu documento" />
               </div>
-              <div className="form-group">
-                <label>País</label>
-                <select className="input" value={realData.country} disabled={identityLocked}
-                  onChange={e => setRealData(p => ({ ...p, country: e.target.value }))}>
-                  <option value="">Selecciona tu país</option>
-                  {COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Ciudad</label>
-                <input type="text" className="input" value={realData.city} disabled={identityLocked}
-                  onChange={e => setRealData(p => ({ ...p, city: e.target.value }))} placeholder="Ej: Santa Cruz" />
-              </div>
+              <CityAutocomplete
+                label="Ubicación"
+                placeholder="Selecciona tu ciudad"
+                value={{ country: realData.country, city: realData.city }}
+                disabled={identityLocked}
+                onChange={(result) => {
+                  if (result) {
+                    setRealData(p => ({ ...p, country: result.country, city: result.city }))
+                  }
+                }}
+              />
               <div className="form-group">
                 <label>Teléfono de contacto</label>
                 <input type="tel" className="input" value={realData.phone} disabled={identityLocked}
@@ -356,24 +382,50 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
                   )}
                 </div>
 
-                {/* Documentos de identidad */}
+                {/* Documento de Identidad - Anverso y Reverso */}
                 <div className="verif-docs-upload">
-                  <label>📄 Documentos de Identidad (CI/Pasaporte)</label>
-                  <p className="verif-hint">Sube fotos de tu documento: Anverso y Reverso. Las imágenes se comprimen automáticamente.</p>
-                  <input type="file" accept="image/*" multiple id="id-input" style={{ display: 'none' }} onChange={handleIdentityFiles} />
-                  <label htmlFor="id-input" className="btn btn-secondary verif-upload-btn">
-                    {identityFiles.length > 0 ? 'Cambiar documentos' : 'Seleccionar documentos'} ({identityFiles.length})
-                  </label>
-                  {identityFiles.length > 0 && (
-                    <div className="verif-preview-grid">
-                      {identityFiles.map((f, i) => (
-                        <div key={i} className="verif-preview-item">
-                          <img src={URL.createObjectURL(f)} alt="preview" />
-                          <button className="verif-preview-remove" onClick={() => removeIdentityFile(i)} title="Eliminar">✕</button>
+                  <label>📄 Documento de Identidad</label>
+                  <p className="verif-hint">Sube ambos lados de tu documento (CI/Pasaporte). Máximo 4MB por imagen. Se comprimen automáticamente.</p>
+                  <div className="verif-id-grid">
+                    {/* Anverso */}
+                    <div className="verif-id-slot">
+                      <strong>Anverso (Frente)</strong>
+                      <input type="file" accept="image/*" id="anverso-input" style={{ display: 'none' }} onChange={handleAnversoFile} />
+                      <label htmlFor="anverso-input" className="btn btn-secondary verif-upload-btn">
+                        {anversoFile ? 'Cambiar anverso' : 'Seleccionar anverso'}
+                      </label>
+                      {anversoFile && (
+                        <div className="verif-preview-single">
+                          <div className="verif-preview-item verif-preview-single-item">
+                            <img src={URL.createObjectURL(anversoFile)} alt="Anverso" />
+                            <button className="verif-preview-remove" onClick={removeAnversoFile} title="Eliminar">✕</button>
+                          </div>
                         </div>
-                      ))}
+                      )}
+                      {verificationRequest?.identity_docs?.[0] && !anversoFile && (
+                        <p className="verif-hint" style={{color: 'var(--gold)'}}>✓ Anverso ya enviado</p>
+                      )}
                     </div>
-                  )}
+                    {/* Reverso */}
+                    <div className="verif-id-slot">
+                      <strong>Reverso (Atrás)</strong>
+                      <input type="file" accept="image/*" id="reverso-input" style={{ display: 'none' }} onChange={handleReversoFile} />
+                      <label htmlFor="reverso-input" className="btn btn-secondary verif-upload-btn">
+                        {reversoFile ? 'Cambiar reverso' : 'Seleccionar reverso'}
+                      </label>
+                      {reversoFile && (
+                        <div className="verif-preview-single">
+                          <div className="verif-preview-item verif-preview-single-item">
+                            <img src={URL.createObjectURL(reversoFile)} alt="Reverso" />
+                            <button className="verif-preview-remove" onClick={removeReversoFile} title="Eliminar">✕</button>
+                          </div>
+                        </div>
+                      )}
+                      {verificationRequest?.identity_docs?.[1] && !reversoFile && (
+                        <p className="verif-hint" style={{color: 'var(--gold)'}}>✓ Reverso ya enviado</p>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </>
             )}
