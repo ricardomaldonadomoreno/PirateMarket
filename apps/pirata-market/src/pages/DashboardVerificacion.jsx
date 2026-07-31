@@ -301,8 +301,8 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
         <div className={`verif-layer ${identityVerified ? 'verified' : ''}`}>
           <div className="layer-header">
             <h3>👤 Identidad Personal</h3>
-            <span className={`layer-status ${identityVerified ? 'approved' : verificationRequest?.status === 'pending' ? 'pending' : ''}`}>
-              {identityVerified ? '✓ Verificada' : verificationRequest?.status === 'pending' ? '⏳ En revisión' : '✗ Pendiente'}
+            <span className={`layer-status ${identityVerified ? 'approved' : verificationRequest?.status === 'pending' ? 'pending' : verificationRequest?.status === 'rejected' ? 'rejected' : ''}`}>
+              {identityVerified ? '✓ Verificada' : verificationRequest?.status === 'pending' ? '⏳ En revisión' : verificationRequest?.status === 'rejected' ? '✗ Rechazada' : '✗ Pendiente'}
             </span>
           </div>
 
@@ -436,8 +436,8 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
 
       <div className="verif-footer">
         {verificationRequest?.admin_note && (
-          <div className="admin-note">
-            <strong>Nota del administrador:</strong> {verificationRequest.admin_note}
+          <div className={`admin-note ${verificationRequest?.status === 'rejected' ? 'admin-note-rejected' : ''}`}>
+            <strong>{verificationRequest?.status === 'rejected' ? '✗ Motivo de rechazo:' : 'Nota del administrador:'}</strong> {verificationRequest.admin_note}
           </div>
         )}
         {fileError && <p className="verif-error">{fileError}</p>}

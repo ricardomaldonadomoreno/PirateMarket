@@ -438,6 +438,7 @@
 
 .layer-status.approved { background: var(--success); color: var(--dark); }
 .layer-status.pending { background: var(--warning); color: var(--dark); }
+.layer-status.rejected { background: var(--danger); color: var(--light); }
 
 .real-data-grid {
   display: grid;
@@ -482,6 +483,13 @@
   border-radius: var(--radius-sm);
   margin-bottom: 1rem;
   font-size: 0.85rem;
+}
+
+.admin-note-rejected {
+  background: rgba(230, 57, 70, 0.1);
+  border: 2px solid var(--danger);
+  font-size: 0.9rem;
+  font-weight: 600;
 }
 
 .success-msg {
