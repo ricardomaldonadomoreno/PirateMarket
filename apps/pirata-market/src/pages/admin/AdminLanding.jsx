@@ -248,7 +248,9 @@ export default function AdminLanding() {
           </div>
         </div>
 
-        {/* Sección Sub-Admins */}
+        {/* Sección Sub-Admins — Solo para superadmin */}
+        {adminScope === 'all' && (
+        <>
         <h3 className="serif" style={{ color: 'var(--gold)', marginBottom: '1rem', fontSize: '1.2rem' }}>Sub-Administradores</h3>
 
         {/* Formulario crear sub-admin */}
@@ -388,6 +390,9 @@ export default function AdminLanding() {
             </div>
           )}
         </div>
+
+        </>
+        )}
 
         {/* Footer */}
         <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'center', gap: '1rem' }}>
