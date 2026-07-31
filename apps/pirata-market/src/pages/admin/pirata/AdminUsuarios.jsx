@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
-import AdminNavbarPirata from '../../components/AdminNavbarPirata'
+import AdminNavbarPirata from '../../../components/AdminNavbarPirata'
 import './AdminUsuarios.css'
 
 const fmt = (date) => date ? new Date(date).toLocaleDateString('es-BO', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '—'

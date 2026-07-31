@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import AdminNavbarPirata from '../../components/AdminNavbarPirata'
+import AdminNavbarPirata from '../../../components/AdminNavbarPirata'
 import './AdminDashboard.css'
 
 export default function AdminDashboard() {

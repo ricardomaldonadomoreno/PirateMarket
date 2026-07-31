@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
-import AdminNavbarTraficante from '../../components/AdminNavbarTraficante'
+import AdminNavbarTraficante from '../../../components/AdminNavbarTraficante'
 
 export default function TraficanteAdminViajes() {
   const [trips, setTrips] = useState([])

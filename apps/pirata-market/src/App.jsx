@@ -39,16 +39,16 @@ import AdminLanding from './pages/admin/AdminLanding'
 import AdminSubAdmins from './pages/admin/AdminSubAdmins'
 
 // Admin — Pirata Market
-import AdminDashboard from './pages/admin/AdminDashboard'
-import AdminUsuarios from './pages/admin/AdminUsuarios'
-import AdminAnuncios from './pages/admin/AdminAnuncios'
-import AdminReportes from './pages/admin/AdminReportes'
+import AdminDashboard from './pages/admin/pirata/AdminDashboard'
+import AdminUsuarios from './pages/admin/pirata/AdminUsuarios'
+import AdminAnuncios from './pages/admin/pirata/AdminAnuncios'
+import AdminReportes from './pages/admin/pirata/AdminReportes'
 
 // Admin — Traficante
-import TraficanteAdminDashboard from './pages/admin/TraficanteAdminDashboard'
-import TraficanteAdminViajes from './pages/admin/TraficanteAdminViajes'
-import TraficanteAdminVerificaciones from './pages/admin/TraficanteAdminVerificaciones'
-import TraficanteAdminDestacados from './pages/admin/TraficanteAdminDestacados'
+import TraficanteAdminDashboard from './pages/admin/traficante/TraficanteAdminDashboard'
+import TraficanteAdminViajes from './pages/admin/traficante/TraficanteAdminViajes'
+import TraficanteAdminVerificaciones from './pages/admin/traficante/TraficanteAdminVerificaciones'
+import TraficanteAdminDestacados from './pages/admin/traficante/TraficanteAdminDestacados'
 
 // Components
 import Navbar from './components/Navbar'
