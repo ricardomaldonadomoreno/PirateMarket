@@ -291,6 +291,69 @@
 /* ── VERIFICACIÓN DE CUENTA ── */
 
 /* Info box con tipos de verificación */
+/* ── TIPO DE CUENTA SELECTOR (arriba) ── */
+.verif-type-selector {
+  margin-bottom: 0.75rem;
+}
+
+.type-selector-row {
+  display: flex;
+  flex-direction: row;
+  gap: 0.5rem;
+  margin-top: 0;
+}
+
+.type-selector-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--dark-surface);
+  border: 1px solid var(--dark-border);
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 0.6rem 1.25rem;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s;
+  flex: 1;
+}
+
+.type-selector-btn:hover:not(:disabled) {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: rgba(212,175,55,0.06);
+}
+
+.type-selector-btn:disabled,
+.type-selector-btn.active {
+  opacity: 1;
+  cursor: default;
+  background: rgba(212,175,55,0.12);
+  border-color: var(--gold);
+  color: var(--gold);
+  font-weight: 600;
+}
+
+.type-selector-icon {
+  font-size: 1.1rem;
+}
+
+/* ── INFO COMPACTA ── */
+.verif-info-compact {
+  padding: 0.75rem 1rem;
+  background: rgba(212,175,55,0.04);
+  border: 1px solid var(--dark-border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 1rem;
+}
+
+.verif-info-text {
+  color: var(--gold);
+  font-size: 0.85rem;
+  margin: 0;
+}
+
 .verif-info-box {
   background: rgba(212,175,55,0.04);
   border: 1px solid var(--dark-border);

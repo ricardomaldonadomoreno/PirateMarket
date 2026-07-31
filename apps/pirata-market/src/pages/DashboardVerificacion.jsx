@@ -294,34 +294,30 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
         {isVerified && <span className="verif-badge approved">✓ Cuenta Verificada</span>}
       </div>
 
-      {/* INFO: Tipos de verificación */}
+      {/* TIPO DE CUENTA - Botones de selección */}
+      <div className="verif-type-selector">
+        <div className="type-change-options type-selector-row">
+          {ACCOUNT_TYPES.map(opt => (
+            <button
+              key={opt.value}
+              onClick={() => handleChangeType(opt.value)}
+              disabled={changingType || userType === opt.value}
+              className={`type-selector-btn ${userType === opt.value ? 'active' : ''}`}
+            >
+              <span className="type-selector-icon">{opt.icon}</span>
+              <span>{opt.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
       {!isVerified && (
-        <div className="verif-info-box">
-          <p><strong>¿Qué tipo de verificación necesitas?</strong></p>
-          <div className="verif-types-info">
-            <div className="verif-type-card">
-              <span className="verif-type-icon">👤</span>
-              <div>
-                <strong>Persona</strong>
-                <p>Solo tu identidad personal. Para publicar como vendedor individual.</p>
-              </div>
-            </div>
-            <div className="verif-type-card">
-              <span className="verif-type-icon">🏪</span>
-              <div>
-                <strong>Tienda</strong>
-                <p>Identidad + verificación de tu local/negocio físico. Para publicar como tienda.</p>
-              </div>
-            </div>
-            <div className="verif-type-card">
-              <span className="verif-type-icon">📦</span>
-              <div>
-                <strong>Mayorista</strong>
-                <p>Identidad + documentos legales de tu negocio. Para venta al por mayor.</p>
-              </div>
-            </div>
-          </div>
-          <p className="verif-hint">Selecciona tu tipo de cuenta abajo y completa los documentos.</p>
+        <div className="verif-info-compact">
+          <p className="verif-info-text">
+            {userType === 'person' && '👤 Solo necesitas verificar tu identidad personal'}
+            {userType === 'shop' && '🏪 Necesitas verificar tu identidad + documentos de tu negocio'}
+            {userType === 'wholesale' && '📦 Necesitas verificar tu identidad + documentos legales de tu negocio'}
+          </p>
         </div>
       )}
 
@@ -473,29 +469,7 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
           </div>
         )}
 
-        {/* TIPO DE CUENTA */}
-        <div className="verif-layer account-type-layer">
-          <div className="layer-header">
-            <h3>🔁 Tipo de Cuenta</h3>
-          </div>
-          <div className="layer-content">
-            <p className="verif-hint">
-              Cambiar tu tipo de cuenta reinicia la verificación de negocio. Tu identidad personal no se ve afectada.
-            </p>
-            <div className="type-change-options">
-              {ACCOUNT_TYPES.map(opt => (
-                <button
-                  key={opt.value}
-                  onClick={() => handleChangeType(opt.value)}
-                  disabled={changingType || userType === opt.value}
-                  className={userType === opt.value ? 'active' : ''}
-                >
-                  {opt.icon} {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
+
       </div>
 
       <div className="verif-footer">
