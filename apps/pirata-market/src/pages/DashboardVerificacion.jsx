@@ -286,7 +286,8 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
   const isVerified = profile?.is_verified
   const identityVerified = profile?.identity_verified
   const businessVerified = profile?.business_verified
-  const identityLocked = profile?.identity_locked && !profile?.allow_identity_edit
+  const isPending = verificationRequest?.status === 'pending' && !identityVerified
+  const identityLocked = isPending || (profile?.identity_locked && !profile?.allow_identity_edit)
   const isShopOrWholesale = userType === 'shop' || userType === 'wholesale'
 
   return (
@@ -355,7 +356,7 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
           </div>
 
           <div className="layer-content">
-            {identityLocked && !identityVerified ? (
+            {isPending ? (
               <div className="verif-locked-message">
                 <Clock size={24} />
                 <strong>Tu identidad está en revisión</strong>
@@ -478,7 +479,7 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
             <div className="layer-header">
               <h3><Store size={18} /> Verificación de Negocio</h3>
               <span className={`layer-status ${businessVerified ? 'approved' : ''}`}>
-                {businessVerified ? <><Check size={14} /> Verificada</> : <><XCircle size={14} /> Pendiente</>}
+                {businessVerified ? <><Check size={14} /> Verificada</> : verificationRequest?.status === 'pending' && isShopOrWholesale ? <><Clock size={14} /> En revisión</> : <><XCircle size={14} /> Pendiente</>}
               </span>
             </div>
             <div className="layer-content">
@@ -512,8 +513,8 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
         )}
         {fileError && <p className="verif-error">{fileError}</p>}
         {comprError && <p className="verif-error">{comprError}</p>}
-        <button className="btn btn-primary btn-full" onClick={handleSubmitVerification} disabled={identityLocked || uploadingDocs || (!anversoFile && !reversoFile && !businessFiles.length && !selfieFiles.length)}>
-          {uploadingDocs ? 'Enviando...' : identityLocked ? 'Tu identidad está bloqueada por el administrador' : <><ShieldCheck size={16} /> Enviar Solicitud de Verificación</>}
+        <button className="btn btn-primary btn-full" onClick={handleSubmitVerification} disabled={isPending || uploadingDocs || (!anversoFile && !reversoFile && !businessFiles.length && !selfieFiles.length)}>
+          {uploadingDocs ? 'Enviando...' : isPending ? 'Tu identidad está en revisión' : <><ShieldCheck size={16} /> Enviar Solicitud de Verificación</>}
         </button>
         {verifSaved && <p className="success-msg"><Check size={14} /> Solicitud enviada con éxito. El equipo revisará tus documentos pronto.</p>}
       </div>
