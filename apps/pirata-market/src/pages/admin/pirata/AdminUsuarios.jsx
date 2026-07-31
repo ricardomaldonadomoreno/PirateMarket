@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { supabase } from '../../lib/supabase'
+import { supabase } from '../../../lib/supabase'
 import AdminNavbarPirata from '../../../components/AdminNavbarPirata'
 import './AdminUsuarios.css'
 
@@ -30,9 +30,11 @@ export default function AdminUsuarios() {
         .select(`
           id, display_name, email, user_type,
           is_verified, is_banned, is_premium, premium_until,
-          created_at, avatar_url, whatsapp, shop_name,
-          full_name, country, city, phone,
-          identity_verified, identity_locked, business_verified, allow_identity_edit
+          created_at, avatar_url, whatsapp,
+          pirata_profiles!inner(
+            full_name, country, city, phone, shop_name,
+            identity_verified, identity_locked, business_verified, allow_identity_edit
+          )
         `)
         .neq('user_type', 'collaborator')
         .order('created_at', { ascending: false })
@@ -47,7 +49,20 @@ export default function AdminUsuarios() {
   }
 
   const processUsers = async (usersData) => {
-    setUsers(usersData)
+    // Aplanar pirata_profiles al nivel del usuario para compatibilidad con el resto del código
+    const flattened = usersData.map(u => ({
+      ...u,
+      full_name: u.pirata_profiles?.full_name || null,
+      country: u.pirata_profiles?.country || null,
+      city: u.pirata_profiles?.city || null,
+      phone: u.pirata_profiles?.phone || null,
+      shop_name: u.pirata_profiles?.shop_name || null,
+      identity_verified: u.pirata_profiles?.identity_verified || false,
+      identity_locked: u.pirata_profiles?.identity_locked || false,
+      business_verified: u.pirata_profiles?.business_verified || false,
+      allow_identity_edit: u.pirata_profiles?.allow_identity_edit || false,
+    }))
+    setUsers(flattened)
     const userIds = usersData.map(u => u.id)
 
     const { data: requests } = await supabase
@@ -80,9 +95,22 @@ export default function AdminUsuarios() {
     if (docsModal?.user?.id === userId) {
       const { data: freshUser } = await supabase
         .from('users')
-        .select('id, display_name, email, user_type, is_verified, is_banned, is_premium, premium_until, created_at, avatar_url, whatsapp, shop_name, full_name, country, city, phone, identity_verified, identity_locked, business_verified, allow_identity_edit')
+        .select('id, display_name, email, user_type, is_verified, is_banned, is_premium, premium_until, created_at, avatar_url, whatsapp, pirata_profiles(full_name, country, city, phone, shop_name, identity_verified, identity_locked, business_verified, allow_identity_edit)')
         .eq('id', userId)
         .single()
+      // Aplanar pirata_profiles
+      const flatUser = freshUser ? {
+        ...freshUser,
+        full_name: freshUser.pirata_profiles?.full_name || null,
+        country: freshUser.pirata_profiles?.country || null,
+        city: freshUser.pirata_profiles?.city || null,
+        phone: freshUser.pirata_profiles?.phone || null,
+        shop_name: freshUser.pirata_profiles?.shop_name || null,
+        identity_verified: freshUser.pirata_profiles?.identity_verified || false,
+        identity_locked: freshUser.pirata_profiles?.identity_locked || false,
+        business_verified: freshUser.pirata_profiles?.business_verified || false,
+        allow_identity_edit: freshUser.pirata_profiles?.allow_identity_edit || false,
+      } : null
       const { data: freshReq } = await supabase
         .from('verification_requests')
         .select('*')
@@ -90,7 +118,7 @@ export default function AdminUsuarios() {
         .order('created_at', { ascending: false })
         .limit(1)
         .single()
-      if (freshUser) setDocsModal({ user: freshUser, request: freshReq || null })
+      if (flatUser) setDocsModal({ user: flatUser, request: freshReq || null })
     }
   }
 
@@ -120,7 +148,7 @@ export default function AdminUsuarios() {
   const handleApproveIdentity = async (requestId, userId) => {
     const now = new Date().toISOString()
     await supabase.from('verification_requests').update({ status: 'approved', reviewed_at: now }).eq('id', requestId)
-    await supabase.from('users').update({ identity_verified: true, identity_locked: true, allow_identity_edit: false }).eq('id', userId)
+    await supabase.from('pirata_profiles').update({ identity_verified: true, identity_locked: true, allow_identity_edit: false }).eq('user_id', userId)
     const targetUser = users.find(u => u.id === userId)
     if (targetUser?.user_type === 'person') {
       await supabase.from('users').update({ is_verified: true }).eq('id', userId)
@@ -131,7 +159,8 @@ export default function AdminUsuarios() {
   const handleApproveBusiness = async (requestId, userId) => {
     const now = new Date().toISOString()
     await supabase.from('verification_requests').update({ status: 'approved', reviewed_at: now }).eq('id', requestId)
-    await supabase.from('users').update({ business_verified: true, is_verified: true }).eq('id', userId)
+    await supabase.from('pirata_profiles').update({ business_verified: true }).eq('user_id', userId)
+    await supabase.from('users').update({ is_verified: true }).eq('id', userId)
     await refreshAll(userId)
   }
 
@@ -143,9 +172,10 @@ export default function AdminUsuarios() {
     }).eq('id', requestId)
     const userId = docsModal.user.id
     if (layer === 'identity') {
-      await supabase.from('users').update({ identity_verified: false }).eq('id', userId)
+      await supabase.from('pirata_profiles').update({ identity_verified: false }).eq('user_id', userId)
     } else {
-      await supabase.from('users').update({ business_verified: false, is_verified: false }).eq('id', userId)
+      await supabase.from('pirata_profiles').update({ business_verified: false }).eq('user_id', userId)
+      await supabase.from('users').update({ is_verified: false }).eq('id', userId)
     }
     setRejectNotes(p => ({ ...p, [layer]: '' }))
     await refreshAll(userId)
@@ -160,15 +190,17 @@ export default function AdminUsuarios() {
   const handleRevokeVerification = async (userId, layer) => {
     if (!confirm(`Revocar verificacion de ${layer === 'identity' ? 'Identidad' : 'Negocio'}?`)) return
     if (layer === 'identity') {
-      await supabase.from('users').update({ identity_verified: false, identity_locked: false, is_verified: false }).eq('id', userId)
+      await supabase.from('pirata_profiles').update({ identity_verified: false, identity_locked: false }).eq('user_id', userId)
+      await supabase.from('users').update({ is_verified: false }).eq('id', userId)
     } else {
-      await supabase.from('users').update({ business_verified: false, is_verified: false }).eq('id', userId)
+      await supabase.from('pirata_profiles').update({ business_verified: false }).eq('user_id', userId)
+      await supabase.from('users').update({ is_verified: false }).eq('id', userId)
     }
     await refreshAll(userId)
   }
 
   const handleAllowIdentityEdit = async (userId, current) => {
-    await supabase.from('users').update({ allow_identity_edit: !current, identity_locked: current }).eq('id', userId)
+    await supabase.from('pirata_profiles').update({ allow_identity_edit: !current, identity_locked: current }).eq('user_id', userId)
     await refreshAll(userId)
   }
 
