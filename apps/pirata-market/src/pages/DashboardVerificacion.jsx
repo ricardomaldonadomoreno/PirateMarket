@@ -295,6 +295,27 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
         {isVerified &&             <span className="verif-badge approved"><Check size={14} /> Cuenta Verificada</span>}
       </div>
 
+      {/* Cuadros explicativos compactos */}
+      {!isVerified && (
+        <div className="verif-explain-grid">
+          <div className="verif-explain-card">
+            <User size={16} className="verif-explain-icon" />
+            <strong>Persona</strong>
+            <p>Solo tu identidad personal</p>
+          </div>
+          <div className="verif-explain-card">
+            <Store size={16} className="verif-explain-icon" />
+            <strong>Tienda</strong>
+            <p>Identidad + verificación de negocio</p>
+          </div>
+          <div className="verif-explain-card">
+            <Package size={16} className="verif-explain-icon" />
+            <strong>Mayorista</strong>
+            <p>Identidad + documentos legales</p>
+          </div>
+        </div>
+      )}
+
       {/* TIPO DE CUENTA - Botones de selección */}
       <div className="verif-type-selector">
         <div className="type-change-options type-selector-row">
