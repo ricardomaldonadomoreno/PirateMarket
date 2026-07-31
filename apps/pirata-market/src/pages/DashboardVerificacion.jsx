@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { compressImage } from '../lib/utils'
 import CityAutocomplete from '../components/CityAutocomplete'
+import { Country } from 'country-state-city'
 import './Dashboard.css'
 
 const ACCOUNT_TYPES = [
@@ -348,7 +349,17 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
                   value={{ country: realData.country, city: realData.city }}
                   onChange={(result) => {
                     if (result) {
-                      setRealData(p => ({ ...p, country: result.country, city: result.city }))
+                      setRealData(p => {
+                        // Auto-prefijo de teléfono al cambiar país
+                        let newPhone = p.phone
+                        if (result.country_code && result.country !== p.country) {
+                          const country = Country.getAllCountries().find(c => c.isoCode === result.country_code)
+                          if (country?.phonecode) {
+                            newPhone = '+' + country.phonecode
+                          }
+                        }
+                        return { ...p, country: result.country, city: result.city, phone: newPhone }
+                      })
                     }
                   }}
                 />
