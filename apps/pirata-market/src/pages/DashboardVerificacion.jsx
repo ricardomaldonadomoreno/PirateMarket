@@ -177,7 +177,7 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
     setChangingType(true)
     try {
       await supabase.from('users').update({ user_type: newType }).eq('id', user.id)
-      await supabase.from('pirata_profiles').update({ business_verified: false }).eq('user_id', user.id)
+      await supabase.from('pirata_profiles').update({ business_verified: false, identity_locked: false }).eq('user_id', user.id)
 
       if (verificationRequest) {
         await supabase.from('verification_requests').update({
@@ -251,7 +251,7 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
         selfie_url: selfieUrl,
       }
 
-      // Guardar datos reales en pirata_profiles
+      // Guardar datos reales en pirata_profiles y bloquear edición
       const cityValue = typeof realData.city === 'string' ? realData.city : (realData.city?.city || '')
       const countryValue = typeof realData.country === 'string' ? realData.country : (realData.city?.country || '')
       await supabase.from('pirata_profiles').update({
@@ -259,6 +259,7 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
         country: countryValue,
         city: cityValue,
         phone: realData.phone,
+        identity_locked: true,
       }).eq('user_id', user.id)
 
       if (verificationRequest) {

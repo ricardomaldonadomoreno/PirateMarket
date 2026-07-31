@@ -172,7 +172,7 @@ export default function AdminUsuarios() {
     }).eq('id', requestId)
     const userId = docsModal.user.id
     if (layer === 'identity') {
-      await supabase.from('pirata_profiles').update({ identity_verified: false }).eq('user_id', userId)
+      await supabase.from('pirata_profiles').update({ identity_verified: false, identity_locked: false }).eq('user_id', userId)
     } else {
       await supabase.from('pirata_profiles').update({ business_verified: false }).eq('user_id', userId)
       await supabase.from('users').update({ is_verified: false }).eq('id', userId)
