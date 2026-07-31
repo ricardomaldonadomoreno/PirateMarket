@@ -341,17 +341,18 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
                 <input type="text" className="input" value={realData.full_name} disabled={identityLocked}
                   onChange={e => setRealData(p => ({ ...p, full_name: e.target.value }))} placeholder="Como figura en tu documento" />
               </div>
-              <CityAutocomplete
-                label="Ubicación"
-                placeholder="Selecciona tu ciudad"
-                value={{ country: realData.country, city: realData.city }}
-                disabled={identityLocked}
-                onChange={(result) => {
-                  if (result) {
-                    setRealData(p => ({ ...p, country: result.country, city: result.city }))
-                  }
-                }}
-              />
+              <div className="form-group">
+                <label>País / Ciudad</label>
+                <CityAutocomplete
+                  placeholder="Selecciona tu país y ciudad"
+                  value={{ country: realData.country, city: realData.city }}
+                  onChange={(result) => {
+                    if (result) {
+                      setRealData(p => ({ ...p, country: result.country, city: result.city }))
+                    }
+                  }}
+                />
+              </div>
               <div className="form-group">
                 <label>Teléfono de contacto</label>
                 <input type="tel" className="input" value={realData.phone} disabled={identityLocked}
@@ -494,7 +495,7 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
         )}
         {fileError && <p className="verif-error">{fileError}</p>}
         {comprError && <p className="verif-error">{comprError}</p>}
-        <button className="btn btn-primary btn-full" onClick={handleSubmitVerification} disabled={identityLocked || uploadingDocs || (!identityFiles.length && !businessFiles.length && !selfieFiles.length)}>
+        <button className="btn btn-primary btn-full" onClick={handleSubmitVerification} disabled={identityLocked || uploadingDocs || (!anversoFile && !reversoFile && !businessFiles.length && !selfieFiles.length)}>
           {uploadingDocs ? 'Enviando...' : identityLocked ? 'Tu identidad está bloqueada por el administrador' : 'Enviar Solicitud de Verificación'}
         </button>
         {verifSaved && <p className="success-msg">✓ Solicitud enviada con éxito. El equipo revisará tus documentos pronto.</p>}
