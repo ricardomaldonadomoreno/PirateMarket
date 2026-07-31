@@ -6,8 +6,9 @@ import './AdminLogin.css'
 // AdminLanding = Hub central del backoffice
 // - Sub-admin: solo ve la tarjeta de su app permitida
 // - SuperAdmin (scope='all'): ve tarjetas de apps + formulario de sub-admins + lista de sub-admins
-
-const CREATE_ADMIN_URL = 'https://pfoxxzuxdujyjytegsaz.supabase.co/functions/v1/create-admin'
+//
+// Crear sub-admins via Edge Function `create-admin` (slug: rapid-handler)
+// Listar/eliminar/activar via Supabase REST directamente en tabla admins
 
 export default function AdminLanding() {
   const [loading, setLoading] = useState(true)
@@ -88,10 +89,18 @@ export default function AdminLanding() {
 
     setSaving(true)
     try {
+      const CREATE_ADMIN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/rapid-handler`
+      const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
+
       const res = await fetch(CREATE_ADMIN_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': ANON_KEY,
+          'Authorization': `Bearer ${ANON_KEY}`,
+        },
         body: JSON.stringify({
+          superadmin_email: sessionStorage.getItem('admin_email'),
           email: form.email,
           password: form.password,
           full_name: form.full_name || form.email.split('@')[0],

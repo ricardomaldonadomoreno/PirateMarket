@@ -2,17 +2,21 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './AdminLogin.css'
 
-// AdminLogin usa la tabla `admins` (completamente separada de users y Supabase Auth)
-// + Edge Function `login-admin` para verificar credenciales.
+// AdminLogin usa la Edge Function `login-admin` para verificar credenciales.
+// La Edge Function verifica directamente contra la tabla `admins` (sin Supabase Auth).
 //
 // Flujo:
 // 1. Email + contraseña → POST a Edge Function
-// 2. Si success: guarda admin_id, admin_email, admin_name, admin_scope en sessionStorage
+// 2. Si success → guardar admin_id, admin_email, admin_name, admin_scope en sessionStorage
 // 3. Redirige a /admin/home
-// 4. Si scope='all': acceso total a todo (superadmin)
-// 5. Si scope específico: acceso limitado (sub-admin)
+// 4. scope='all': acceso total (superadmin)
+// 5. scope específico: acceso limitado (sub-admin)
 
-const EDGE_FUNCTION_URL = 'https://pfoxxzuxdujyjytegsaz.supabase.co/functions/v1/login-admin'
+// URL de la Edge Function (obtenida del dashboard de Supabase)
+const LOGIN_ADMIN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/smart-processor`
+
+// Obtener la anon key del entorno Supabase
+const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 export default function AdminLogin() {
   const navigate = useNavigate()
@@ -27,9 +31,13 @@ export default function AdminLogin() {
     setError(null)
 
     try {
-      const res = await fetch(EDGE_FUNCTION_URL, {
+      const res = await fetch(LOGIN_ADMIN_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': ANON_KEY,
+          'Authorization': `Bearer ${ANON_KEY}`,
+        },
         body: JSON.stringify({ email, password }),
       })
 
