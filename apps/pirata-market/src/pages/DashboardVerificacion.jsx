@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase'
 import { compressImage } from '../lib/utils'
 import CityAutocomplete from '../components/CityAutocomplete'
 import { Country } from 'country-state-city'
-import { ShieldCheck, User, Store, Package, Camera, FileText, RefreshCw, Clock, Check, XCircle } from 'lucide-react'
+import { ShieldCheck, User, Store, Package, Camera, FileText, RefreshCw, Clock, Check, XCircle, X } from 'lucide-react'
 import './Dashboard.css'
 
 const ACCOUNT_TYPES = [
