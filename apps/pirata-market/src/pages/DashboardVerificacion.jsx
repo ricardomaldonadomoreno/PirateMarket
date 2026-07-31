@@ -69,15 +69,24 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
   }
 
   const loadVerification = async () => {
-    const { data } = await supabase
-      .from('verification_requests')
-      .select('*')
-      .eq('user_id', user.id)
-      .eq('source', 'pirata')
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single()
-    if (data) setVerificationRequest(data)
+    try {
+      const { data, error } = await supabase
+        .from('verification_requests')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('source', 'pirata')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error loading verification:', error)
+      }
+      if (data) setVerificationRequest(data)
+      else setVerificationRequest(null)
+    } catch (err) {
+      console.error('Error loading verification:', err)
+      setVerificationRequest(null)
+    }
   }
 
   const validateImageType = (file) => {
@@ -169,9 +178,13 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
     if (newType === profile?.user_type) return
     const label = ACCOUNT_TYPES.find(o => o.value === newType)?.label || newType
     const requiresBusinessVerification = newType === 'shop' || newType === 'wholesale'
-    const confirmMsg = requiresBusinessVerification
-      ? `¿Cambiar tu tipo de cuenta a ${label}? Deberás completar una nueva verificación de negocio. Tu verificación de identidad se mantiene.`
-      : `¿Cambiar tu tipo de cuenta a ${label}? Tu verificación de negocio se reseteará, pero tu identidad se mantendrá.`
+    // Si identityLocked, avisar que se cancelará la verificación actual
+    const isCurrentlyLocked = profile?.identity_locked || verificationRequest?.status === 'pending'
+    const confirmMsg = isCurrentlyLocked
+      ? `¿Cambiar tu tipo de cuenta a ${label}? Esto cancelará tu solicitud de verificación actual y desbloqueará tus datos para una nueva solicitud.`
+      : requiresBusinessVerification
+        ? `¿Cambiar tu tipo de cuenta a ${label}? Deberás completar una nueva verificación de negocio. Tu verificación de identidad se mantiene.`
+        : `¿Cambiar tu tipo de cuenta a ${label}? Tu verificación de negocio se reseteará, pero tu identidad se mantendrá.`
     if (!confirm(confirmMsg)) return
 
     setChangingType(true)
@@ -180,10 +193,11 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
       await supabase.from('pirata_profiles').update({ business_verified: false, identity_locked: false }).eq('user_id', user.id)
 
       if (verificationRequest) {
-        await supabase.from('verification_requests').update({
-          business_docs: [],
-          status: requiresBusinessVerification ? 'pending' : verificationRequest.status
-        }).eq('id', verificationRequest.id)
+        // Si identity estaba locked, resetear completamente la solicitud
+        const updatePayload = isCurrentlyLocked
+          ? { status: 'pending', identity_docs: [null, null], business_docs: [], selfie_url: null, admin_note: null }
+          : { business_docs: [], status: requiresBusinessVerification ? 'pending' : verificationRequest.status }
+        await supabase.from('verification_requests').update(updatePayload).eq('id', verificationRequest.id)
       } else if (requiresBusinessVerification) {
         await supabase.from('verification_requests').insert([{
           user_id: user.id,
@@ -286,8 +300,12 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
   const isVerified = profile?.is_verified
   const identityVerified = profile?.identity_verified
   const businessVerified = profile?.business_verified
+  // isPending: hay una solicitud pendiente Y la identidad aún no está verificada
   const isPending = verificationRequest?.status === 'pending' && !identityVerified
-  const identityLocked = isPending || (profile?.identity_locked && !profile?.allow_identity_edit)
+  // identityLocked: la identidad está bloqueada si hay solicitud pending, O si identity_locked=true Y no se permite editar
+  const identityLocked = isPending || (profile?.identity_locked && !identityRejected)
+  // identityRejected: hay una solicitud rechazada
+  const identityRejected = verificationRequest?.status === 'rejected'
   const isShopOrWholesale = userType === 'shop' || userType === 'wholesale'
 
   return (
@@ -356,7 +374,7 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
           </div>
 
           <div className="layer-content">
-            {isPending ? (
+            {(isPending || (profile?.identity_locked && !identityRejected)) ? (
               <div className="verif-locked-message">
                 <Clock size={24} />
                 <strong>Tu identidad está en revisión</strong>
@@ -370,6 +388,14 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
                 <input type="text" className="input" value={realData.full_name} disabled={identityLocked}
                   onChange={e => setRealData(p => ({ ...p, full_name: e.target.value }))} placeholder="Como figura en tu documento" />
               </div>
+              {/* identityLocked visual feedback */}
+              {profile?.identity_locked && !isPending && !identityVerified && (
+                <div className="verif-locked-message" style={{marginTop: '8px'}}>
+                  <Clock size={20} />
+                  <strong>Datos bloqueados</strong>
+                  <p>Tu solicitud está siendo revisada. No puedes modificar tus datos hasta que el administrador los apruebe o rechace.</p>
+                </div>
+              )}
               <div className="form-group">
                 <label>País / Ciudad</label>
                 <CityAutocomplete
@@ -399,7 +425,7 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
               </div>
             </div>
 
-            {!identityVerified && (
+            {!identityVerified && !identityLocked && (
               <>
                 {/* Foto personal (selfie) */}
                 <div className="verif-docs-upload">
@@ -474,7 +500,7 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
         </div>
 
         {/* VERIFICACIÓN DE NEGOCIO */}
-        {isShopOrWholesale && (
+        {isShopOrWholesale && !identityLocked && (
           <div className={`verif-layer ${businessVerified ? 'verified' : ''}`}>
             <div className="layer-header">
               <h3><Store size={18} /> Verificación de Negocio</h3>
@@ -513,8 +539,8 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
         )}
         {fileError && <p className="verif-error">{fileError}</p>}
         {comprError && <p className="verif-error">{comprError}</p>}
-        <button className="btn btn-primary btn-full" onClick={handleSubmitVerification} disabled={isPending || uploadingDocs || (!anversoFile && !reversoFile && !businessFiles.length && !selfieFiles.length)}>
-          {uploadingDocs ? 'Enviando...' : isPending ? 'Tu identidad está en revisión' : <><ShieldCheck size={16} /> Enviar Solicitud de Verificación</>}
+        <button className="btn btn-primary btn-full" onClick={handleSubmitVerification} disabled={identityLocked || uploadingDocs || (!anversoFile && !reversoFile && !businessFiles.length && !selfieFiles.length)}>
+          {uploadingDocs ? 'Enviando...' : identityLocked ? 'Tu identidad está en revisión' : <><ShieldCheck size={16} /> Enviar Solicitud de Verificación</>}
         </button>
         {verifSaved && <p className="success-msg"><Check size={14} /> Solicitud enviada con éxito. El equipo revisará tus documentos pronto.</p>}
       </div>
