@@ -5,12 +5,13 @@ import { supabase } from '../lib/supabase'
 import { compressImage } from '../lib/utils'
 import CityAutocomplete from '../components/CityAutocomplete'
 import { Country } from 'country-state-city'
+import { ShieldCheck, User, Store, Package, Camera, FileText, RefreshCw, Clock, Check, XCircle } from 'lucide-react'
 import './Dashboard.css'
 
 const ACCOUNT_TYPES = [
-  { value: 'person',    label: 'Persona',   icon: '👤' },
-  { value: 'shop',      label: 'Tienda',    icon: '🏪' },
-  { value: 'wholesale', label: 'Mayorista', icon: '📦' },
+  { value: 'person',    label: 'Persona',   icon: User },
+  { value: 'shop',      label: 'Tienda',    icon: Store },
+  { value: 'wholesale', label: 'Mayorista', icon: Package },
 ]
 
 export default function DashboardVerificacion({ user, profile, onProfileUpdate }) {
@@ -290,8 +291,8 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
   return (
     <div className="db-section">
       <div className="db-section-header">
-        <h2>🏅 Verificación de Cuenta</h2>
-        {isVerified && <span className="verif-badge approved">✓ Cuenta Verificada</span>}
+        <h2><ShieldCheck size={22} /> Verificación de Cuenta</h2>
+        {isVerified &&             <span className="verif-badge approved"><Check size={14} /> Cuenta Verificada</span>}
       </div>
 
       {/* TIPO DE CUENTA - Botones de selección */}
@@ -304,7 +305,7 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
               disabled={changingType || userType === opt.value}
               className={`type-selector-btn ${userType === opt.value ? 'active' : ''}`}
             >
-              <span className="type-selector-icon">{opt.icon}</span>
+              {opt.icon && <opt.icon className="type-selector-icon" size={18} />}
               <span>{opt.label}</span>
             </button>
           ))}
@@ -314,9 +315,9 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
       {!isVerified && (
         <div className="verif-info-compact">
           <p className="verif-info-text">
-            {userType === 'person' && '👤 Solo necesitas verificar tu identidad personal'}
-            {userType === 'shop' && '🏪 Necesitas verificar tu identidad + documentos de tu negocio'}
-            {userType === 'wholesale' && '📦 Necesitas verificar tu identidad + documentos legales de tu negocio'}
+            {userType === 'person' && <><User size={14} /> Solo necesitas verificar tu identidad personal</>}
+            {userType === 'shop' && <><Store size={14} /> Necesitas verificar tu identidad + documentos de tu negocio</>}
+            {userType === 'wholesale' && <><Package size={14} /> Necesitas verificar tu identidad + documentos legales de tu negocio</>}
           </p>
         </div>
       )}
@@ -325,9 +326,9 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
         {/* IDENTIDAD PERSONAL */}
         <div className={`verif-layer ${identityVerified ? 'verified' : ''}`}>
           <div className="layer-header">
-            <h3>👤 Identidad Personal</h3>
+            <h3><User size={18} /> Identidad Personal</h3>
             <span className={`layer-status ${identityVerified ? 'approved' : verificationRequest?.status === 'pending' ? 'pending' : verificationRequest?.status === 'rejected' ? 'rejected' : ''}`}>
-              {identityVerified ? '✓ Verificada' : verificationRequest?.status === 'pending' ? '⏳ En revisión' : verificationRequest?.status === 'rejected' ? '✗ Rechazada' : '✗ Pendiente'}
+              {identityVerified ? <><Check size={14} /> Verificada</> : verificationRequest?.status === 'pending' ? <><Clock size={14} /> En revisión</> : verificationRequest?.status === 'rejected' ? <><XCircle size={14} /> Rechazada</> : <><XCircle size={14} /> Pendiente</>}
             </span>
           </div>
 
@@ -371,7 +372,7 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
               <>
                 {/* Foto personal (selfie) */}
                 <div className="verif-docs-upload">
-                  <label>📸 Tu Foto Personal</label>
+                  <label><Camera size={16} /> Tu Foto Personal</label>
                   <p className="verif-hint">Sube una foto clara de tu rostro. Se usará para verificar que eres la misma persona del documento.</p>
                   <input type="file" accept="image/*" id="selfie-input" style={{ display: 'none' }} onChange={handleSelfieFiles} />
                   <label htmlFor="selfie-input" className="btn btn-secondary verif-upload-btn">
@@ -381,18 +382,18 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
                     <div className="verif-preview-single">
                       <div className="verif-preview-item verif-preview-single-item">
                         <img src={URL.createObjectURL(selfieFiles[0])} alt="Tu foto" />
-                        <button className="verif-preview-remove" onClick={removeSelfieFile} title="Eliminar">✕</button>
+                        <button className="verif-preview-remove" onClick={removeSelfieFile} title="Eliminar"><X size={14} /></button>
                       </div>
                     </div>
                   )}
                   {verificationRequest?.selfie_url && selfieFiles.length === 0 && (
-                    <p className="verif-hint" style={{color: 'var(--gold)'}}>✓ Foto personal ya enviada anteriormente</p>
+                    <p className="verif-hint" style={{color: 'var(--gold)'}}><Check size={12} /> Foto personal ya enviada anteriormente</p>
                   )}
                 </div>
 
                 {/* Documento de Identidad - Anverso y Reverso */}
                 <div className="verif-docs-upload">
-                  <label>📄 Documento de Identidad</label>
+                  <label><FileText size={16} /> Documento de Identidad</label>
                   <p className="verif-hint">Sube ambos lados de tu documento (CI/Pasaporte). Máximo 4MB por imagen. Se comprimen automáticamente.</p>
                   <div className="verif-id-grid">
                     {/* Anverso */}
@@ -406,12 +407,12 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
                         <div className="verif-preview-single">
                           <div className="verif-preview-item verif-preview-single-item">
                             <img src={URL.createObjectURL(anversoFile)} alt="Anverso" />
-                            <button className="verif-preview-remove" onClick={removeAnversoFile} title="Eliminar">✕</button>
+                            <button className="verif-preview-remove" onClick={removeAnversoFile} title="Eliminar"><X size={14} /></button>
                           </div>
                         </div>
                       )}
                       {verificationRequest?.identity_docs?.[0] && !anversoFile && (
-                        <p className="verif-hint" style={{color: 'var(--gold)'}}>✓ Anverso ya enviado</p>
+                        <p className="verif-hint" style={{color: 'var(--gold)'}}><Check size={12} /> Anverso ya enviado</p>
                       )}
                     </div>
                     {/* Reverso */}
@@ -425,12 +426,12 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
                         <div className="verif-preview-single">
                           <div className="verif-preview-item verif-preview-single-item">
                             <img src={URL.createObjectURL(reversoFile)} alt="Reverso" />
-                            <button className="verif-preview-remove" onClick={removeReversoFile} title="Eliminar">✕</button>
+                            <button className="verif-preview-remove" onClick={removeReversoFile} title="Eliminar"><X size={14} /></button>
                           </div>
                         </div>
                       )}
                       {verificationRequest?.identity_docs?.[1] && !reversoFile && (
-                        <p className="verif-hint" style={{color: 'var(--gold)'}}>✓ Reverso ya enviado</p>
+                        <p className="verif-hint" style={{color: 'var(--gold)'}}><Check size={12} /> Reverso ya enviado</p>
                       )}
                     </div>
                   </div>
@@ -444,9 +445,9 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
         {isShopOrWholesale && (
           <div className={`verif-layer ${businessVerified ? 'verified' : ''}`}>
             <div className="layer-header">
-              <h3>🏪 Verificación de Negocio</h3>
+              <h3><Store size={18} /> Verificación de Negocio</h3>
               <span className={`layer-status ${businessVerified ? 'approved' : ''}`}>
-                {businessVerified ? '✓ Verificada' : '✗ Pendiente'}
+                {businessVerified ? <><Check size={14} /> Verificada</> : <><XCircle size={14} /> Pendiente</>}
               </span>
             </div>
             <div className="layer-content">
@@ -460,7 +461,7 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
                   {businessFiles.map((f, i) => (
                     <div key={i} className="verif-preview-item">
                       <img src={URL.createObjectURL(f)} alt="preview" />
-                      <button className="verif-preview-remove" onClick={() => removeBusinessFile(i)} title="Eliminar">✕</button>
+                      <button className="verif-preview-remove" onClick={() => removeBusinessFile(i)} title="Eliminar"><X size={14} /></button>
                     </div>
                   ))}
                 </div>
@@ -475,15 +476,15 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
       <div className="verif-footer">
         {verificationRequest?.admin_note && (
           <div className={`admin-note ${verificationRequest?.status === 'rejected' ? 'admin-note-rejected' : ''}`}>
-            <strong>{verificationRequest?.status === 'rejected' ? '✗ Motivo de rechazo:' : 'Nota del administrador:'}</strong> {verificationRequest.admin_note}
+            <strong>{verificationRequest?.status === 'rejected' ? <><XCircle size={14} /> Motivo de rechazo:</> : 'Nota del administrador:'}</strong> {verificationRequest.admin_note}
           </div>
         )}
         {fileError && <p className="verif-error">{fileError}</p>}
         {comprError && <p className="verif-error">{comprError}</p>}
         <button className="btn btn-primary btn-full" onClick={handleSubmitVerification} disabled={identityLocked || uploadingDocs || (!anversoFile && !reversoFile && !businessFiles.length && !selfieFiles.length)}>
-          {uploadingDocs ? 'Enviando...' : identityLocked ? 'Tu identidad está bloqueada por el administrador' : 'Enviar Solicitud de Verificación'}
+          {uploadingDocs ? 'Enviando...' : identityLocked ? 'Tu identidad está bloqueada por el administrador' : <><ShieldCheck size={16} /> Enviar Solicitud de Verificación</>}
         </button>
-        {verifSaved && <p className="success-msg">✓ Solicitud enviada con éxito. El equipo revisará tus documentos pronto.</p>}
+        {verifSaved && <p className="success-msg"><Check size={14} /> Solicitud enviada con éxito. El equipo revisará tus documentos pronto.</p>}
       </div>
     </div>
   )
