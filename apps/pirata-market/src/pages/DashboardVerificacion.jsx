@@ -355,6 +355,14 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
           </div>
 
           <div className="layer-content">
+            {identityLocked && !identityVerified ? (
+              <div className="verif-locked-message">
+                <Clock size={24} />
+                <strong>Tu identidad está en revisión</strong>
+                <p>Los datos y documentos que enviaste están bloqueados hasta que el administrador los apruebe o rechace.</p>
+              </div>
+            ) : (
+              <>
             <div className="real-data-grid">
               <div className="form-group">
                 <label>Nombre Completo Real</label>
@@ -460,6 +468,7 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
                 </div>
               </>
             )}
+            </>
           </div>
         </div>
 

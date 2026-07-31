@@ -24,7 +24,7 @@ export default function DashboardSidebar({ user, profile, verificationSelfie }) 
   const isShopOrWholesale = userType === 'shop' || userType === 'wholesale'
   const identityVerified = profile?.identity_verified
   const businessVerified = profile?.business_verified
-  const sidebarAvatar = verificationSelfie || null
+  const sidebarAvatar = (verificationSelfie && identityVerified) ? verificationSelfie : null
   const userTypeInfo = ACCOUNT_TYPES[userType] || ACCOUNT_TYPES.person
 
   // Secciones visibles en sidebar
