@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { supabase } from '../../lib/supabase'
 import './AdminLogin.css'
 
 // AdminLogin usa la Edge Function `login-admin` para verificar credenciales.
@@ -58,6 +59,17 @@ export default function AdminLogin() {
       sessionStorage.setItem('admin_email', adminEmail)
       sessionStorage.setItem('admin_name', full_name)
       sessionStorage.setItem('admin_scope', scope)
+
+      // Intentar login en Supabase Auth para que auth.uid() funcione con RLS
+      // El admin debe tener cuenta en users con user_type='admin'
+      try {
+        await supabase.auth.signInWithPassword({ email: adminEmail, password })
+      } catch (authErr) {
+        // Si falla el login de Auth (ej: admin no tiene cuenta en users),
+        // continuar sin sesión de Auth. Las RLS de admin no funcionarán
+        // pero las operaciones via Edge Functions sí.
+        console.warn('Admin Auth login fallback (sin sesión Supabase Auth):', authErr.message)
+      }
 
       // Redirigir al landing del backoffice
       navigate('/admin/home')
