@@ -381,121 +381,120 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
                 <p>Los datos y documentos que enviaste están bloqueados hasta que el administrador los apruebe o rechace.</p>
               </div>
             ) : (
-              <>
-            <div className="real-data-grid">
-              <div className="form-group">
-                <label>Nombre Completo Real</label>
-                <input type="text" className="input" value={realData.full_name} disabled={identityLocked}
-                  onChange={e => setRealData(p => ({ ...p, full_name: e.target.value }))} placeholder="Como figura en tu documento" />
-              </div>
-              {/* identityLocked visual feedback */}
-              {profile?.identity_locked && !isPending && !identityVerified && (
-                <div className="verif-locked-message" style={{marginTop: '8px'}}>
-                  <Clock size={20} />
-                  <strong>Datos bloqueados</strong>
-                  <p>Tu solicitud está siendo revisada. No puedes modificar tus datos hasta que el administrador los apruebe o rechace.</p>
-                </div>
-              )}
-              <div className="form-group">
-                <label>País / Ciudad</label>
-                <CityAutocomplete
-                  placeholder="Selecciona tu país y ciudad"
-                  value={{ country: realData.country, city: realData.city }}
-                  onChange={(result) => {
-                    if (result) {
-                      setRealData(p => {
-                        // Auto-prefijo de teléfono al cambiar país
-                        let newPhone = p.phone
-                        if (result.country_code && result.country !== p.country) {
-                          const country = Country.getAllCountries().find(c => c.isoCode === result.country_code)
-                          if (country?.phonecode) {
-                            newPhone = '+' + country.phonecode
-                          }
+              <div>
+                <div className="real-data-grid">
+                  <div className="form-group">
+                    <label>Nombre Completo Real</label>
+                    <input type="text" className="input" value={realData.full_name} disabled={identityLocked}
+                      onChange={e => setRealData(p => ({ ...p, full_name: e.target.value }))} placeholder="Como figura en tu documento" />
+                  </div>
+                  {profile?.identity_locked && !isPending && !identityVerified && (
+                    <div className="verif-locked-message" style={{marginTop: '8px'}}>
+                      <Clock size={20} />
+                      <strong>Datos bloqueados</strong>
+                      <p>Tu solicitud está siendo revisada. No puedes modificar tus datos hasta que el administrador los apruebe o rechace.</p>
+                    </div>
+                  )}
+                  <div className="form-group">
+                    <label>País / Ciudad</label>
+                    <CityAutocomplete
+                      placeholder="Selecciona tu país y ciudad"
+                      value={{ country: realData.country, city: realData.city }}
+                      onChange={(result) => {
+                        if (result) {
+                          setRealData(p => {
+                            let newPhone = p.phone
+                            if (result.country_code && result.country !== p.country) {
+                              const country = Country.getAllCountries().find(c => c.isoCode === result.country_code)
+                              if (country?.phonecode) {
+                                newPhone = '+' + country.phonecode
+                              }
+                            }
+                            return { ...p, country: result.country, city: result.city, phone: newPhone }
+                          })
                         }
-                        return { ...p, country: result.country, city: result.city, phone: newPhone }
-                      })
-                    }
-                  }}
-                />
-              </div>
-              <div className="form-group">
-                <label>Teléfono de contacto</label>
-                <input type="tel" className="input" value={realData.phone} disabled={identityLocked}
-                  onChange={e => setRealData(p => ({ ...p, phone: e.target.value }))} placeholder="+591 ..." />
-              </div>
-            </div>
-
-            {!identityVerified && !identityLocked && (
-              <>
-                {/* Foto personal (selfie) */}
-                <div className="verif-docs-upload">
-                  <label><Camera size={16} /> Tu Foto Personal</label>
-                  <p className="verif-hint">Sube una foto clara de tu rostro. Se usará para verificar que eres la misma persona del documento.</p>
-                  <input type="file" accept="image/*" id="selfie-input" style={{ display: 'none' }} onChange={handleSelfieFiles} />
-                  <label htmlFor="selfie-input" className="btn btn-secondary verif-upload-btn">
-                    {selfieFiles.length > 0 ? 'Cambiar foto' : 'Seleccionar foto'}
-                  </label>
-                  {selfieFiles.length > 0 && (
-                    <div className="verif-preview-single">
-                      <div className="verif-preview-item verif-preview-single-item">
-                        <img src={URL.createObjectURL(selfieFiles[0])} alt="Tu foto" />
-                        <button className="verif-preview-remove" onClick={removeSelfieFile} title="Eliminar"><X size={14} /></button>
-                      </div>
-                    </div>
-                  )}
-                  {verificationRequest?.selfie_url && selfieFiles.length === 0 && (
-                    <p className="verif-hint" style={{color: 'var(--gold)'}}><Check size={12} /> Foto personal ya enviada anteriormente</p>
-                  )}
-                </div>
-
-                {/* Documento de Identidad - Anverso y Reverso */}
-                <div className="verif-docs-upload">
-                  <label><FileText size={16} /> Documento de Identidad</label>
-                  <p className="verif-hint">Sube ambos lados de tu documento (CI/Pasaporte). Máximo 4MB por imagen. Se comprimen automáticamente.</p>
-                  <div className="verif-id-grid">
-                    {/* Anverso */}
-                    <div className="verif-id-slot">
-                      <strong>Anverso (Frente)</strong>
-                      <input type="file" accept="image/*" id="anverso-input" style={{ display: 'none' }} onChange={handleAnversoFile} />
-                      <label htmlFor="anverso-input" className="btn btn-secondary verif-upload-btn">
-                        {anversoFile ? 'Cambiar anverso' : 'Seleccionar anverso'}
-                      </label>
-                      {anversoFile && (
-                        <div className="verif-preview-single">
-                          <div className="verif-preview-item verif-preview-single-item">
-                            <img src={URL.createObjectURL(anversoFile)} alt="Anverso" />
-                            <button className="verif-preview-remove" onClick={removeAnversoFile} title="Eliminar"><X size={14} /></button>
-                          </div>
-                        </div>
-                      )}
-                      {verificationRequest?.identity_docs?.[0] && !anversoFile && (
-                        <p className="verif-hint" style={{color: 'var(--gold)'}}><Check size={12} /> Anverso ya enviado</p>
-                      )}
-                    </div>
-                    {/* Reverso */}
-                    <div className="verif-id-slot">
-                      <strong>Reverso (Atrás)</strong>
-                      <input type="file" accept="image/*" id="reverso-input" style={{ display: 'none' }} onChange={handleReversoFile} />
-                      <label htmlFor="reverso-input" className="btn btn-secondary verif-upload-btn">
-                        {reversoFile ? 'Cambiar reverso' : 'Seleccionar reverso'}
-                      </label>
-                      {reversoFile && (
-                        <div className="verif-preview-single">
-                          <div className="verif-preview-item verif-preview-single-item">
-                            <img src={URL.createObjectURL(reversoFile)} alt="Reverso" />
-                            <button className="verif-preview-remove" onClick={removeReversoFile} title="Eliminar"><X size={14} /></button>
-                          </div>
-                        </div>
-                      )}
-                      {verificationRequest?.identity_docs?.[1] && !reversoFile && (
-                        <p className="verif-hint" style={{color: 'var(--gold)'}}><Check size={12} /> Reverso ya enviado</p>
-                      )}
-                    </div>
+                      }}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Teléfono de contacto</label>
+                    <input type="tel" className="input" value={realData.phone} disabled={identityLocked}
+                      onChange={e => setRealData(p => ({ ...p, phone: e.target.value }))} placeholder="+591 ..." />
                   </div>
                 </div>
-              </>
+
+                {!identityVerified && !identityLocked && (
+                  <div>
+                    {/* Foto personal (selfie) */}
+                    <div className="verif-docs-upload">
+                      <label><Camera size={16} /> Tu Foto Personal</label>
+                      <p className="verif-hint">Sube una foto clara de tu rostro. Se usará para verificar que eres la misma persona del documento.</p>
+                      <input type="file" accept="image/*" id="selfie-input" style={{ display: 'none' }} onChange={handleSelfieFiles} />
+                      <label htmlFor="selfie-input" className="btn btn-secondary verif-upload-btn">
+                        {selfieFiles.length > 0 ? 'Cambiar foto' : 'Seleccionar foto'}
+                      </label>
+                      {selfieFiles.length > 0 && (
+                        <div className="verif-preview-single">
+                          <div className="verif-preview-item verif-preview-single-item">
+                            <img src={URL.createObjectURL(selfieFiles[0])} alt="Tu foto" />
+                            <button className="verif-preview-remove" onClick={removeSelfieFile} title="Eliminar"><X size={14} /></button>
+                          </div>
+                        </div>
+                      )}
+                      {verificationRequest?.selfie_url && selfieFiles.length === 0 && (
+                        <p className="verif-hint" style={{color: 'var(--gold)'}}><Check size={12} /> Foto personal ya enviada anteriormente</p>
+                      )}
+                    </div>
+
+                    {/* Documento de Identidad - Anverso y Reverso */}
+                    <div className="verif-docs-upload">
+                      <label><FileText size={16} /> Documento de Identidad</label>
+                      <p className="verif-hint">Sube ambos lados de tu documento (CI/Pasaporte). Máximo 4MB por imagen. Se comprimen automáticamente.</p>
+                      <div className="verif-id-grid">
+                        {/* Anverso */}
+                        <div className="verif-id-slot">
+                          <strong>Anverso (Frente)</strong>
+                          <input type="file" accept="image/*" id="anverso-input" style={{ display: 'none' }} onChange={handleAnversoFile} />
+                          <label htmlFor="anverso-input" className="btn btn-secondary verif-upload-btn">
+                            {anversoFile ? 'Cambiar anverso' : 'Seleccionar anverso'}
+                          </label>
+                          {anversoFile && (
+                            <div className="verif-preview-single">
+                              <div className="verif-preview-item verif-preview-single-item">
+                                <img src={URL.createObjectURL(anversoFile)} alt="Anverso" />
+                                <button className="verif-preview-remove" onClick={removeAnversoFile} title="Eliminar"><X size={14} /></button>
+                              </div>
+                            </div>
+                          )}
+                          {verificationRequest?.identity_docs?.[0] && !anversoFile && (
+                            <p className="verif-hint" style={{color: 'var(--gold)'}}><Check size={12} /> Anverso ya enviado</p>
+                          )}
+                        </div>
+                        {/* Reverso */}
+                        <div className="verif-id-slot">
+                          <strong>Reverso (Atrás)</strong>
+                          <input type="file" accept="image/*" id="reverso-input" style={{ display: 'none' }} onChange={handleReversoFile} />
+                          <label htmlFor="reverso-input" className="btn btn-secondary verif-upload-btn">
+                            {reversoFile ? 'Cambiar reverso' : 'Seleccionar reverso'}
+                          </label>
+                          {reversoFile && (
+                            <div className="verif-preview-single">
+                              <div className="verif-preview-item verif-preview-single-item">
+                                <img src={URL.createObjectURL(reversoFile)} alt="Reverso" />
+                                <button className="verif-preview-remove" onClick={removeReversoFile} title="Eliminar"><X size={14} /></button>
+                              </div>
+                            </div>
+                          )}
+                          {verificationRequest?.identity_docs?.[1] && !reversoFile && (
+                            <p className="verif-hint" style={{color: 'var(--gold)'}}><Check size={12} /> Reverso ya enviado</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
-            </>
           </div>
         </div>
 

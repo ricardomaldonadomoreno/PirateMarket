@@ -69,6 +69,7 @@ export default function AdminUsuarios() {
       .from('verification_requests')
       .select('*')
       .in('user_id', userIds)
+      .eq('source', 'pirata')
       .order('created_at', { ascending: false })
 
     if (requests) {
@@ -115,9 +116,10 @@ export default function AdminUsuarios() {
         .from('verification_requests')
         .select('*')
         .eq('user_id', userId)
+        .eq('source', 'pirata')
         .order('created_at', { ascending: false })
         .limit(1)
-        .single()
+        .maybeSingle()
       if (flatUser) setDocsModal({ user: flatUser, request: freshReq || null })
     }
   }
@@ -413,13 +415,23 @@ export default function AdminUsuarios() {
                     )}
                   </div>
                 </div>
-                {docsModal.request?.identity_docs?.length > 0 ? (
+                {docsModal.request?.identity_docs?.some(url => url) ? (
                   <>
                     <div className="docs-grid">
                       {docsModal.request.identity_docs.map((url, i) => (
-                        <div key={i} className="doc-card" onClick={() => openLightbox(docsModal.request.identity_docs, i)}>
-                          <img src={url} alt={i === 0 ? 'Anverso' : 'Reverso'} className="doc-thumb" />
-                          <span className="doc-label">{i === 0 ? 'Anverso' : 'Reverso'}</span>
+                        <div key={i} className="doc-card" onClick={() => {
+                          const validDocs = docsModal.request.identity_docs.filter(Boolean)
+                          const idx = docsModal.request.identity_docs.indexOf(url)
+                          openLightbox(validDocs, validDocs.indexOf(url))
+                        }}>
+                          {url ? (
+                            <>
+                              <img src={url} alt={i === 0 ? 'Anverso' : 'Reverso'} className="doc-thumb" />
+                              <span className="doc-label">{i === 0 ? 'Anverso' : 'Reverso'}</span>
+                            </>
+                          ) : (
+                            <><span className="doc-label" style={{color:'var(--text-muted)'}}>{i === 0 ? 'Anverso (falta)' : 'Reverso (falta)'}</span></>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -435,29 +447,29 @@ export default function AdminUsuarios() {
                       </div>
                     )}
                   </>
-                ) : (
-                  docsModal.request ? (
-                    <>
-                      <p className="docs-empty">Sin fotos de identidad subidas aun.</p>
-                      <div className="docs-status-row">
-                        <span>Estado: </span>
-                        <span className={`admin-badge ${docsModal.request.status === 'pending' ? 'badge-pending' : docsModal.request.status === 'approved' ? 'badge-verified' : 'badge-rejected'}`}>
-                          {docsModal.request.status}
-                        </span>
-                      </div>
-                      {docsModal.request.status === 'pending' && (
-                        <div className="docs-actions">
-                          <button className="btn btn-primary" onClick={() => handleApproveVerification(docsModal.request.id, docsModal.user.id)}>Aprobar</button>
-                          <div className="docs-reject">
-                            <input type="text" className="input" placeholder="Motivo de rechazo..."
-                              value={rejectNotes.identity}
-                              onChange={e => setRejectNotes(p => ({ ...p, identity: e.target.value }))} />
-                            <button className="btn btn-secondary" onClick={() => handleRejectLayer(docsModal.request.id, 'identity')}>Rechazar</button>
-                          </div>
+                ) : docsModal.request ? (
+                  <div>
+                    <p className="docs-empty">Sin fotos de identidad subidas aun.</p>
+                    <div className="docs-status-row">
+                      <span>Estado: </span>
+                      <span className={`admin-badge ${docsModal.request.status === 'pending' ? 'badge-pending' : docsModal.request.status === 'approved' ? 'badge-verified' : 'badge-rejected'}`}>
+                        {docsModal.request.status}
+                      </span>
+                    </div>
+                    {docsModal.request.status === 'pending' && (
+                      <div className="docs-actions">
+                        <button className="btn btn-primary" onClick={() => handleApproveVerification(docsModal.request.id, docsModal.user.id)}>Aprobar</button>
+                        <div className="docs-reject">
+                          <input type="text" className="input" placeholder="Motivo de rechazo..."
+                            value={rejectNotes.identity}
+                            onChange={e => setRejectNotes(p => ({ ...p, identity: e.target.value }))} />
+                          <button className="btn btn-secondary" onClick={() => handleRejectLayer(docsModal.request.id, 'identity')}>Rechazar</button>
                         </div>
-                      )}
-                    </>
-                  ) : <p className="docs-empty">Este usuario no tiene solicitud de verificacion.</p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="docs-empty">Este usuario no tiene solicitud de verificacion.</p>
                 )}
               </div>
 
@@ -470,16 +482,19 @@ export default function AdminUsuarios() {
                       <button className="btn-small btn-danger" onClick={() => handleRevokeVerification(docsModal.user.id, 'business')}>Revocar negocio</button>
                     )}
                   </div>
-                  {docsModal.request?.business_docs?.length > 0 ? (
-                    <>
-                      <div className="docs-grid">
-                        {docsModal.request.business_docs.map((url, i) => (
-                          <div key={i} className="doc-card" onClick={() => openLightbox(docsModal.request.business_docs, i)}>
-                            <img src={url} alt={`Doc ${i+1}`} className="doc-thumb" />
-                            <span className="doc-label">Doc {i+1}</span>
-                          </div>
-                        ))}
-                      </div>
+                  {docsModal.request?.business_docs?.some(url => url) ? (
+                  <>
+                    <div className="docs-grid">
+                      {docsModal.request.business_docs.filter(Boolean).map((url, i) => (
+                        <div key={i} className="doc-card" onClick={() => {
+                          const validDocs = docsModal.request.business_docs.filter(Boolean)
+                          openLightbox(validDocs, i)
+                        }}>
+                          <img src={url} alt={`Doc ${i+1}`} className="doc-thumb" />
+                          <span className="doc-label">Doc {i+1}</span>
+                        </div>
+                      ))}
+                    </div>
                       {!docsModal.user.business_verified && (
                         <div className="docs-actions">
                           <button className="btn btn-primary" onClick={() => handleApproveBusiness(docsModal.request.id, docsModal.user.id)}>Aprobar negocio</button>
