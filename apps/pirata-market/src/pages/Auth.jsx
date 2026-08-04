@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
+import CountrySelect from '../../../traficante-app/src/components/CountrySelect'
 import './Auth.css'
 
 export default function Auth() {
@@ -19,6 +20,7 @@ export default function Auth() {
     password: '',
     display_name: '',
     whatsapp: '',
+    country: '',
   })
 
   // Detectar contexto según de dónde viene
@@ -76,7 +78,7 @@ export default function Auth() {
     }
 
     try {
-      // Identidad 1: Solo registrar datos básicos (Email, WhatsApp, Display Name)
+      // Identidad 1: Solo registrar datos básicos (Email, WhatsApp, Display Name, País)
       const { error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -84,6 +86,7 @@ export default function Auth() {
           data: {
             display_name: formData.display_name,
             whatsapp: formData.whatsapp,
+            country: formData.country,
             user_type: 'person' // Por defecto persona hasta que elija app
           },
           emailRedirectTo: fromTraficante
@@ -94,7 +97,7 @@ export default function Auth() {
       if (authError) throw authError
       setUserEmail(formData.email)
       setMode('email_sent')
-      setFormData({ email: '', password: '', display_name: '', whatsapp: '' })
+      setFormData({ email: '', password: '', display_name: '', whatsapp: '', country: '' })
     } catch (err) {
       setError(err.message || t('auth.error_signup'))
     } finally {
@@ -231,6 +234,13 @@ export default function Auth() {
                     <input type="tel" name="whatsapp" className="input"
                       placeholder="+591 7XXXXXXX" value={formData.whatsapp}
                       onChange={handleInputChange} required />
+                  </div>
+                  <div className="form-group">
+                    <CountrySelect
+                      label="País *"
+                      value={formData.country}
+                      onChange={(value) => setFormData(prev => ({ ...prev, country: value }))}
+                    />
                   </div>
                   <div className="form-group">
                     <label>{t('auth.email')} *</label>
