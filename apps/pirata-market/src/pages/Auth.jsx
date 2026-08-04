@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
+import { Country } from 'country-state-city'
 import CountrySelect from '../../../traficante-app/src/components/CountrySelect'
 import './Auth.css'
 
@@ -82,13 +83,14 @@ export default function Auth() {
 
     try {
       // Identidad 1: Solo registrar datos básicos (Email, WhatsApp, Display Name, País)
+      const fullPhone = phoneCode ? `+${phoneCode}${formData.whatsapp}` : formData.whatsapp
       const { error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
           data: {
             display_name: formData.display_name,
-            whatsapp: formData.whatsapp,
+            whatsapp: fullPhone,
             country: formData.country,
             user_type: 'person' // Por defecto persona hasta que elija app
           },
@@ -101,6 +103,7 @@ export default function Auth() {
       setUserEmail(formData.email)
       setMode('email_sent')
       setFormData({ email: '', password: '', display_name: '', whatsapp: '', country: '' })
+      setPhoneCode('')
     } catch (err) {
       setError(err.message || t('auth.error_signup'))
     } finally {
@@ -256,13 +259,6 @@ export default function Auth() {
                         placeholder="7XXXXXXX" value={formData.whatsapp}
                         onChange={handleInputChange} required />
                     </div>
-                  </div>
-                  <div className="form-group">
-                    <CountrySelect
-                      label="País *"
-                      value={formData.country}
-                      onChange={(value) => setFormData(prev => ({ ...prev, country: value }))}
-                    />
                   </div>
                   <div className="form-group">
                     <label>{t('auth.email')} *</label>
