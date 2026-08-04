@@ -22,13 +22,13 @@ const formatDate = (d) => {
 
 const getLevelLabel = (user) => {
   if (!user) return { label: 'Básico', color: '#888' }
-  if (user.traficante_address_verified && user.traficante_bank_verified) {
+  if (user.address_verified && user.bank_verified) {
     return { label: 'Elite', color: '#784212' }
   }
-  if (user.traficante_address_verified) {
+  if (user.address_verified) {
     return { label: 'PRO', color: '#8E44AD' }
   }
-  if (user.traficante_identity_verified) {
+  if (user.identity_verified) {
     return { label: 'Medio', color: '#2980B9' }
   }
   return { label: 'Básico', color: '#888' }
@@ -93,10 +93,13 @@ export default function TraficanteBuscar() {
       if (userIds.length > 0) {
         const { data: usersData } = await sb
           .from('users')
-          .select('id, display_name, avatar_url, traficante_identity_verified, traficante_address_verified, traficante_bank_verified')
+          .select('id, display_name, avatar_url, traficante_profiles!inner(identity_verified, address_verified, bank_verified)')
           .in('id', userIds)
         const usersMap = {}
-        usersData?.forEach(u => { usersMap[u.id] = u })
+        usersData?.forEach(u => {
+          const tp = u.traficante_profiles?.[0] || {}
+          usersMap[u.id] = { ...u, ...tp }
+        })
         setUsers(usersMap)
       }
     }
@@ -258,7 +261,7 @@ export default function TraficanteBuscar() {
                             <span className="t-trip-level" style={{ color: level.color }}>{level.label}</span>
                           </div>
                         </div>
-                        {usr.traficante_identity_verified && (
+                        {usr.identity_verified && (
                           <span className="t-trip-verified" title="Identidad verificada">
                             <ShieldCheck size={14} />
                           </span>

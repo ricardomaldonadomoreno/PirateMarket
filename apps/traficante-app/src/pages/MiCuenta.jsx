@@ -56,36 +56,32 @@ export default function MiCuenta({ user, onProfileUpdate }) {
 
   const loadProfile = async () => {
     setLoading(true)
-    const { data } = await supabase
+    const { data: userData } = await supabase
       .from('users')
-      .select(`
-        display_name, avatar_url,
-        traficante_full_name, traficante_phone,
-        traficante_birth_country, traficante_doc_type, traficante_doc_number,
-        traficante_personal_locked,
-        traficante_address_city, traficante_address_country, traficante_address_text,
-        traficante_address_lat, traficante_address_lng,
-        traficante_address_locked, traficante_phone_locked,
-        traficante_identity_verified, traficante_address_verified,
-        traficante_bank_verified
-      `)
+      .select('display_name, avatar_url')
       .eq('id', user.id)
       .single()
-    if (data) {
-      setProfile(data)
-      setFullName(data.traficante_full_name || '')
-      setPhone(data.traficante_phone || '')
-      setBirthCountry(data.traficante_birth_country || '')
-      setDocType(data.traficante_doc_type || '')
-      setDocNumber(data.traficante_doc_number || '')
-      setAddressCity(data.traficante_address_city || '')
-      setAddressCountry(data.traficante_address_country || '')
-      setAddressText(data.traficante_address_text || '')
-      if (data.traficante_address_city) {
-        setAddressCityObj({ city: data.traficante_address_city, country: data.traficante_address_country, lat: data.traficante_address_lat, lng: data.traficante_address_lng })
+    const { data: profileData } = await supabase
+      .from('traficante_profiles')
+      .select('*')
+      .eq('id', user.id)
+      .maybeSingle()
+    if (userData) {
+      const merged = { ...userData, ...(profileData || {}) }
+      setProfile(merged)
+      setFullName(merged.full_name || '')
+      setPhone(merged.phone || '')
+      setBirthCountry(merged.birth_country || '')
+      setDocType(merged.doc_type || '')
+      setDocNumber(merged.doc_number || '')
+      setAddressCity(merged.address_city || '')
+      setAddressCountry(merged.address_country || '')
+      setAddressText(merged.address_text || '')
+      if (merged.address_city) {
+        setAddressCityObj({ city: merged.address_city, country: merged.address_country, lat: merged.address_lat, lng: merged.address_lng })
       }
-      if (data.traficante_address_lat && data.traficante_address_lng) {
-        setAddressCoords({ lat: data.traficante_address_lat, lng: data.traficante_address_lng })
+      if (merged.address_lat && merged.address_lng) {
+        setAddressCoords({ lat: merged.address_lat, lng: merged.address_lng })
       }
     }
     setLoading(false)
@@ -113,7 +109,7 @@ export default function MiCuenta({ user, onProfileUpdate }) {
     : null
 
   // ── GUARDAR INFORMACIÓN PERSONAL ──
-  const isPersonalLocked = profile?.traficante_personal_locked
+  const isPersonalLocked = profile?.personal_locked
 
   const savePersonal = async () => {
     if (isPersonalLocked) return
@@ -125,24 +121,24 @@ export default function MiCuenta({ user, onProfileUpdate }) {
 
     setSaving(true)
     setError('')
-    const { error: err } = await supabase.from('users').update({
-      traficante_full_name: fullName.trim(),
-      traficante_phone: phone.trim(),
-      traficante_birth_country: birthCountry.trim(),
-      traficante_doc_type: docType,
-      traficante_doc_number: docNumber.trim(),
-      traficante_personal_locked: true,
+    const { error: err } = await supabase.from('traficante_profiles').update({
+      full_name: fullName.trim(),
+      phone: phone.trim(),
+      birth_country: birthCountry.trim(),
+      doc_type: docType,
+      doc_number: docNumber.trim(),
+      personal_locked: true,
     }).eq('id', user.id)
     setSaving(false)
     if (err) return setError(err.message)
     setProfile(prev => ({
       ...prev,
-      traficante_full_name: fullName.trim(),
-      traficante_phone: phone.trim(),
-      traficante_birth_country: birthCountry.trim(),
-      traficante_doc_type: docType,
-      traficante_doc_number: docNumber.trim(),
-      traficante_personal_locked: true,
+      full_name: fullName.trim(),
+      phone: phone.trim(),
+      birth_country: birthCountry.trim(),
+      doc_type: docType,
+      doc_number: docNumber.trim(),
+      personal_locked: true,
     }))
     if (onProfileUpdate) onProfileUpdate(prev => ({ ...prev, display_name: profile?.display_name }))
     setSaved('personal')
@@ -151,21 +147,21 @@ export default function MiCuenta({ user, onProfileUpdate }) {
 
   // ── GUARDAR DIRECCIÓN ──
   const saveAddress = async () => {
-    if (profile?.traficante_address_locked) return
+    if (profile?.address_locked) return
     if (!addressCity || !addressText) return setError('Completa la ciudad y dirección')
     setSaving(true)
     setError('')
-    const { error: err } = await supabase.from('users').update({
-      traficante_address_city: addressCityObj?.city || addressCity,
-      traficante_address_country: addressCityObj?.country || addressCountry,
-      traficante_address_text: addressText,
-      traficante_address_lat: addressCoords?.lat || addressCoordsFromCity?.lat || addressCityObj?.lat || null,
-      traficante_address_lng: addressCoords?.lng || addressCoordsFromCity?.lng || addressCityObj?.lng || null,
-      traficante_address_locked: true,
+    const { error: err } = await supabase.from('traficante_profiles').update({
+      address_city: addressCityObj?.city || addressCity,
+      address_country: addressCityObj?.country || addressCountry,
+      address_text: addressText,
+      address_lat: addressCoords?.lat || addressCoordsFromCity?.lat || addressCityObj?.lat || null,
+      address_lng: addressCoords?.lng || addressCoordsFromCity?.lng || addressCityObj?.lng || null,
+      address_locked: true,
     }).eq('id', user.id)
     setSaving(false)
     if (err) return setError(err.message)
-    setProfile(prev => ({ ...prev, traficante_address_locked: true }))
+    setProfile(prev => ({ ...prev, address_locked: true }))
     setSaved('address')
     setTimeout(() => setSaved(''), 3000)
   }
@@ -226,23 +222,23 @@ export default function MiCuenta({ user, onProfileUpdate }) {
                     <div className="real-data-grid">
                       <div className="data-item">
                         <label>Nombre completo real</label>
-                        <span>{profile?.traficante_full_name || '—'}</span>
+                        <span>{profile?.full_name || '—'}</span>
                       </div>
                       <div className="data-item">
                         <label>Teléfono</label>
-                        <span>{profile?.traficante_phone || '—'}</span>
+                        <span>{profile?.phone || '—'}</span>
                       </div>
                       <div className="data-item">
                         <label>País de nacimiento</label>
-                        <span>{profile?.traficante_birth_country || '—'}</span>
+                        <span>{profile?.birth_country || '—'}</span>
                       </div>
                       <div className="data-item">
                         <label>Tipo de documento</label>
-                        <span>{profile?.traficante_doc_type === 'ci' ? 'Cédula de Identidad' : profile?.traficante_doc_type === 'pasaporte' ? 'Pasaporte' : '—'}</span>
+                        <span>{profile?.doc_type === 'ci' ? 'Cédula de Identidad' : profile?.doc_type === 'pasaporte' ? 'Pasaporte' : '—'}</span>
                       </div>
                       <div className="data-item traf-data-full">
                         <label>Número de documento</label>
-                        <span>{profile?.traficante_doc_number || '—'}</span>
+                        <span>{profile?.doc_number || '—'}</span>
                       </div>
                     </div>
                   </div>
@@ -322,12 +318,12 @@ export default function MiCuenta({ user, onProfileUpdate }) {
                   <strong>Lee antes de guardar:</strong> Una vez confirmada, tu dirección principal quedará fija y no podrá editarse. Debe coincidir exactamente con tu documento de identidad.
                 </div>
 
-                {profile?.traficante_address_locked ? (
+                {profile?.address_locked ? (
                   <div className="mc-locked-address">
                     <div className="mc-locked-address-icon">📍</div>
                     <div>
-                      <div className="mc-locked-address-city">{profile.traficante_address_city}</div>
-                      <div className="mc-locked-address-text">{profile.traficante_address_text}</div>
+                      <div className="mc-locked-address-city">{profile.address_city}</div>
+                      <div className="mc-locked-address-text">{profile.address_text}</div>
                       {addressCoords && (
                         <div className="mc-locked-address-coords">
                           {addressCoords.lat.toFixed(5)}, {addressCoords.lng.toFixed(5)}

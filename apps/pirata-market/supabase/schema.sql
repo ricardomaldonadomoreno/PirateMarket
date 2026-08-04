@@ -123,23 +123,14 @@ CREATE TABLE IF NOT EXISTS users (
   shop_banner_url TEXT
 );
 
--- Columnas Traficante (transportador)
-DO $$ BEGIN
-  ALTER TABLE users ADD COLUMN IF NOT EXISTS traficante_full_name TEXT;
-  ALTER TABLE users ADD COLUMN IF NOT EXISTS traficante_phone TEXT;
-  ALTER TABLE users ADD COLUMN IF NOT EXISTS traficante_phone_locked BOOLEAN DEFAULT FALSE;
-  ALTER TABLE users ADD COLUMN IF NOT EXISTS traficante_address_city TEXT;
-  ALTER TABLE users ADD COLUMN IF NOT EXISTS traficante_address_text TEXT;
-  ALTER TABLE users ADD COLUMN IF NOT EXISTS traficante_address_lat DOUBLE PRECISION;
-  ALTER TABLE users ADD COLUMN IF NOT EXISTS traficante_address_lng DOUBLE PRECISION;
-  ALTER TABLE users ADD COLUMN IF NOT EXISTS traficante_address_locked BOOLEAN DEFAULT FALSE;
-  ALTER TABLE users ADD COLUMN IF NOT EXISTS traficante_bio TEXT;
-  ALTER TABLE users ADD COLUMN IF NOT EXISTS traficante_frequent_routes TEXT;
-  ALTER TABLE users ADD COLUMN IF NOT EXISTS traficante_identity_verified BOOLEAN DEFAULT FALSE;
-  ALTER TABLE users ADD COLUMN IF NOT EXISTS traficante_address_verified BOOLEAN DEFAULT FALSE;
-  ALTER TABLE users ADD COLUMN IF NOT EXISTS traficante_bank_verified BOOLEAN DEFAULT FALSE;
-EXCEPTION WHEN duplicate_column THEN NULL;
-END $$;
+-- Datos del traficante viven en traficante_profiles, no en users.
+-- La tabla traficante_profiles tiene las columnas:
+-- full_name, phone, phone_locked, address_city, address_text, address_lat, address_lng,
+-- address_locked, address_country, address_state, address_state_code, address_country_code,
+-- birth_country, doc_type, doc_number, personal_locked, bio, bank_verified,
+-- identity_verified, address_verified, travel_doc_verified, second_country_verified,
+-- frequent_routes, level, total_trips, total_shipments, avg_rating,
+-- guarantee_deposit, deposit_currency, created_at, updated_at.
 
 CREATE INDEX IF NOT EXISTS idx_users_type ON users(user_type);
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
@@ -706,11 +697,8 @@ GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon;
 -- MIGRATIONS (aplicar en orden en Supabase SQL Editor)
 -- ================================================
 
--- Migration: Agregar columnas de documento a users
-ALTER TABLE users ADD COLUMN IF NOT EXISTS traficante_birth_country TEXT;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS traficante_doc_type TEXT;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS traficante_doc_number TEXT;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS traficante_personal_locked BOOLEAN DEFAULT FALSE;
+-- Migration: Las columnas de documento ya viven en traficante_profiles.
+-- Estas líneas estaban en users y fueron eliminadas.
 
 -- Migration: Corregir policies de traficante_verification_requests
 -- (las policies actuales no permiten INSERT porque usan EXCEPTION y no se reemplazan)

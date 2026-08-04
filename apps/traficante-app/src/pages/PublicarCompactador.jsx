@@ -85,19 +85,19 @@ export default function PublicarCompactador({ user }) {
     if (!user) { navigate('/auth'); return }
     setLoadingProfile(true)
     supabase
-      .from('users')
-      .select('traficante_address_city, traficante_address_country, traficante_address_text, traficante_address_lat, traficante_address_lng, traficante_address_locked, traficante_identity_verified')
+      .from('traficante_profiles')
+      .select('address_city, address_country, address_text, address_lat, address_lng, address_locked, identity_verified')
       .eq('id', user.id)
-      .single()
+      .maybeSingle()
       .then(({ data }) => {
         if (data) {
-          setIdentityVerified(!!data.traficante_identity_verified)
-          if (data.traficante_address_city && data.traficante_address_locked) {
+          setIdentityVerified(!!data.identity_verified)
+          if (data.address_city && data.address_locked) {
             setVerifiedAddr({
-              city: data.traficante_address_city,
-              country: data.traficante_address_country,
-              lat: data.traficante_address_lat,
-              lng: data.traficante_address_lng,
+              city: data.address_city,
+              country: data.address_country,
+              lat: data.address_lat,
+              lng: data.address_lng,
             })
           }
         }

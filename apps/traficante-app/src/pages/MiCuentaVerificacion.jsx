@@ -244,8 +244,8 @@ export default function MiCuentaVerificacion({ user, profile }) {
       <div className="verif-layer">
         <div className="layer-header">
           <h3>Documento de Identidad (CI/Pasaporte)</h3>
-          <span className={`layer-status ${profile?.traficante_identity_verified ? 'approved' : ''}`}>
-            {profile?.traficante_identity_verified ? 'Verificado' : verifRequest?.identity_docs?.length ? 'Enviado' : 'Pendiente'}
+          <span className={`layer-status ${profile?.identity_verified ? 'approved' : ''}`}>
+            {profile?.identity_verified ? 'Verificado' : verifRequest?.identity_docs?.length ? 'Enviado' : 'Pendiente'}
           </span>
         </div>
         <p className="verif-hint">Sube fotos de tu documento: Anverso y Reverso. Las imágenes se comprimen automáticamente.</p>
@@ -276,8 +276,8 @@ export default function MiCuentaVerificacion({ user, profile }) {
       <div className="verif-layer">
         <div className="layer-header">
           <h3>Comprobante de Domicilio</h3>
-          <span className={`layer-status ${profile?.traficante_address_verified ? 'approved' : ''}`}>
-            {profile?.traficante_address_verified ? 'Verificado' : verifRequest?.domicile_docs?.length ? 'Enviado' : 'Pendiente'}
+          <span className={`layer-status ${profile?.address_verified ? 'approved' : ''}`}>
+            {profile?.address_verified ? 'Verificado' : verifRequest?.domicile_docs?.length ? 'Enviado' : 'Pendiente'}
           </span>
         </div>
         <p className="verif-hint">Factura de agua, luz, teléfono, internet o cable con tu nombre y dirección. Las imágenes se comprimen automáticamente.</p>
@@ -308,8 +308,8 @@ export default function MiCuentaVerificacion({ user, profile }) {
       <div className="verif-layer">
         <div className="layer-header">
           <h3>Extracto Bancario</h3>
-          <span className={`layer-status ${profile?.traficante_bank_verified ? 'approved' : ''}`}>
-            {profile?.traficante_bank_verified ? 'Verificado' : verifRequest?.bank_docs?.length ? 'Enviado' : 'Pendiente'}
+          <span className={`layer-status ${profile?.bank_verified ? 'approved' : ''}`}>
+            {profile?.bank_verified ? 'Verificado' : verifRequest?.bank_docs?.length ? 'Enviado' : 'Pendiente'}
           </span>
         </div>
         <p className="verif-hint">El extracto puede contener una sola transacción. Lo importante es que sea visible tu nombre completo y dirección, igual que en tus documentos de identidad y domicilio. Acepta imágenes y PDFs.</p>
@@ -343,8 +343,8 @@ export default function MiCuentaVerificacion({ user, profile }) {
       <div className="verif-layer">
         <div className="layer-header">
           <h3>Verificación de WhatsApp</h3>
-          <span className={`layer-status ${profile?.traficante_phone_locked ? 'approved' : ''}`}>
-            {profile?.traficante_phone_locked ? 'Fijado' : 'Pendiente'}
+          <span className={`layer-status ${profile?.phone_locked ? 'approved' : ''}`}>
+            {profile?.phone_locked ? 'Fijado' : 'Pendiente'}
           </span>
         </div>
         <p className="verif-hint">El teléfono se fija una vez durante el registro. Para modificarlo contacta a soporte.</p>

@@ -22,14 +22,15 @@ export default function TraficanteAdminVerificaciones() {
           *,
           user:users(
             display_name, email, whatsapp,
-            traficante_full_name, traficante_phone,
-            traficante_birth_country, traficante_doc_type, traficante_doc_number,
-            traficante_personal_locked, traficante_phone_locked,
-            traficante_address_city, traficante_address_country, traficante_address_text,
-            traficante_address_lat, traficante_address_lng,
-            traficante_address_locked,
-            traficante_identity_verified, traficante_address_verified, traficante_bank_verified,
-            is_verified, avatar_url
+            is_verified, avatar_url,
+            traficante_profiles(
+              full_name, phone, birth_country, doc_type, doc_number,
+              personal_locked, phone_locked,
+              address_city, address_country, address_text,
+              address_lat, address_lng,
+              address_locked,
+              identity_verified, address_verified, bank_verified
+            )
           )
         `)
         .order('created_at', { ascending: false })
@@ -40,7 +41,17 @@ export default function TraficanteAdminVerificaciones() {
 
       const { data, error } = await query
       if (error) { console.error(error); return }
-      if (data) setRequests(data)
+      if (data) {
+        // Aplanar traficante_profiles en user para mantener compatibilidad con la UI
+        const flattened = data.map(req => {
+          const tp = req.user?.traficante_profiles?.[0]
+          return {
+            ...req,
+            user: tp ? { ...req.user, ...tp } : req.user
+          }
+        })
+        setRequests(flattened)
+      }
     } catch (error) {
       console.error('loadRequests error:', error)
     } finally {
@@ -62,12 +73,15 @@ export default function TraficanteAdminVerificaciones() {
     if (req?.domicile_docs?.length > 0 && req?.bank_docs?.length > 0) level = 'pro'
     if (req?.selfie_url) level = 'elite'
 
-    await supabase.from('traficante_profiles').update({ level, is_verified: true }).eq('id', userId)
+    await supabase.from('traficante_profiles').update({
+      level,
+      identity_verified: true,
+      address_verified: true,
+      bank_verified: true,
+    }).eq('id', userId)
+
     await supabase.from('users').update({
       is_verified: true,
-      traficante_identity_verified: true,
-      traficante_address_verified: true,
-      traficante_bank_verified: true,
     }).eq('id', userId)
 
     setDetailModal(null)
@@ -83,7 +97,6 @@ export default function TraficanteAdminVerificaciones() {
     }).eq('id', requestId)
     await supabase.from('users').update({
       is_verified: false,
-      traficante_identity_verified: false,
     }).eq('id', userId)
     setRejectNote('')
     setDetailModal(null)
@@ -93,12 +106,14 @@ export default function TraficanteAdminVerificaciones() {
   // ── REVOCAR ──
   const handleRevoke = async (userId) => {
     if (!confirm('¿Revocar verificación completa del traficante?')) return
-    await supabase.from('traficante_profiles').update({ is_verified: false, level: 'basico' }).eq('id', userId)
+    await supabase.from('traficante_profiles').update({
+      level: 'basico',
+      identity_verified: false,
+      address_verified: false,
+      bank_verified: false,
+    }).eq('id', userId)
     await supabase.from('users').update({
       is_verified: false,
-      traficante_identity_verified: false,
-      traficante_address_verified: false,
-      traficante_bank_verified: false,
     }).eq('id', userId)
     setDetailModal(null)
     loadRequests()
@@ -148,7 +163,7 @@ export default function TraficanteAdminVerificaciones() {
           <div className="admin-filter-btns">
             {['all', 'pending', 'approved', 'rejected'].map(s => (
               <button key={s} className={`filter-btn ${filterStatus === s ? 'active' : ''}`} onClick={() => setFilterStatus(s)}>
-                {s === 'all' ? 'Todos' : s === 'pending' ? '⏳ Pendientes' : s === 'approved' ? '✓ Aprobados' : '✗ Rechazados'}
+                {s === 'all' ? 'Todos' : s === 'pending' ? 'Pendientes' : s === 'approved' ? 'Aprobados' : 'Rechazados'}
               </button>
             ))}
           </div>
@@ -183,9 +198,9 @@ export default function TraficanteAdminVerificaciones() {
                       <div className="admin-listing-title">{req.user?.display_name || '—'}</div>
                       <div className="admin-listing-meta">
                         {req.user?.email}
-                        {req.user?.traficante_full_name && (
+                        {req.user?.full_name && (
                           <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                            {req.user.traficante_full_name}
+                            {req.user.full_name}
                           </div>
                         )}
                       </div>
@@ -197,16 +212,16 @@ export default function TraficanteAdminVerificaciones() {
                       req.status === 'approved' ? 'badge-verified' :
                       req.status === 'rejected' ? 'badge-rejected' : 'badge-pending'
                     }`}>
-                      {req.status === 'pending' ? '⏳ Pendiente' :
-                       req.status === 'approved' ? '✓ Aprobado' : '✗ Rechazado'}
+                      {req.status === 'pending' ? 'Pendiente' :
+                       req.status === 'approved' ? 'Aprobado' : 'Rechazado'}
                     </span>
                   </div>
 
                   <div style={{ fontSize: '0.8rem' }}>
-                    {req.identity_docs?.length > 0 && <span style={{ marginRight: '0.5rem' }}>🪪 {req.identity_docs.length}</span>}
-                    {req.domicile_docs?.length > 0 && <span style={{ marginRight: '0.5rem' }}>🏠 {req.domicile_docs.length}</span>}
-                    {req.bank_docs?.length > 0 && <span style={{ marginRight: '0.5rem' }}>🏦 {req.bank_docs.length}</span>}
-                    {req.selfie_url && <span>📷 ✓</span>}
+                    {req.identity_docs?.length > 0 && <span style={{ marginRight: '0.5rem' }}>ID {req.identity_docs.length}</span>}
+                    {req.domicile_docs?.length > 0 && <span style={{ marginRight: '0.5rem' }}>DOM {req.domicile_docs.length}</span>}
+                    {req.bank_docs?.length > 0 && <span style={{ marginRight: '0.5rem' }}>BANCO {req.bank_docs.length}</span>}
+                    {req.selfie_url && <span>FOTO</span>}
                   </div>
 
                   <div className="admin-cell-muted">{fmt(req.created_at)}</div>
@@ -221,7 +236,7 @@ export default function TraficanteAdminVerificaciones() {
                     </button>
                     {req.status === 'pending' && (
                       <button className="btn-small btn-success" onClick={() => handleApprove(req.id, req.user_id)}>
-                        ✓ Aprobar
+                        Aprobar
                       </button>
                     )}
                     {req.status === 'approved' && (
@@ -254,10 +269,10 @@ export default function TraficanteAdminVerificaciones() {
                   detailModal.request?.status === 'approved' ? 'badge-verified' :
                   detailModal.request?.status === 'rejected' ? 'badge-rejected' : 'badge-pending'
                 }`}>
-                  {detailModal.request?.status === 'pending' ? '⏳ Pendiente' :
-                   detailModal.request?.status === 'approved' ? '✓ Aprobado' : '✗ Rechazado'}
+                  {detailModal.request?.status === 'pending' ? 'Pendiente' :
+                   detailModal.request?.status === 'approved' ? 'Aprobado' : 'Rechazado'}
                 </span>
-                {detailModal.user?.traficante_identity_verified && (
+                {detailModal.user?.identity_verified && (
                   <span className="admin-badge badge-verified" style={{ marginLeft: '0.5rem' }}>Verificado</span>
                 )}
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginLeft: 'auto' }}>
@@ -265,74 +280,74 @@ export default function TraficanteAdminVerificaciones() {
                 </span>
               </div>
 
-              {/* ── DATOS PERSONALES (de /traficante/mi-cuenta) ── */}
+              {/* ── DATOS PERSONALES (de traficante_profiles) ── */}
               <div className="docs-section">
                 <h4>Datos personales</h4>
-                {detailModal.user?.traficante_personal_locked && (
+                {detailModal.user?.personal_locked && (
                   <div className="traf-locked-banner">Datos personales fijados por el usuario</div>
                 )}
                 <div className="traf-data-grid">
-                  {detailModal.user?.traficante_full_name && (
+                  {detailModal.user?.full_name && (
                     <div className="traf-data-item">
                       <label>Nombre completo real</label>
-                      <span>{detailModal.user.traficante_full_name}</span>
+                      <span>{detailModal.user.full_name}</span>
                     </div>
                   )}
-                  {detailModal.user?.traficante_phone && (
+                  {detailModal.user?.phone && (
                     <div className="traf-data-item">
                       <label>Teléfono</label>
-                      <span>{detailModal.user.traficante_phone}</span>
+                      <span>{detailModal.user.phone}</span>
                     </div>
                   )}
-                  {detailModal.user?.traficante_birth_country && (
+                  {detailModal.user?.birth_country && (
                     <div className="traf-data-item">
                       <label>País de nacimiento</label>
-                      <span>{detailModal.user.traficante_birth_country}</span>
+                      <span>{detailModal.user.birth_country}</span>
                     </div>
                   )}
-                  {detailModal.user?.traficante_doc_type && (
+                  {detailModal.user?.doc_type && (
                     <div className="traf-data-item">
                       <label>Tipo de documento</label>
-                      <span>{detailModal.user.traficante_doc_type === 'ci' ? 'Cédula de Identidad (CI)' : detailModal.user.traficante_doc_type === 'pasaporte' ? 'Pasaporte' : detailModal.user.traficante_doc_type}</span>
+                      <span>{detailModal.user.doc_type === 'ci' ? 'Cédula de Identidad (CI)' : detailModal.user.doc_type === 'pasaporte' ? 'Pasaporte' : detailModal.user.doc_type}</span>
                     </div>
                   )}
-                  {detailModal.user?.traficante_doc_number && (
+                  {detailModal.user?.doc_number && (
                     <div className="traf-data-item traf-data-full">
                       <label>Número de documento</label>
-                      <span>{detailModal.user.traficante_doc_number}</span>
+                      <span>{detailModal.user.doc_number}</span>
                     </div>
                   )}
                 </div>
               </div>
 
-              {/* ── DIRECCIÓN (de /traficante/mi-cuenta) ── */}
+              {/* ── DIRECCIÓN (de traficante_profiles) ── */}
               <div className="docs-section">
                 <h4>Dirección</h4>
                 <div className="traf-data-grid">
-                  {detailModal.user?.traficante_address_city && (
+                  {detailModal.user?.address_city && (
                     <div className="traf-data-item">
                       <label>Ciudad</label>
-                      <span>{detailModal.user.traficante_address_city}</span>
+                      <span>{detailModal.user.address_city}</span>
                     </div>
                   )}
-                  {detailModal.user?.traficante_address_country && (
+                  {detailModal.user?.address_country && (
                     <div className="traf-data-item">
                       <label>País</label>
-                      <span>{detailModal.user.traficante_address_country}</span>
+                      <span>{detailModal.user.address_country}</span>
                     </div>
                   )}
-                  {detailModal.user?.traficante_address_text && (
+                  {detailModal.user?.address_text && (
                     <div className="traf-data-item traf-data-full">
                       <label>Dirección exacta</label>
-                      <span>{detailModal.user.traficante_address_text}</span>
+                      <span>{detailModal.user.address_text}</span>
                     </div>
                   )}
-                  {detailModal.user?.traficante_address_lat && detailModal.user?.traficante_address_lng && (
+                  {detailModal.user?.address_lat && detailModal.user?.address_lng && (
                     <div className="traf-data-item">
                       <label>Coordenadas GPS</label>
                       <span>
-                        {detailModal.user.traficante_address_lat.toFixed(5)}, {detailModal.user.traficante_address_lng.toFixed(5)}
-                        {detailModal.user.traficante_address_locked && (
+                        {Number(detailModal.user.address_lat).toFixed(5)}, {Number(detailModal.user.address_lng).toFixed(5)}
+                        {detailModal.user.address_locked && (
                           <span className="traf-locked-tag">Fija</span>
                         )}
                       </span>
@@ -341,7 +356,7 @@ export default function TraficanteAdminVerificaciones() {
                 </div>
               </div>
 
-              {/* ── DOCUMENTOS DE VERIFICACIÓN (de /traficante/mi-cuenta/verificacion) ── */}
+              {/* ── DOCUMENTOS DE VERIFICACIÓN (de traficante_verification_requests) ── */}
               <div className="docs-section">
                 <h4>Documento de identidad</h4>
                 {detailModal.request?.identity_docs?.length > 0 ? (
@@ -430,14 +445,14 @@ export default function TraficanteAdminVerificaciones() {
               {detailModal.request?.status === 'pending' && (
                 <div className="traf-modal-actions">
                   <button className="btn btn-primary traf-btn-approve" onClick={() => handleApprove(detailModal.request.id, detailModal.user.id)}>
-                    ✓ Aprobar verificación
+                    Aprobar verificación
                   </button>
                   <div className="traf-reject-row">
                     <input type="text" className="input" placeholder="Motivo de rechazo..."
                       value={rejectNote} onChange={e => setRejectNote(e.target.value)}
                       style={{ flex: 1 }} />
                     <button className="btn btn-secondary traf-btn-reject" onClick={() => handleReject(detailModal.request.id, detailModal.user.id)}>
-                      ✗ Rechazar
+                      Rechazar
                     </button>
                   </div>
                 </div>
