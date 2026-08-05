@@ -172,15 +172,28 @@ export default function MiPerfil({ user, onProfileUpdate }) {
     if (deleteConfirmText !== 'ELIMINAR') return
     setDeleting(true)
     try {
-      // Llamar función SQL que borra TODO del usuario
-      const { error: rpcError } = await supabase
-        .rpc('delete_user_account', { p_user_id: user.id })
-      if (rpcError) throw rpcError
-      // Cerrar sesión local
-      await supabase.auth.signOut()
-      navigate('/')
+      // Verificar si ya hay una solicitud pendiente
+      const { data: existingReq } = await supabase
+        .from('deletion_requests')
+        .select('id, status')
+        .eq('user_id', user.id)
+        .eq('status', 'pending')
+        .single()
+      if (existingReq) {
+        setError('Ya tienes una solicitud de eliminación pendiente. El administrador la revisará pronto.')
+        setDeleting(false)
+        return
+      }
+      // Enviar solicitud de eliminación al admin
+      const { error: insertError } = await supabase
+        .from('deletion_requests')
+        .insert({ user_id: user.id, status: 'pending' })
+      if (insertError) throw insertError
+      setShowDeleteConfirm(false)
+      setDeleteConfirmText('')
+      setError('Solicitud de eliminación enviada. El administrador la revisará y responderá pronto.')
     } catch (err) {
-      setError('Error al eliminar la cuenta: ' + (err.message || err))
+      setError('Error al enviar la solicitud: ' + (err.message || err))
     }
     setDeleting(false)
   }
@@ -433,7 +446,7 @@ export default function MiPerfil({ user, onProfileUpdate }) {
               ) : (
                 <div className="mp-delete-confirm">
                   <p className="mp-delete-warning">
-                    Escribe <strong>ELIMINAR</strong> para confirmar:
+                    Escribe <strong>ELIMINAR</strong> para solicitar la eliminación:
                   </p>
                   <input className="input mp-delete-input"
                     value={deleteConfirmText}
@@ -447,7 +460,7 @@ export default function MiPerfil({ user, onProfileUpdate }) {
                     <button className="btn btn-danger mp-btn-sm"
                       onClick={handleDeleteAccount}
                       disabled={deleteConfirmText !== 'ELIMINAR' || deleting}>
-                      {deleting ? <span className="loading" style={{ width: 16, height: 16 }} /> : 'Eliminar mi cuenta'}
+                      {deleting ? <span className="loading" style={{ width: 16, height: 16 }} /> : 'Enviar solicitud'}
                     </button>
                   </div>
                 </div>
