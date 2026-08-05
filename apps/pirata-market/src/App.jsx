@@ -68,7 +68,7 @@ function App() {
     if (!userId) return setProfile(null)
     const { data } = await supabase
       .from('users')
-      .select('display_name, avatar_url, user_type, is_premium, premium_until, pirata_profiles(full_name, country, city, phone, shop_name, identity_verified, business_verified, identity_locked, allow_identity_edit)')
+      .select('display_name, avatar_url, user_type, is_premium, premium_until, pirata_profiles(full_name, country, city, phone, shop_name, identity, identity_verified, business_verified, identity_locked, allow_identity_edit)')
       .eq('id', userId)
       .single()
     if (data && data.pirata_profiles) {

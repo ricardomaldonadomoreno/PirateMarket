@@ -19,7 +19,7 @@ export default function DashboardSidebar({ user, profile, verificationSelfie }) 
   const location = useLocation()
 
   const displayName = profile?.display_name || user?.email?.split('@')[0] || ''
-  const userType = profile?.user_type || 'person'
+  const userType = profile?.identity || 'person'
   const isPremium = profile?.is_premium && profile?.premium_until && new Date(profile.premium_until) > new Date()
   const isShopOrWholesale = userType === 'shop' || userType === 'wholesale'
   const identityVerified = profile?.identity_verified

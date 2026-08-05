@@ -46,7 +46,7 @@ export default function DashboardTienda({ user, profile }) {
 
   if (!user) return null
 
-  const userType = profile?.user_type || 'person'
+  const userType = profile?.identity || 'person'
   const isPremium = profile?.is_premium && profile?.premium_until && new Date(profile.premium_until) > new Date()
 
   return (
