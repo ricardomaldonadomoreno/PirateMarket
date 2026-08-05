@@ -4,7 +4,7 @@ import AdminNavbarPirata from '../../components/AdminNavbarPirata'
 import './AdminPerfiles.css'
 
 const fmt = (date) => date ? new Date(date).toLocaleDateString('es-BO', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'
-const typeLabel = (type) => ({ shop: 'Tienda', wholesale: 'Mayorista', person: 'Usuario', admin: 'Admin' }[type] || 'Usuario')
+const typeLabel = (type) => ({ person: 'Usuario', superadmin: 'Super Admin' }[type] || 'Usuario')
 
 export default function AdminPerfiles() {
   const [users, setUsers] = useState([])
@@ -25,7 +25,7 @@ export default function AdminPerfiles() {
     try {
       const { data, error } = await supabase
         .from('users')
-        .select('id, display_name, email, whatsapp, user_type, is_verified, is_banned, is_premium, premium_until, created_at, avatar_url, country')
+        .select('id, display_name, email, whatsapp, user_type, is_banned, created_at, avatar_url, country')
         .order('created_at', { ascending: false })
 
       if (error) { console.error('loadUsers error:', error); setLoading(false); return }
@@ -110,7 +110,7 @@ export default function AdminPerfiles() {
   const hasDeletionRequest = (userId) => deletionRequests.some(r => r.user_id === userId)
 
   const handleExportCSV = () => {
-    const headers = ['ID', 'Nombre', 'Email', 'WhatsApp', 'País', 'Tipo', 'Verificado', 'Premium', 'Premium hasta', 'Registrado']
+    const headers = ['ID', 'Nombre', 'Email', 'WhatsApp', 'País', 'Tipo', 'Registrado']
     const rows = users.map(u => [
       u.id,
       u.display_name || '',
@@ -118,9 +118,6 @@ export default function AdminPerfiles() {
       u.whatsapp || '',
       u.country || '',
       typeLabel(u.user_type),
-      u.is_verified ? 'Sí' : 'No',
-      u.is_premium ? 'Sí' : 'No',
-      u.premium_until ? fmt(u.premium_until) : '',
       u.created_at || ''
     ])
     const csvContent = [headers, ...rows].map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n')
@@ -226,9 +223,9 @@ export default function AdminPerfiles() {
                   </div>
 
                   <div className="admin-perfil-badges">
-                    {user.is_verified
-                      ? <span className="admin-badge badge-verified">Verificado</span>
-                      : <span className="admin-badge badge-free">Sin verificar</span>}
+                    {user.is_banned
+                      ? <span className="admin-badge badge-banned">Baneado</span>
+                      : <span className="admin-badge badge-free">Activo</span>}
                   </div>
 
                   <div className="admin-perfil-date">
