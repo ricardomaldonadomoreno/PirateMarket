@@ -339,10 +339,6 @@ export default function AdminPerfiles() {
                     <span>{detailModal.country || 'No registrado'}</span>
                   </div>
                   <div className="detail-field">
-                    <label>Verificado</label>
-                    <span>{detailModal.is_verified ? 'Sí' : 'No'}</span>
-                  </div>
-                  <div className="detail-field">
                     <label>Registro</label>
                     <span>{fmt(detailModal.created_at)}</span>
                   </div>
