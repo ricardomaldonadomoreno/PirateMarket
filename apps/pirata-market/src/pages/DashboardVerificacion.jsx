@@ -175,7 +175,7 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
   }
 
   const handleChangeType = async (newType) => {
-    if (newType === profile?.user_type) return
+    if (newType === profile?.identity) return
     const label = ACCOUNT_TYPES.find(o => o.value === newType)?.label || newType
     const requiresBusinessVerification = newType === 'shop' || newType === 'wholesale'
     // Si identityLocked, avisar que se cancelará la verificación actual
@@ -189,7 +189,7 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
 
     setChangingType(true)
     try {
-      await supabase.from('users').update({ user_type: newType }).eq('id', user.id)
+      await supabase.from('pirata_profiles').update({ identity: newType }).eq('user_id', user.id)
       await supabase.from('pirata_profiles').update({ business_verified: false, identity_locked: false }).eq('user_id', user.id)
 
       if (verificationRequest) {
@@ -296,7 +296,7 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
 
   if (!user) return null
 
-  const userType = profile?.user_type || 'person'
+  const userType = profile?.identity || 'person'
   const isVerified = profile?.is_verified
   const identityVerified = profile?.identity_verified
   const businessVerified = profile?.business_verified
