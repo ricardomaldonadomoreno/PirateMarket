@@ -34,6 +34,7 @@ export default function AdminNavbarPirata() {
     { path: '/admin/pirata/usuarios', icon: '👥', label: 'Usuarios' },
     { path: '/admin/pirata/anuncios', icon: '📋', label: 'Anuncios' },
     { path: '/admin/pirata/reportes', icon: '🚨', label: 'Reportes' },
+    { path: '/admin/pirata/catalogos', icon: '🏪', label: 'Catálogos' },
   ]
 
   // Sub-Admins solo para super_admin (scope='all')

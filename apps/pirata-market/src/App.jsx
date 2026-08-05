@@ -43,6 +43,7 @@ import AdminDashboard from './pages/admin/pirata/AdminDashboard'
 import AdminUsuarios from './pages/admin/pirata/AdminUsuarios'
 import AdminAnuncios from './pages/admin/pirata/AdminAnuncios'
 import AdminReportes from './pages/admin/pirata/AdminReportes'
+import AdminCatalogos from './pages/admin/pirata/AdminCatalogos'
 
 // Admin — Perfiles Generales
 import AdminPerfiles from './pages/admin/AdminPerfiles'
@@ -132,6 +133,7 @@ function App() {
         <Route path="/admin/pirata/usuarios" element={<AdminRoute><AdminUsuarios /></AdminRoute>} />
         <Route path="/admin/pirata/anuncios" element={<AdminRoute><AdminAnuncios /></AdminRoute>} />
         <Route path="/admin/pirata/reportes" element={<AdminRoute><AdminReportes /></AdminRoute>} />
+        <Route path="/admin/pirata/catalogos" element={<AdminRoute><AdminCatalogos /></AdminRoute>} />
 
         {/* ── TRAFICANTE ── */}
         <Route path="/traficante" element={<><TraficanteNavbar user={user} profile={profile} /><TraficanteHome user={user} /></>} />
