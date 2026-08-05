@@ -4,13 +4,13 @@ import AdminNavbarPirata from '../../components/AdminNavbarPirata'
 import './AdminPerfiles.css'
 
 const fmt = (date) => date ? new Date(date).toLocaleDateString('es-BO', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'
-const typeLabel = (type) => ({ shop: 'Tienda', wholesale: 'Mayorista', person: 'Persona', admin: 'Admin' }[type] || 'Persona')
+const typeLabel = (type) => ({ shop: 'Tienda', wholesale: 'Mayorista', person: 'Usuario', admin: 'Admin' }[type] || 'Usuario')
 
 export default function AdminPerfiles() {
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [filterType, setFilterType] = useState('all')
+  const [tab, setTab] = useState('perfiles')
   const [filterCountry, setFilterCountry] = useState('all')
   const [countries, setCountries] = useState([])
   const [deletionRequests, setDeletionRequests] = useState([])
@@ -96,9 +96,15 @@ export default function AdminPerfiles() {
       u.email?.toLowerCase().includes(q) ||
       u.whatsapp?.toLowerCase().includes(q) ||
       u.country?.toLowerCase().includes(q)
-    const matchType = filterType === 'all' || u.user_type === filterType
     const matchCountry = filterCountry === 'all' || u.country === filterCountry
-    return matchSearch && matchType && matchCountry
+    return matchSearch && matchCountry
+  })
+
+  const filteredDeletions = deletionRequests.filter(r => {
+    const q = search.toLowerCase()
+    const u = users.find(x => x.id === r.user_id)
+    const matchSearch = !q || (u?.display_name?.toLowerCase().includes(q) || u?.email?.toLowerCase().includes(q) || u?.whatsapp?.toLowerCase().includes(q))
+    return matchSearch
   })
 
   const hasDeletionRequest = (userId) => deletionRequests.some(r => r.user_id === userId)
@@ -112,56 +118,23 @@ export default function AdminPerfiles() {
           <p className="admin-page-sub">{users.length} perfiles registrados en la plataforma</p>
         </div>
 
-        {/* Solicitudes de eliminación */}
-        {deletionRequests.length > 0 && (
-          <div className="admin-card admin-card-warning">
-            <div className="deletion-header">
-              <h3 className="serif" style={{ color: 'var(--warning)', margin: 0 }}>
-                Solicitudes de eliminación ({deletionRequests.length})
-              </h3>
-            </div>
-            <div className="deletion-list">
-              {deletionRequests.map(req => {
-                const u = users.find(x => x.id === req.user_id)
-                return (
-                  <div key={req.id} className="deletion-row">
-                    <div className="deletion-user-info">
-                      <span className="deletion-name">{u?.display_name || u?.email || 'Usuario eliminado'}</span>
-                      <span className="deletion-email">{u?.email || req.user_id}</span>
-                      <span className="deletion-date">Solicitado: {fmt(req.requested_at)}</span>
-                    </div>
-                    <div className="deletion-actions">
-                      <button className="btn btn-danger btn-sm" onClick={() => setDeleteModal(u)} disabled={executing}>
-                        Aprobar y eliminar
-                      </button>
-                      <button className="btn btn-secondary btn-sm" onClick={() => handleCancelDeletion(req.id)}>
-                        Cancelar solicitud
-                      </button>
-                      <button className="btn btn-ghost btn-sm" onClick={() => handleRejectDeletion(req.id)}>
-                        Rechazar
-                      </button>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        )}
+
+
+        {/* Tabs */}
+        <div className="admin-tabs">
+          <button className={`admin-tab ${tab === 'perfiles' ? 'active' : ''}`} onClick={() => setTab('perfiles')}>
+            Perfiles ({users.length})
+          </button>
+          <button className={`admin-tab ${tab === 'deletions' ? 'active' : ''}`} onClick={() => setTab('deletions')}>
+            Solicitudes de eliminación ({deletionRequests.length})
+          </button>
+        </div>
 
         {/* Filtros */}
         <div className="admin-filters-bar">
           <input type="text" className="input" placeholder="Buscar nombre, email, WhatsApp, país..."
             value={search} onChange={e => setSearch(e.target.value)} style={{ maxWidth: '320px' }} />
-          <div className="admin-filter-btns">
-            {['all', 'person', 'shop', 'wholesale', 'admin'].map(type => (
-              <button key={type}
-                className={`filter-btn ${filterType === type ? 'active' : ''}`}
-                onClick={() => setFilterType(type)}>
-                {type === 'all' ? 'Todos' : typeLabel(type)}
-              </button>
-            ))}
-          </div>
-          {countries.length > 0 && (
+          {tab === 'perfiles' && countries.length > 0 && (
             <select className="input country-filter" value={filterCountry} onChange={e => setFilterCountry(e.target.value)}>
               <option value="all">Todos los países</option>
               {countries.map(c => <option key={c} value={c}>{c}</option>)}
@@ -169,7 +142,8 @@ export default function AdminPerfiles() {
           )}
         </div>
 
-        {/* Tabla de perfiles */}
+        {/* Contenido según tab */}
+        {tab === 'perfiles' && (
         <div className="admin-card">
           {loading ? <div className="admin-loading">Cargando perfiles...</div> : (
             <>
@@ -244,6 +218,63 @@ export default function AdminPerfiles() {
             </>
           )}
         </div>
+        )}
+
+        {tab === 'deletions' && (
+        <div className="admin-card">
+          {filteredDeletions.length === 0 ? (
+            <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+              No hay solicitudes de eliminación pendientes.
+            </div>
+          ) : (
+            <>
+              <div className="admin-perfiles-header">
+                <span>Usuario</span>
+                <span>Email</span>
+                <span>Solicitado</span>
+                <span>Estado</span>
+                <span>Acciones</span>
+              </div>
+              {filteredDeletions.map(req => {
+                const u = users.find(x => x.id === req.user_id)
+                return (
+                  <div key={req.id} className="admin-perfil-row">
+                    <div className="admin-perfil-info">
+                      <div className="admin-perfil-avatar">
+                        {u?.avatar_url
+                          ? <img src={u.avatar_url} alt={u.display_name} />
+                          : <span>{(u?.display_name || u?.email || '?')?.charAt(0).toUpperCase()}</span>}
+                      </div>
+                      <div>
+                        <div className="admin-perfil-name">{u?.display_name || 'Usuario eliminado'}</div>
+                        <div className="admin-perfil-id">{req.user_id.slice(0, 8)}...</div>
+                      </div>
+                    </div>
+                    <div className="admin-perfil-contact">
+                      <div className="perfil-email">{u?.email || req.user_id}</div>
+                    </div>
+                    <div className="admin-perfil-date">{fmt(req.requested_at)}</div>
+                    <div>
+                      <span className="admin-badge badge-verified" style={{ background: 'var(--warning)' }}>Pendiente</span>
+                    </div>
+                    <div className="admin-perfil-actions">
+                      <button className="btn btn-danger btn-sm" onClick={() => setDeleteModal(u)} disabled={executing}>
+                        Aprobar y eliminar
+                      </button>
+                      <button className="btn btn-secondary btn-sm" onClick={() => handleCancelDeletion(req.id)}>
+                        Cancelar
+                      </button>
+                      <button className="btn btn-ghost btn-sm" onClick={() => handleRejectDeletion(req.id, req.user_id)}>
+                        Rechazar
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
+            </>
+          )}
+        </div>
+        )}
 
         {/* Modal detalle */}
         {detailModal && (
