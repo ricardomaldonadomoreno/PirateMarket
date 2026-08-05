@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import {
   Camera, Trash2, Lock, Eye, EyeOff, AlertTriangle,
-  User, ShieldCheck, Mail, Phone, ShieldAlert, LogOut, Globe
+  User, ShieldCheck, Mail, Phone, ShieldAlert, LogOut, Globe, Pencil, Check
 } from 'lucide-react'
 import './MiPerfil.css'
 
@@ -28,6 +28,7 @@ export default function MiPerfil({ user, onProfileUpdate }) {
   const [profile, setProfile] = useState(null)
   const [trafLevel, setTrafLevel] = useState(null)
   const [displayName, setDisplayName] = useState('')
+  const [editingName, setEditingName] = useState(false)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [savingName, setSavingName] = useState(false)
   const [savedName, setSavedName] = useState(false)
@@ -235,13 +236,28 @@ export default function MiPerfil({ user, onProfileUpdate }) {
                   <div className="mp-name-row">
                     <input className="input" value={displayName}
                       onChange={e => setDisplayName(e.target.value)}
-                      placeholder="Ej: Ricardo M." />
-                    <button className="btn btn-primary mp-save-btn"
-                      onClick={handleSaveName} disabled={savingName}>
-                      {savingName
-                        ? <span className="loading" style={{ width: 16, height: 16 }} />
-                        : 'Guardar'}
-                    </button>
+                      placeholder="Ej: Ricardo M."
+                      readOnly={!editingName} />
+                    {!editingName ? (
+                      <button className="mp-icon-btn"
+                        onClick={() => setEditingName(true)}
+                        title="Editar nombre">
+                        <Pencil size={14} />
+                      </button>
+                    ) : (
+                      <div style={{ display: 'flex', gap: '4px' }}>
+                        <button className="btn btn-primary mp-save-btn"
+                          onClick={() => { setEditingName(false); handleSaveName() }} disabled={savingName}>
+                          {savingName
+                            ? <span className="loading" style={{ width: 16, height: 16 }} />
+                            : <><Check size={14} /> Guardar</>}
+                        </button>
+                        <button className="btn btn-secondary mp-save-btn"
+                          onClick={() => { setEditingName(false); setDisplayName(profile?.display_name || '') }}>
+                          Cancelar
+                        </button>
+                      </div>
+                    )}
                   </div>
                   <div className="mp-avatar-actions">
                     <button className="mp-icon-btn"
