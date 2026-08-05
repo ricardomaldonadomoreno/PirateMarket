@@ -83,7 +83,7 @@
 /* ── Profiles table ── */
 .admin-perfiles-header {
   display: grid;
-  grid-template-columns: 2fr 1.5fr 0.8fr 0.7fr 0.9fr 0.8fr 0.5fr;
+  grid-template-columns: 2fr 1.5fr 0.8fr 0.7fr 0.9fr 0.8fr 0.8fr;
   gap: 0.75rem;
   padding: 0.75rem 1rem;
   font-size: 0.72rem;
@@ -96,7 +96,7 @@
 
 .admin-perfil-row {
   display: grid;
-  grid-template-columns: 2fr 1.5fr 0.8fr 0.7fr 0.9fr 0.8fr 0.5fr;
+  grid-template-columns: 2fr 1.5fr 0.8fr 0.7fr 0.9fr 0.8fr 0.8fr;
   gap: 0.75rem;
   padding: 0.875rem 1rem;
   align-items: center;
@@ -195,22 +195,44 @@
 }
 
 .btn-icon {
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-sm);
   background: transparent;
   border: 1px solid var(--dark-border);
-  color: var(--text-muted);
+  color: var(--gold);
   cursor: pointer;
   transition: all 0.2s;
+  flex-shrink: 0;
 }
 
 .btn-icon:hover {
+  background: rgba(184, 152, 95, 0.15);
   border-color: var(--gold);
-  color: var(--gold);
+  transform: translateY(-1px);
+}
+
+.btn-icon-ban {
+  color: var(--danger);
+  border-color: rgba(230, 57, 70, 0.3);
+}
+
+.btn-icon-ban:hover {
+  background: rgba(230, 57, 70, 0.15);
+  border-color: var(--danger);
+}
+
+.btn-icon-unban {
+  color: var(--success, #4caf50);
+  border-color: rgba(76, 175, 80, 0.3);
+}
+
+.btn-icon-unban:hover {
+  background: rgba(76, 175, 80, 0.15);
+  border-color: var(--success, #4caf50);
 }
 
 /* ── Detail modal ── */

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import AdminNavbarPirata from '../../components/AdminNavbarPirata'
+import { Eye, Ban } from 'lucide-react'
 import './AdminPerfiles.css'
 
 const fmt = (date) => date ? new Date(date).toLocaleDateString('es-BO', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'
@@ -88,6 +89,13 @@ export default function AdminPerfiles() {
       admin_note: 'Cancelada por el usuario'
     }).eq('id', requestId)
     loadDeletionRequests()
+  }
+
+  const handleBan = async (userId, isBanned) => {
+    if (!confirm(isBanned ? '¿Desbanear este usuario?' : '¿Banear este usuario?')) return
+    const { error } = await supabase.from('users').update({ is_banned: !isBanned }).eq('id', userId)
+    if (error) { alert('Error: ' + error.message); return }
+    loadUsers()
   }
 
   const filtered = users.filter(u => {
@@ -233,10 +241,14 @@ export default function AdminPerfiles() {
                   </div>
 
                   <div className="admin-perfil-actions">
-                    <button className="btn btn-ghost btn-icon" onClick={() => setDetailModal(user)} title="Ver detalle">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-                      </svg>
+                    <button className="btn-icon" onClick={() => setDetailModal(user)} title="Ver detalle">
+                      <Eye size={16} />
+                    </button>
+                    <button
+                      className={`btn-icon ${user.is_banned ? 'btn-icon-unban' : 'btn-icon-ban'}`}
+                      onClick={() => handleBan(user.id, user.is_banned)}
+                      title={user.is_banned ? 'Desbanear usuario' : 'Banear usuario'}>
+                      <Ban size={16} />
                     </button>
                   </div>
                 </div>
