@@ -22,7 +22,7 @@ export default function TraficanteAdminVerificaciones() {
           *,
           user:users(
             display_name, email, whatsapp,
-            is_verified, avatar_url,
+            avatar_url,
             traficante_profiles(
               full_name, phone, birth_country, doc_type, doc_number,
               personal_locked, phone_locked,
@@ -80,10 +80,6 @@ export default function TraficanteAdminVerificaciones() {
       bank_verified: true,
     }).eq('id', userId)
 
-    await supabase.from('users').update({
-      is_verified: true,
-    }).eq('id', userId)
-
     setDetailModal(null)
     loadRequests()
   }
@@ -95,9 +91,6 @@ export default function TraficanteAdminVerificaciones() {
     await supabase.from('traficante_verification_requests').update({
       status: 'rejected', admin_note: rejectNote.trim(), reviewed_at: now
     }).eq('id', requestId)
-    await supabase.from('users').update({
-      is_verified: false,
-    }).eq('id', userId)
     setRejectNote('')
     setDetailModal(null)
     loadRequests()
@@ -111,9 +104,6 @@ export default function TraficanteAdminVerificaciones() {
       identity_verified: false,
       address_verified: false,
       bank_verified: false,
-    }).eq('id', userId)
-    await supabase.from('users').update({
-      is_verified: false,
     }).eq('id', userId)
     setDetailModal(null)
     loadRequests()

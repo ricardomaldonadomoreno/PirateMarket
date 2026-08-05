@@ -29,7 +29,7 @@ export default function AdminUsuarios() {
         .from('users')
         .select(`
           id, display_name, email, user_type,
-          is_verified, is_banned, is_premium, premium_until,
+          is_banned, is_premium, premium_until,
           created_at, avatar_url, whatsapp,
           pirata_profiles!inner(
             full_name, country, city, phone, shop_name,
@@ -96,7 +96,7 @@ export default function AdminUsuarios() {
     if (docsModal?.user?.id === userId) {
       const { data: freshUser } = await supabase
         .from('users')
-        .select('id, display_name, email, user_type, is_verified, is_banned, is_premium, premium_until, created_at, avatar_url, whatsapp, pirata_profiles(full_name, country, city, phone, shop_name, identity_verified, identity_locked, business_verified, allow_identity_edit)')
+        .select('id, display_name, email, user_type, is_banned, is_premium, premium_until, created_at, avatar_url, whatsapp, pirata_profiles(full_name, country, city, phone, shop_name, identity_verified, identity_locked, business_verified, allow_identity_edit)')
         .eq('id', userId)
         .single()
       // Aplanar pirata_profiles
@@ -130,11 +130,6 @@ export default function AdminUsuarios() {
     refreshAll(userId)
   }
 
-  const handleVerify = async (userId, isVerified) => {
-    await supabase.from('users').update({ is_verified: !isVerified }).eq('id', userId)
-    refreshAll(userId)
-  }
-
   const handleTogglePremium = async (userId, isPremium) => {
     if (isPremium) {
       await supabase.from('users').update({ is_premium: false, premium_until: null }).eq('id', userId)
@@ -151,10 +146,6 @@ export default function AdminUsuarios() {
     const now = new Date().toISOString()
     await supabase.from('verification_requests').update({ status: 'approved', reviewed_at: now }).eq('id', requestId)
     await supabase.from('pirata_profiles').update({ identity_verified: true, identity_locked: true, allow_identity_edit: false }).eq('user_id', userId)
-    const targetUser = users.find(u => u.id === userId)
-    if (targetUser?.user_type === 'person') {
-      await supabase.from('users').update({ is_verified: true }).eq('id', userId)
-    }
     await refreshAll(userId)
   }
 
@@ -162,7 +153,6 @@ export default function AdminUsuarios() {
     const now = new Date().toISOString()
     await supabase.from('verification_requests').update({ status: 'approved', reviewed_at: now }).eq('id', requestId)
     await supabase.from('pirata_profiles').update({ business_verified: true }).eq('user_id', userId)
-    await supabase.from('users').update({ is_verified: true }).eq('id', userId)
     await refreshAll(userId)
   }
 
@@ -177,7 +167,6 @@ export default function AdminUsuarios() {
       await supabase.from('pirata_profiles').update({ identity_verified: false, identity_locked: false }).eq('user_id', userId)
     } else {
       await supabase.from('pirata_profiles').update({ business_verified: false }).eq('user_id', userId)
-      await supabase.from('users').update({ is_verified: false }).eq('id', userId)
     }
     setRejectNotes(p => ({ ...p, [layer]: '' }))
     await refreshAll(userId)
@@ -185,7 +174,7 @@ export default function AdminUsuarios() {
 
   const handleApproveVerification = async (requestId, userId) => {
     await supabase.from('verification_requests').update({ status: 'approved', reviewed_at: new Date().toISOString() }).eq('id', requestId)
-    await supabase.from('users').update({ is_verified: true }).eq('id', userId)
+    await supabase.from('pirata_profiles').update({ identity_verified: true, identity_locked: true }).eq('user_id', userId)
     await refreshAll(userId)
   }
 
@@ -193,10 +182,8 @@ export default function AdminUsuarios() {
     if (!confirm(`Revocar verificacion de ${layer === 'identity' ? 'Identidad' : 'Negocio'}?`)) return
     if (layer === 'identity') {
       await supabase.from('pirata_profiles').update({ identity_verified: false, identity_locked: false }).eq('user_id', userId)
-      await supabase.from('users').update({ is_verified: false }).eq('id', userId)
     } else {
       await supabase.from('pirata_profiles').update({ business_verified: false }).eq('user_id', userId)
-      await supabase.from('users').update({ is_verified: false }).eq('id', userId)
     }
     await refreshAll(userId)
   }
@@ -326,9 +313,6 @@ export default function AdminUsuarios() {
                     </div>
 
                     <div className="admin-user-badges">
-                      {user.is_verified
-                        ? <span className="admin-badge badge-verified">Verificado</span>
-                        : <span className="admin-badge badge-free">Sin verificar</span>}
                       {user.is_banned && <span className="admin-badge badge-banned">Baneado</span>}
                       {vReq?.status === 'pending'  && <span className="admin-badge badge-pending">Pendiente</span>}
                       {vReq?.status === 'rejected' && <span className="admin-badge badge-rejected">Rechazado</span>}
@@ -346,11 +330,6 @@ export default function AdminUsuarios() {
                     <div className="admin-user-date">{fmt(user.created_at)}</div>
 
                     <div className="admin-user-actions">
-                      <button className={`btn-small ${user.is_verified ? 'btn-danger' : 'btn-success'}`}
-                        onClick={() => handleVerify(user.id, user.is_verified)}
-                        title={user.is_verified ? 'Quitar verificacion general' : 'Marcar como verificado'}>
-                        {user.is_verified ? 'Desverificar' : 'Verificar'}
-                      </button>
                       <button className="btn-small btn-docs"
                         onClick={() => {
                           setRejectNotes({ identity: '', business: '' })

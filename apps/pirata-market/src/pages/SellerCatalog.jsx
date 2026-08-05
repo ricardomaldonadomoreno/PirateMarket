@@ -34,7 +34,7 @@ export default function SellerCatalog() {
     try {
       const { data: sellerData } = await supabase
         .from('users')
-        .select('id, display_name, user_type, is_verified, avatar_url, created_at, whatsapp, pirata_profiles(shop_name, shop_bio, shop_link, shop_hours, shop_color, shop_logo_url, shop_banner_url, is_premium, premium_until)')
+        .select('id, display_name, user_type, avatar_url, created_at, whatsapp, pirata_profiles(shop_name, shop_bio, shop_link, shop_hours, shop_color, shop_logo_url, shop_banner_url, is_premium, premium_until, identity_verified)')
         .eq('id', userId)
         .single()
       if (sellerData && sellerData.pirata_profiles) {
@@ -155,7 +155,7 @@ export default function SellerCatalog() {
 
                   <div className="seller-header-badges">
                     <span className={`badge badge-${typeColor(seller.user_type)}`}>{typeLabel(seller.user_type)}</span>
-                    {seller.is_verified && <span className="badge badge-verified">✓ Verificado</span>}
+                    {seller.identity_verified && <span className="badge badge-verified">✓ Verificado</span>}
                   </div>
 
                   {seller.shop_bio && <p className="seller-premium-bio">{seller.shop_bio}</p>}
@@ -189,9 +189,9 @@ export default function SellerCatalog() {
                 <div className="seller-certifications">
                   <div className="seller-cert-header">
                     <span>🏅 Certificaciones y verificaciones</span>
-                    {!seller.is_verified && <span className="seller-cert-pending">Pendiente de verificación</span>}
+                    {!seller.identity_verified && <span className="seller-cert-pending">Pendiente de verificación</span>}
                   </div>
-                  {seller.is_verified ? (
+                  {seller.identity_verified ? (
                     <>
                       <div className="seller-cert-grid">
                         <div className="seller-cert-item"><span>✅</span><span>Identidad verificada</span></div>
@@ -232,7 +232,7 @@ export default function SellerCatalog() {
                   <h1 className="serif">{seller.display_name}</h1>
                   <div className="seller-header-badges">
                     <span className={`badge badge-${typeColor(seller.user_type)}`}>{typeLabel(seller.user_type)}</span>
-                    {seller.is_verified && <span className="badge badge-verified">✓ Verificado</span>}
+                    {seller.identity_verified && <span className="badge badge-verified">✓ Verificado</span>}
                   </div>
                 </div>
                 <div className="seller-header-meta">
@@ -253,9 +253,9 @@ export default function SellerCatalog() {
               <div className="seller-certifications">
                 <div className="seller-cert-header">
                   <span>🏅 Certificaciones y verificaciones</span>
-                  {!seller.is_verified && <span className="seller-cert-pending">Pendiente de verificación</span>}
+                  {!seller.identity_verified && <span className="seller-cert-pending">Pendiente de verificación</span>}
                 </div>
-                {seller.is_verified ? (
+                {seller.identity_verified ? (
                   <>
                     <div className="seller-cert-grid">
                       <div className="seller-cert-item"><span>✅</span><span>Identidad verificada</span></div>

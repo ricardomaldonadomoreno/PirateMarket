@@ -297,7 +297,7 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
   if (!user) return null
 
   const userType = profile?.identity || 'person'
-  const isVerified = profile?.is_verified
+  const isVerified = profile?.identity_verified
   const identityVerified = profile?.identity_verified
   const businessVerified = profile?.business_verified
   // isPending: hay una solicitud pendiente Y la identidad aún no está verificada

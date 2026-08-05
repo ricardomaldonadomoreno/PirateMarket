@@ -54,7 +54,7 @@ export async function getListings(filters = {}) {
     .from('listings')
     .select(`
       *,
-      user:users(id, display_name, user_type, is_verified),
+      user:users(id, display_name, user_type, pirata_profiles(identity_verified)),
       category:categories(name, slug, icon)
     `)
     .eq('status', 'active')
@@ -102,7 +102,7 @@ export async function getListingBySlug(slug) {
     .from('listings')
     .select(`
       *,
-      user:users(id, display_name, user_type, is_verified, avatar_url, created_at),
+      user:users(id, display_name, user_type, avatar_url, created_at, pirata_profiles(identity_verified)),
       category:categories(name, slug, icon)
     `)
     .eq('slug', slug)

@@ -25,7 +25,7 @@ export default function Dashboard({ user, profile: externalProfile }) {
       const { data } = await supabase
         .from('users')
         .select(`
-          display_name, avatar_url, is_verified,
+          display_name, avatar_url,
           shop_name, shop_bio, shop_link, shop_hours, shop_color, shop_logo_url, shop_banner_url,
           pirata_profiles!inner(
             full_name, country, city, phone,

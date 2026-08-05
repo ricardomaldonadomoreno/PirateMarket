@@ -14,7 +14,7 @@ export default function TraficanteAdminViajes() {
     try {
       let query = supabase
         .from('traficante_trips')
-        .select(`*, user:users(display_name, email, is_verified)`)
+        .select(`*, user:users(display_name, email, traficante_profiles(identity_verified))`)
         .order('created_at', { ascending: false })
 
       if (filterStatus !== 'all') {
@@ -97,7 +97,7 @@ export default function TraficanteAdminViajes() {
 
                   <div className="admin-cell-muted">
                     {trip.user?.display_name || '—'}
-                    {trip.user?.is_verified && <span style={{ marginLeft: '0.3rem', fontSize: '0.7rem' }}>✓</span>}
+                    {trip.user?.traficante_profiles?.identity_verified && <span style={{ marginLeft: '0.3rem', fontSize: '0.7rem' }}>✓</span>}
                   </div>
 
                   <div>{trip.type}</div>

@@ -91,7 +91,7 @@ export default function ListingDetail({ user }) {
   if (!listing) return null
 
   const badge = listing.user
-    ? getUserBadge(listing.user.user_type, listing.user.is_verified, t)
+    ? getUserBadge(listing.user.user_type, listing.user.pirata_profiles?.identity_verified, t)
     : { icon: '🏴‍☠️', label: t('badges.pirate'), color: 'gold' }
 
   const hasPhotos = listing.photos && listing.photos.length > 0
