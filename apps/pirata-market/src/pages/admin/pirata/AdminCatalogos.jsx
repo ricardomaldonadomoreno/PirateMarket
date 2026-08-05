@@ -17,13 +17,14 @@ export default function AdminCatalogos() {
       const { data, error } = await supabase
         .from('users')
         .select(`
-          id, email, display_name, user_type, is_premium, premium_until, created_at,
+          id, email, display_name, created_at,
           pirata_profiles(
-            shop_name, shop_bio, shop_link, shop_hours, shop_color, shop_logo_url, shop_banner_url
+            identity, shop_name, shop_bio, shop_link, shop_hours, shop_color, shop_logo_url, shop_banner_url,
+            is_premium, premium_until
           )
         `)
-        .in('user_type', ['shop', 'wholesale'])
-        .order('is_premium', { ascending: false })
+        .in('pirata_profiles.identity', ['shop', 'wholesale'])
+        .order('pirata_profiles.is_premium', { ascending: false })
         .order('created_at', { ascending: false })
 
       if (error) throw error
@@ -43,7 +44,7 @@ export default function AdminCatalogos() {
         : { is_premium: true, premium_until: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString() }
 
       const { error } = await supabase
-        .from('users')
+        .from('pirata_profiles')
         .update(update)
         .eq('id', userId)
 
@@ -66,7 +67,7 @@ export default function AdminCatalogos() {
       baseDate.setDate(baseDate.getDate() + extraDays)
 
       const { error } = await supabase
-        .from('users')
+        .from('pirata_profiles')
         .update({ is_premium: true, premium_until: baseDate.toISOString() })
         .eq('id', userId)
 
@@ -78,7 +79,7 @@ export default function AdminCatalogos() {
   }
 
   const isPremiumActive = (shop) =>
-    shop.is_premium && shop.premium_until && new Date(shop.premium_until) > new Date()
+    shop.pirata_profiles?.is_premium && shop.pirata_profiles?.premium_until && new Date(shop.pirata_profiles.premium_until) > new Date()
 
   const filtered = shops.filter(s => {
     const matchSearch = s.display_name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -95,7 +96,7 @@ export default function AdminCatalogos() {
   }) : '—'
 
   const premiumExpired = (shop) =>
-    shop.is_premium && shop.premium_until && new Date(shop.premium_until) <= new Date()
+    shop.pirata_profiles?.is_premium && shop.pirata_profiles?.premium_until && new Date(shop.pirata_profiles.premium_until) <= new Date()
 
   return (
     <div className="admin-page">
@@ -162,8 +163,8 @@ export default function AdminCatalogos() {
                     </div>
                   </div>
                   <div className="catalog-cell">
-                    <span className={`admin-type-label admin-type-${shop.user_type}`}>
-                      {shop.user_type === 'shop' ? '🏪 Tienda' : '📦 Mayorista'}
+                    <span className={`admin-type-label admin-type-${pp.identity}`}>
+                      {pp.identity === 'shop' ? '🏪 Tienda' : '📦 Mayorista'}
                     </span>
                   </div>
                   <div className="catalog-cell">
@@ -181,12 +182,12 @@ export default function AdminCatalogos() {
                     {active ? (
                       <div className="badge-premium">
                         <span>⭐ Premium</span>
-                        <span className="badge-premium-date">hasta {fmt(shop.premium_until)}</span>
+                        <span className="badge-premium-date">hasta {fmt(pp.premium_until)}</span>
                       </div>
                     ) : expired ? (
                       <div className="badge-expired">
                         <span>⚠️ Expirado</span>
-                        <span className="badge-premium-date">{fmt(shop.premium_until)}</span>
+                        <span className="badge-premium-date">{fmt(pp.premium_until)}</span>
                       </div>
                     ) : (
                       <span className="badge-free">Sin premium</span>

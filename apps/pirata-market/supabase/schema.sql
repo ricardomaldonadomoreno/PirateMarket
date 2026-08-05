@@ -15,7 +15,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- ================================================
 
 DO $$ BEGIN
-  CREATE TYPE user_type AS ENUM ('person', 'shop', 'wholesale', 'admin');
+  CREATE TYPE user_type AS ENUM ('person', 'superadmin');
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
@@ -109,11 +109,9 @@ CREATE TABLE IF NOT EXISTS users (
   city TEXT,
   country TEXT,
 
-  -- Premium
+  -- Catálogo / Tienda (Capa 2 — solo shops/wholesale)
   is_premium BOOLEAN DEFAULT FALSE,
   premium_until TIMESTAMPTZ,
-
-  -- Catálogo / Tienda (Capa 2 — solo shops/wholesale)
   shop_name TEXT,
   shop_logo_url TEXT,
   shop_bio TEXT,
