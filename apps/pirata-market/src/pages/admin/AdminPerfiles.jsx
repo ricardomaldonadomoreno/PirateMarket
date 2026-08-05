@@ -339,16 +339,8 @@ export default function AdminPerfiles() {
                     <span>{detailModal.country || 'No registrado'}</span>
                   </div>
                   <div className="detail-field">
-                    <label>Tipo</label>
-                    <span>{typeLabel(detailModal.user_type)}</span>
-                  </div>
-                  <div className="detail-field">
                     <label>Verificado</label>
                     <span>{detailModal.is_verified ? 'Sí' : 'No'}</span>
-                  </div>
-                  <div className="detail-field">
-                    <label>Premium</label>
-                    <span>{detailModal.is_premium ? `Hasta ${fmt(detailModal.premium_until)}` : 'No'}</span>
                   </div>
                   <div className="detail-field">
                     <label>Registro</label>
