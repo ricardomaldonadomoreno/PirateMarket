@@ -109,13 +109,42 @@ export default function AdminPerfiles() {
 
   const hasDeletionRequest = (userId) => deletionRequests.some(r => r.user_id === userId)
 
+  const handleExportCSV = () => {
+    const headers = ['ID', 'Nombre', 'Email', 'WhatsApp', 'País', 'Tipo', 'Verificado', 'Premium', 'Premium hasta', 'Registrado']
+    const rows = users.map(u => [
+      u.id,
+      u.display_name || '',
+      u.email || '',
+      u.whatsapp || '',
+      u.country || '',
+      typeLabel(u.user_type),
+      u.is_verified ? 'Sí' : 'No',
+      u.is_premium ? 'Sí' : 'No',
+      u.premium_until ? fmt(u.premium_until) : '',
+      u.created_at || ''
+    ])
+    const csvContent = [headers, ...rows].map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n')
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `perfiles_pirata_${new Date().toISOString().slice(0, 10)}.csv`
+    link.click()
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <div className="admin-page">
       <AdminNavbarPirata />
       <div className="admin-content">
         <div className="admin-page-header">
           <h1 className="serif luxury-gold">Perfiles Generales</h1>
-          <p className="admin-page-sub">{users.length} perfiles registrados en la plataforma</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <p className="admin-page-sub" style={{ margin: 0 }}>{users.length} perfiles registrados en la plataforma</p>
+            <button className="btn btn-gold" onClick={handleExportCSV} title="Descargar todos los perfiles en CSV">
+              📥 Exportar CSV
+            </button>
+          </div>
         </div>
 
 
