@@ -30,6 +30,7 @@ export default function AdminNavbarPirata() {
   // Links base para Pirata Market
   const pirataLinks = [
     { path: '/admin/pirata', icon: '📊', label: 'Dashboard' },
+    { path: '/admin/perfiles', icon: '👤', label: 'Perfiles' },
     { path: '/admin/pirata/usuarios', icon: '👥', label: 'Usuarios' },
     { path: '/admin/pirata/anuncios', icon: '📋', label: 'Anuncios' },
     { path: '/admin/pirata/reportes', icon: '🚨', label: 'Reportes' },

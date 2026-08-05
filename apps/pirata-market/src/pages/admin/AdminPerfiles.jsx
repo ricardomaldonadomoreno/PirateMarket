@@ -1,0 +1,363 @@
+import { useState, useEffect } from 'react'
+import { supabase } from '../../lib/supabase'
+import AdminNavbarPirata from '../../components/AdminNavbarPirata'
+import './AdminPerfiles.css'
+
+const fmt = (date) => date ? new Date(date).toLocaleDateString('es-BO', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'
+const typeLabel = (type) => ({ shop: 'Tienda', wholesale: 'Mayorista', person: 'Persona', admin: 'Admin' }[type] || 'Persona')
+
+export default function AdminPerfiles() {
+  const [users, setUsers] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
+  const [filterType, setFilterType] = useState('all')
+  const [filterCountry, setFilterCountry] = useState('all')
+  const [countries, setCountries] = useState([])
+  const [deletionRequests, setDeletionRequests] = useState([])
+  const [detailModal, setDetailModal] = useState(null)
+  const [deleteModal, setDeleteModal] = useState(null)
+  const [executing, setExecuting] = useState(false)
+
+  useEffect(() => { loadUsers(); loadDeletionRequests() }, [])
+
+  const loadUsers = async () => {
+    setLoading(true)
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('id, display_name, email, whatsapp, user_type, is_verified, is_banned, is_premium, premium_until, created_at, avatar_url, country')
+        .order('created_at', { ascending: false })
+
+      if (error) { console.error('loadUsers error:', error); setLoading(false); return }
+      if (data) {
+        setUsers(data)
+        // Extraer países únicos
+        const uniqueCountries = [...new Set(data.map(u => u.country).filter(Boolean))]
+        setCountries(uniqueCountries)
+      }
+    } catch (err) {
+      console.error('loadUsers error:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const loadDeletionRequests = async () => {
+    const { data } = await supabase
+      .from('deletion_requests')
+      .select('id, user_id, requested_at, status')
+      .eq('status', 'pending')
+      .order('requested_at', { ascending: false })
+    setDeletionRequests(data || [])
+  }
+
+  const handleDeleteAccount = async (user) => {
+    if (!confirm(`¿Confirmar eliminación de cuenta de "${user.display_name || user.email}"?\n\nEsta acción es IRREVERSIBLE y eliminará TODOS los datos del usuario.`)) return
+    setExecuting(true)
+    setDeleteModal(null)
+    try {
+      const { error } = await supabase.rpc('delete_user_account', { p_user_id: user.id })
+      if (error) throw new Error(error.message)
+      // Marcar solicitud como completada
+      const req = deletionRequests.find(r => r.user_id === user.id)
+      if (req) {
+        await supabase.from('deletion_requests').update({ status: 'approved', reviewed_at: new Date().toISOString() }).eq('id', req.id)
+      }
+      loadUsers()
+      loadDeletionRequests()
+    } catch (err) {
+      alert('Error: ' + err.message)
+    }
+    setExecuting(false)
+  }
+
+  const handleRejectDeletion = async (requestId, userId) => {
+    const reason = prompt('Motivo de rechazo (opcional):')
+    await supabase.from('deletion_requests').update({
+      status: 'rejected',
+      reviewed_at: new Date().toISOString(),
+      admin_note: reason || null
+    }).eq('id', requestId)
+    loadDeletionRequests()
+  }
+
+  const handleCancelDeletion = async (requestId) => {
+    await supabase.from('deletion_requests').update({
+      status: 'rejected',
+      reviewed_at: new Date().toISOString(),
+      admin_note: 'Cancelada por el usuario'
+    }).eq('id', requestId)
+    loadDeletionRequests()
+  }
+
+  const filtered = users.filter(u => {
+    const q = search.toLowerCase()
+    const matchSearch = u.display_name?.toLowerCase().includes(q) ||
+      u.email?.toLowerCase().includes(q) ||
+      u.whatsapp?.toLowerCase().includes(q) ||
+      u.country?.toLowerCase().includes(q)
+    const matchType = filterType === 'all' || u.user_type === filterType
+    const matchCountry = filterCountry === 'all' || u.country === filterCountry
+    return matchSearch && matchType && matchCountry
+  })
+
+  const hasDeletionRequest = (userId) => deletionRequests.some(r => r.user_id === userId)
+
+  return (
+    <div className="admin-page">
+      <AdminNavbarPirata />
+      <div className="admin-content">
+        <div className="admin-page-header">
+          <h1 className="serif luxury-gold">Perfiles Generales</h1>
+          <p className="admin-page-sub">{users.length} perfiles registrados en la plataforma</p>
+        </div>
+
+        {/* Solicitudes de eliminación */}
+        {deletionRequests.length > 0 && (
+          <div className="admin-card admin-card-warning">
+            <div className="deletion-header">
+              <h3 className="serif" style={{ color: 'var(--warning)', margin: 0 }}>
+                Solicitudes de eliminación ({deletionRequests.length})
+              </h3>
+            </div>
+            <div className="deletion-list">
+              {deletionRequests.map(req => {
+                const u = users.find(x => x.id === req.user_id)
+                return (
+                  <div key={req.id} className="deletion-row">
+                    <div className="deletion-user-info">
+                      <span className="deletion-name">{u?.display_name || u?.email || 'Usuario eliminado'}</span>
+                      <span className="deletion-email">{u?.email || req.user_id}</span>
+                      <span className="deletion-date">Solicitado: {fmt(req.requested_at)}</span>
+                    </div>
+                    <div className="deletion-actions">
+                      <button className="btn btn-danger btn-sm" onClick={() => setDeleteModal(u)} disabled={executing}>
+                        Aprobar y eliminar
+                      </button>
+                      <button className="btn btn-secondary btn-sm" onClick={() => handleCancelDeletion(req.id)}>
+                        Cancelar solicitud
+                      </button>
+                      <button className="btn btn-ghost btn-sm" onClick={() => handleRejectDeletion(req.id)}>
+                        Rechazar
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Filtros */}
+        <div className="admin-filters-bar">
+          <input type="text" className="input" placeholder="Buscar nombre, email, WhatsApp, país..."
+            value={search} onChange={e => setSearch(e.target.value)} style={{ maxWidth: '320px' }} />
+          <div className="admin-filter-btns">
+            {['all', 'person', 'shop', 'wholesale', 'admin'].map(type => (
+              <button key={type}
+                className={`filter-btn ${filterType === type ? 'active' : ''}`}
+                onClick={() => setFilterType(type)}>
+                {type === 'all' ? 'Todos' : typeLabel(type)}
+              </button>
+            ))}
+          </div>
+          {countries.length > 0 && (
+            <select className="input country-filter" value={filterCountry} onChange={e => setFilterCountry(e.target.value)}>
+              <option value="all">Todos los países</option>
+              {countries.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          )}
+        </div>
+
+        {/* Tabla de perfiles */}
+        <div className="admin-card">
+          {loading ? <div className="admin-loading">Cargando perfiles...</div> : (
+            <>
+              <div className="admin-perfiles-header">
+                <span>Usuario</span>
+                <span>Contacto</span>
+                <span>País</span>
+                <span>Tipo</span>
+                <span>Estado</span>
+                <span>Registro</span>
+                <span>Acciones</span>
+              </div>
+
+              {filtered.length === 0 && (
+                <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  No se encontraron perfiles.
+                </div>
+              )}
+
+              {filtered.map(user => (
+                <div key={user.id} className={`admin-perfil-row ${user.is_banned ? 'banned' : ''}`}>
+                  <div className="admin-perfil-info">
+                    <div className="admin-perfil-avatar">
+                      {user.avatar_url
+                        ? <img src={user.avatar_url} alt={user.display_name} />
+                        : <span>{(user.display_name || user.email)?.charAt(0).toUpperCase()}</span>}
+                    </div>
+                    <div>
+                      <div className="admin-perfil-name">
+                        {user.display_name || 'Sin nombre'}
+                        {hasDeletionRequest(user.id) && (
+                          <span className="deletion-pending-tag" title="Solicitud de eliminación pendiente">Elim</span>
+                        )}
+                      </div>
+                      <div className="admin-perfil-id">{user.id.slice(0, 8)}...</div>
+                    </div>
+                  </div>
+
+                  <div className="admin-perfil-contact">
+                    {user.email && <div className="perfil-email">{user.email}</div>}
+                    {user.whatsapp && <a href={`https://wa.me/${user.whatsapp.replace(/\D/g, '')}`}
+                      target="_blank" rel="noreferrer" className="perfil-wa">{user.whatsapp}</a>}
+                  </div>
+
+                  <div className="admin-perfil-country">
+                    {user.country || <span style={{ color: 'var(--text-muted)' }}>—</span>}
+                  </div>
+
+                  <div>
+                    <span className="admin-type-label">{typeLabel(user.user_type)}</span>
+                  </div>
+
+                  <div className="admin-perfil-badges">
+                    {user.is_verified
+                      ? <span className="admin-badge badge-verified">Verificado</span>
+                      : <span className="admin-badge badge-free">Sin verificar</span>}
+                  </div>
+
+                  <div className="admin-perfil-date">
+                    {fmt(user.created_at)}
+                  </div>
+
+                  <div className="admin-perfil-actions">
+                    <button className="btn btn-ghost btn-icon" onClick={() => setDetailModal(user)} title="Ver detalle">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
+        </div>
+
+        {/* Modal detalle */}
+        {detailModal && (
+          <div className="detail-modal-overlay" onClick={() => setDetailModal(null)}>
+            <div className="detail-modal" onClick={e => e.stopPropagation()}>
+              <div className="detail-modal-header">
+                <h3>Detalle del perfil</h3>
+                <button className="detail-modal-close" onClick={() => setDetailModal(null)}>✕</button>
+              </div>
+              <div className="detail-modal-body">
+                <div className="detail-avatar-row">
+                  <div className="detail-avatar">
+                    {detailModal.avatar_url
+                      ? <img src={detailModal.avatar_url} alt="avatar" />
+                      : <span>{(detailModal.display_name || detailModal.email)?.charAt(0).toUpperCase()}</span>}
+                  </div>
+                  <div>
+                    <div className="detail-name">{detailModal.display_name || 'Sin nombre'}</div>
+                    <div className="detail-id">{detailModal.id}</div>
+                  </div>
+                </div>
+                <div className="detail-grid">
+                  <div className="detail-field">
+                    <label>Email</label>
+                    <span>{detailModal.email}</span>
+                  </div>
+                  <div className="detail-field">
+                    <label>WhatsApp</label>
+                    <span>{detailModal.whatsapp || 'No registrado'}</span>
+                  </div>
+                  <div className="detail-field">
+                    <label>País</label>
+                    <span>{detailModal.country || 'No registrado'}</span>
+                  </div>
+                  <div className="detail-field">
+                    <label>Tipo</label>
+                    <span>{typeLabel(detailModal.user_type)}</span>
+                  </div>
+                  <div className="detail-field">
+                    <label>Verificado</label>
+                    <span>{detailModal.is_verified ? 'Sí' : 'No'}</span>
+                  </div>
+                  <div className="detail-field">
+                    <label>Premium</label>
+                    <span>{detailModal.is_premium ? `Hasta ${fmt(detailModal.premium_until)}` : 'No'}</span>
+                  </div>
+                  <div className="detail-field">
+                    <label>Registro</label>
+                    <span>{fmt(detailModal.created_at)}</span>
+                  </div>
+                  <div className="detail-field">
+                    <label>Solicitud eliminación</label>
+                    <span>
+                      {hasDeletionRequest(detailModal.id)
+                        ? <span style={{ color: 'var(--warning)' }}>Pendiente</span>
+                        : 'Sin solicitud'}
+                    </span>
+                  </div>
+                </div>
+                {hasDeletionRequest(detailModal.id) && (
+                  <button className="btn btn-danger" style={{ marginTop: '1rem', width: '100%' }}
+                    onClick={() => { setDetailModal(null); setDeleteModal(detailModal) }}>
+                    Aprobar eliminación de cuenta
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal confirmación eliminación */}
+        {deleteModal && (
+          <div className="delete-confirm-overlay" onClick={() => setDeleteModal(null)}>
+            <div className="delete-confirm-modal" onClick={e => e.stopPropagation()}>
+              <div className="delete-confirm-header">
+                <h3>Confirmar eliminación</h3>
+              </div>
+              <div className="delete-confirm-body">
+                <div className="delete-user-preview">
+                  <div className="delete-avatar">
+                    {deleteModal.avatar_url
+                      ? <img src={deleteModal.avatar_url} alt="" />
+                      : <span>{(deleteModal.display_name || deleteModal.email)?.charAt(0).toUpperCase()}</span>}
+                  </div>
+                  <div>
+                    <strong>{deleteModal.display_name || deleteModal.email}</strong>
+                    <span>{deleteModal.email}</span>
+                  </div>
+                </div>
+                <div className="delete-warning">
+                  <p>Esta acción eliminará permanentemente:</p>
+                  <ul>
+                    <li>Todos los datos del usuario (perfil, avatar)</li>
+                    <li>Todos sus anuncios y publicaciones</li>
+                    <li>Todos sus viajes y envíos (traficante)</li>
+                    <li>Sus verificaciones y documentos</li>
+                    <li>Su cuenta de autenticación (login)</li>
+                  </ul>
+                  <p><strong>Esta acción NO se puede deshacer.</strong></p>
+                </div>
+                <div className="delete-confirm-actions">
+                  <button className="btn btn-secondary" onClick={() => setDeleteModal(null)}>
+                    Cancelar
+                  </button>
+                  <button className="btn btn-danger" onClick={() => handleDeleteAccount(deleteModal)} disabled={executing}>
+                    {executing ? 'Eliminando...' : 'Confirmar eliminación'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+      </div>
+    </div>
+  )
+}
