@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import {
   Camera, Trash2, Lock, Eye, EyeOff, AlertTriangle,
-  User, ShieldCheck, Mail, Phone, ShieldAlert, LogOut
+  User, ShieldCheck, Mail, Phone, ShieldAlert, LogOut, Globe
 } from 'lucide-react'
 import './MiPerfil.css'
 
@@ -53,7 +53,7 @@ export default function MiPerfil({ user, onProfileUpdate }) {
     try {
       const { data: userData } = await supabase
         .from('users')
-        .select('display_name, avatar_url, whatsapp, user_type')
+        .select('display_name, avatar_url, whatsapp, user_type, country')
         .eq('id', user.id)
         .single()
       const { data: trafData } = await supabase
@@ -325,6 +325,10 @@ export default function MiPerfil({ user, onProfileUpdate }) {
                 <div className="mp-readonly-field">
                   <Phone size={14} />
                   <span>{profile?.whatsapp || 'No registrado'}</span>
+                </div>
+                <div className="mp-readonly-field">
+                  <Globe size={14} />
+                  <span>{profile?.country || 'No registrado'}</span>
                 </div>
               </div>
             </div>
