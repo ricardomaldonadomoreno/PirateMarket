@@ -259,7 +259,7 @@ export default function Home() {
           onChange={e => handleFilterChange('search', e.target.value)} />
         <button className={`mobile-filter-btn ${activeFiltersCount > 0 ? 'has-filters' : ''}`}
           onClick={() => setShowDrawer(true)}>
-          ⚙️ Filtros
+          ⚙️ Buscar Anuncio
           {activeFiltersCount > 0 && (
             <span className="filter-count-badge">{activeFiltersCount}</span>
           )}
@@ -288,6 +288,11 @@ export default function Home() {
             <h3 className="filter-title">{t('home.filters.title')}</h3>
             <input type="text" className="input" placeholder={t('home.title')}
               value={filters.search} onChange={e => handleFilterChange('search', e.target.value)} />
+          </div>
+          <div className="filter-section">
+            <Link to="/publicar" className="btn btn-primary sidebar-publish-btn">
+              + {t('navbar.publish')}
+            </Link>
           </div>
           <FiltersContent />
         </aside>
@@ -379,7 +384,7 @@ export default function Home() {
         <div className="drawer-overlay" onClick={() => setShowDrawer(false)}>
           <div className="drawer" onClick={e => e.stopPropagation()}>
             <div className="drawer-header">
-              <h3 className="serif">Filtros</h3>
+              <h3 className="serif">Buscar Anuncio</h3>
               <div className="drawer-header-actions">
                 {activeFiltersCount > 0 && (
                   <button className="drawer-clear-btn" onClick={() => {
