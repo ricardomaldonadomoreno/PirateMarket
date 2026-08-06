@@ -14,6 +14,7 @@ export default function CityAutocomplete({
   placeholder,
   value,
   onChange,
+  disabled = false,
 }) {
   const allCountries = useMemo(() => Country.getAllCountries(), [])
 
@@ -218,10 +219,11 @@ export default function CityAutocomplete({
           placeholder="País"
           value={countryInput}
           onChange={handleCountryInput}
-          onFocus={() => countryInput.length >= 1 && setShowCountryDropdown(true)}
-          readOnly={!!selectedCountry && !showCountryDropdown}
+          onFocus={() => !disabled && countryInput.length >= 1 && setShowCountryDropdown(true)}
+          readOnly={!!selectedCountry && !showCountryDropdown || disabled}
+          disabled={disabled}
         />
-        {selectedCountry && !showCountryDropdown && (
+        {selectedCountry && !showCountryDropdown && !disabled && (
           <button type="button" className="ca-clear" onClick={() => { setSelectedCountry(null); setCountryInput(''); setStateInput(''); setCityInput(''); setSelectedState(null); onChange(null) }}>
             <X size={13} />
           </button>
@@ -251,10 +253,11 @@ export default function CityAutocomplete({
             placeholder="Departamento / Estado"
             value={stateInput}
             onChange={handleStateInput}
-            onFocus={() => setShowStateDropdown(true)}
-            readOnly={!!selectedState && !showStateDropdown}
+            onFocus={() => !disabled && setShowStateDropdown(true)}
+            readOnly={!!selectedState && !showStateDropdown || disabled}
+            disabled={disabled}
           />
-          {selectedState && !showStateDropdown && (
+          {selectedState && !showStateDropdown && !disabled && (
             <button type="button" className="ca-clear" onClick={() => { setSelectedState(null); setStateInput(''); setCityInput(''); onChange(null) }}>
               <X size={13} />
             </button>
@@ -285,10 +288,11 @@ export default function CityAutocomplete({
             placeholder="Ciudad"
             value={cityInput}
             onChange={handleCityInput}
-            onFocus={() => cityInput.length >= 1 && setShowCityDropdown(true)}
-            readOnly={!!value && value.city && !showCityDropdown}
+            onFocus={() => !disabled && cityInput.length >= 1 && setShowCityDropdown(true)}
+            readOnly={!!value && value.city && !showCityDropdown || disabled}
+            disabled={disabled}
           />
-          {value?.city && !showCityDropdown && (
+          {value?.city && !showCityDropdown && !disabled && (
             <button type="button" className="ca-clear" onClick={clear}>
               <X size={13} />
             </button>

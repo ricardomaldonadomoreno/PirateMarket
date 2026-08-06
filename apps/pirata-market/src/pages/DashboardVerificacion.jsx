@@ -341,6 +341,7 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
                     <CityAutocomplete
                       placeholder="Selecciona tu país y ciudad"
                       value={{ country: realData.country, city: realData.city }}
+                      disabled={identityLocked && !isRejected}
                       onChange={(result) => {
                         if (result) {
                           setRealData(p => {
