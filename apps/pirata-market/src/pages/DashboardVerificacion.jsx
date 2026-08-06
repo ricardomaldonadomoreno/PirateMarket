@@ -149,6 +149,7 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
     const label = ACCOUNT_TYPES.find(o => o.value === newType)?.label || newType
     const requiresBusinessVerification = newType === 'shop' || newType === 'wholesale'
     const isCurrentlyLocked = profile?.identity_locked && profile?.verif_status === 'pending'
+    const isAlreadyVerified = profile?.identity_verified
 
     const confirmMsg = isCurrentlyLocked
       ? `¿Cambiar tu tipo de cuenta a ${label}? Esto cancelará tu solicitud de verificación actual y desbloqueará tus datos para una nueva solicitud.`
@@ -160,16 +161,21 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
 
     setChangingType(true)
     try {
-      // Resetear estado de verificación y cambiar tipo
+      // Si la identidad ya está verificada, NO resetear nada de identidad
+      const resetIdentity = !isAlreadyVerified && isCurrentlyLocked
+      const keepIdentityVerified = isAlreadyVerified
+
       await supabase.from('pirata_profiles').update({
         identity: newType,
         business_verified: false,
-        identity_locked: isCurrentlyLocked ? false : profile?.identity_locked || false,
-        verif_status: isCurrentlyLocked ? null : profile?.verif_status || null,
-        identity_docs: [null, null],
+        identity_locked: keepIdentityVerified ? true : (resetIdentity ? false : profile?.identity_locked || false),
+        verif_status: keepIdentityVerified ? 'approved' : (resetIdentity ? null : profile?.verif_status || null),
+        // Solo resetear docs de identidad si NO estaba verificado
+        identity_docs: keepIdentityVerified ? undefined : (resetIdentity ? [null, null] : undefined),
+        selfie_url: keepIdentityVerified ? undefined : (resetIdentity ? null : undefined),
+        // Siempre resetear docs de negocio y nota
         business_docs: [],
-        selfie_url: null,
-        admin_note: null,
+        admin_note: keepIdentityVerified ? null : undefined,
       }).eq('user_id', user.id)
 
       setBusinessFiles([])
