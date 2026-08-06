@@ -43,10 +43,10 @@ export default function AdminUsuarios() {
   const processUsers = async (profilesData) => {
     const userIds = profilesData.map(p => p.user_id)
 
-    // Cargar datos de users (cuenta raíz) usando los user_ids de pirata_profiles
+    // Cargar datos de la cuenta raíz (solo email y display_name)
     const { data: usersRoot } = await supabase
       .from('users')
-      .select('id, display_name, email, user_type, is_banned, created_at, avatar_url, whatsapp')
+      .select('id, display_name, email')
       .in('id', userIds)
 
     const usersMap = {}
@@ -54,7 +54,7 @@ export default function AdminUsuarios() {
       usersRoot.forEach(u => { usersMap[u.id] = u })
     }
 
-    // Cargar verificaciones de pirata
+    // Cargar verificaciones de pirata (cualquier estado: pending, approved, rejected)
     const { data: requests } = await supabase
       .from('verification_requests')
       .select('*')
@@ -63,16 +63,16 @@ export default function AdminUsuarios() {
       .order('created_at', { ascending: false })
 
     const reqMap = {}
-    const pendingUserIds = new Set()
+    const verifiedUserIds = new Set()
     if (requests) {
       requests.forEach(r => {
         if (!reqMap[r.user_id]) reqMap[r.user_id] = r
-        if (r.status === 'pending') pendingUserIds.add(r.user_id)
+        verifiedUserIds.add(r.user_id)
       })
     }
 
-    // Solo mostrar perfiles con verificación pendiente
-    const profilesWithVerification = profilesData.filter(p => pendingUserIds.has(p.user_id))
+    // Mostrar todos los perfiles que tienen una solicitud de verificación
+    const profilesWithVerification = profilesData.filter(p => verifiedUserIds.has(p.user_id))
 
     // Aplanar: datos de pirata_profiles directo + datos de users por user_id
     const flattened = profilesWithVerification.map(p => {
@@ -101,13 +101,9 @@ export default function AdminUsuarios() {
         premium_until: p.premium_until || null,
         bio: p.bio || null,
         created_at: p.created_at,
-        // Datos de la cuenta raíz (users) por referencia user_id
+        // Datos de la cuenta raíz por referencia user_id
         display_name: u.display_name || null,
         email: u.email || null,
-        user_type: u.user_type || null,
-        is_banned: u.is_banned || false,
-        avatar_url: u.avatar_url || null,
-        whatsapp: u.whatsapp || null,
       }
     })
     setUsers(flattened)
@@ -137,10 +133,10 @@ export default function AdminUsuarios() {
         .eq('user_id', userId)
         .single()
 
-      // Cargar datos de la cuenta raíz
+      // Cargar datos de la cuenta raíz (solo email y display_name)
       const { data: freshRoot } = await supabase
         .from('users')
-        .select('display_name, email, user_type, is_banned, created_at, avatar_url, whatsapp')
+        .select('display_name, email')
         .eq('id', userId)
         .single()
 
@@ -171,10 +167,7 @@ export default function AdminUsuarios() {
         created_at: freshProfile.created_at,
         display_name: u.display_name || null,
         email: u.email || null,
-        user_type: u.user_type || null,
-        is_banned: u.is_banned || false,
-        avatar_url: u.avatar_url || null,
-        whatsapp: u.whatsapp || null,
+        is_banned: false,
       } : null
       const { data: freshReq } = await supabase
         .from('verification_requests')
@@ -346,38 +339,25 @@ export default function AdminUsuarios() {
                 const listCount      = activeListings[user.id] || 0
 
                 return (
-                  <div key={user.id} className={`admin-user-row ${user.is_banned ? 'banned' : ''}`}>
+                  <div key={user.id} className="admin-user-row">
 
                     <div className="admin-user-info">
-                      <div className="admin-user-avatar">
-                        {user.avatar_url
-                          ? <img src={user.avatar_url} alt={user.display_name} />
-                          : <span>{user.display_name?.charAt(0).toUpperCase()}</span>}
-                      </div>
                       <div>
                         <div className="admin-user-name">
                           {user.display_name}
                           {hasPendingDocs && <span className="verif-pending-dot" title="Documentos pendientes">D</span>}
                         </div>
                         <div className="admin-user-email">{user.email}</div>
-                        {user.whatsapp && (
-                          <a href={`https://wa.me/${user.whatsapp.replace(/\D/g,'')}`}
-                            target="_blank" rel="noreferrer"
-                            className="admin-wa-link">
-                            {user.whatsapp}
-                          </a>
-                        )}
                         {user.shop_name && <div className="admin-user-shop">{user.shop_name}</div>}
                         <div className="admin-user-date">{fmt(user.created_at)} · {listCount > 0 ? <span className="count-active">{listCount} anuncios</span> : <span>0 anuncios</span>}</div>
                       </div>
                     </div>
 
                     <div>
-                      <span className="admin-type-label">{typeLabel(user.user_type)}</span>
+                      <span className="admin-type-label">{typeLabel(user.identity)}</span>
                     </div>
 
                     <div className="admin-user-badges">
-                      {user.is_banned && <span className="admin-badge badge-banned">Baneado</span>}
                       {vReq?.status === 'pending'  && <span className="admin-badge badge-pending">Pendiente</span>}
                       {vReq?.status === 'rejected' && <span className="admin-badge badge-rejected">Rechazado</span>}
                       {user.identity_verified  && <span className="admin-badge badge-id">Identidad</span>}
@@ -407,9 +387,9 @@ export default function AdminUsuarios() {
                         onClick={() => handleTogglePremium(user.id, isPremiumActive)}>
                         {isPremiumActive ? 'Quitar Premium' : 'Activar Premium'}
                       </button>
-                      <button className={`btn-small ${user.is_banned ? 'btn-success' : 'btn-danger'}`}
-                        onClick={() => handleBan(user.id, user.is_banned)}>
-                        {user.is_banned ? 'Desbanear' : 'Banear'}
+                      <button className="btn-small btn-danger"
+                        onClick={() => handleBan(user.id, false)}>
+                        Banear
                       </button>
                     </div>
                   </div>
