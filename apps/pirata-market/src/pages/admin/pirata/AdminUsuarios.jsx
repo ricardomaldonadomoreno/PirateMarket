@@ -49,8 +49,28 @@ export default function AdminUsuarios() {
   }
 
   const processUsers = async (usersData) => {
-    // Aplanar pirata_profiles al nivel del usuario para compatibilidad con el resto del código
-    const flattened = usersData.map(u => ({
+    const userIds = usersData.map(u => u.id)
+
+    // Cargar verificaciones de pirata
+    const { data: requests } = await supabase
+      .from('verification_requests')
+      .select('*')
+      .in('user_id', userIds)
+      .eq('source', 'pirata')
+      .order('created_at', { ascending: false })
+
+    // Mapear solicitudes por user_id (más reciente primero)
+    const reqMap = {}
+    if (requests) {
+      requests.forEach(r => { if (!reqMap[r.user_id]) reqMap[r.user_id] = r })
+    }
+
+    // Solo mostrar usuarios que han iniciado verificación (tienen verification_request)
+    const userIdsWithVerification = new Set(Object.keys(reqMap))
+    const usersWithVerification = usersData.filter(u => userIdsWithVerification.has(u.id))
+
+    // Aplanar pirata_profiles al nivel del usuario
+    const flattened = usersWithVerification.map(u => ({
       ...u,
       full_name: u.pirata_profiles?.full_name || null,
       country: u.pirata_profiles?.country || null,
@@ -63,25 +83,14 @@ export default function AdminUsuarios() {
       allow_identity_edit: u.pirata_profiles?.allow_identity_edit || false,
     }))
     setUsers(flattened)
-    const userIds = usersData.map(u => u.id)
+    setVerificationRequests(reqMap)
 
-    const { data: requests } = await supabase
-      .from('verification_requests')
-      .select('*')
-      .in('user_id', userIds)
-      .eq('source', 'pirata')
-      .order('created_at', { ascending: false })
-
-    if (requests) {
-      const map = {}
-      requests.forEach(r => { if (!map[r.user_id]) map[r.user_id] = r })
-      setVerificationRequests(map)
-    }
+    const filteredIds = usersWithVerification.map(u => u.id)
 
     const { data: listings } = await supabase
       .from('listings')
       .select('user_id')
-      .in('user_id', userIds)
+      .in('user_id', filteredIds)
       .eq('status', 'active')
 
     if (listings) {
