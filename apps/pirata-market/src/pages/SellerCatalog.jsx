@@ -46,14 +46,13 @@ export default function SellerCatalog() {
         setSeller(sellerData)
       }
 
-      // Cargar fotos del negocio si está verificado
-      const { data: verifData } = await supabase
-        .from('verification_requests')
+      // Cargar fotos del negocio si está verificado (de pirata_profiles)
+      const { data: profileData } = await supabase
+        .from('pirata_profiles')
         .select('business_docs')
         .eq('user_id', userId)
-        .eq('status', 'approved')
         .single()
-      if (sellerData && verifData) sellerData.business_docs = verifData.business_docs || []
+      if (sellerData && profileData) sellerData.business_docs = profileData.business_docs || []
 
       const { data: listingsData } = await supabase
         .from('listings')

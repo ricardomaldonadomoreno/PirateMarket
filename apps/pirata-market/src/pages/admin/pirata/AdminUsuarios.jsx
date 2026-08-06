@@ -5,30 +5,32 @@ import './AdminUsuarios.css'
 
 const fmt = (date) => date ? new Date(date).toLocaleDateString('es-BO', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '—'
 const typeLabel = (type) => type === 'shop' ? 'Tienda' : type === 'wholesale' ? 'Mayorista' : 'Persona'
+const statusLabel = (s) => s === 'pending' ? 'Pendiente' : s === 'approved' ? 'Aprobado' : s === 'rejected' ? 'Rechazado' : 'Sin solicitud'
 
 export default function AdminUsuarios() {
-  const [users, setUsers]                                 = useState([])
-  const [loading, setLoading]                             = useState(true)
-  const [search, setSearch]                               = useState('')
-  const [filterType, setFilterType]                       = useState('all')
-  const [verificationRequests, setVerificationRequests]   = useState({})
-  const [docsModal, setDocsModal]                         = useState(null)
-  const [rejectNotes, setRejectNotes]                     = useState({ identity: '', business: '' })
-  const [infoNote, setInfoNote]                           = useState('')
-  const [sendingNote, setSendingNote]                     = useState(false)
-  const [noteSent, setNoteSent]                           = useState(false)
-  const [lightbox, setLightbox]                           = useState(null)
+  const [users, setUsers]     = useState([])
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch]   = useState('')
+  const [filterType, setFilterType] = useState('all')
+  const [filterStatus, setFilterStatus] = useState('all')
+  const [docsModal, setDocsModal]     = useState(null)
+  const [rejectNotes, setRejectNotes] = useState({ identity: '', business: '' })
+  const [infoNote, setInfoNote]       = useState('')
+  const [sendingNote, setSendingNote] = useState(false)
+  const [noteSent, setNoteSent]       = useState(false)
+  const [lightbox, setLightbox]       = useState(null)
 
   useEffect(() => { loadUsers() }, [])
 
-  // ── CARGA ──
+  // ── CARGA: Solo pirata_profiles + users para email/display_name ──
   const loadUsers = async () => {
     setLoading(true)
     try {
-      // 1. Leer pirata_profiles (tabla principal)
+      // 1. Leer pirata_profiles (tabla principal) — solo los que tienen verif_status != null
       const { data: profiles, error } = await supabase
         .from('pirata_profiles')
         .select('*')
+        .not('verif_status', 'is', null)
         .order('created_at', { ascending: false })
 
       if (error) { console.error('loadUsers error:', error); setLoading(false); return }
@@ -54,27 +56,8 @@ export default function AdminUsuarios() {
       usersRoot.forEach(u => { usersMap[u.id] = u })
     }
 
-    // 3. Solicitudes de verificación (cualquier estado)
-    const { data: requests } = await supabase
-      .from('verification_requests')
-      .select('*')
-      .in('user_id', userIds)
-      .order('created_at', { ascending: false })
-
-    const reqMap = {}
-    const verifiedUserIds = new Set()
-    if (requests) {
-      requests.forEach(r => {
-        if (!reqMap[r.user_id]) reqMap[r.user_id] = r
-        verifiedUserIds.add(r.user_id)
-      })
-    }
-
-    // 4. Solo perfiles con solicitud de verificación
-    const profilesWithVerification = profilesData.filter(p => verifiedUserIds.has(p.user_id))
-
-    // 5. Aplanar datos
-    const flattened = profilesWithVerification.map(p => {
+    // 3. Aplanar datos — todo viene de pirata_profiles
+    const flattened = profilesData.map(p => {
       const u = usersMap[p.user_id] || {}
       return {
         id: p.id,
@@ -90,6 +73,12 @@ export default function AdminUsuarios() {
         business_verified: p.business_verified || false,
         identity_locked: p.identity_locked || false,
         allow_identity_edit: p.allow_identity_edit || false,
+        verif_status: p.verif_status || null,
+        identity_docs: p.identity_docs || [null, null],
+        business_docs: p.business_docs || [],
+        selfie_url: p.selfie_url || null,
+        admin_note: p.admin_note || null,
+        reviewed_at: p.reviewed_at || null,
         created_at: p.created_at,
         // users (solo referencia)
         display_name: u.display_name || null,
@@ -97,7 +86,6 @@ export default function AdminUsuarios() {
       }
     })
     setUsers(flattened)
-    setVerificationRequests(reqMap)
   }
 
   // ── REFRESH MODAL ──
@@ -130,72 +118,97 @@ export default function AdminUsuarios() {
         business_verified: freshProfile.business_verified || false,
         identity_locked: freshProfile.identity_locked || false,
         allow_identity_edit: freshProfile.allow_identity_edit || false,
+        verif_status: freshProfile.verif_status || null,
+        identity_docs: freshProfile.identity_docs || [null, null],
+        business_docs: freshProfile.business_docs || [],
+        selfie_url: freshProfile.selfie_url || null,
+        admin_note: freshProfile.admin_note || null,
+        reviewed_at: freshProfile.reviewed_at || null,
         created_at: freshProfile.created_at,
         display_name: u.display_name || null,
         email: u.email || null,
       } : null
 
-      const { data: freshReq } = await supabase
-        .from('verification_requests')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle()
-
-      if (flatUser) setDocsModal({ user: flatUser, request: freshReq || null })
+      if (flatUser) setDocsModal({ user: flatUser })
     }
   }
 
   // ── ACCIONES DE VERIFICACION ──
-  const handleApproveIdentity = async (requestId, userId) => {
+  const handleApproveIdentity = async (userId) => {
     const now = new Date().toISOString()
-    await supabase.from('verification_requests').update({ status: 'approved', reviewed_at: now }).eq('id', requestId)
-    await supabase.from('pirata_profiles').update({ identity_verified: true, identity_locked: true, allow_identity_edit: false }).eq('user_id', userId)
+    await supabase.from('pirata_profiles').update({
+      identity_verified: true,
+      identity_locked: true,
+      allow_identity_edit: false,
+      verif_status: 'approved',
+      reviewed_at: now,
+    }).eq('user_id', userId)
     await refreshAll(userId)
   }
 
-  const handleApproveBusiness = async (requestId, userId) => {
+  const handleApproveBusiness = async (userId) => {
     const now = new Date().toISOString()
-    await supabase.from('verification_requests').update({ status: 'approved', reviewed_at: now }).eq('id', requestId)
-    await supabase.from('pirata_profiles').update({ business_verified: true }).eq('user_id', userId)
+    await supabase.from('pirata_profiles').update({
+      business_verified: true,
+      reviewed_at: now,
+    }).eq('user_id', userId)
     await refreshAll(userId)
   }
 
-  const handleRejectLayer = async (requestId, layer) => {
+  const handleRejectLayer = async (layer) => {
     const note = rejectNotes[layer]
     if (!note.trim()) { alert('Escribe un motivo de rechazo'); return }
-    await supabase.from('verification_requests').update({
-      status: 'rejected', admin_note: note, reviewed_at: new Date().toISOString()
-    }).eq('id', requestId)
-    const userId = docsModal.user.id
+    const userId = docsModal.user.user_id
     if (layer === 'identity') {
-      await supabase.from('pirata_profiles').update({ identity_verified: false, identity_locked: false }).eq('user_id', userId)
+      await supabase.from('pirata_profiles').update({
+        identity_verified: false,
+        identity_locked: false,
+        verif_status: 'rejected',
+        admin_note: note,
+        reviewed_at: new Date().toISOString(),
+      }).eq('user_id', userId)
     } else {
-      await supabase.from('pirata_profiles').update({ business_verified: false }).eq('user_id', userId)
+      await supabase.from('pirata_profiles').update({
+        business_verified: false,
+        admin_note: note,
+        reviewed_at: new Date().toISOString(),
+      }).eq('user_id', userId)
     }
     setRejectNotes(p => ({ ...p, [layer]: '' }))
     await refreshAll(userId)
   }
 
-  const handleApproveVerification = async (requestId, userId) => {
-    await supabase.from('verification_requests').update({ status: 'approved', reviewed_at: new Date().toISOString() }).eq('id', requestId)
-    await supabase.from('pirata_profiles').update({ identity_verified: true, identity_locked: true }).eq('user_id', userId)
+  const handleApproveVerification = async (userId) => {
+    await supabase.from('pirata_profiles').update({
+      identity_verified: true,
+      identity_locked: true,
+      verif_status: 'approved',
+      reviewed_at: new Date().toISOString(),
+    }).eq('user_id', userId)
     await refreshAll(userId)
   }
 
   const handleRevokeVerification = async (userId, layer) => {
     if (!confirm(`Revocar verificación de ${layer === 'identity' ? 'Identidad' : 'Negocio'}?`)) return
     if (layer === 'identity') {
-      await supabase.from('pirata_profiles').update({ identity_verified: false, identity_locked: false }).eq('user_id', userId)
+      await supabase.from('pirata_profiles').update({
+        identity_verified: false,
+        identity_locked: false,
+        verif_status: null,
+      }).eq('user_id', userId)
     } else {
-      await supabase.from('pirata_profiles').update({ business_verified: false }).eq('user_id', userId)
+      await supabase.from('pirata_profiles').update({
+        business_verified: false,
+      }).eq('user_id', userId)
     }
     await refreshAll(userId)
   }
 
   const handleAllowIdentityEdit = async (userId, current) => {
-    await supabase.from('pirata_profiles').update({ allow_identity_edit: !current, identity_locked: current }).eq('user_id', userId)
+    await supabase.from('pirata_profiles').update({
+      allow_identity_edit: !current,
+      identity_locked: current,
+    }).eq('user_id', userId)
     await refreshAll(userId)
   }
 
@@ -203,14 +216,14 @@ export default function AdminUsuarios() {
   const handleSendInfoNote = async () => {
     if (!infoNote.trim()) { alert('Escribe un mensaje'); return }
     setSendingNote(true)
-    if (docsModal?.request?.id) {
-      await supabase.from('verification_requests').update({ admin_note: infoNote.trim() }).eq('id', docsModal.request.id)
-    }
+    await supabase.from('pirata_profiles').update({
+      admin_note: infoNote.trim(),
+    }).eq('user_id', docsModal.user.user_id)
     setSendingNote(false)
     setNoteSent(true)
     setInfoNote('')
     setTimeout(() => setNoteSent(false), 3000)
-    await refreshAll(docsModal.user.id)
+    await refreshAll(docsModal.user.user_id)
   }
 
   // ── LIGHTBOX ──
@@ -237,7 +250,8 @@ export default function AdminUsuarios() {
       u.email?.toLowerCase().includes(q) ||
       u.shop_name?.toLowerCase().includes(q)
     const matchType = filterType === 'all' || u.identity === filterType
-    return matchSearch && matchType
+    const matchStatus = filterStatus === 'all' || u.verif_status === filterStatus
+    return matchSearch && matchType && matchStatus
   })
 
   return (
@@ -261,6 +275,15 @@ export default function AdminUsuarios() {
               </button>
             ))}
           </div>
+          <div className="admin-filter-btns" style={{ marginLeft: '0.5rem' }}>
+            {['all', 'pending', 'approved', 'rejected'].map(s => (
+              <button key={s}
+                className={`filter-btn ${filterStatus === s ? 'active' : ''}`}
+                onClick={() => setFilterStatus(s)}>
+                {s === 'all' ? 'Todos estados' : statusLabel(s)}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="admin-card">
@@ -280,50 +303,43 @@ export default function AdminUsuarios() {
                 </div>
               )}
 
-              {filtered.map(user => {
-                const vReq = verificationRequests[user.user_id]
-
-                return (
-                  <div key={user.id} className="admin-user-row">
-
-                    <div className="admin-user-info">
-                      <div>
-                        <div className="admin-user-name">
-                          {user.display_name}
-                        </div>
-                        <div className="admin-user-email">{user.email}</div>
-                        {user.shop_name && <div className="admin-user-shop">{user.shop_name}</div>}
-                      </div>
-                    </div>
-
+              {filtered.map(user => (
+                <div key={user.id} className="admin-user-row">
+                  <div className="admin-user-info">
                     <div>
-                      <span className="admin-type-label">{typeLabel(user.identity)}</span>
-                    </div>
-
-                    <div className="admin-user-badges">
-                      {vReq?.status === 'pending'  && <span className="admin-badge badge-pending">Pendiente</span>}
-                      {vReq?.status === 'approved' && <span className="admin-badge badge-verified">Aprobado</span>}
-                      {vReq?.status === 'rejected' && <span className="admin-badge badge-rejected">Rechazado</span>}
-                      {user.identity_verified  && <span className="admin-badge badge-id">Identidad</span>}
-                      {user.business_verified  && <span className="admin-badge badge-biz">Negocio</span>}
-                    </div>
-
-                    <div className="admin-user-date">{fmt(user.created_at)}</div>
-
-                    <div className="admin-user-actions">
-                      <button className="btn-small btn-docs"
-                        onClick={() => {
-                          setRejectNotes({ identity: '', business: '' })
-                          setInfoNote('')
-                          setNoteSent(false)
-                          setDocsModal({ user, request: vReq || null })
-                        }}>
-                        Revisar documentos
-                      </button>
+                      <div className="admin-user-name">{user.display_name}</div>
+                      <div className="admin-user-email">{user.email}</div>
+                      {user.shop_name && <div className="admin-user-shop">{user.shop_name}</div>}
                     </div>
                   </div>
-                )
-              })}
+
+                  <div>
+                    <span className="admin-type-label">{typeLabel(user.identity)}</span>
+                  </div>
+
+                  <div className="admin-user-badges">
+                    {user.verif_status === 'pending'  && <span className="admin-badge badge-pending">Pendiente</span>}
+                    {user.verif_status === 'approved' && <span className="admin-badge badge-verified">Aprobado</span>}
+                    {user.verif_status === 'rejected' && <span className="admin-badge badge-rejected">Rechazado</span>}
+                    {user.identity_verified  && <span className="admin-badge badge-id">Identidad</span>}
+                    {user.business_verified  && <span className="admin-badge badge-biz">Negocio</span>}
+                  </div>
+
+                  <div className="admin-user-date">{fmt(user.created_at)}</div>
+
+                  <div className="admin-user-actions">
+                    <button className="btn-small btn-docs"
+                      onClick={() => {
+                        setRejectNotes({ identity: '', business: '' })
+                        setInfoNote('')
+                        setNoteSent(false)
+                        setDocsModal({ user })
+                      }}>
+                      Revisar documentos
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -353,6 +369,19 @@ export default function AdminUsuarios() {
                 </div>
               )}
 
+              {/* Selfie */}
+              {docsModal.user.selfie_url && (
+                <div className="docs-section">
+                  <h4>Foto personal</h4>
+                  <div className="docs-grid">
+                    <div className="doc-card" onClick={() => openLightbox([docsModal.user.selfie_url], 0)}>
+                      <img src={docsModal.user.selfie_url} alt="Selfie" className="doc-thumb" />
+                      <span className="doc-label">Selfie</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Capa 1: Identidad */}
               <div className="docs-section">
                 <div className="docs-section-title">
@@ -360,20 +389,20 @@ export default function AdminUsuarios() {
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
                     {docsModal.user.identity_verified && (
                       <>
-                        <button className="btn-small btn-danger" onClick={() => handleRevokeVerification(docsModal.user.id, 'identity')}>Revocar identidad</button>
-                        <button className="btn-small btn-docs" onClick={() => handleAllowIdentityEdit(docsModal.user.id, docsModal.user.allow_identity_edit)}>
+                        <button className="btn-small btn-danger" onClick={() => handleRevokeVerification(docsModal.user.user_id, 'identity')}>Revocar identidad</button>
+                        <button className="btn-small btn-docs" onClick={() => handleAllowIdentityEdit(docsModal.user.user_id, docsModal.user.allow_identity_edit)}>
                           {docsModal.user.allow_identity_edit ? 'Bloquear edición' : 'Permitir edición'}
                         </button>
                       </>
                     )}
                   </div>
                 </div>
-                {docsModal.request?.identity_docs?.some(url => url) ? (
+                {docsModal.user.identity_docs?.some(url => url) ? (
                   <>
                     <div className="docs-grid">
-                      {docsModal.request.identity_docs.map((url, i) => (
+                      {docsModal.user.identity_docs.map((url, i) => (
                         <div key={i} className="doc-card" onClick={() => {
-                          const validDocs = docsModal.request.identity_docs.filter(Boolean)
+                          const validDocs = docsModal.user.identity_docs.filter(Boolean)
                           openLightbox(validDocs, validDocs.indexOf(url))
                         }}>
                           {url ? (
@@ -389,39 +418,37 @@ export default function AdminUsuarios() {
                     </div>
                     {!docsModal.user.identity_verified && (
                       <div className="docs-actions">
-                        <button className="btn btn-primary" onClick={() => handleApproveIdentity(docsModal.request.id, docsModal.user.id)}>Aprobar identidad</button>
+                        <button className="btn btn-primary" onClick={() => handleApproveIdentity(docsModal.user.user_id)}>Aprobar identidad</button>
                         <div className="docs-reject">
                           <input type="text" className="input" placeholder="Motivo de rechazo..."
                             value={rejectNotes.identity}
                             onChange={e => setRejectNotes(p => ({ ...p, identity: e.target.value }))} />
-                          <button className="btn btn-secondary" onClick={() => handleRejectLayer(docsModal.request.id, 'identity')}>Rechazar</button>
+                          <button className="btn btn-secondary" onClick={() => handleRejectLayer('identity')}>Rechazar</button>
                         </div>
                       </div>
                     )}
                   </>
-                ) : docsModal.request ? (
+                ) : (
                   <div>
                     <p className="docs-empty">Sin fotos de identidad subidas aún.</p>
                     <div className="docs-status-row">
                       <span>Estado: </span>
-                      <span className={`admin-badge ${docsModal.request.status === 'pending' ? 'badge-pending' : docsModal.request.status === 'approved' ? 'badge-verified' : 'badge-rejected'}`}>
-                        {docsModal.request.status}
+                      <span className={`admin-badge ${docsModal.user.verif_status === 'pending' ? 'badge-pending' : docsModal.user.verif_status === 'approved' ? 'badge-verified' : 'badge-rejected'}`}>
+                        {statusLabel(docsModal.user.verif_status)}
                       </span>
                     </div>
-                    {docsModal.request.status === 'pending' && (
+                    {docsModal.user.verif_status === 'pending' && (
                       <div className="docs-actions">
-                        <button className="btn btn-primary" onClick={() => handleApproveVerification(docsModal.request.id, docsModal.user.id)}>Aprobar</button>
+                        <button className="btn btn-primary" onClick={() => handleApproveVerification(docsModal.user.user_id)}>Aprobar</button>
                         <div className="docs-reject">
                           <input type="text" className="input" placeholder="Motivo de rechazo..."
                             value={rejectNotes.identity}
                             onChange={e => setRejectNotes(p => ({ ...p, identity: e.target.value }))} />
-                          <button className="btn btn-secondary" onClick={() => handleRejectLayer(docsModal.request.id, 'identity')}>Rechazar</button>
+                          <button className="btn btn-secondary" onClick={() => handleRejectLayer('identity')}>Rechazar</button>
                         </div>
                       </div>
                     )}
                   </div>
-                ) : (
-                  <p className="docs-empty">Este usuario no tiene solicitud de verificación.</p>
                 )}
               </div>
 
@@ -431,15 +458,15 @@ export default function AdminUsuarios() {
                   <div className="docs-section-title">
                     <h4>Capa 2 — Negocio</h4>
                     {docsModal.user.business_verified && (
-                      <button className="btn-small btn-danger" onClick={() => handleRevokeVerification(docsModal.user.id, 'business')}>Revocar negocio</button>
+                      <button className="btn-small btn-danger" onClick={() => handleRevokeVerification(docsModal.user.user_id, 'business')}>Revocar negocio</button>
                     )}
                   </div>
-                  {docsModal.request?.business_docs?.some(url => url) ? (
+                  {docsModal.user.business_docs?.some(url => url) ? (
                   <>
                     <div className="docs-grid">
-                      {docsModal.request.business_docs.filter(Boolean).map((url, i) => (
+                      {docsModal.user.business_docs.filter(Boolean).map((url, i) => (
                         <div key={i} className="doc-card" onClick={() => {
-                          const validDocs = docsModal.request.business_docs.filter(Boolean)
+                          const validDocs = docsModal.user.business_docs.filter(Boolean)
                           openLightbox(validDocs, i)
                         }}>
                           <img src={url} alt={`Doc ${i+1}`} className="doc-thumb" />
@@ -449,12 +476,12 @@ export default function AdminUsuarios() {
                     </div>
                       {!docsModal.user.business_verified && (
                         <div className="docs-actions">
-                          <button className="btn btn-primary" onClick={() => handleApproveBusiness(docsModal.request.id, docsModal.user.id)}>Aprobar negocio</button>
+                          <button className="btn btn-primary" onClick={() => handleApproveBusiness(docsModal.user.user_id)}>Aprobar negocio</button>
                           <div className="docs-reject">
                             <input type="text" className="input" placeholder="Motivo de rechazo..."
                               value={rejectNotes.business}
                               onChange={e => setRejectNotes(p => ({ ...p, business: e.target.value }))} />
-                            <button className="btn btn-secondary" onClick={() => handleRejectLayer(docsModal.request.id, 'business')}>Rechazar</button>
+                            <button className="btn btn-secondary" onClick={() => handleRejectLayer('business')}>Rechazar</button>
                           </div>
                         </div>
                       )}
@@ -464,29 +491,27 @@ export default function AdminUsuarios() {
               )}
 
               {/* Nota informativa */}
-              {docsModal.request && (
-                <div className="docs-section docs-section-note">
-                  <h4>Nota para el usuario</h4>
-                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
-                    El usuario la verá en su panel. No cambia el estado de su solicitud.
-                  </p>
-                  {docsModal.request.admin_note && (
-                    <div style={{ background: 'rgba(184,152,95,0.07)', border: '1px solid rgba(184,152,95,0.2)', borderRadius: 'var(--radius-sm)', padding: '0.75rem', marginBottom: '0.75rem' }}>
-                      <div style={{ fontSize: '0.7rem', color: 'var(--gold)', fontWeight: 700, marginBottom: '0.35rem' }}>NOTA ACTUAL</div>
-                      <p style={{ fontSize: '0.85rem', margin: 0, fontStyle: 'italic' }}>"{docsModal.request.admin_note}"</p>
-                    </div>
-                  )}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    <textarea className="input" rows={3} placeholder="Ej: Tu foto está borrosa, sube una más clara..."
-                      value={infoNote} onChange={e => setInfoNote(e.target.value)}
-                      style={{ resize: 'vertical', fontFamily: 'Inter, sans-serif', fontSize: '0.875rem' }} />
-                    <button className="btn btn-secondary" onClick={handleSendInfoNote} disabled={sendingNote || !infoNote.trim()}>
-                      {sendingNote ? 'Enviando...' : 'Enviar nota'}
-                    </button>
-                    {noteSent && <p style={{ color: 'var(--success)', fontSize: '0.85rem', fontWeight: 600 }}>Nota enviada</p>}
+              <div className="docs-section docs-section-note">
+                <h4>Nota para el usuario</h4>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
+                  El usuario la verá en su panel. No cambia el estado de su solicitud.
+                </p>
+                {docsModal.user.admin_note && (
+                  <div style={{ background: 'rgba(184,152,95,0.07)', border: '1px solid rgba(184,152,95,0.2)', borderRadius: 'var(--radius-sm)', padding: '0.75rem', marginBottom: '0.75rem' }}>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--gold)', fontWeight: 700, marginBottom: '0.35rem' }}>NOTA ACTUAL</div>
+                    <p style={{ fontSize: '0.85rem', margin: 0, fontStyle: 'italic' }}>"{docsModal.user.admin_note}"</p>
                   </div>
+                )}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <textarea className="input" rows={3} placeholder="Ej: Tu foto está borrosa, sube una más clara..."
+                    value={infoNote} onChange={e => setInfoNote(e.target.value)}
+                    style={{ resize: 'vertical', fontFamily: 'Inter, sans-serif', fontSize: '0.875rem' }} />
+                  <button className="btn btn-secondary" onClick={handleSendInfoNote} disabled={sendingNote || !infoNote.trim()}>
+                    {sendingNote ? 'Enviando...' : 'Enviar nota'}
+                  </button>
+                  {noteSent && <p style={{ color: 'var(--success)', fontSize: '0.85rem', fontWeight: 600 }}>Nota enviada</p>}
                 </div>
-              )}
+              </div>
 
             </div>
           </div>

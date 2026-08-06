@@ -52,11 +52,9 @@ export default function Dashboard({ user, profile: externalProfile }) {
     if (!user) return
     const loadSelfie = async () => {
       const { data } = await supabase
-        .from('verification_requests')
+        .from('pirata_profiles')
         .select('selfie_url')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
         .single()
       if (data?.selfie_url) setVerificationSelfie(data.selfie_url)
     }
