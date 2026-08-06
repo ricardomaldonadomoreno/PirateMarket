@@ -25,19 +25,14 @@ export default function AdminUsuarios() {
   const loadUsers = async () => {
     setLoading(true)
     try {
-      // Leer directamente desde pirata_profiles, con JOIN a users para datos básicos
-      const { data, error } = await supabase
+      // Leer pirata_profiles directamente (tabla principal)
+      const { data: profiles, error } = await supabase
         .from('pirata_profiles')
-        .select(`
-          *,
-          user:users(
-            display_name, email, user_type, is_banned, created_at, avatar_url, whatsapp
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
 
       if (error) { console.error('loadUsers error:', error); setLoading(false); return }
-      if (data) await processUsers(data)
+      if (profiles) await processUsers(profiles)
     } catch (err) {
       console.error('loadUsers error:', err)
     } finally {
@@ -48,6 +43,17 @@ export default function AdminUsuarios() {
   const processUsers = async (profilesData) => {
     const userIds = profilesData.map(p => p.user_id)
 
+    // Cargar datos de users (cuenta raíz) usando los user_ids de pirata_profiles
+    const { data: usersRoot } = await supabase
+      .from('users')
+      .select('id, display_name, email, user_type, is_banned, created_at, avatar_url, whatsapp')
+      .in('id', userIds)
+
+    const usersMap = {}
+    if (usersRoot) {
+      usersRoot.forEach(u => { usersMap[u.id] = u })
+    }
+
     // Cargar verificaciones de pirata
     const { data: requests } = await supabase
       .from('verification_requests')
@@ -56,7 +62,6 @@ export default function AdminUsuarios() {
       .eq('source', 'pirata')
       .order('created_at', { ascending: false })
 
-    // Mapear solicitudes por user_id (más reciente primero)
     const reqMap = {}
     if (requests) {
       requests.forEach(r => { if (!reqMap[r.user_id]) reqMap[r.user_id] = r })
@@ -66,40 +71,42 @@ export default function AdminUsuarios() {
     const userIdsWithVerification = new Set(Object.keys(reqMap))
     const profilesWithVerification = profilesData.filter(p => userIdsWithVerification.has(p.user_id))
 
-    // Aplanar: los datos de pirata_profiles están directamente en el objeto,
-    // y los de users están en .user
-    const flattened = profilesWithVerification.map(p => ({
-      id: p.id,
-      user_id: p.user_id,
-      // Datos de pirata_profiles (directos)
-      identity: p.identity,
-      full_name: p.full_name || null,
-      country: p.country || null,
-      city: p.city || null,
-      phone: p.phone || null,
-      shop_name: p.shop_name || null,
-      shop_bio: p.shop_bio || null,
-      shop_link: p.shop_link || null,
-      shop_hours: p.shop_hours || null,
-      shop_color: p.shop_color || null,
-      shop_logo_url: p.shop_logo_url || null,
-      shop_banner_url: p.shop_banner_url || null,
-      identity_verified: p.identity_verified || false,
-      business_verified: p.business_verified || false,
-      identity_locked: p.identity_locked || false,
-      allow_identity_edit: p.allow_identity_edit || false,
-      is_premium: p.is_premium || false,
-      premium_until: p.premium_until || null,
-      bio: p.bio || null,
-      // Datos de users (del JOIN)
-      display_name: p.user?.display_name || null,
-      email: p.user?.email || null,
-      user_type: p.user?.user_type || null,
-      is_banned: p.user?.is_banned || false,
-      avatar_url: p.user?.avatar_url || null,
-      whatsapp: p.user?.whatsapp || null,
-      created_at: p.user?.created_at || p.created_at,
-    }))
+    // Aplanar: datos de pirata_profiles directo + datos de users por user_id
+    const flattened = profilesWithVerification.map(p => {
+      const u = usersMap[p.user_id] || {}
+      return {
+        id: p.id,
+        user_id: p.user_id,
+        // Datos de pirata_profiles
+        identity: p.identity,
+        full_name: p.full_name || null,
+        country: p.country || null,
+        city: p.city || null,
+        phone: p.phone || null,
+        shop_name: p.shop_name || null,
+        shop_bio: p.shop_bio || null,
+        shop_link: p.shop_link || null,
+        shop_hours: p.shop_hours || null,
+        shop_color: p.shop_color || null,
+        shop_logo_url: p.shop_logo_url || null,
+        shop_banner_url: p.shop_banner_url || null,
+        identity_verified: p.identity_verified || false,
+        business_verified: p.business_verified || false,
+        identity_locked: p.identity_locked || false,
+        allow_identity_edit: p.allow_identity_edit || false,
+        is_premium: p.is_premium || false,
+        premium_until: p.premium_until || null,
+        bio: p.bio || null,
+        created_at: p.created_at,
+        // Datos de la cuenta raíz (users) por referencia user_id
+        display_name: u.display_name || null,
+        email: u.email || null,
+        user_type: u.user_type || null,
+        is_banned: u.is_banned || false,
+        avatar_url: u.avatar_url || null,
+        whatsapp: u.whatsapp || null,
+      }
+    })
     setUsers(flattened)
     setVerificationRequests(reqMap)
 
@@ -123,13 +130,19 @@ export default function AdminUsuarios() {
     if (docsModal?.user?.id === userId) {
       const { data: freshProfile } = await supabase
         .from('pirata_profiles')
-        .select(`
-          *,
-          user:users(display_name, email, user_type, is_banned, created_at, avatar_url, whatsapp)
-        `)
+        .select('*')
         .eq('user_id', userId)
         .single()
+
+      // Cargar datos de la cuenta raíz
+      const { data: freshRoot } = await supabase
+        .from('users')
+        .select('display_name, email, user_type, is_banned, created_at, avatar_url, whatsapp')
+        .eq('id', userId)
+        .single()
+
       // Aplanar
+      const u = freshRoot || {}
       const flatUser = freshProfile ? {
         id: freshProfile.id,
         user_id: freshProfile.user_id,
@@ -152,13 +165,13 @@ export default function AdminUsuarios() {
         is_premium: freshProfile.is_premium || false,
         premium_until: freshProfile.premium_until || null,
         bio: freshProfile.bio || null,
-        display_name: freshProfile.user?.display_name || null,
-        email: freshProfile.user?.email || null,
-        user_type: freshProfile.user?.user_type || null,
-        is_banned: freshProfile.user?.is_banned || false,
-        avatar_url: freshProfile.user?.avatar_url || null,
-        whatsapp: freshProfile.user?.whatsapp || null,
-        created_at: freshProfile.user?.created_at || freshProfile.created_at,
+        created_at: freshProfile.created_at,
+        display_name: u.display_name || null,
+        email: u.email || null,
+        user_type: u.user_type || null,
+        is_banned: u.is_banned || false,
+        avatar_url: u.avatar_url || null,
+        whatsapp: u.whatsapp || null,
       } : null
       const { data: freshReq } = await supabase
         .from('verification_requests')
