@@ -25,18 +25,15 @@ export default function AdminUsuarios() {
   const loadUsers = async () => {
     setLoading(true)
     try {
+      // Leer directamente desde pirata_profiles, con JOIN a users para datos básicos
       const { data, error } = await supabase
-        .from('users')
+        .from('pirata_profiles')
         .select(`
-          id, display_name, email, user_type,
-          is_banned, is_premium, premium_until,
-          created_at, avatar_url, whatsapp,
-          pirata_profiles!inner(
-            full_name, country, city, phone, shop_name,
-            identity_verified, identity_locked, business_verified, allow_identity_edit
+          *,
+          user:users(
+            display_name, email, user_type, is_banned, created_at, avatar_url, whatsapp
           )
         `)
-        .neq('user_type', 'collaborator')
         .order('created_at', { ascending: false })
 
       if (error) { console.error('loadUsers error:', error); setLoading(false); return }
@@ -48,8 +45,8 @@ export default function AdminUsuarios() {
     }
   }
 
-  const processUsers = async (usersData) => {
-    const userIds = usersData.map(u => u.id)
+  const processUsers = async (profilesData) => {
+    const userIds = profilesData.map(p => p.user_id)
 
     // Cargar verificaciones de pirata
     const { data: requests } = await supabase
@@ -65,27 +62,48 @@ export default function AdminUsuarios() {
       requests.forEach(r => { if (!reqMap[r.user_id]) reqMap[r.user_id] = r })
     }
 
-    // Solo mostrar usuarios que han iniciado verificación (tienen verification_request)
+    // Solo mostrar perfiles que han iniciado verificación
     const userIdsWithVerification = new Set(Object.keys(reqMap))
-    const usersWithVerification = usersData.filter(u => userIdsWithVerification.has(u.id))
+    const profilesWithVerification = profilesData.filter(p => userIdsWithVerification.has(p.user_id))
 
-    // Aplanar pirata_profiles al nivel del usuario
-    const flattened = usersWithVerification.map(u => ({
-      ...u,
-      full_name: u.pirata_profiles?.full_name || null,
-      country: u.pirata_profiles?.country || null,
-      city: u.pirata_profiles?.city || null,
-      phone: u.pirata_profiles?.phone || null,
-      shop_name: u.pirata_profiles?.shop_name || null,
-      identity_verified: u.pirata_profiles?.identity_verified || false,
-      identity_locked: u.pirata_profiles?.identity_locked || false,
-      business_verified: u.pirata_profiles?.business_verified || false,
-      allow_identity_edit: u.pirata_profiles?.allow_identity_edit || false,
+    // Aplanar: los datos de pirata_profiles están directamente en el objeto,
+    // y los de users están en .user
+    const flattened = profilesWithVerification.map(p => ({
+      id: p.id,
+      user_id: p.user_id,
+      // Datos de pirata_profiles (directos)
+      identity: p.identity,
+      full_name: p.full_name || null,
+      country: p.country || null,
+      city: p.city || null,
+      phone: p.phone || null,
+      shop_name: p.shop_name || null,
+      shop_bio: p.shop_bio || null,
+      shop_link: p.shop_link || null,
+      shop_hours: p.shop_hours || null,
+      shop_color: p.shop_color || null,
+      shop_logo_url: p.shop_logo_url || null,
+      shop_banner_url: p.shop_banner_url || null,
+      identity_verified: p.identity_verified || false,
+      business_verified: p.business_verified || false,
+      identity_locked: p.identity_locked || false,
+      allow_identity_edit: p.allow_identity_edit || false,
+      is_premium: p.is_premium || false,
+      premium_until: p.premium_until || null,
+      bio: p.bio || null,
+      // Datos de users (del JOIN)
+      display_name: p.user?.display_name || null,
+      email: p.user?.email || null,
+      user_type: p.user?.user_type || null,
+      is_banned: p.user?.is_banned || false,
+      avatar_url: p.user?.avatar_url || null,
+      whatsapp: p.user?.whatsapp || null,
+      created_at: p.user?.created_at || p.created_at,
     }))
     setUsers(flattened)
     setVerificationRequests(reqMap)
 
-    const filteredIds = usersWithVerification.map(u => u.id)
+    const filteredIds = profilesWithVerification.map(p => p.user_id)
 
     const { data: listings } = await supabase
       .from('listings')
@@ -103,23 +121,44 @@ export default function AdminUsuarios() {
   const refreshAll = async (userId) => {
     await loadUsers()
     if (docsModal?.user?.id === userId) {
-      const { data: freshUser } = await supabase
-        .from('users')
-        .select('id, display_name, email, user_type, is_banned, is_premium, premium_until, created_at, avatar_url, whatsapp, pirata_profiles(full_name, country, city, phone, shop_name, identity_verified, identity_locked, business_verified, allow_identity_edit)')
-        .eq('id', userId)
+      const { data: freshProfile } = await supabase
+        .from('pirata_profiles')
+        .select(`
+          *,
+          user:users(display_name, email, user_type, is_banned, created_at, avatar_url, whatsapp)
+        `)
+        .eq('user_id', userId)
         .single()
-      // Aplanar pirata_profiles
-      const flatUser = freshUser ? {
-        ...freshUser,
-        full_name: freshUser.pirata_profiles?.full_name || null,
-        country: freshUser.pirata_profiles?.country || null,
-        city: freshUser.pirata_profiles?.city || null,
-        phone: freshUser.pirata_profiles?.phone || null,
-        shop_name: freshUser.pirata_profiles?.shop_name || null,
-        identity_verified: freshUser.pirata_profiles?.identity_verified || false,
-        identity_locked: freshUser.pirata_profiles?.identity_locked || false,
-        business_verified: freshUser.pirata_profiles?.business_verified || false,
-        allow_identity_edit: freshUser.pirata_profiles?.allow_identity_edit || false,
+      // Aplanar
+      const flatUser = freshProfile ? {
+        id: freshProfile.id,
+        user_id: freshProfile.user_id,
+        identity: freshProfile.identity,
+        full_name: freshProfile.full_name || null,
+        country: freshProfile.country || null,
+        city: freshProfile.city || null,
+        phone: freshProfile.phone || null,
+        shop_name: freshProfile.shop_name || null,
+        shop_bio: freshProfile.shop_bio || null,
+        shop_link: freshProfile.shop_link || null,
+        shop_hours: freshProfile.shop_hours || null,
+        shop_color: freshProfile.shop_color || null,
+        shop_logo_url: freshProfile.shop_logo_url || null,
+        shop_banner_url: freshProfile.shop_banner_url || null,
+        identity_verified: freshProfile.identity_verified || false,
+        business_verified: freshProfile.business_verified || false,
+        identity_locked: freshProfile.identity_locked || false,
+        allow_identity_edit: freshProfile.allow_identity_edit || false,
+        is_premium: freshProfile.is_premium || false,
+        premium_until: freshProfile.premium_until || null,
+        bio: freshProfile.bio || null,
+        display_name: freshProfile.user?.display_name || null,
+        email: freshProfile.user?.email || null,
+        user_type: freshProfile.user?.user_type || null,
+        is_banned: freshProfile.user?.is_banned || false,
+        avatar_url: freshProfile.user?.avatar_url || null,
+        whatsapp: freshProfile.user?.whatsapp || null,
+        created_at: freshProfile.user?.created_at || freshProfile.created_at,
       } : null
       const { data: freshReq } = await supabase
         .from('verification_requests')
@@ -141,11 +180,11 @@ export default function AdminUsuarios() {
 
   const handleTogglePremium = async (userId, isPremium) => {
     if (isPremium) {
-      await supabase.from('users').update({ is_premium: false, premium_until: null }).eq('id', userId)
+      await supabase.from('pirata_profiles').update({ is_premium: false, premium_until: null }).eq('user_id', userId)
     } else {
       const until = new Date()
       until.setFullYear(until.getFullYear() + 1)
-      await supabase.from('users').update({ is_premium: true, premium_until: until.toISOString() }).eq('id', userId)
+      await supabase.from('pirata_profiles').update({ is_premium: true, premium_until: until.toISOString() }).eq('user_id', userId)
     }
     refreshAll(userId)
   }
