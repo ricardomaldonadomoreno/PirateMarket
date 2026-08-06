@@ -63,13 +63,16 @@ export default function AdminUsuarios() {
       .order('created_at', { ascending: false })
 
     const reqMap = {}
+    const pendingUserIds = new Set()
     if (requests) {
-      requests.forEach(r => { if (!reqMap[r.user_id]) reqMap[r.user_id] = r })
+      requests.forEach(r => {
+        if (!reqMap[r.user_id]) reqMap[r.user_id] = r
+        if (r.status === 'pending') pendingUserIds.add(r.user_id)
+      })
     }
 
-    // Solo mostrar perfiles que han iniciado verificación
-    const userIdsWithVerification = new Set(Object.keys(reqMap))
-    const profilesWithVerification = profilesData.filter(p => userIdsWithVerification.has(p.user_id))
+    // Solo mostrar perfiles con verificación pendiente
+    const profilesWithVerification = profilesData.filter(p => pendingUserIds.has(p.user_id))
 
     // Aplanar: datos de pirata_profiles directo + datos de users por user_id
     const flattened = profilesWithVerification.map(p => {
