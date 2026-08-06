@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { MapContainer, TileLayer, Marker, Circle } from 'react-leaflet'
+import { X, ZoomIn } from 'lucide-react'
 import 'leaflet/dist/leaflet.css'
 import { getListingBySlug, incrementViews, incrementContacts, incrementShares } from '../lib/supabase'
 import { formatPrice, timeAgo, timeUntilExpiry, generateWhatsAppURL, generateShareURL, copyToClipboard, openInMaps, getUserBadge } from '../lib/utils'
@@ -15,6 +16,7 @@ export default function ListingDetail({ user }) {
   const [loading, setLoading] = useState(true)
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0)
   const [showMapOptions, setShowMapOptions] = useState(false)
+  const [lightboxIndex, setLightboxIndex] = useState(null)
 
   useEffect(() => {
     loadListing()
@@ -109,6 +111,9 @@ export default function ListingDetail({ user }) {
               <div className="photo-gallery">
                 <div className="photo-main">
                   <img src={listing.photos[currentPhotoIndex]} alt={listing.title} />
+                  <button className="photo-zoom-btn" onClick={() => setLightboxIndex(currentPhotoIndex)} title="Ver imagen completa">
+                    <ZoomIn size={20} />
+                  </button>
                   {listing.photos.length > 1 && (
                     <>
                       <button className="photo-nav photo-prev" onClick={prevPhoto}>‹</button>
@@ -237,6 +242,25 @@ export default function ListingDetail({ user }) {
           </div>
         </div>
       </div>
+
+      {/* Lightbox para imagen completa */}
+      {lightboxIndex !== null && (
+        <div className="lightbox-overlay" onClick={() => setLightboxIndex(null)}>
+          <div className="lightbox-content" onClick={e => e.stopPropagation()}>
+            <button className="lightbox-close" onClick={() => setLightboxIndex(null)}>
+              <X size={24} />
+            </button>
+            <button className="lightbox-nav lightbox-prev" onClick={() => setLightboxIndex(prev => prev > 0 ? prev - 1 : listing.photos.length - 1)}>
+              ‹
+            </button>
+            <img src={listing.photos[lightboxIndex]} alt={listing.title} className="lightbox-img" />
+            <button className="lightbox-nav lightbox-next" onClick={() => setLightboxIndex(prev => prev < listing.photos.length - 1 ? prev + 1 : 0)}>
+              ›
+            </button>
+            <div className="lightbox-indicator">{lightboxIndex + 1} / {listing.photos.length}</div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
