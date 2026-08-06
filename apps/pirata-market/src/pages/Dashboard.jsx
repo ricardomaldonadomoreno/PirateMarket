@@ -55,7 +55,6 @@ export default function Dashboard({ user, profile: externalProfile }) {
         .from('verification_requests')
         .select('selfie_url')
         .eq('user_id', user.id)
-        .eq('source', 'pirata')
         .order('created_at', { ascending: false })
         .limit(1)
         .single()

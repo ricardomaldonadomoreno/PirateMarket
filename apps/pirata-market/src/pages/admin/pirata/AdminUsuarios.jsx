@@ -54,12 +54,11 @@ export default function AdminUsuarios() {
       usersRoot.forEach(u => { usersMap[u.id] = u })
     }
 
-    // 3. Solicitudes de verificación de pirata (cualquier estado)
+    // 3. Solicitudes de verificación (cualquier estado)
     const { data: requests } = await supabase
       .from('verification_requests')
       .select('*')
       .in('user_id', userIds)
-      .eq('source', 'pirata')
       .order('created_at', { ascending: false })
 
     const reqMap = {}
@@ -140,7 +139,6 @@ export default function AdminUsuarios() {
         .from('verification_requests')
         .select('*')
         .eq('user_id', userId)
-        .eq('source', 'pirata')
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle()
