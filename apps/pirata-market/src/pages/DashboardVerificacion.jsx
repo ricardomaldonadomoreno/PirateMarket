@@ -148,39 +148,24 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
     if (newType === profile?.identity) return
     const label = ACCOUNT_TYPES.find(o => o.value === newType)?.label || newType
     const requiresBusinessVerification = newType === 'shop' || newType === 'wholesale'
-    const isCurrentlyLocked = profile?.identity_locked && profile?.verif_status === 'pending'
-    const isAlreadyVerified = profile?.identity_verified
 
-    const confirmMsg = isCurrentlyLocked
-      ? `¿Cambiar tu tipo de cuenta a ${label}? Esto cancelará tu solicitud de verificación actual y desbloqueará tus datos para una nueva solicitud.`
-      : requiresBusinessVerification
-        ? `¿Cambiar tu tipo de cuenta a ${label}? Deberás completar una nueva verificación de negocio. Tu verificación de identidad se mantiene.`
-        : `¿Cambiar tu tipo de cuenta a ${label}? Tu verificación de negocio se reseteará, pero tu identidad se mantendrá.`
+    const confirmMsg = requiresBusinessVerification
+      ? `¿Cambiar tu tipo de cuenta a ${label}? Necesitarás subir documentos de negocio. Tu verificación de identidad no se afecta.`
+      : `¿Cambiar tu tipo de cuenta a ${label}? La capa de negocio se quita. Tu verificación de identidad no se afecta.`
 
     if (!confirm(confirmMsg)) return
 
     setChangingType(true)
     try {
-      // Si la identidad ya está verificada, NO resetear nada de identidad
-      const resetIdentity = !isAlreadyVerified && isCurrentlyLocked
-      const keepIdentityVerified = isAlreadyVerified
-
+      // Solo cambiar el tipo y resetear la verificación de negocio
+      // La verificación de identidad (identity_verified, identity_locked, verif_status,
+      // identity_docs, selfie_url, admin_note) NUNCA se toca aquí.
       await supabase.from('pirata_profiles').update({
         identity: newType,
         business_verified: false,
-        identity_locked: keepIdentityVerified ? true : (resetIdentity ? false : profile?.identity_locked || false),
-        verif_status: keepIdentityVerified ? 'approved' : (resetIdentity ? null : profile?.verif_status || null),
-        // Solo resetear docs de identidad si NO estaba verificado
-        identity_docs: keepIdentityVerified ? undefined : (resetIdentity ? [null, null] : undefined),
-        selfie_url: keepIdentityVerified ? undefined : (resetIdentity ? null : undefined),
-        // Siempre resetear docs de negocio y nota
-        business_docs: [],
-        admin_note: keepIdentityVerified ? null : undefined,
       }).eq('user_id', user.id)
 
       setBusinessFiles([])
-      setAnversoFile(null)
-      setReversoFile(null)
       if (onProfileUpdate) await onProfileUpdate(user.id)
     } catch (error) { alert('Error al cambiar tipo: ' + error.message) }
     finally { setChangingType(false) }
