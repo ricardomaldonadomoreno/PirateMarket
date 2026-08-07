@@ -1,55 +1,97 @@
 /* AdminCatalogos.css — estilos para la gestión de catálogos premium */
 
-/* ── Tabla de catálogos ── */
-.admin-catalogs-table {
+/* ── Buscador ── */
+.catalog-search-section {
+  margin-bottom: 1.5rem;
+}
+
+.catalog-search-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 600px;
+}
+
+.catalog-search-input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+  background: var(--dark);
+  border: 1px solid var(--dark-border);
+  border-radius: var(--radius-lg);
+  color: var(--text-light);
+}
+
+.catalog-search-input:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
+}
+
+/* ── Resultados ── */
+.catalog-results {
+  margin-top: 1rem;
+}
+
+.catalog-results-count {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+
+/* ── Grid de tarjetas ── */
+.catalog-users-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 1rem;
+}
+
+/* ── Tarjeta de usuario ── */
+.catalog-user-card {
+  background: var(--dark);
+  border: 1px solid var(--dark-border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
   display: flex;
   flex-direction: column;
-}
-
-.admin-catalogs-header {
-  display: grid;
-  grid-template-columns: 2fr 0.8fr 2fr 1.2fr 1.2fr;
   gap: 1rem;
-  padding: 0.75rem 1rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-muted);
-  border-bottom: 1px solid var(--dark-border);
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.admin-catalog-row {
-  display: grid;
-  grid-template-columns: 2fr 0.8fr 2fr 1.2fr 1.2fr;
-  gap: 1rem;
-  padding: 1rem;
-  align-items: center;
-  border-bottom: 1px solid var(--dark-border);
-  font-size: 0.875rem;
-  transition: background 0.2s;
+.catalog-user-card:hover {
+  border-color: rgba(212, 175, 55, 0.3);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 }
 
-.admin-catalog-row:hover {
-  background: var(--dark);
-}
-
-.admin-catalog-row.inactive {
-  opacity: 0.65;
-}
-
-/* ── Info de tienda ── */
-.catalog-info {
+/* ── Header de tarjeta ── */
+.card-header-row {
   display: flex;
-  align-items: center;
+  justify-content: space-between;
+  align-items: flex-start;
   gap: 0.75rem;
 }
 
-.catalog-logo {
-  width: 44px;
-  height: 44px;
-  border-radius: var(--radius-md);
-  overflow: hidden;
+.card-user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.card-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--gold);
+  flex-shrink: 0;
+}
+
+.card-avatar-placeholder {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
   background: var(--dark-border);
   display: flex;
   align-items: center;
@@ -60,92 +102,165 @@
   flex-shrink: 0;
 }
 
-.catalog-logo img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.catalog-name {
+.card-display-name {
   font-weight: 600;
+  font-size: 1rem;
   color: var(--text-light);
 }
 
-.catalog-email {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-}
-
-/* ── Datos de tienda ── */
-.catalog-shop-name {
-  font-weight: 600;
-  color: var(--text-light);
-  margin-bottom: 0.25rem;
-}
-
-.catalog-link {
+.card-email {
   font-size: 0.75rem;
   color: var(--text-muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 200px;
 }
 
-.catalog-hours {
+.card-shop-name {
+  font-size: 0.8rem;
+  color: var(--gold);
+  font-weight: 500;
+  margin-top: 0.15rem;
+}
+
+/* ── Badge de tipo ── */
+.card-type-badge {
+  flex-shrink: 0;
+}
+
+.type-badge-shop {
+  background: rgba(76, 175, 80, 0.15);
+  color: #4CAF50;
+  padding: 0.3rem 0.6rem;
+  border-radius: var(--radius-sm);
   font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.type-badge-wholesale {
+  background: rgba(156, 39, 176, 0.15);
+  color: #CE93D8;
+  padding: 0.3rem 0.6rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.type-badge-person {
+  background: rgba(33, 150, 243, 0.15);
+  color: #64B5F6;
+  padding: 0.3rem 0.6rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.type-badge-none {
+  background: rgba(158, 158, 158, 0.15);
   color: var(--text-muted);
+  padding: 0.3rem 0.6rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
 }
 
-/* ── Badges ── */
-.badge-premium {
+/* ── Sección premium ── */
+.card-premium-section {
+  padding: 0.75rem;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.premium-badge-active {
   display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
 }
 
-.badge-premium span:first-child {
+.premium-star {
+  font-size: 1rem;
+}
+
+.premium-label {
   color: var(--gold);
   font-weight: 600;
 }
 
-.badge-premium-date {
-  font-size: 0.7rem;
+.premium-date {
   color: var(--text-muted);
+  font-size: 0.75rem;
+  margin-left: auto;
 }
 
-.badge-expired span:first-child {
+.premium-badge-expired {
+  font-size: 0.85rem;
   color: #e74c3c;
   font-weight: 600;
 }
 
-.badge-free {
-  color: var(--text-muted);
+.premium-badge-none {
   font-size: 0.85rem;
+  color: var(--text-muted);
 }
 
 /* ── Acciones ── */
-.catalog-actions {
+.card-actions {
   display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.5rem;
+}
+
+/* ── Nota ── */
+.card-note {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--dark-border);
+}
+
+/* ── Estado vacío ── */
+.catalog-empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--text-muted);
+}
+
+.catalog-empty-icon {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.catalog-hint {
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+  opacity: 0.7;
+}
+
+/* ── Error ── */
+.catalog-error {
+  padding: 1rem;
+  background: rgba(231, 76, 60, 0.1);
+  border: 1px solid rgba(231, 76, 60, 0.3);
+  border-radius: var(--radius-md);
+  color: #e74c3c;
+  font-size: 0.85rem;
 }
 
 /* ── Responsive ── */
-@media (max-width: 1024px) {
-  .admin-catalogs-header,
-  .admin-catalog-row {
-    grid-template-columns: 1fr 1fr;
+@media (max-width: 480px) {
+  .catalog-users-grid {
+    grid-template-columns: 1fr;
   }
 
-  .admin-catalogs-header span:nth-child(n+3),
-  .admin-catalog-row > div:nth-child(n+3) {
-    display: none;
-  }
-
-  .admin-catalog-row > div:last-child {
-    display: flex !important;
+  .catalog-search-row {
     flex-direction: column;
-    gap: 0.4rem;
+  }
+
+  .catalog-search-input {
+    width: 100%;
+  }
+
+  .catalog-search-row .btn {
+    width: 100%;
   }
 }

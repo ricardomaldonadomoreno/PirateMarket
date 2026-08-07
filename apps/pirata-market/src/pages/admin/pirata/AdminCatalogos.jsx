@@ -1,102 +1,123 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import AdminNavbarPirata from '../../../components/AdminNavbarPirata'
 import './AdminCatalogos.css'
 
 export default function AdminCatalogos() {
-  const [shops, setShops] = useState([])
-  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [filterPremium, setFilterPremium] = useState('all') // all | active | inactive
+  const [result, setResult] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [updating, setUpdating] = useState(false)
 
-  useEffect(() => { loadShops() }, [])
-
-  const loadShops = async () => {
+  // Buscar usuario por email o display_name
+  const handleSearch = async () => {
+    const q = search.trim()
+    if (!q) return
     setLoading(true)
+    setResult(null)
     try {
-      const { data, error } = await supabase
+      // Buscar en users
+      const { data: usersData } = await supabase
         .from('users')
-        .select(`
-          id, email, display_name, created_at,
-          pirata_profiles(
-            identity, shop_name, shop_bio, shop_link, shop_hours, shop_color, shop_logo_url, shop_banner_url,
-            is_premium, premium_until
-          )
-        `)
-        .in('pirata_profiles.identity', ['shop', 'wholesale'])
-        .order('pirata_profiles.is_premium', { ascending: false })
-        .order('created_at', { ascending: false })
+        .select('id, email, display_name, avatar_url, whatsapp, country, is_banned, created_at, user_type')
+        .or(`email.ilike.%${q}%,display_name.ilike.%${q}%`)
+        .limit(10)
 
-      if (error) throw error
-      if (data) setShops(data)
+      if (!usersData || usersData.length === 0) {
+        setResult({ notFound: true, query: q })
+        setLoading(false)
+        return
+      }
+
+      // Para cada usuario encontrado, cargar su pirata_profiles
+      const userIds = usersData.map(u => u.id)
+      const { data: profilesData } = await supabase
+        .from('pirata_profiles')
+        .select('user_id, identity, shop_name, shop_logo_url, shop_banner_url, shop_color, is_premium, premium_until, identity_verified, business_verified')
+        .in('user_id', userIds)
+
+      // Fusionar
+      const profilesMap = {}
+      if (profilesData) {
+        profilesData.forEach(p => { profilesMap[p.user_id] = p })
+      }
+
+      const merged = usersData.map(u => ({
+        ...u,
+        pirata: profilesMap[u.id] || null,
+      }))
+
+      setResult({ users: merged, query: q })
     } catch (error) {
-      console.error('Error cargando catálogos:', error)
+      console.error('Error buscando:', error)
+      setResult({ error: error.message })
     } finally {
       setLoading(false)
     }
   }
 
-  const handleTogglePremium = async (userId, currentStatus, currentUntil) => {
-    if (!confirm(currentStatus ? '¿Desactivar catálogo premium?' : '¿Activar catálogo premium?')) return
+  // Activar/Desactivar premium
+  const handleTogglePremium = async (userId, isCurrentlyPremium) => {
+    if (!confirm(isCurrentlyPremium ? '¿Desactivar catálogo premium?' : '¿Activar catálogo premium?')) return
+    setUpdating(true)
     try {
-      const update = currentStatus
-        ? { is_premium: false, premium_until: null }
-        : { is_premium: true, premium_until: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString() }
-
-      const { error } = await supabase
-        .from('pirata_profiles')
-        .update(update)
-        .eq('id', userId)
-
-      if (error) throw error
-      loadShops()
+      if (isCurrentlyPremium) {
+        // Desactivar
+        await supabase.from('pirata_profiles').update({
+          is_premium: false,
+          premium_until: null,
+        }).eq('user_id', userId)
+      } else {
+        // Activar con duración seleccionable
+        const days = parseInt(prompt('Días de duración del premium (ej: 30, 60, 90):', '30'))
+        if (!days || days <= 0) { setUpdating(false); return }
+        const until = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString()
+        await supabase.from('pirata_profiles').update({
+          is_premium: true,
+          premium_until: until,
+        }).eq('user_id', userId)
+      }
+      // Recargar resultado
+      await handleSearch()
     } catch (error) {
       alert('Error: ' + error.message)
+    } finally {
+      setUpdating(false)
     }
   }
 
-  const handleExtendPremium = async (userId) => {
-    const extraDays = parseInt(prompt('Días adicionales a agregar:', '30'))
-    if (!extraDays || extraDays <= 0) return
+  // Extender premium
+  const handleExtend = async (userId, premiumUntil) => {
+    const days = parseInt(prompt('Días adicionales a extender:', '30'))
+    if (!days || days <= 0) return
+    setUpdating(true)
     try {
-      const { data: shop } = shops.find(s => s.id === userId) || {}
-      const currentUntil = shop?.premium_until
-      const baseDate = currentUntil && new Date(currentUntil) > new Date()
-        ? new Date(currentUntil)
+      const baseDate = premiumUntil && new Date(premiumUntil) > new Date()
+        ? new Date(premiumUntil)
         : new Date()
-      baseDate.setDate(baseDate.getDate() + extraDays)
-
-      const { error } = await supabase
-        .from('pirata_profiles')
-        .update({ is_premium: true, premium_until: baseDate.toISOString() })
-        .eq('id', userId)
-
-      if (error) throw error
-      loadShops()
+      baseDate.setDate(baseDate.getDate() + days)
+      await supabase.from('pirata_profiles').update({
+        is_premium: true,
+        premium_until: baseDate.toISOString(),
+      }).eq('user_id', userId)
+      await handleSearch()
     } catch (error) {
       alert('Error: ' + error.message)
+    } finally {
+      setUpdating(false)
     }
   }
 
-  const isPremiumActive = (shop) =>
-    shop.pirata_profiles?.is_premium && shop.pirata_profiles?.premium_until && new Date(shop.pirata_profiles.premium_until) > new Date()
-
-  const filtered = shops.filter(s => {
-    const matchSearch = s.display_name?.toLowerCase().includes(search.toLowerCase()) ||
-      s.email?.toLowerCase().includes(search.toLowerCase()) ||
-      s.pirata_profiles?.shop_name?.toLowerCase().includes(search.toLowerCase())
-    const matchPremium = filterPremium === 'all' ||
-      (filterPremium === 'active' && isPremiumActive(s)) ||
-      (filterPremium === 'inactive' && !isPremiumActive(s))
-    return matchSearch && matchPremium
-  })
+  const isPremiumActive = (pirata) =>
+    pirata?.is_premium && pirata?.premium_until && new Date(pirata.premium_until) > new Date()
 
   const fmt = (date) => date ? new Date(date).toLocaleDateString('es-BO', {
-    day: '2-digit', month: '2-digit', year: 'numeric'
+    day: '2-digit', month: 'short', year: 'numeric'
   }) : '—'
 
-  const premiumExpired = (shop) =>
-    shop.pirata_profiles?.is_premium && shop.pirata_profiles?.premium_until && new Date(shop.pirata_profiles.premium_until) <= new Date()
+  const fmtShort = (date) => date ? new Date(date).toLocaleDateString('es-BO', {
+    day: '2-digit', month: 'short'
+  }) : '—'
 
   return (
     <div className="admin-page">
@@ -104,111 +125,154 @@ export default function AdminCatalogos() {
       <div className="admin-content">
         <div className="admin-page-header">
           <h1 className="serif luxury-gold">Catálogos Premium</h1>
-          <p className="admin-page-sub">
-            {shops.length} tiendas/mayoristas · {shops.filter(isPremiumActive).length} premium activos
-          </p>
+          <p className="admin-page-sub">Busca un usuario y activa o desactiva su catálogo premium</p>
         </div>
 
-        <div className="admin-filters-bar">
-          <input
-            type="text" className="input" placeholder="Buscar por nombre, email o tienda..."
-            value={search} onChange={e => setSearch(e.target.value)}
-            style={{ maxWidth: '300px' }}
-          />
-          <div className="admin-filter-btns">
-            {['all', 'active', 'inactive'].map(f => (
-              <button key={f} className={`filter-btn ${filterPremium === f ? 'active' : ''}`}
-                onClick={() => setFilterPremium(f)}>
-                {f === 'all' ? 'Todos' : f === 'active' ? '✓ Premium activo' : '✗ Sin premium'}
-              </button>
-            ))}
+        {/* Buscador */}
+        <div className="catalog-search-section">
+          <div className="catalog-search-row">
+            <input
+              type="text"
+              className="input catalog-search-input"
+              placeholder="Buscar por email o nombre de usuario..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') handleSearch() }}
+            />
+            <button
+              className="btn btn-primary"
+              onClick={handleSearch}
+              disabled={loading || updating}
+              style={{ marginLeft: '0.5rem' }}
+            >
+              {loading ? 'Buscando...' : '🔍 Buscar'}
+            </button>
           </div>
         </div>
 
-        {loading ? (
-          <div className="admin-loading">
-            {[...Array(5)].map((_, i) => <div key={i} className="skeleton-row" style={{ height: '60px' }} />)}
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="admin-empty">
-            <span className="admin-empty-icon">🏪</span>
-            <p>No se encontraron tiendas/mayoristas</p>
-          </div>
-        ) : (
-          <div className="admin-catalogs-table">
-            <div className="admin-catalogs-header">
-              <span>Tienda</span>
-              <span>Tipo</span>
-              <span>Datos tienda</span>
-              <span>Premium</span>
-              <span>Acciones</span>
-            </div>
-            {filtered.map(shop => {
-              const pp = shop.pirata_profiles || {}
-              const active = isPremiumActive(shop)
-              const expired = premiumExpired(shop)
-              return (
-                <div key={shop.id} className={`admin-catalog-row ${!active ? 'inactive' : ''}`}>
-                  <div className="catalog-info">
-                    <div className="catalog-logo">
-                      {pp.shop_logo_url ? (
-                        <img src={pp.shop_logo_url} alt={pp.shop_name || shop.display_name} />
-                      ) : (
-                        <span>{shop.display_name?.charAt(0).toUpperCase()}</span>
-                      )}
-                    </div>
-                    <div>
-                      <div className="catalog-name">{shop.display_name}</div>
-                      <div className="catalog-email">{shop.email}</div>
-                    </div>
-                  </div>
-                  <div className="catalog-cell">
-                    <span className={`admin-type-label admin-type-${pp.identity}`}>
-                      {pp.identity === 'shop' ? '🏪 Tienda' : '📦 Mayorista'}
-                    </span>
-                  </div>
-                  <div className="catalog-cell">
-                    {pp.shop_name ? (
-                      <>
-                        <div className="catalog-shop-name">{pp.shop_name}</div>
-                        {pp.shop_link && <div className="catalog-link">🔗 {pp.shop_link}</div>}
-                        {pp.shop_hours && <div className="catalog-hours">🕐 {pp.shop_hours}</div>}
-                      </>
-                    ) : (
-                      <span className="admin-cell-muted">Sin datos de tienda</span>
-                    )}
-                  </div>
-                  <div className="catalog-cell">
-                    {active ? (
-                      <div className="badge-premium">
-                        <span>⭐ Premium</span>
-                        <span className="badge-premium-date">hasta {fmt(pp.premium_until)}</span>
+        {/* Resultados */}
+        {result && (
+          <div className="catalog-results">
+            {result.notFound ? (
+              <div className="catalog-empty">
+                <span className="catalog-empty-icon">🔍</span>
+                <p>No se encontró ningún usuario con "{result.query}"</p>
+              </div>
+            ) : result.error ? (
+              <div className="catalog-error">
+                <p>Error: {result.error}</p>
+              </div>
+            ) : (
+              <>
+                <p className="catalog-results-count">
+                  {result.users.length} resultado{result.users.length !== 1 ? 's' : ''} para "{result.query}"
+                </p>
+                <div className="catalog-users-grid">
+                  {result.users.map(u => {
+                    const pirata = u.pirata
+                    const premiumActive = isPremiumActive(pirata)
+                    const isShop = pirata?.identity === 'shop' || pirata?.identity === 'wholesale'
+                    return (
+                      <div key={u.id} className="catalog-user-card">
+                        {/* Header */}
+                        <div className="card-header-row">
+                          <div className="card-user-info">
+                            {u.avatar_url ? (
+                              <img src={u.avatar_url} alt="" className="card-avatar" />
+                            ) : (
+                              <div className="card-avatar-placeholder">
+                                {u.display_name?.charAt(0).toUpperCase() || '?'}
+                              </div>
+                            )}
+                            <div>
+                              <div className="card-display-name">{u.display_name}</div>
+                              <div className="card-email">{u.email}</div>
+                              {pirata?.shop_name && <div className="card-shop-name">{pirata.shop_name}</div>}
+                            </div>
+                          </div>
+                          <div className="card-type-badge">
+                            {pirata?.identity === 'shop' && <span className="type-badge-shop">🏪 Tienda</span>}
+                            {pirata?.identity === 'wholesale' && <span className="type-badge-wholesale">📦 Mayorista</span>}
+                            {pirata?.identity === 'person' && <span className="type-badge-person">👤 Persona</span>}
+                            {!pirata && <span className="type-badge-none">Sin perfil pirata</span>}
+                          </div>
+                        </div>
+
+                        {/* Premium status */}
+                        <div className="card-premium-section">
+                          {premiumActive ? (
+                            <div className="premium-badge-active">
+                              <span className="premium-star">⭐</span>
+                              <span className="premium-label">Premium activo</span>
+                              <span className="premium-date">hasta {fmt(pirata.premium_until)}</span>
+                            </div>
+                          ) : pirata?.is_premium && pirata?.premium_until && new Date(pirata.premium_until) <= new Date() ? (
+                            <div className="premium-badge-expired">
+                              <span>⚠️ Premium expirado ({fmtShort(pirata.premium_until)})</span>
+                            </div>
+                          ) : (
+                            <div className="premium-badge-none">Sin premium</div>
+                          )}
+                        </div>
+
+                        {/* Acciones */}
+                        {isShop && (
+                          <div className="card-actions">
+                            {premiumActive ? (
+                              <>
+                                <button
+                                  className="btn btn-danger btn-sm"
+                                  onClick={() => handleTogglePremium(u.id, true)}
+                                  disabled={updating}
+                                >
+                                  Desactivar premium
+                                </button>
+                                <button
+                                  className="btn btn-secondary btn-sm"
+                                  onClick={() => handleExtend(u.id, pirata?.premium_until)}
+                                  disabled={updating}
+                                >
+                                  Extender
+                                </button>
+                              </>
+                            ) : (
+                              <button
+                                className="btn btn-primary btn-sm"
+                                onClick={() => handleTogglePremium(u.id, false)}
+                                disabled={updating}
+                              >
+                                ⭐ Activar premium
+                              </button>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Nota si no es tienda/mayorista */}
+                        {!isShop && pirata && (
+                          <div className="card-note">
+                            Es persona — no necesita catálogo premium
+                          </div>
+                        )}
+                        {!pirata && (
+                          <div className="card-note">
+                            No tiene perfil pirata (no ha iniciado verificación)
+                          </div>
+                        )}
                       </div>
-                    ) : expired ? (
-                      <div className="badge-expired">
-                        <span>⚠️ Expirado</span>
-                        <span className="badge-premium-date">{fmt(pp.premium_until)}</span>
-                      </div>
-                    ) : (
-                      <span className="badge-free">Sin premium</span>
-                    )}
-                  </div>
-                  <div className="catalog-actions">
-                    <button
-                      className={`btn ${active ? 'btn-danger' : 'btn-primary'} btn-sm`}
-                      onClick={() => handleTogglePremium(shop.id, active)}>
-                      {active ? 'Desactivar' : 'Activar premium'}
-                    </button>
-                    {active && (
-                      <button className="btn btn-secondary btn-sm"
-                        onClick={() => handleExtendPremium(shop.id)}>
-                        Extender
-                      </button>
-                    )}
-                  </div>
+                    )
+                  })}
                 </div>
-              )
-            })}
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Estado inicial */}
+        {!result && !loading && (
+          <div className="catalog-empty">
+            <span className="catalog-empty-icon">⭐</span>
+            <p>Escribe el email o nombre de usuario para buscar y gestionar su catálogo premium</p>
+            <p className="catalog-hint">Los usuarios solicitan premium por WhatsApp. Busca aquí y actívalo.</p>
           </div>
         )}
       </div>
