@@ -361,6 +361,30 @@
     flex: 1; overflow-y: auto; padding: 1.25rem;
   }
 
+  .drawer-publish-btn {
+    display: block;
+    width: 100%;
+    padding: 0.875rem 1.25rem;
+    background: var(--gold);
+    color: var(--dark);
+    border-radius: var(--radius-lg);
+    font-size: 1rem;
+    font-weight: 700;
+    text-align: center;
+    text-decoration: none;
+    margin-bottom: 1.25rem;
+    transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(212, 175, 55, 0.3);
+  }
+  .drawer-publish-btn:hover {
+    background: var(--gold-light);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.4);
+  }
+  .drawer-publish-btn:active {
+    transform: translateY(0);
+  }
+
   .drawer-footer {
     padding: 1rem 1.25rem;
     border-top: 1px solid var(--dark-border);
