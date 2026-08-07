@@ -188,22 +188,6 @@ export default function AdminUsuarios() {
     await refreshAll(userId)
   }
 
-  const handleRevokeVerification = async (userId, layer) => {
-    if (!confirm(`Revocar verificación de ${layer === 'identity' ? 'Identidad' : 'Negocio'}?`)) return
-    if (layer === 'identity') {
-      await supabase.from('pirata_profiles').update({
-        identity_verified: false,
-        identity_locked: false,
-        verif_status: null,
-      }).eq('user_id', userId)
-    } else {
-      await supabase.from('pirata_profiles').update({
-        business_verified: false,
-      }).eq('user_id', userId)
-    }
-    await refreshAll(userId)
-  }
-
   const handleAllowIdentityEdit = async (userId, current) => {
     await supabase.from('pirata_profiles').update({
       allow_identity_edit: !current,
@@ -389,7 +373,6 @@ export default function AdminUsuarios() {
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
                     {docsModal.user.identity_verified && (
                       <>
-                        <button className="btn-small btn-danger" onClick={() => handleRevokeVerification(docsModal.user.user_id, 'identity')}>Revocar identidad</button>
                         <button className="btn-small btn-docs" onClick={() => handleAllowIdentityEdit(docsModal.user.user_id, docsModal.user.allow_identity_edit)}>
                           {docsModal.user.allow_identity_edit ? 'Bloquear edición' : 'Permitir edición'}
                         </button>
@@ -457,9 +440,7 @@ export default function AdminUsuarios() {
                 <div className="docs-section">
                   <div className="docs-section-title">
                     <h4>Capa 2 — Negocio</h4>
-                    {docsModal.user.business_verified && (
-                      <button className="btn-small btn-danger" onClick={() => handleRevokeVerification(docsModal.user.user_id, 'business')}>Revocar negocio</button>
-                    )}
+
                   </div>
                   {docsModal.user.business_docs?.some(url => url) ? (
                   <>
