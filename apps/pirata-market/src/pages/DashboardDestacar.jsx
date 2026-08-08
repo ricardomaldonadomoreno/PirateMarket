@@ -1,0 +1,267 @@
+import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
+import { supabase } from '../lib/supabase'
+import './DashboardDestacar.css'
+
+export default function DashboardDestacar({ user, profile }) {
+  const { t } = useTranslation()
+  const [listings, setListings] = useState([])
+  const [selectedListings, setSelectedListings] = useState(new Set())
+  const [bannerFile, setBannerFile] = useState(null)
+  const [bannerPreview, setBannerPreview] = useState(null)
+  const [sending, setSending] = useState(false)
+  const [message, setMessage] = useState('')
+  const [messageType, setMessageType] = useState('') // success, error, info
+  const [loading, setLoading] = useState(true)
+
+  // Cargar los anuncios del usuario
+  useEffect(() => {
+    if (!user) return
+    loadListings()
+  }, [user])
+
+  const loadListings = async () => {
+    setLoading(true)
+    try {
+      const { data, error } = await supabase
+        .from('listings')
+        .select(`*, category:categories(name, slug, icon)`)
+        .eq('user_id', user.id)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      setListings(data || [])
+    } catch (error) { console.error(error) }
+    finally { setLoading(false) }
+  }
+
+  // Toggle selección de anuncio para destacar
+  const toggleListing = (listingId) => {
+    setSelectedListings(prev => {
+      const next = new Set(prev)
+      if (next.has(listingId)) next.delete(listingId)
+      else next.add(listingId)
+      return next
+    })
+  }
+
+  // Manejar upload de banner
+  const handleBannerUpload = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validar tipo de archivo
+    if (!file.type.startsWith('image/')) {
+      setMessage('Solo se permiten imágenes (JPG, PNG, WebP)')
+      setMessageType('error')
+      return
+    }
+
+    // Validar dimensiones con un Image element
+    const img = new Image()
+    const url = URL.createObjectURL(file)
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+      if (img.width !== 1200 || img.height !== 300) {
+        setMessage(`La imagen debe ser exactamente 1200x300 px. Actual: ${img.width}x${img.height}`)
+        setMessageType('error')
+        setBannerFile(null)
+        setBannerPreview(null)
+        return
+      }
+      setBannerFile(file)
+      setBannerPreview(url)
+      setMessage('')
+    }
+    img.onerror = () => {
+      setMessage('No se pudo cargar la imagen')
+      setMessageType('error')
+    }
+    img.src = url
+  }
+
+  // Enviar solicitud (destacados + banner en un solo proceso)
+  const handleSubmit = async () => {
+    if (selectedListings.size === 0 && !bannerFile) {
+      setMessage('Selecciona al menos un anuncio o sube un banner para enviar la solicitud')
+      setMessageType('error')
+      return
+    }
+
+    setSending(true)
+    setMessage('')
+    try {
+      // Subir banner si hay
+      let bannerUrl = null
+      if (bannerFile) {
+        const fileName = `${user.id}/${Date.now()}_${bannerFile.name}`
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('banner-uploads')
+          .upload(fileName, bannerFile, { contentType: bannerFile.type })
+        if (uploadError) throw uploadError
+        const { data: { publicUrl } } = supabase.storage
+          .from('banner-uploads')
+          .getPublicUrl(uploadData.path)
+        bannerUrl = publicUrl
+      }
+
+      // Insertar solicitud en la tabla destacar_requests
+      const { error: insertError } = await supabase
+        .from('destacar_requests')
+        .insert({
+          user_id: user.id,
+          listing_ids: Array.from(selectedListings),
+          banner_url: bannerUrl,
+          status: 'pending',
+          created_at: new Date().toISOString(),
+        })
+      if (insertError) throw insertError
+
+      setMessage('Solicitud enviada correctamente. El admin la revisará pronto.')
+      setMessageType('success')
+      setSelectedListings(new Set())
+      setBannerFile(null)
+      setBannerPreview(null)
+
+      // Resetear el input de archivo
+      const fileInput = document.getElementById('banner-upload-input')
+      if (fileInput) fileInput.value = ''
+    } catch (error) {
+      console.error(error)
+      setMessage(`Error al enviar: ${error.message}`)
+      setMessageType('error')
+    } finally {
+      setSending(false)
+    }
+  }
+
+  if (!user) return null
+
+  return (
+    <div className="destacar-page">
+      <div className="destacar-header">
+        <h2>⭐ Destacar Anuncios</h2>
+        <p className="destacar-subtitle">
+          Selecciona tus anuncios para destacar y/o sube un banner publicitario.
+          Los anuncios destacados aparecen aleatoriamente en el Home.
+        </p>
+      </div>
+
+      {/* Mensajes */}
+      {message && (
+        <div className={`destacar-message ${messageType}`}>
+          {message}
+        </div>
+      )}
+
+      {/* Sección 1: Selección de anuncios */}
+      <div className="destacar-section">
+        <div className="destacar-section-title">
+          <span className="destacar-section-icon">📋</span>
+          <span>Seleccionar anuncios para destacar</span>
+          <span className="destacar-price-badge">$1 × 30 días</span>
+        </div>
+
+        {loading ? (
+          <div className="destacar-loading">Cargando anuncios...</div>
+        ) : listings.length === 0 ? (
+          <div className="destacar-empty">
+            <p>No tienes anuncios activos. <a href="/publicar">Publica uno primero</a>.</p>
+          </div>
+        ) : (
+          <div className="destacar-listings">
+            {listings.map(listing => {
+              const isSelected = selectedListings.has(listing.id)
+              const isFeatured = listing.is_featured && listing.featured_until && new Date(listing.featured_until) > new Date()
+              return (
+                <div key={listing.id}
+                  className={`destacar-listing-item ${isSelected ? 'selected' : ''} ${isFeatured ? 'featured' : ''}`}
+                  onClick={() => toggleListing(listing.id)}
+                >
+                  <div className="destacar-listing-checkbox">
+                    {isSelected ? '✅' : '☐'}
+                  </div>
+                  <div className="destacar-listing-image">
+                    {listing.photos?.length > 0
+                      ? <img src={listing.photos[0]} alt={listing.title} />
+                      : <div className="destacar-listing-no-img">{listing.category?.icon || '📦'}</div>
+                    }
+                  </div>
+                  <div className="destacar-listing-info">
+                    <div className="destacar-listing-title">{listing.title}</div>
+                    <div className="destacar-listing-meta">
+                      <span className="destacar-listing-price">{listing.price} {listing.currency}</span>
+                      {isFeatured && <span className="destacar-listing-badge">Ya destacado</span>}
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Sección 2: Banner publicitario */}
+      <div className="destacar-section">
+        <div className="destacar-section-title">
+          <span className="destacar-section-icon">🖼️</span>
+          <span>Solicitar banner publicitario</span>
+          <span className="destacar-price-badge">$30 × 30 días</span>
+        </div>
+        <p className="destacar-banner-desc">
+          Sube una imagen de exactamente <strong>1200×300 px</strong>. Se mostrará en el banner rotatorio del Home (rotación cada 5 segundos).
+        </p>
+
+        <div className="destacar-banner-upload">
+          <label htmlFor="banner-upload-input" className="destacar-banner-label">
+            {bannerPreview ? (
+              <div className="destacar-banner-preview-container">
+                <img src={bannerPreview} alt="Banner preview" className="destacar-banner-preview" />
+                <span className="destacar-banner-change">Cambiar imagen</span>
+              </div>
+            ) : (
+              <div className="destacar-banner-placeholder">
+                <span className="destacar-banner-placeholder-icon">📤</span>
+                <span>Haz clic para subir tu banner (1200×300 px)</span>
+              </div>
+            )}
+          </label>
+          <input
+            id="banner-upload-input"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            onChange={handleBannerUpload}
+            style={{ display: 'none' }}
+          />
+        </div>
+
+        {bannerPreview && (
+          <div className="destacar-banner-dimensions">
+            1200 × 300 px ✅
+          </div>
+        )}
+      </div>
+
+      {/* Botón único de envío */}
+      <div className="destacar-submit-section">
+        <button
+          className="btn btn-primary destacar-submit-btn"
+          onClick={handleSubmit}
+          disabled={sending}
+        >
+          {sending ? 'Enviando...' : 'Enviar solicitud'}
+        </button>
+        {selectedListings.size > 0 && (
+          <span className="destacar-submit-info">
+            {selectedListings.size} anuncio(s) seleccionado(s)
+          </span>
+        )}
+        {bannerFile && (
+          <span className="destacar-submit-info">
+            Banner adjunto (1200×300)
+          </span>
+        )}
+      </div>
+    </div>
+  )
+}

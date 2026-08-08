@@ -1,0 +1,340 @@
+/* ── Dashboard Destacar ── */
+
+.destacar-page {
+  max-width: 800px;
+}
+
+.destacar-header {
+  margin-bottom: 2rem;
+}
+
+.destacar-header h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--gold, #d4a843);
+  margin-bottom: 0.5rem;
+}
+
+.destacar-subtitle {
+  color: #888;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+/* ── Mensajes ── */
+
+.destacar-message {
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+
+.destacar-message.success {
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  color: #22c55e;
+}
+
+.destacar-message.error {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+}
+
+.destacar-message.info {
+  background: rgba(212, 168, 67, 0.1);
+  border: 1px solid rgba(212, 168, 67, 0.3);
+  color: var(--gold, #d4a843);
+}
+
+/* ── Secciones ── */
+
+.destacar-section {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.destacar-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 1rem;
+}
+
+.destacar-section-icon {
+  font-size: 1.2rem;
+}
+
+.destacar-price-badge {
+  background: rgba(212, 168, 67, 0.15);
+  border: 1px solid rgba(212, 168, 67, 0.3);
+  color: var(--gold, #d4a843);
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-weight: 600;
+  margin-left: auto;
+}
+
+/* ── Lista de anuncios ── */
+
+.destacar-loading {
+  text-align: center;
+  color: #666;
+  padding: 2rem;
+  font-size: 0.9rem;
+}
+
+.destacar-empty {
+  text-align: center;
+  color: #666;
+  padding: 2rem;
+  font-size: 0.9rem;
+}
+
+.destacar-empty a {
+  color: var(--gold, #d4a843);
+  text-decoration: underline;
+}
+
+.destacar-listings {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.destacar-listing-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.destacar-listing-item:hover {
+  border-color: rgba(212, 168, 67, 0.3);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.destacar-listing-item.selected {
+  border-color: rgba(212, 168, 67, 0.6);
+  background: rgba(212, 168, 67, 0.08);
+}
+
+.destacar-listing-item.featured {
+  border-color: rgba(255, 215, 0, 0.4);
+  background: rgba(255, 215, 0, 0.05);
+}
+
+.destacar-listing-checkbox {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+  width: 28px;
+  text-align: center;
+}
+
+.destacar-listing-image {
+  width: 50px;
+  height: 50px;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.destacar-listing-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.destacar-listing-no-img {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+.destacar-listing-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.destacar-listing-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.destacar-listing-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.destacar-listing-price {
+  font-size: 0.85rem;
+  color: var(--gold, #d4a843);
+  font-weight: 600;
+}
+
+.destacar-listing-badge {
+  font-size: 0.7rem;
+  background: rgba(255, 215, 0, 0.15);
+  color: #ffd700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+/* ── Banner upload ── */
+
+.destacar-banner-desc {
+  color: #888;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+.destacar-banner-upload {
+  width: 100%;
+}
+
+.destacar-banner-label {
+  display: block;
+  cursor: pointer;
+}
+
+.destacar-banner-preview-container {
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 2px solid rgba(212, 168, 67, 0.4);
+}
+
+.destacar-banner-preview {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.destacar-banner-change {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+.destacar-banner-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 3rem 2rem;
+  border: 2px dashed rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  transition: border-color 0.2s ease;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.destacar-banner-placeholder:hover {
+  border-color: rgba(212, 168, 67, 0.4);
+  color: #999;
+}
+
+.destacar-banner-placeholder-icon {
+  font-size: 2rem;
+}
+
+.destacar-banner-dimensions {
+  margin-top: 8px;
+  font-size: 0.8rem;
+  color: #22c55e;
+  font-weight: 600;
+}
+
+/* ── Submit ── */
+
+.destacar-submit-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-top: 2rem;
+}
+
+.destacar-submit-btn {
+  padding: 14px 40px;
+  font-size: 1rem;
+  font-weight: 700;
+  border-radius: 10px;
+  background: var(--gold, #d4a843);
+  color: #000;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 250px;
+}
+
+.destacar-submit-btn:hover {
+  background: #e0b84f;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(212, 168, 67, 0.3);
+}
+
+.destacar-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.destacar-submit-info {
+  font-size: 0.8rem;
+  color: #888;
+}
+
+/* ── Responsive ── */
+
+@media (max-width: 768px) {
+  .destacar-section {
+    padding: 1rem;
+  }
+
+  .destacar-section-title {
+    flex-wrap: wrap;
+  }
+
+  .destacar-price-badge {
+    margin-left: 0;
+    margin-top: 6px;
+  }
+
+  .destacar-submit-btn {
+    width: 100%;
+  }
+}

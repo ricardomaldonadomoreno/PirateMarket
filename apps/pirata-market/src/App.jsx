@@ -10,6 +10,7 @@ import CreateListing from './pages/CreateListing'
 import Dashboard from './pages/Dashboard'
 import DashboardVerificacion from './pages/DashboardVerificacion'
 import DashboardTienda from './pages/DashboardTienda'
+import DashboardDestacar from './pages/DashboardDestacar'
 import Auth from './pages/Auth'
 import VentasTV from './pages/VentasTV'
 import ComoFunciona from './pages/ComoFunciona'
@@ -112,6 +113,7 @@ function App() {
         <Route path="/dashboard" element={<><Navbar user={user} profile={profile} /><Dashboard user={user} profile={profile} /></>}>
           <Route path="verificacion" element={<DashboardVerificacion user={user} profile={profile} onProfileUpdate={loadProfile} />} />
           <Route path="tienda" element={<DashboardTienda user={user} profile={profile} />} />
+          <Route path="destacar" element={<DashboardDestacar user={user} profile={profile} />} />
         </Route>
         <Route path="/auth" element={<><Navbar user={user} profile={profile} /><Auth /></>} />
         <Route path="/ventas-tv" element={<><Navbar user={user} profile={profile} /><VentasTV /></>} />

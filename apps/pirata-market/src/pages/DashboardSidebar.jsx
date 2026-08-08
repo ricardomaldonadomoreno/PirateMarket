@@ -5,6 +5,7 @@ const SECTIONS = [
   { key: 'anuncios',     icon: '📋', label: 'Mis anuncios', path: '/dashboard' },
   { key: 'verificacion', icon: '🏅', label: 'Verificación', path: '/dashboard/verificacion' },
   { key: 'catalogo',     icon: '⭐', label: 'Catálogo Premium', path: '/dashboard/tienda' },
+  { key: 'destacar',     icon: '🚀', label: 'Destacar', path: '/dashboard/destacar' },
 ]
 
 const ACCOUNT_TYPES = {
