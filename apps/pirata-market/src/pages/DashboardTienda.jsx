@@ -13,6 +13,7 @@ export default function DashboardTienda({ user, profile }) {
   })
   const [savingShop, setSavingShop] = useState(false)
   const [shopSaved, setShopSaved] = useState(false)
+  const [editing, setEditing] = useState(false)
 
   // Cargar shop_profiles y identity de pirata_profiles directamente
   useEffect(() => {
@@ -37,6 +38,7 @@ export default function DashboardTienda({ user, profile }) {
     load()
   }, [user])
 
+  // Si ya tiene datos guardados, no mostrar formulario en edición por defecto
   useEffect(() => {
     if (shopData) {
       setShopForm({
@@ -48,6 +50,9 @@ export default function DashboardTienda({ user, profile }) {
         shop_logo_url: shopData.shop_logo_url || '',
         shop_banner_url: shopData.shop_banner_url || '',
       })
+      // Si ya tiene datos, ocultar formulario (solo mostrar botón editar)
+      const hasData = shopData.shop_name || shopData.shop_banner_url || shopData.shop_link
+      if (hasData) setEditing(false)
     }
   }, [shopData])
 
@@ -86,8 +91,23 @@ export default function DashboardTienda({ user, profile }) {
       }
       setShopSaved(true)
       setTimeout(() => setShopSaved(false), 3000)
+      // Recargar datos y volver a modo visualización
+      await refreshData()
+      setEditing(false)
     } catch (error) { alert('Error al guardar: ' + error.message) }
     finally { setSavingShop(false) }
+  }
+
+  const refreshData = async () => {
+    if (!user) return
+    try {
+      const { data: shop } = await supabase
+        .from('shop_profiles')
+        .select('shop_name, shop_bio, shop_link, shop_hours, shop_color, shop_logo_url, shop_banner_url, is_premium, premium_until')
+        .eq('user_id', user.id)
+        .single()
+      if (shop) setShopData(shop)
+    } catch (err) { console.error(err) }
   }
 
   if (!user) return null
@@ -107,7 +127,8 @@ export default function DashboardTienda({ user, profile }) {
           <p>Activa tu catálogo premium para personalizar tu tienda.</p>
           <a href="https://wa.me/59175109694" className="btn btn-primary">Solicitar por WhatsApp</a>
         </div>
-      ) : (
+      ) : editing ? (
+        /* ── MODO EDICIÓN ── */
         <div className="premium-form">
           <div className="premium-form-grid">
             <div className="form-group">
@@ -141,10 +162,55 @@ export default function DashboardTienda({ user, profile }) {
               <textarea className="input" rows={3} value={shopForm.shop_bio} onChange={e => setShopForm(p => ({ ...p, shop_bio: e.target.value }))} />
             </div>
           </div>
-          <button className="btn btn-primary" onClick={handleShopSave} disabled={savingShop}>
-            {savingShop ? 'Guardando...' : 'Guardar Cambios'}
-          </button>
+          <div className="premium-form-actions">
+            <button className="btn btn-primary" onClick={handleShopSave} disabled={savingShop}>
+              {savingShop ? 'Guardando...' : 'Guardar Cambios'}
+            </button>
+            <button className="btn btn-secondary" onClick={() => { setEditing(false); refreshData() }}>
+              Cancelar
+            </button>
+          </div>
           {shopSaved && <p className="success-msg">✓ Tienda actualizada correctamente</p>}
+        </div>
+      ) : (
+        /* ── MODO VISUALIZACIÓN (datos guardados, botón editar) ── */
+        <div className="premium-view">
+          <div className="premium-view-grid">
+            <div className="premium-view-item">
+              <span className="premium-view-label">Nombre de Tienda</span>
+              <span className="premium-view-value">{shopData?.shop_name || '—'}</span>
+            </div>
+            <div className="premium-view-item">
+              <span className="premium-view-label">Color de Marca</span>
+              <span className="premium-view-value" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{ width: 16, height: 16, borderRadius: '50%', backgroundColor: shopData?.shop_color || '#D4AF37', display: 'inline-block' }} />
+                {shopData?.shop_color || '#D4AF37'}
+              </span>
+            </div>
+            <div className="premium-view-item full-width">
+              <span className="premium-view-label">Enlace Web</span>
+              <span className="premium-view-value">{shopData?.shop_link ? <a href={shopData.shop_link} target="_blank" rel="noopener noreferrer">{shopData.shop_link}</a> : '—'}</span>
+            </div>
+            <div className="premium-view-item full-width">
+              <span className="premium-view-label">Banner de Tienda</span>
+              <span className="premium-view-value">{shopData?.shop_banner_url ? <a href={shopData.shop_banner_url} target="_blank" rel="noopener noreferrer">Ver banner</a> : '—'}</span>
+            </div>
+            <div className="premium-view-item full-width">
+              <span className="premium-view-label">Logo de Tienda</span>
+              <span className="premium-view-value">{shopData?.shop_logo_url ? <a href={shopData.shop_logo_url} target="_blank" rel="noopener noreferrer">Ver logo</a> : '—'}</span>
+            </div>
+            <div className="premium-view-item">
+              <span className="premium-view-label">Horario de Atención</span>
+              <span className="premium-view-value">{shopData?.shop_hours || '—'}</span>
+            </div>
+            <div className="premium-view-item full-width">
+              <span className="premium-view-label">Bio / Descripción</span>
+              <span className="premium-view-value">{shopData?.shop_bio || '—'}</span>
+            </div>
+          </div>
+          <button className="btn btn-primary" onClick={() => setEditing(true)}>
+            ✏️ Editar
+          </button>
         </div>
       )}
     </div>
