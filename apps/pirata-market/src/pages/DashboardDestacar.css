@@ -2,6 +2,8 @@
 
 .destacar-page {
   max-width: 800px;
+  width: 100%;
+  margin: 0 auto;
 }
 
 .destacar-header {
@@ -232,8 +234,11 @@
 
 .destacar-banner-preview {
   width: 100%;
+  max-height: 200px;
   height: auto;
   display: block;
+  object-fit: cover;
+  object-position: center;
 }
 
 .destacar-banner-change {
@@ -336,5 +341,11 @@
 
   .destacar-submit-btn {
     width: 100%;
+    min-width: unset;
+  }
+
+  .destacar-listing-image {
+    width: 45px;
+    height: 45px;
   }
 }
