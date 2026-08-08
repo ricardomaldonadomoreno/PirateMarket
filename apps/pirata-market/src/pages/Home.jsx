@@ -20,8 +20,9 @@ export default function Home() {
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
   const [showDrawer, setShowDrawer] = useState(false)
+  const [featuredBanners, setFeaturedBanners] = useState([])
+  const [currentBannerIdx, setCurrentBannerIdx] = useState(0)
   const [featuredListings, setFeaturedListings] = useState([])
-  const [featuredBanner, setFeaturedBanner] = useState(null)
   const [filters, setFilters] = useState({
     category: null,
     minPrice: '',
@@ -64,22 +65,42 @@ export default function Home() {
   }, [loading, listings])
 
   useEffect(() => { loadData(); loadFeatured() }, [])
+
+  // Rotación de banners cada 5 segundos
+  useEffect(() => {
+    if (featuredBanners.length <= 1) return
+    const interval = setInterval(() => {
+      setCurrentBannerIdx(prev => (prev + 1) % featuredBanners.length)
+    }, 5000)
+    return () => clearInterval(interval)
+  }, [featuredBanners])
   useEffect(() => { loadListings() }, [filters])
 
   const loadFeatured = async () => {
+    const now = new Date().toISOString()
     try {
+      // Cargar banners aprobados y activos desde destacar_requests
+      const { data: bannerData } = await supabase
+        .from('destacar_requests')
+        .select('id, banner_url, banner_live_until')
+        .eq('banner_live', true)
+        .gt('banner_live_until', now)
+        .order('created_at', { ascending: false })
+
+      if (bannerData && bannerData.length > 0) {
+        setFeaturedBanners(bannerData)
+      }
+
+      // Cargar anuncios destacados (is_featured=true y featured_until > now)
       const { data: featuredData } = await supabase
-        .from('featured_listings')
-        .select('listing_id, banner_image_url')
+        .from('listings')
+        .select('id')
+        .eq('is_featured', true)
+        .gt('featured_until', now)
         .eq('status', 'active')
-      if (featuredData && featuredData.length > 0) {
+
+      if (featuredData) {
         setFeaturedListings(featuredData)
-        // Banner: seleccionar uno aleatorio que tenga imagen
-        const withBanner = featuredData.filter(f => f.banner_image_url)
-        if (withBanner.length > 0) {
-          const random = withBanner[Math.floor(Math.random() * withBanner.length)]
-          setFeaturedBanner(random)
-        }
       }
     } catch (error) { console.error('Error loading featured:', error) }
   }
@@ -127,8 +148,8 @@ export default function Home() {
     })
   }
 
-  // Construir set de IDs destacados y ordenar: destacados primero
-  const featuredIds = new Set(featuredListings.map(f => f.listing_id))
+  // Construir set de IDs destacados y ordenar: destacados primero (aleatorio)
+  const featuredIds = new Set(featuredListings.map(f => f.id))
   const displayedListings = filterByZone(listings).sort((a, b) => {
     const aFeatured = featuredIds.has(a.id) ? 0 : 1
     const bFeatured = featuredIds.has(b.id) ? 0 : 1
@@ -299,19 +320,18 @@ export default function Home() {
 
         <main className="content">
 
-          {/* Banner Rotatorio (Destacados) */}
-          {featuredBanner && (
+          {/* Banner Rotatorio (Destacados) — cada 5 segundos */}
+          {featuredBanners.length > 0 && (
             <div className="featured-banner">
-              <Link to={`/ficha/${featuredBanner.listing_id}`} className="featured-banner-link">
-                {featuredBanner.banner_image_url ? (
-                  <img src={featuredBanner.banner_image_url} alt="Anuncio destacado" className="featured-banner-img" />
-                ) : (
-                  <div className="featured-banner-placeholder">
-                    <span className="luxury-gold serif">⭐ Oferta Destacada</span>
-                  </div>
-                )}
-              </Link>
-              <span className="featured-banner-badge">⭐ Oferta</span>
+              <a href="javascript:void(0)" className="featured-banner-link">
+                <img
+                  src={featuredBanners[currentBannerIdx]?.banner_url}
+                  alt="Banner publicitario"
+                  className="featured-banner-img"
+                  key={currentBannerIdx}
+                />
+              </a>
+              <span className="featured-banner-badge">⭐ Premium</span>
             </div>
           )}
 
@@ -356,7 +376,7 @@ export default function Home() {
                         <div className="listing-no-image"><span>{listing.category?.icon || '📦'}</span></div>
                       )}
                       {listing.video_url && <div className="video-badge">▶ 6s</div>}
-                      {featuredIds.has(listing.id) && <div className="featured-badge">⭐ Oferta</div>}
+                      {featuredIds.has(listing.id) && <div className="featured-badge">⭐ Destacado</div>}
                       <div className={`seller-badge ${sellerClass}`}>{sellerIcon}</div>
                       {listing.location_lat && <div className="location-dot" title="Tiene ubicación">📍</div>}
                     </div>
