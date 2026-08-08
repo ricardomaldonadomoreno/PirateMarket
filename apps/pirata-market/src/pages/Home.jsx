@@ -22,6 +22,7 @@ export default function Home() {
   const [showDrawer, setShowDrawer] = useState(false)
   const [featuredBanners, setFeaturedBanners] = useState([])
   const [currentBannerIdx, setCurrentBannerIdx] = useState(0)
+  const [isBannerPaused, setIsBannerPaused] = useState(false)
   const [featuredListings, setFeaturedListings] = useState([])
   const [filters, setFilters] = useState({
     category: null,
@@ -66,14 +67,18 @@ export default function Home() {
 
   useEffect(() => { loadData(); loadFeatured() }, [])
 
-  // Rotación de banners cada 5 segundos
+  // Rotación de banners cada 5 segundos (con pausa al hover)
   useEffect(() => {
-    if (featuredBanners.length <= 1) return
+    if (featuredBanners.length <= 1 || isBannerPaused) return
     const interval = setInterval(() => {
       setCurrentBannerIdx(prev => (prev + 1) % featuredBanners.length)
     }, 5000)
     return () => clearInterval(interval)
-  }, [featuredBanners])
+  }, [featuredBanners, isBannerPaused])
+
+  const goToBanner = (idx) => setCurrentBannerIdx(idx)
+  const prevBanner = () => setCurrentBannerIdx(prev => (prev - 1 + featuredBanners.length) % featuredBanners.length)
+  const nextBanner = () => setCurrentBannerIdx(prev => (prev + 1) % featuredBanners.length)
   useEffect(() => { loadListings() }, [filters])
 
   const loadFeatured = async () => {
@@ -320,18 +325,47 @@ export default function Home() {
 
         <main className="content">
 
-          {/* Banner Rotatorio (Destacados) — cada 5 segundos */}
+          {/* Banner Carousel Principal — estilo eBay/Amazon */}
           {featuredBanners.length > 0 && (
-            <div className="featured-banner">
-              <a href="javascript:void(0)" className="featured-banner-link">
+            <div
+              className="banner-carousel"
+              onMouseEnter={() => setIsBannerPaused(true)}
+              onMouseLeave={() => setIsBannerPaused(false)}
+            >
+              {/* Flecha izquierda */}
+              <button className="banner-carousel-arrow banner-carousel-arrow--left" onClick={prevBanner}>
+                ‹
+              </button>
+
+              {/* Slide activo */}
+              <div className="banner-carousel-slide">
                 <img
                   src={featuredBanners[currentBannerIdx]?.banner_url}
                   alt="Banner publicitario"
-                  className="featured-banner-img"
-                  key={currentBannerIdx}
+                  className="banner-carousel-img"
                 />
-              </a>
-              <span className="featured-banner-badge">⭐ Premium</span>
+              </div>
+
+              {/* Flecha derecha */}
+              <button className="banner-carousel-arrow banner-carousel-arrow--right" onClick={nextBanner}>
+                ›
+              </button>
+
+              {/* Dots indicadores */}
+              {featuredBanners.length > 1 && (
+                <div className="banner-carousel-dots">
+                  {featuredBanners.map((_, idx) => (
+                    <button
+                      key={idx}
+                      className={`banner-carousel-dot ${idx === currentBannerIdx ? 'active' : ''}`}
+                      onClick={() => goToBanner(idx)}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {/* Badge */}
+              <span className="banner-carousel-badge">⭐ Premium</span>
             </div>
           )}
 
