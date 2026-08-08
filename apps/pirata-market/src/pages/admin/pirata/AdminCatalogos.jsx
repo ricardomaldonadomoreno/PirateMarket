@@ -29,22 +29,36 @@ export default function AdminCatalogos() {
         return
       }
 
-      // Para cada usuario encontrado, cargar su pirata_profiles
+      // Para cada usuario encontrado, cargar pirata_profiles (identity, verificación) Y shop_profiles (premium, datos tienda)
       const userIds = usersData.map(u => u.id)
-      const { data: profilesData } = await supabase
+
+      // Cargar pirata_profiles (identity, verificación)
+      const { data: pirataData } = await supabase
         .from('pirata_profiles')
-        .select('user_id, identity, shop_name, shop_logo_url, shop_banner_url, shop_color, is_premium, premium_until, identity_verified, business_verified')
+        .select('user_id, identity, identity_verified, business_verified')
+        .in('user_id', userIds)
+
+      // Cargar shop_profiles (premium, datos tienda)
+      const { data: shopData } = await supabase
+        .from('shop_profiles')
+        .select('user_id, shop_name, shop_logo_url, shop_banner_url, shop_color, is_premium, premium_until')
         .in('user_id', userIds)
 
       // Fusionar
-      const profilesMap = {}
-      if (profilesData) {
-        profilesData.forEach(p => { profilesMap[p.user_id] = p })
+      const pirataMap = {}
+      if (pirataData) {
+        pirataData.forEach(p => { pirataMap[p.user_id] = p })
+      }
+
+      const shopMap = {}
+      if (shopData) {
+        shopData.forEach(s => { shopMap[s.user_id] = s })
       }
 
       const merged = usersData.map(u => ({
         ...u,
-        pirata: profilesMap[u.id] || null,
+        pirata: pirataMap[u.id] || null,
+        shop: shopMap[u.id] || null,
       }))
 
       setResult({ users: merged, query: q })
@@ -63,7 +77,7 @@ export default function AdminCatalogos() {
     try {
       if (isCurrentlyPremium) {
         // Desactivar
-        await supabase.from('pirata_profiles').update({
+        await supabase.from('shop_profiles').update({
           is_premium: false,
           premium_until: null,
         }).eq('user_id', userId)
@@ -72,10 +86,26 @@ export default function AdminCatalogos() {
         const days = parseInt(prompt('Días de duración del premium (ej: 30, 60, 90):', '30'))
         if (!days || days <= 0) { setUpdating(false); return }
         const until = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString()
-        await supabase.from('pirata_profiles').update({
-          is_premium: true,
-          premium_until: until,
-        }).eq('user_id', userId)
+
+        // Upsert: si ya existe shop_profile, update; si no, insert
+        const { data: existing } = await supabase
+          .from('shop_profiles')
+          .select('id')
+          .eq('user_id', userId)
+          .single()
+
+        if (existing) {
+          await supabase.from('shop_profiles').update({
+            is_premium: true,
+            premium_until: until,
+          }).eq('user_id', userId)
+        } else {
+          await supabase.from('shop_profiles').insert({
+            user_id: userId,
+            is_premium: true,
+            premium_until: until,
+          })
+        }
       }
       // Recargar resultado
       await handleSearch()
@@ -96,10 +126,26 @@ export default function AdminCatalogos() {
         ? new Date(premiumUntil)
         : new Date()
       baseDate.setDate(baseDate.getDate() + days)
-      await supabase.from('pirata_profiles').update({
-        is_premium: true,
-        premium_until: baseDate.toISOString(),
-      }).eq('user_id', userId)
+
+      // Upsert
+      const { data: existing } = await supabase
+        .from('shop_profiles')
+        .select('id')
+        .eq('user_id', userId)
+        .single()
+
+      if (existing) {
+        await supabase.from('shop_profiles').update({
+          is_premium: true,
+          premium_until: baseDate.toISOString(),
+        }).eq('user_id', userId)
+      } else {
+        await supabase.from('shop_profiles').insert({
+          user_id: userId,
+          is_premium: true,
+          premium_until: baseDate.toISOString(),
+        })
+      }
       await handleSearch()
     } catch (error) {
       alert('Error: ' + error.message)
@@ -108,8 +154,8 @@ export default function AdminCatalogos() {
     }
   }
 
-  const isPremiumActive = (pirata) =>
-    pirata?.is_premium && pirata?.premium_until && new Date(pirata.premium_until) > new Date()
+  const isPremiumActive = (shop) =>
+    shop?.is_premium && shop?.premium_until && new Date(shop.premium_until) > new Date()
 
   const fmt = (date) => date ? new Date(date).toLocaleDateString('es-BO', {
     day: '2-digit', month: 'short', year: 'numeric'
@@ -170,7 +216,8 @@ export default function AdminCatalogos() {
                 <div className="catalog-users-grid">
                   {result.users.map(u => {
                     const pirata = u.pirata
-                    const premiumActive = isPremiumActive(pirata)
+                    const shop = u.shop
+                    const premiumActive = isPremiumActive(shop)
                     const isShop = pirata?.identity === 'shop' || pirata?.identity === 'wholesale'
                     return (
                       <div key={u.id} className="catalog-user-card">
@@ -187,7 +234,7 @@ export default function AdminCatalogos() {
                             <div>
                               <div className="card-display-name">{u.display_name}</div>
                               <div className="card-email">{u.email}</div>
-                              {pirata?.shop_name && <div className="card-shop-name">{pirata.shop_name}</div>}
+                              {shop?.shop_name && <div className="card-shop-name">{shop.shop_name}</div>}
                             </div>
                           </div>
                           <div className="card-type-badge">
@@ -204,11 +251,11 @@ export default function AdminCatalogos() {
                             <div className="premium-badge-active">
                               <span className="premium-star">⭐</span>
                               <span className="premium-label">Premium activo</span>
-                              <span className="premium-date">hasta {fmt(pirata.premium_until)}</span>
+                              <span className="premium-date">hasta {fmt(shop.premium_until)}</span>
                             </div>
-                          ) : pirata?.is_premium && pirata?.premium_until && new Date(pirata.premium_until) <= new Date() ? (
+                          ) : shop?.is_premium && shop?.premium_until && new Date(shop.premium_until) <= new Date() ? (
                             <div className="premium-badge-expired">
-                              <span>⚠️ Premium expirado ({fmtShort(pirata.premium_until)})</span>
+                              <span>⚠️ Premium expirado ({fmtShort(shop.premium_until)})</span>
                             </div>
                           ) : (
                             <div className="premium-badge-none">Sin premium</div>
@@ -229,7 +276,7 @@ export default function AdminCatalogos() {
                                 </button>
                                 <button
                                   className="btn btn-secondary btn-sm"
-                                  onClick={() => handleExtend(u.id, pirata?.premium_until)}
+                                  onClick={() => handleExtend(u.id, shop?.premium_until)}
                                   disabled={updating}
                                 >
                                   Extender

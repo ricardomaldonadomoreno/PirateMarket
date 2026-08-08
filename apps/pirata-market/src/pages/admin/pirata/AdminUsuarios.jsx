@@ -68,7 +68,6 @@ export default function AdminUsuarios() {
         country: p.country || null,
         city: p.city || null,
         phone: p.phone || null,
-        shop_name: p.shop_name || null,
         identity_verified: p.identity_verified || false,
         business_verified: p.business_verified || false,
         identity_locked: p.identity_locked || false,
@@ -113,7 +112,6 @@ export default function AdminUsuarios() {
         country: freshProfile.country || null,
         city: freshProfile.city || null,
         phone: freshProfile.phone || null,
-        shop_name: freshProfile.shop_name || null,
         identity_verified: freshProfile.identity_verified || false,
         business_verified: freshProfile.business_verified || false,
         identity_locked: freshProfile.identity_locked || false,
@@ -232,7 +230,7 @@ export default function AdminUsuarios() {
     const q = search.toLowerCase()
     const matchSearch = u.display_name?.toLowerCase().includes(q) ||
       u.email?.toLowerCase().includes(q) ||
-      u.shop_name?.toLowerCase().includes(q)
+      u.full_name?.toLowerCase().includes(q)
     const matchType = filterType === 'all' || u.identity === filterType
     const matchStatus = filterStatus === 'all' || u.verif_status === filterStatus
     return matchSearch && matchType && matchStatus
@@ -293,7 +291,6 @@ export default function AdminUsuarios() {
                     <div>
                       <div className="admin-user-name">{user.display_name}</div>
                       <div className="admin-user-email">{user.email}</div>
-                      {user.shop_name && <div className="admin-user-shop">{user.shop_name}</div>}
                     </div>
                   </div>
 

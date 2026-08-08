@@ -26,18 +26,23 @@ export default function Dashboard({ user, profile: externalProfile }) {
         .from('users')
         .select(`
           display_name, avatar_url,
-          shop_name, shop_bio, shop_link, shop_hours, shop_color, shop_logo_url, shop_banner_url,
           pirata_profiles!inner(
             full_name, country, city, phone,
-            identity, is_premium, premium_until, identity_verified, business_verified, identity_locked, allow_identity_edit
+            identity, identity_verified, business_verified, identity_locked, allow_identity_edit
+          ),
+          shop_profiles(
+            shop_name, shop_bio, shop_link, shop_hours, shop_color, shop_logo_url, shop_banner_url,
+            is_premium, premium_until
           )
         `)
         .eq('id', user.id)
         .single()
       if (data && data.pirata_profiles) {
+        // Fusionar: datos de users + pirata_profiles + shop_profiles en un solo objeto
         setProfile({
           ...data,
           ...data.pirata_profiles,
+          ...(data.shop_profiles || {}),
         })
       } else if (data) {
         setProfile(data)

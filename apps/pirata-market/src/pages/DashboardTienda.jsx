@@ -29,15 +29,36 @@ export default function DashboardTienda({ user, profile }) {
   const handleShopSave = async () => {
     setSavingShop(true)
     try {
-      await supabase.from('pirata_profiles').update({
-        shop_name: shopForm.shop_name || null,
-        shop_bio: shopForm.shop_bio || null,
-        shop_link: shopForm.shop_link || null,
-        shop_hours: shopForm.shop_hours || null,
-        shop_color: shopForm.shop_color || '#D4AF37',
-        shop_logo_url: shopForm.shop_logo_url || null,
-        shop_banner_url: shopForm.shop_banner_url || null,
-      }).eq('user_id', user.id)
+      // Upsert: si ya existe, update; si no, insert
+      const { data: existing } = await supabase
+        .from('shop_profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .single()
+
+      if (existing) {
+        await supabase.from('shop_profiles').update({
+          shop_name: shopForm.shop_name || null,
+          shop_bio: shopForm.shop_bio || null,
+          shop_link: shopForm.shop_link || null,
+          shop_hours: shopForm.shop_hours || null,
+          shop_color: shopForm.shop_color || '#D4AF37',
+          shop_logo_url: shopForm.shop_logo_url || null,
+          shop_banner_url: shopForm.shop_banner_url || null,
+          updated_at: new Date().toISOString(),
+        }).eq('user_id', user.id)
+      } else {
+        await supabase.from('shop_profiles').insert({
+          user_id: user.id,
+          shop_name: shopForm.shop_name || null,
+          shop_bio: shopForm.shop_bio || null,
+          shop_link: shopForm.shop_link || null,
+          shop_hours: shopForm.shop_hours || null,
+          shop_color: shopForm.shop_color || '#D4AF37',
+          shop_logo_url: shopForm.shop_logo_url || null,
+          shop_banner_url: shopForm.shop_banner_url || null,
+        })
+      }
       setShopSaved(true)
       setTimeout(() => setShopSaved(false), 3000)
     } catch (error) { alert('Error al guardar: ' + error.message) }
