@@ -3,30 +3,15 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import {
   Camera, Trash2, Lock, Eye, EyeOff, AlertTriangle,
-  User, ShieldCheck, Mail, Phone, ShieldAlert, LogOut, Globe, Pencil, Check
+  User, Mail, Phone, ShieldAlert, LogOut, Globe, Pencil, Check
 } from 'lucide-react'
 import './MiPerfil.css'
-
-const USER_TYPE_LABELS = {
-  person:    { label: 'Persona',    color: 'var(--text-muted)' },
-  shop:      { label: 'Tienda',     color: 'var(--gold)' },
-  wholesale: { label: 'Mayorista',  color: '#2980B9' },
-  admin:     { label: 'Admin',      color: 'var(--danger)' },
-}
-
-const TRAFICANTE_LEVEL_LABELS = {
-  basico: { label: 'Básico', color: 'var(--text-muted)' },
-  medio:  { label: 'Medio',  color: '#2980B9' },
-  pro:    { label: 'PRO',    color: '#8E44AD' },
-  elite:  { label: 'Elite',  color: '#784212' },
-}
 
 export default function MiPerfil({ user, onProfileUpdate }) {
   const navigate = useNavigate()
   const fileInputRef = useRef(null)
   const [loading, setLoading] = useState(true)
   const [profile, setProfile] = useState(null)
-  const [trafLevel, setTrafLevel] = useState(null)
   const [displayName, setDisplayName] = useState('')
   const [editingName, setEditingName] = useState(false)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
@@ -57,16 +42,10 @@ export default function MiPerfil({ user, onProfileUpdate }) {
         .select('display_name, avatar_url, whatsapp, user_type, country')
         .eq('id', user.id)
         .single()
-      const { data: trafData } = await supabase
-        .from('traficante_profiles')
-        .select('level')
-        .eq('id', user.id)
-        .single()
       if (userData) {
         setProfile(userData)
         setDisplayName(userData.display_name || '')
       }
-      if (trafData) setTrafLevel(trafData.level)
     } catch (err) {
       console.error(err)
     }
@@ -198,8 +177,6 @@ export default function MiPerfil({ user, onProfileUpdate }) {
     setDeleting(false)
   }
 
-  const userTypeInfo = USER_TYPE_LABELS[profile?.user_type] || USER_TYPE_LABELS['person']
-  const trafLevelInfo = TRAFICANTE_LEVEL_LABELS[trafLevel] || null
 
   if (loading) return (
     <div className="mp-loading">
@@ -295,45 +272,6 @@ export default function MiPerfil({ user, onProfileUpdate }) {
 
               {error && <div className="mp-error"><AlertTriangle size={14} /> {error}</div>}
               {savedName && <div className="mp-success">Nombre actualizado</div>}
-            </div>
-
-            {/* ══ SECCIÓN 2 — ESTADO EN APPS ══ */}
-            <div className="mp-section">
-              <div className="mp-section-header">
-                <ShieldCheck size={16} className="mp-section-icon" />
-                <span>Estado en aplicaciones</span>
-              </div>
-              <p className="mp-hint">
-                Tu categoría y nivel se asignan según tus verificaciones.
-              </p>
-
-              <div className="mp-apps-status">
-                <div className="mp-app-status-card">
-                  <div className="mp-app-status-header">
-                    <span className="mp-app-status-name">Pirata Market</span>
-                  </div>
-                  <div className="mp-app-status-badge"
-                    style={{ color: userTypeInfo.color, borderColor: userTypeInfo.color, background: `${userTypeInfo.color}15` }}>
-                    {userTypeInfo.label}
-                  </div>
-                </div>
-
-                <div className="mp-app-status-card">
-                  <div className="mp-app-status-header">
-                    <span className="mp-app-status-name">Traficante</span>
-                  </div>
-                  {trafLevelInfo ? (
-                    <div className="mp-app-status-badge"
-                      style={{ color: trafLevelInfo.color, borderColor: trafLevelInfo.color, background: `${trafLevelInfo.color}15` }}>
-                      Nivel {trafLevelInfo.label}
-                    </div>
-                  ) : (
-                    <div className="mp-app-status-badge mp-app-status-none">
-                      Sin nivel asignado
-                    </div>
-                  )}
-                </div>
-              </div>
             </div>
 
             {/* ══ SECCIÓN 3 — DATOS DE ACCESO ══ */}
