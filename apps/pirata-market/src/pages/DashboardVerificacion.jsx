@@ -13,8 +13,9 @@ const ACCOUNT_TYPES = [
   { value: 'wholesale', label: 'Mayorista', icon: Package },
 ]
 
-export default function DashboardVerificacion({ user, profile, onProfileUpdate }) {
+export default function DashboardVerificacion({ user }) {
   const { t } = useTranslation()
+  const [profile, setProfile] = useState(null)
   const [uploadingDocs, setUploadingDocs] = useState(false)
   const [businessFiles, setBusinessFiles] = useState([])
   const [selfieFiles, setSelfieFiles] = useState([])
@@ -29,34 +30,48 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
   const [reversoFile, setReversoFile] = useState(null)
   const [loading, setLoading] = useState(true)
 
+  // ── Cargar profile directamente de pirata_profiles ──
+  const loadPirataProfile = async () => {
+    if (!user) return
+    try {
+      const { data } = await supabase
+        .from('pirata_profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single()
+      if (data) {
+        setProfile(data)
+        setRealData({
+          full_name: data.full_name || '',
+          country: data.country || '',
+          city: data.city || '',
+          phone: data.phone || ''
+        })
+      }
+    } catch (error) { console.error(error) }
+  }
+
+  useEffect(() => {
+    if (user) {
+      loadPirataProfile()
+      setLoading(false)
+    }
+  }, [user])
+
   // Estado de verificación derivado de pirata_profiles
   const userType = profile?.identity || 'person'
   const identityVerified = profile?.identity_verified || false
   const businessVerified = profile?.business_verified || false
   const identityLocked = profile?.identity_locked || false
+  const allowIdentityEdit = profile?.allow_identity_edit || false
   const verifStatus = profile?.verif_status || null
   const adminNote = profile?.admin_note || null
   const isShopOrWholesale = userType === 'shop' || userType === 'wholesale'
 
-  // Derivar estado UI de pirata_profiles.verif_status
+  // Derivar estado UI
   const isPending = verifStatus === 'pending' && !identityVerified
   const isRejected = verifStatus === 'rejected'
   const identityPending = isPending || (identityLocked && !identityVerified)
-
-  useEffect(() => {
-    if (profile) {
-      setRealData({
-        full_name: profile.full_name || '',
-        country: profile.country || '',
-        city: profile.city || '',
-        phone: profile.phone || ''
-      })
-    }
-  }, [profile])
-
-  useEffect(() => {
-    if (user) setLoading(false)
-  }, [user])
 
   const validateImageType = (file) => {
     const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
@@ -143,9 +158,9 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
     return publicUrl
   }
 
-  // Cambiar tipo de cuenta → actualiza pirata_profiles.identity
+  // ── CAMBIAR TIPO → solo cambia identity + resetea business_verified ──
   const handleChangeType = async (newType) => {
-    if (newType === profile?.identity) return
+    if (newType === userType) return
     const label = ACCOUNT_TYPES.find(o => o.value === newType)?.label || newType
     const requiresBusinessVerification = newType === 'shop' || newType === 'wholesale'
 
@@ -157,21 +172,20 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
 
     setChangingType(true)
     try {
-      // Solo cambiar el tipo y resetear la verificación de negocio
-      // La verificación de identidad (identity_verified, identity_locked, verif_status,
-      // identity_docs, selfie_url, admin_note) NUNCA se toca aquí.
+      // Solo cambiar el tipo y resetear business_verified
+      // identity_verified, identity_locked, verif_status, identity_docs, selfie_url → NUNCA se tocan
       await supabase.from('pirata_profiles').update({
         identity: newType,
         business_verified: false,
       }).eq('user_id', user.id)
 
-      setBusinessFiles([])
-      if (onProfileUpdate) await onProfileUpdate(user.id)
+      // Recargar el profile directamente
+      await loadPirataProfile()
     } catch (error) { alert('Error al cambiar tipo: ' + error.message) }
     finally { setChangingType(false) }
   }
 
-  // Enviar solicitud de verificación → todo va a pirata_profiles
+  // ── ENVIAR SOLICITUD DE VERIFICACIÓN ──
   const handleSubmitVerification = async () => {
     if (!identityVerified) {
       if (!realData.full_name || !realData.country || !realData.city || !realData.phone) {
@@ -208,7 +222,7 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
         selfieUrl = await uploadSingleFile(selfieFiles[0], 'selfie', 'selfie')
       }
 
-      // Guardar TODO en pirata_profiles: datos personales + fotos + estado
+      // Guardar TODO en pirata_profiles
       const cityValue = typeof realData.city === 'string' ? realData.city : (realData.city?.city || '')
       const countryValue = typeof realData.country === 'string' ? realData.country : (realData.city?.country || '')
       await supabase.from('pirata_profiles').update({
@@ -221,8 +235,6 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
         identity_docs: identityUrls,
         business_docs: businessUrls,
         selfie_url: selfieUrl,
-        identity_verified: identityVerified, // mantener si ya estaba verificado
-        business_verified: businessVerified,
       }).eq('user_id', user.id)
 
       setVerifSaved(true)
@@ -231,12 +243,13 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
       setBusinessFiles([])
       setSelfieFiles([])
       setTimeout(() => setVerifSaved(false), 4000)
-      if (onProfileUpdate) await onProfileUpdate(user.id)
+      await loadPirataProfile()
     } catch (error) { alert('Error al enviar: ' + error.message) }
     finally { setUploadingDocs(false) }
   }
 
   if (!user) return null
+  if (loading) return <div className="db-section"><p>Cargando...</p></div>
 
   return (
     <div className="db-section">
@@ -312,8 +325,8 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
           </div>
 
           <div className="layer-content">
-            {/* Si está en revisión (pending) → bloqueado */}
-            {identityPending && !isRejected ? (
+            {/* Si está en revisión (pending) y no fue rechazado y no tiene allow_identity_edit → bloqueado */}
+            {identityPending && !isRejected && !allowIdentityEdit ? (
               <div className="verif-locked-message">
                 <Clock size={24} />
                 <strong>Tu identidad está en revisión</strong>
@@ -324,7 +337,7 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
                 <div className="real-data-grid">
                   <div className="form-group">
                     <label>Nombre Completo Real</label>
-                    <input type="text" className="input" value={realData.full_name} disabled={identityLocked && !isRejected}
+                    <input type="text" className="input" value={realData.full_name} disabled={identityLocked && !isRejected && !allowIdentityEdit}
                       onChange={e => setRealData(p => ({ ...p, full_name: e.target.value }))} placeholder="Como figura en tu documento" />
                   </div>
                   <div className="form-group">
@@ -332,7 +345,7 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
                     <CityAutocomplete
                       placeholder="Selecciona tu país y ciudad"
                       value={{ country: realData.country, city: realData.city }}
-                      disabled={identityLocked && !isRejected}
+                      disabled={identityLocked && !isRejected && !allowIdentityEdit}
                       onChange={(result) => {
                         if (result) {
                           setRealData(p => {
@@ -351,18 +364,18 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
                   </div>
                   <div className="form-group">
                     <label>Teléfono de contacto</label>
-                    <input type="tel" className="input" value={realData.phone} disabled={identityLocked && !isRejected}
+                    <input type="tel" className="input" value={realData.phone} disabled={identityLocked && !isRejected && !allowIdentityEdit}
                       onChange={e => setRealData(p => ({ ...p, phone: e.target.value }))} placeholder="+591 ..." />
                   </div>
                 </div>
 
-                {/* Formularios de upload: solo si no está locked o fue rechazado */}
-                {!identityVerified && (!identityLocked || isRejected) && (
+                {/* Formularios de upload: solo si no está verificado y (no locked o fue rechazado o tiene allow edit) */}
+                {!identityVerified && (!identityLocked || isRejected || allowIdentityEdit) && (
                   <div>
                     {/* Foto personal (selfie) */}
                     <div className="verif-docs-upload">
                       <label><Camera size={16} /> Tu Foto Personal</label>
-                      <p className="verif-hint">Sube una foto clara de tu rostro. Se usará para verificar que eres la misma persona del documento.</p>
+                      <p className="verif-hint">Sube una foto clara de tu rostro.</p>
                       <input type="file" accept="image/*" id="selfie-input" style={{ display: 'none' }} onChange={handleSelfieFiles} />
                       <label htmlFor="selfie-input" className="btn btn-secondary verif-upload-btn">
                         {selfieFiles.length > 0 ? 'Cambiar foto' : 'Seleccionar foto'}
@@ -431,16 +444,14 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
         </div>
 
         {/* CAPA 2: VERIFICACIÓN DE NEGOCIO */}
-        {isShopOrWholesale && (!identityPending || isRejected) && (
+        {isShopOrWholesale && (!identityPending || isRejected || allowIdentityEdit) && (
           <div className={`verif-layer ${businessVerified ? 'verified' : ''}`}>
             <div className="layer-header">
               <h3><Store size={18} /> Verificación de Negocio</h3>
               <span className={`layer-status ${
-                businessVerified ? 'approved' :
-                isPending ? 'pending' : ''
+                businessVerified ? 'approved' : ''
               }`}>
                 {businessVerified ? <><Check size={14} /> Verificada</> :
-                 isPending ? <><Clock size={14} /> En revisión</> :
                  <><XCircle size={14} /> Pendiente</>}
               </span>
             </div>
@@ -459,6 +470,9 @@ export default function DashboardVerificacion({ user, profile, onProfileUpdate }
                     </div>
                   ))}
                 </div>
+              )}
+              {profile?.business_docs?.length > 0 && businessFiles.length === 0 && (
+                <p className="verif-hint" style={{color: 'var(--gold)'}}><Check size={12} /> Documentos de negocio ya enviados anteriormente</p>
               )}
             </div>
           </div>
