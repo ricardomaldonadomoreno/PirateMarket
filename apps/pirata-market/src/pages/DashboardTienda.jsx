@@ -122,6 +122,16 @@ export default function DashboardTienda({ user, profile }) {
               <label>Enlace Web</label>
               <input type="text" className="input" value={shopForm.shop_link} onChange={e => setShopForm(p => ({ ...p, shop_link: e.target.value }))} placeholder="https://..." />
             </div>
+            <div className="form-group full-width">
+              <label>URL del Banner de Tienda</label>
+              <input type="text" className="input" value={shopForm.shop_banner_url} onChange={e => setShopForm(p => ({ ...p, shop_banner_url: e.target.value }))} placeholder="https://...imagen.jpg" />
+              <small className="field-hint">Pega la URL directa de tu imagen de banner (1200×300 px recomendado)</small>
+            </div>
+            <div className="form-group full-width">
+              <label>URL del Logo de Tienda</label>
+              <input type="text" className="input" value={shopForm.shop_logo_url} onChange={e => setShopForm(p => ({ ...p, shop_logo_url: e.target.value }))} placeholder="https://...logo.png" />
+              <small className="field-hint">Pega la URL directa de tu logo (cuadrado recomendado)</small>
+            </div>
             <div className="form-group">
               <label>Horario de Atención</label>
               <input type="text" className="input" value={shopForm.shop_hours} onChange={e => setShopForm(p => ({ ...p, shop_hours: e.target.value }))} placeholder="Ej: Lun-Sáb 9:00-18:00" />
