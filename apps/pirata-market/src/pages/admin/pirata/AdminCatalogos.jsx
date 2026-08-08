@@ -84,10 +84,11 @@ export default function AdminCatalogos() {
         const days = parseInt(prompt('Días de duración del premium (ej: 30, 60, 90):', '30'))
         if (!days || days <= 0) { setUpdating(false); return }
         const until = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString()
-        await supabase.from('shop_profiles').update({
+        await supabase.from('shop_profiles').upsert({
+          user_id: userId,
           is_premium: true,
           premium_until: until,
-        }).eq('user_id', userId)
+        }, { onConflict: 'user_id' })
       }
       await handleSearch()
     } catch (error) {
@@ -107,10 +108,11 @@ export default function AdminCatalogos() {
         ? new Date(premiumUntil)
         : new Date()
       baseDate.setDate(baseDate.getDate() + days)
-      await supabase.from('shop_profiles').update({
+      await supabase.from('shop_profiles').upsert({
+        user_id: userId,
         is_premium: true,
         premium_until: baseDate.toISOString(),
-      }).eq('user_id', userId)
+      }, { onConflict: 'user_id' })
       await handleSearch()
     } catch (error) {
       alert('Error: ' + error.message)
