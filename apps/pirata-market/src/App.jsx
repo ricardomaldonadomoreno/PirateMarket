@@ -69,18 +69,10 @@ function App() {
     if (!userId) return setProfile(null)
     const { data } = await supabase
       .from('users')
-      .select('display_name, avatar_url, user_type, pirata_profiles(full_name, country, city, phone, identity, is_premium, premium_until, identity_verified, business_verified, identity_locked, allow_identity_edit), shop_profiles(shop_name, shop_bio, shop_link, shop_hours, shop_color, shop_logo_url, shop_banner_url)')
+      .select('id, email, display_name, avatar_url, user_type, country')
       .eq('id', userId)
       .single()
-    if (data && data.pirata_profiles) {
-      setProfile({
-        ...data,
-        ...data.pirata_profiles,
-        ...(data.shop_profiles || {}),
-      })
-    } else {
-      setProfile(data || null)
-    }
+    setProfile(data || null)
   }
 
   useEffect(() => {

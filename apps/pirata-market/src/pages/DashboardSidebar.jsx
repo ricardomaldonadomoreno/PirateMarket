@@ -1,5 +1,7 @@
+import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { supabase } from '../lib/supabase'
 
 const SECTIONS = [
   { key: 'anuncios',     icon: '📋', label: 'Mis anuncios', path: '/dashboard' },
@@ -18,13 +20,44 @@ const ACCOUNT_TYPES = {
 export default function DashboardSidebar({ user, profile, verificationSelfie }) {
   const { t } = useTranslation()
   const location = useLocation()
+  const [pirata, setPirata] = useState(null)
+  const [shop, setShop] = useState(null)
 
+  // Cargar datos de pirata_profiles y shop_profiles directamente
+  useEffect(() => {
+    if (!user) return
+    const load = async () => {
+      try {
+        const { data: pirataData } = await supabase
+          .from('pirata_profiles')
+          .select('identity, identity_verified, business_verified')
+          .eq('user_id', user.id)
+          .single()
+        if (pirataData) setPirata(pirataData)
+
+        const { data: shopData } = await supabase
+          .from('shop_profiles')
+          .select('is_premium, premium_until')
+          .eq('user_id', user.id)
+          .single()
+        if (shopData) setShop(shopData)
+      } catch (err) { console.error(err) }
+    }
+    load()
+  }, [user])
+
+  // Datos del perfil básico (users)
   const displayName = profile?.display_name || user?.email?.split('@')[0] || ''
-  const userType = profile?.identity || 'person'
-  const isPremium = profile?.is_premium && profile?.premium_until && new Date(profile.premium_until) > new Date()
+
+  // Datos de pirata_profiles (independientes)
+  const userType = pirata?.identity || 'person'
+  const identityVerified = pirata?.identity_verified || false
+  const businessVerified = pirata?.business_verified || false
   const isShopOrWholesale = userType === 'shop' || userType === 'wholesale'
-  const identityVerified = profile?.identity_verified
-  const businessVerified = profile?.business_verified
+
+  // Premium: viene de shop_profiles (catálogo premium)
+  const shopPremium = shop?.is_premium && shop?.premium_until && new Date(shop.premium_until) > new Date()
+
   const sidebarAvatar = (verificationSelfie && identityVerified) ? verificationSelfie : null
   const userTypeInfo = ACCOUNT_TYPES[userType] || ACCOUNT_TYPES.person
 
@@ -46,8 +79,8 @@ export default function DashboardSidebar({ user, profile, verificationSelfie }) 
         <span className={`user-type-badge user-type-${userType}`}>
           {userTypeInfo.icon} {t(`auth.${userType}`)}
         </span>
-        {isPremium && (
-          <div className="db-premium-badge">⭐ Premium — hasta {new Date(profile.premium_until).toLocaleDateString()}</div>
+        {shopPremium && (
+          <div className="db-premium-badge">⭐ Premium — hasta {new Date(shop.premium_until).toLocaleDateString()}</div>
         )}
         <Link to="/publicar" className="btn btn-primary db-publish-btn">+ {t('navbar.publish')}</Link>
       </div>

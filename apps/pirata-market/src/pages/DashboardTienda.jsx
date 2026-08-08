@@ -5,6 +5,8 @@ import './Dashboard.css'
 
 export default function DashboardTienda({ user, profile }) {
   const { t } = useTranslation()
+  const [shopData, setShopData] = useState(null)
+  const [pirataIdentity, setPirataIdentity] = useState('person')
   const [shopForm, setShopForm] = useState({
     shop_name: '', shop_bio: '', shop_link: '', shop_hours: '',
     shop_color: '#D4AF37', shop_logo_url: '', shop_banner_url: '',
@@ -12,19 +14,42 @@ export default function DashboardTienda({ user, profile }) {
   const [savingShop, setSavingShop] = useState(false)
   const [shopSaved, setShopSaved] = useState(false)
 
+  // Cargar shop_profiles y identity de pirata_profiles directamente
   useEffect(() => {
-    if (profile) {
+    if (!user) return
+    const load = async () => {
+      try {
+        const { data: shop } = await supabase
+          .from('shop_profiles')
+          .select('shop_name, shop_bio, shop_link, shop_hours, shop_color, shop_logo_url, shop_banner_url, is_premium, premium_until')
+          .eq('user_id', user.id)
+          .single()
+        if (shop) setShopData(shop)
+
+        const { data: pirata } = await supabase
+          .from('pirata_profiles')
+          .select('identity')
+          .eq('user_id', user.id)
+          .single()
+        if (pirata) setPirataIdentity(pirata.identity || 'person')
+      } catch (err) { console.error(err) }
+    }
+    load()
+  }, [user])
+
+  useEffect(() => {
+    if (shopData) {
       setShopForm({
-        shop_name: profile.shop_name || '',
-        shop_bio: profile.shop_bio || '',
-        shop_link: profile.shop_link || '',
-        shop_hours: profile.shop_hours || '',
-        shop_color: profile.shop_color || '#D4AF37',
-        shop_logo_url: profile.shop_logo_url || '',
-        shop_banner_url: profile.shop_banner_url || '',
+        shop_name: shopData.shop_name || '',
+        shop_bio: shopData.shop_bio || '',
+        shop_link: shopData.shop_link || '',
+        shop_hours: shopData.shop_hours || '',
+        shop_color: shopData.shop_color || '#D4AF37',
+        shop_logo_url: shopData.shop_logo_url || '',
+        shop_banner_url: shopData.shop_banner_url || '',
       })
     }
-  }, [profile])
+  }, [shopData])
 
   const handleShopSave = async () => {
     setSavingShop(true)
@@ -67,8 +92,8 @@ export default function DashboardTienda({ user, profile }) {
 
   if (!user) return null
 
-  const userType = profile?.identity || 'person'
-  const isPremium = profile?.is_premium && profile?.premium_until && new Date(profile.premium_until) > new Date()
+  const userType = pirataIdentity || 'person'
+  const isPremium = shopData?.is_premium && shopData?.premium_until && new Date(shopData.premium_until) > new Date()
 
   return (
     <div className="db-section">
