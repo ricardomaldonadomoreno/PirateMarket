@@ -34,18 +34,18 @@ export default function SellerCatalog() {
     try {
       const { data: sellerData } = await supabase
         .from('users')
-        .select('id, display_name, user_type, avatar_url, created_at, whatsapp, pirata_profiles(identity_verified, business_verified), shop_profiles(shop_name, shop_bio, shop_link, shop_hours, shop_color, shop_logo_url, shop_banner_url, is_premium, premium_until)')
+        .select('id, display_name, user_type, avatar_url, created_at, whatsapp')
         .eq('id', userId)
         .single()
-      if (sellerData && sellerData.pirata_profiles) {
-        setSeller({
-          ...sellerData,
-          ...sellerData.pirata_profiles,
-          ...(sellerData.shop_profiles || {}),
-        })
-      } else if (sellerData) {
-        setSeller(sellerData)
-      }
+      if (sellerData) setSeller(sellerData)
+
+      // Consultar shop_profiles por separado
+      const { data: shopData } = await supabase
+        .from('shop_profiles')
+        .select('shop_name, shop_bio, shop_link, shop_hours, shop_color, shop_logo_url, shop_banner_url, is_premium, premium_until')
+        .eq('user_id', userId)
+        .single()
+      if (sellerData && shopData) setSeller(prev => ({ ...prev, ...shopData }))
 
       // Cargar fotos del negocio si está verificado (de pirata_profiles)
       const { data: profileData } = await supabase
@@ -53,7 +53,7 @@ export default function SellerCatalog() {
         .select('business_docs')
         .eq('user_id', userId)
         .single()
-      if (sellerData && profileData) sellerData.business_docs = profileData.business_docs || []
+      if (sellerData && profileData) setSeller(prev => ({ ...prev, business_docs: profileData.business_docs || [] }))
 
       const { data: listingsData } = await supabase
         .from('listings')
