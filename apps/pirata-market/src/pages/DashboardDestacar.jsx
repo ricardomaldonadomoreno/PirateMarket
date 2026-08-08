@@ -45,8 +45,8 @@ export default function DashboardDestacar({ user, profile }) {
     })
   }
 
-  // Manejar upload de banner
-  const handleBannerUpload = (e) => {
+  // Manejar upload de banner (comprimir a max 2MB y redimensionar a 1200x300)
+  const handleBannerUpload = async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
 
@@ -57,27 +57,39 @@ export default function DashboardDestacar({ user, profile }) {
       return
     }
 
-    // Validar dimensiones con un Image element
-    const img = new Image()
-    const url = URL.createObjectURL(file)
-    img.onload = () => {
-      URL.revokeObjectURL(url)
-      if (img.width !== 1200 || img.height !== 300) {
-        setMessage(`La imagen debe ser exactamente 1200x300 px. Actual: ${img.width}x${img.height}`)
-        setMessageType('error')
-        setBannerFile(null)
-        setBannerPreview(null)
-        return
+    try {
+      setMessage('Comprimiendo imagen...')
+      setMessageType('info')
+
+      // Comprimir imagen: max 2MB, redimensionar a 1200x300
+      const { compressImage } = await import('../lib/utils')
+      const compressed = await compressImage(file, 1200, 0.8)
+
+      // Verificar que no exceda 2MB
+      const maxSize = 2 * 1024 * 1024 // 2MB
+      if (compressed.size > maxSize) {
+        // Si aún excede 2MB, comprimir con calidad más baja
+        const compressedAgain = await compressImage(compressed, 1200, 0.5)
+        if (compressedAgain.size > maxSize) {
+          setMessage('La imagen no puede comprimirse por debajo de 2MB. Usa una imagen más pequeña.')
+          setMessageType('error')
+          setBannerFile(null)
+          setBannerPreview(null)
+          return
+        }
+        setBannerFile(compressedAgain)
+        setBannerPreview(URL.createObjectURL(compressedAgain))
+      } else {
+        setBannerFile(compressed)
+        setBannerPreview(URL.createObjectURL(compressed))
       }
-      setBannerFile(file)
-      setBannerPreview(url)
-      setMessage('')
-    }
-    img.onerror = () => {
-      setMessage('No se pudo cargar la imagen')
+      setMessage(`Imagen comprimida exitosamente (${(compressed.size / 1024 / 1024).toFixed(2)} MB). Redimensionada a 1200×300 px.`)
+      setMessageType('success')
+    } catch (error) {
+      console.error('Error comprimiendo imagen:', error)
+      setMessage('Error al procesar la imagen. Intenta con otra.')
       setMessageType('error')
     }
-    img.src = url
   }
 
   // Enviar solicitud (destacados + banner en un solo proceso)
