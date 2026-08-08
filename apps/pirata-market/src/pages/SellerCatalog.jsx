@@ -34,7 +34,7 @@ export default function SellerCatalog() {
     try {
       const { data: sellerData } = await supabase
         .from('users')
-        .select('id, display_name, user_type, avatar_url, created_at, whatsapp, pirata_profiles(identity_verified, business_verified), shop_profiles(shop_name, shop_bio, shop_link, shop_hours, shop_color, shop_logo_url, shop_banner_url, is_premium, premium_until)')
+        .select('id, display_name, user_type, avatar_url, created_at, whatsapp, pirata_profiles(identity_verified, business_verified, is_premium, premium_until), shop_profiles(shop_name, shop_bio, shop_link, shop_hours, shop_color, shop_logo_url, shop_banner_url)')
         .eq('id', userId)
         .single()
       if (sellerData && sellerData.pirata_profiles) {

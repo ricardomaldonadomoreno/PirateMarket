@@ -32,16 +32,16 @@ export default function AdminCatalogos() {
       // Para cada usuario encontrado, cargar pirata_profiles (identity, verificación) Y shop_profiles (premium, datos tienda)
       const userIds = usersData.map(u => u.id)
 
-      // Cargar pirata_profiles (identity, verificación)
+      // Cargar pirata_profiles (identity, verificación, premium)
       const { data: pirataData } = await supabase
         .from('pirata_profiles')
-        .select('user_id, identity, identity_verified, business_verified')
+        .select('user_id, identity, identity_verified, business_verified, is_premium, premium_until')
         .in('user_id', userIds)
 
-      // Cargar shop_profiles (premium, datos tienda)
+      // Cargar shop_profiles (datos tienda)
       const { data: shopData } = await supabase
         .from('shop_profiles')
-        .select('user_id, shop_name, shop_logo_url, shop_banner_url, shop_color, is_premium, premium_until')
+        .select('user_id, shop_name, shop_logo_url, shop_banner_url, shop_color')
         .in('user_id', userIds)
 
       // Fusionar
@@ -70,44 +70,25 @@ export default function AdminCatalogos() {
     }
   }
 
-  // Activar/Desactivar premium
+  // Activar/Desactivar premium (en pirata_profiles)
   const handleTogglePremium = async (userId, isCurrentlyPremium) => {
     if (!confirm(isCurrentlyPremium ? '¿Desactivar catálogo premium?' : '¿Activar catálogo premium?')) return
     setUpdating(true)
     try {
       if (isCurrentlyPremium) {
-        // Desactivar
-        await supabase.from('shop_profiles').update({
+        await supabase.from('pirata_profiles').update({
           is_premium: false,
           premium_until: null,
         }).eq('user_id', userId)
       } else {
-        // Activar con duración seleccionable
         const days = parseInt(prompt('Días de duración del premium (ej: 30, 60, 90):', '30'))
         if (!days || days <= 0) { setUpdating(false); return }
         const until = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString()
-
-        // Upsert: si ya existe shop_profile, update; si no, insert
-        const { data: existing } = await supabase
-          .from('shop_profiles')
-          .select('id')
-          .eq('user_id', userId)
-          .single()
-
-        if (existing) {
-          await supabase.from('shop_profiles').update({
-            is_premium: true,
-            premium_until: until,
-          }).eq('user_id', userId)
-        } else {
-          await supabase.from('shop_profiles').insert({
-            user_id: userId,
-            is_premium: true,
-            premium_until: until,
-          })
-        }
+        await supabase.from('pirata_profiles').update({
+          is_premium: true,
+          premium_until: until,
+        }).eq('user_id', userId)
       }
-      // Recargar resultado
       await handleSearch()
     } catch (error) {
       alert('Error: ' + error.message)
@@ -116,7 +97,7 @@ export default function AdminCatalogos() {
     }
   }
 
-  // Extender premium
+  // Extender premium (en pirata_profiles)
   const handleExtend = async (userId, premiumUntil) => {
     const days = parseInt(prompt('Días adicionales a extender:', '30'))
     if (!days || days <= 0) return
@@ -126,26 +107,10 @@ export default function AdminCatalogos() {
         ? new Date(premiumUntil)
         : new Date()
       baseDate.setDate(baseDate.getDate() + days)
-
-      // Upsert
-      const { data: existing } = await supabase
-        .from('shop_profiles')
-        .select('id')
-        .eq('user_id', userId)
-        .single()
-
-      if (existing) {
-        await supabase.from('shop_profiles').update({
-          is_premium: true,
-          premium_until: baseDate.toISOString(),
-        }).eq('user_id', userId)
-      } else {
-        await supabase.from('shop_profiles').insert({
-          user_id: userId,
-          is_premium: true,
-          premium_until: baseDate.toISOString(),
-        })
-      }
+      await supabase.from('pirata_profiles').update({
+        is_premium: true,
+        premium_until: baseDate.toISOString(),
+      }).eq('user_id', userId)
       await handleSearch()
     } catch (error) {
       alert('Error: ' + error.message)
@@ -154,8 +119,8 @@ export default function AdminCatalogos() {
     }
   }
 
-  const isPremiumActive = (shop) =>
-    shop?.is_premium && shop?.premium_until && new Date(shop.premium_until) > new Date()
+  const isPremiumActive = (pirata) =>
+    pirata?.is_premium && pirata?.premium_until && new Date(pirata.premium_until) > new Date()
 
   const fmt = (date) => date ? new Date(date).toLocaleDateString('es-BO', {
     day: '2-digit', month: 'short', year: 'numeric'
@@ -217,7 +182,7 @@ export default function AdminCatalogos() {
                   {result.users.map(u => {
                     const pirata = u.pirata
                     const shop = u.shop
-                    const premiumActive = isPremiumActive(shop)
+                    const premiumActive = isPremiumActive(pirata)
                     const isShop = pirata?.identity === 'shop' || pirata?.identity === 'wholesale'
                     return (
                       <div key={u.id} className="catalog-user-card">
@@ -251,11 +216,11 @@ export default function AdminCatalogos() {
                             <div className="premium-badge-active">
                               <span className="premium-star">⭐</span>
                               <span className="premium-label">Premium activo</span>
-                              <span className="premium-date">hasta {fmt(shop.premium_until)}</span>
+                              <span className="premium-date">hasta {fmt(pirata.premium_until)}</span>
                             </div>
-                          ) : shop?.is_premium && shop?.premium_until && new Date(shop.premium_until) <= new Date() ? (
+                          ) : pirata?.is_premium && pirata?.premium_until && new Date(pirata.premium_until) <= new Date() ? (
                             <div className="premium-badge-expired">
-                              <span>⚠️ Premium expirado ({fmtShort(shop.premium_until)})</span>
+                              <span>⚠️ Premium expirado ({fmtShort(pirata.premium_until)})</span>
                             </div>
                           ) : (
                             <div className="premium-badge-none">Sin premium</div>
@@ -276,7 +241,7 @@ export default function AdminCatalogos() {
                                 </button>
                                 <button
                                   className="btn btn-secondary btn-sm"
-                                  onClick={() => handleExtend(u.id, shop?.premium_until)}
+                                  onClick={() => handleExtend(u.id, pirata?.premium_until)}
                                   disabled={updating}
                                 >
                                   Extender
