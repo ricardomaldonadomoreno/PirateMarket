@@ -92,10 +92,10 @@ export default function DashboardDestacar({ user, profile }) {
     }
   }
 
-  // Enviar solicitud (insertar en ambas tablas según lo seleccionado)
-  const handleSubmit = async () => {
-    if (selectedListings.size === 0 && !bannerFile) {
-      setMessage('Selecciona al menos un anuncio o sube un banner para enviar la solicitud')
+  // Enviar solicitud de anuncios destacados
+  const handleSubmitListings = async () => {
+    if (selectedListings.size === 0) {
+      setMessage('Selecciona al menos un anuncio para destacar')
       setMessageType('error')
       return
     }
@@ -103,43 +103,59 @@ export default function DashboardDestacar({ user, profile }) {
     setSending(true)
     setMessage('')
     try {
-      // 1) Insertar solicitudes de anuncios destacados en destacar_listings
-      if (selectedListings.size > 0) {
-        const listingInserts = Array.from(selectedListings).map(listingId => ({
-          user_id: user.id,
-          listing_id: listingId,
-          status: 'pending',
-        }))
-        const { error: listingsError } = await supabase
-          .from('destacar_listings')
-          .insert(listingInserts)
-        if (listingsError) throw listingsError
-      }
+      const listingInserts = Array.from(selectedListings).map(listingId => ({
+        user_id: user.id,
+        listing_id: listingId,
+        status: 'pending',
+      }))
+      const { error: listingsError } = await supabase
+        .from('destacar_listings')
+        .insert(listingInserts)
+      if (listingsError) throw listingsError
 
-      // 2) Subir banner e insertar solicitud en destacar_banners
-      if (bannerFile) {
-        const fileName = `${user.id}/${Date.now()}_${bannerFile.name}`
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('banner-uploads')
-          .upload(fileName, bannerFile, { contentType: bannerFile.type })
-        if (uploadError) throw uploadError
-        const { data: { publicUrl } } = supabase.storage
-          .from('banner-uploads')
-          .getPublicUrl(uploadData.path)
-
-        const { error: bannerError } = await supabase
-          .from('destacar_banners')
-          .insert({
-            user_id: user.id,
-            banner_url: publicUrl,
-            status: 'pending',
-          })
-        if (bannerError) throw bannerError
-      }
-
-      setMessage('Solicitud enviada correctamente. El admin la revisará pronto.')
+      setMessage('Solicitud de anuncios enviados. El admin la revisará pronto.')
       setMessageType('success')
       setSelectedListings(new Set())
+    } catch (error) {
+      console.error(error)
+      setMessage(`Error al enviar: ${error.message}`)
+      setMessageType('error')
+    } finally {
+      setSending(false)
+    }
+  }
+
+  // Enviar solicitud de banner publicitario
+  const handleSubmitBanner = async () => {
+    if (!bannerFile) {
+      setMessage('Sube una imagen de banner primero')
+      setMessageType('error')
+      return
+    }
+
+    setSending(true)
+    setMessage('')
+    try {
+      const fileName = `${user.id}/${Date.now()}_${bannerFile.name}`
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('banner-uploads')
+        .upload(fileName, bannerFile, { contentType: bannerFile.type })
+      if (uploadError) throw uploadError
+      const { data: { publicUrl } } = supabase.storage
+        .from('banner-uploads')
+        .getPublicUrl(uploadData.path)
+
+      const { error: bannerError } = await supabase
+        .from('destacar_banners')
+        .insert({
+          user_id: user.id,
+          banner_url: publicUrl,
+          status: 'pending',
+        })
+      if (bannerError) throw bannerError
+
+      setMessage('Banner enviado correctamente. El admin lo revisará pronto.')
+      setMessageType('success')
       setBannerFile(null)
       setBannerPreview(null)
 
@@ -262,20 +278,31 @@ export default function DashboardDestacar({ user, profile }) {
         )}
       </div>
 
-      {/* Botón único de envío */}
+      {/* Botón para enviar anuncios destacados */}
       <div className="destacar-submit-section">
         <button
           className="btn btn-primary destacar-submit-btn"
-          onClick={handleSubmit}
+          onClick={handleSubmitListings}
           disabled={sending}
         >
-          {sending ? 'Enviando...' : 'Enviar solicitud'}
+          {sending ? 'Enviando...' : 'Enviar anuncios para destacar'}
         </button>
         {selectedListings.size > 0 && (
           <span className="destacar-submit-info">
             {selectedListings.size} anuncio(s) seleccionado(s)
           </span>
         )}
+      </div>
+
+      {/* Botón para enviar banner */}
+      <div className="destacar-submit-section">
+        <button
+          className="btn btn-gold destacar-submit-btn"
+          onClick={handleSubmitBanner}
+          disabled={sending}
+        >
+          {sending ? 'Enviando...' : 'Enviar banner'}
+        </button>
         {bannerFile && (
           <span className="destacar-submit-info">
             Banner adjunto (1200×300)
