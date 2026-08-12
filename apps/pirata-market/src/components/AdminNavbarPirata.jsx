@@ -44,7 +44,7 @@ export default function AdminNavbarPirata() {
 
   // Si el sub-admin solo tiene acceso a traficante, redirigir
   if (isAdmin && adminScope === 'traficante') {
-    navigate('/admin/traficante', { replace: true })
+    navigate('/admin/packer', { replace: true })
     return null
   }
 

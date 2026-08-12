@@ -9,7 +9,7 @@ export default function TraficanteLegal() {
       <div className="container">
         <button
           className="t-legal-back"
-          onClick={() => navigate('/traficante')}
+          onClick={() => navigate('/packer')}
         >
           ← Volver al inicio
         </button>

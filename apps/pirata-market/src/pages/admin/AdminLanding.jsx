@@ -43,7 +43,7 @@ export default function AdminLanding() {
       return
     }
     if (scope === 'traficante') {
-      navigate('/admin/traficante', { replace: true })
+      navigate('/admin/packer', { replace: true })
       return
     }
 
@@ -221,7 +221,7 @@ export default function AdminLanding() {
 
           {/* Packer */}
           <div
-            onClick={() => navigate('/admin/traficante')}
+            onClick={() => navigate('/admin/packer')}
             style={{
               background: 'rgba(212,175,55,0.05)',
               border: '1px solid rgba(212,175,55,0.2)',

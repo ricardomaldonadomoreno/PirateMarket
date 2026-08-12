@@ -131,27 +131,27 @@ function App() {
         <Route path="/admin/pirata/catalogos" element={<AdminRoute><AdminCatalogos /></AdminRoute>} />
 
         {/* ── TRAFICANTE ── */}
-        <Route path="/traficante" element={<><TraficanteNavbar user={user} profile={profile} /><TraficanteHome user={user} /></>} />
-        <Route path="/traficante/buscar" element={<><TraficanteNavbar user={user} profile={profile} /><TraficanteBuscar user={user} /></>} />
-        <Route path="/traficante/publicar-viajero" element={<><TraficanteNavbar user={user} profile={profile} /><TraficantePublicarViajero user={user} /></>} />
-        <Route path="/traficante/publicar-compactador" element={<><TraficanteNavbar user={user} profile={profile} /><TraficantePublicarCompactador user={user} /></>} />
-        <Route path="/traficante/publicar-flete" element={<><TraficanteNavbar user={user} profile={profile} /><TraficantePublicarFlete user={user} /></>} />
-        <Route path="/traficante/viaje/:id" element={<><TraficanteNavbar user={user} profile={profile} /><TraficanteViajeDetalle user={user} /></>} />
-        <Route path="/traficante/solicitud/:id" element={<><TraficanteNavbar user={user} profile={profile} /><TraficanteSolicitud user={user} /></>} />
-        <Route path="/traficante/mi-cuenta" element={<><TraficanteNavbar user={user} profile={profile} /><MiCuenta user={user} onProfileUpdate={setProfile} /></>}>
+        <Route path="/packer" element={<><TraficanteNavbar user={user} profile={profile} /><TraficanteHome user={user} /></>} />
+        <Route path="/packer/buscar" element={<><TraficanteNavbar user={user} profile={profile} /><TraficanteBuscar user={user} /></>} />
+        <Route path="/packer/publicar-viajero" element={<><TraficanteNavbar user={user} profile={profile} /><TraficantePublicarViajero user={user} /></>} />
+        <Route path="/packer/publicar-compactador" element={<><TraficanteNavbar user={user} profile={profile} /><TraficantePublicarCompactador user={user} /></>} />
+        <Route path="/packer/publicar-flete" element={<><TraficanteNavbar user={user} profile={profile} /><TraficantePublicarFlete user={user} /></>} />
+        <Route path="/packer/viaje/:id" element={<><TraficanteNavbar user={user} profile={profile} /><TraficanteViajeDetalle user={user} /></>} />
+        <Route path="/packer/solicitud/:id" element={<><TraficanteNavbar user={user} profile={profile} /><TraficanteSolicitud user={user} /></>} />
+        <Route path="/packer/mi-cuenta" element={<><TraficanteNavbar user={user} profile={profile} /><MiCuenta user={user} onProfileUpdate={setProfile} /></>}>
           <Route path="viajes" element={<MiCuentaMisViajes user={user} />} />
           <Route path="verificacion" element={<MiCuentaVerificacion user={user} profile={profile} />} />
           <Route path="resenas" element={<MiCuentaResenas user={user} />} />
           <Route path="nivel" element={<MiCuentaNivel user={user} />} />
         </Route>
-        <Route path="/traficante/dashboard" element={<><TraficanteNavbar user={user} profile={profile} /><TraficanteDashboard user={user} /></>} />
-        <Route path="/traficante/legal" element={<><TraficanteNavbar user={user} profile={profile} /><TraficanteLegal /></>} />
+        <Route path="/packer/dashboard" element={<><TraficanteNavbar user={user} profile={profile} /><TraficanteDashboard user={user} /></>} />
+        <Route path="/packer/legal" element={<><TraficanteNavbar user={user} profile={profile} /><TraficanteLegal /></>} />
 
         {/* ── ADMIN TRAFICANTE ── */}
-        <Route path="/admin/traficante" element={<AdminRoute><PackerAdminDashboard /></AdminRoute>} />
-        <Route path="/admin/traficante/viajes" element={<AdminRoute><PackerAdminViajes /></AdminRoute>} />
-        <Route path="/admin/traficante/verificaciones" element={<AdminRoute><PackerAdminVerificaciones /></AdminRoute>} />
-        <Route path="/admin/traficante/destacados" element={<AdminRoute><PackerAdminDestacados /></AdminRoute>} />
+        <Route path="/admin/packer" element={<AdminRoute><PackerAdminDashboard /></AdminRoute>} />
+        <Route path="/admin/packer/viajes" element={<AdminRoute><PackerAdminViajes /></AdminRoute>} />
+        <Route path="/admin/packer/verificaciones" element={<AdminRoute><PackerAdminVerificaciones /></AdminRoute>} />
+        <Route path="/admin/packer/destacados" element={<AdminRoute><PackerAdminDestacados /></AdminRoute>} />
       </Routes>
     </Router>
   )

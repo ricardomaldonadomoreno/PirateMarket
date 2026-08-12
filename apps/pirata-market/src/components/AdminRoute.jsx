@@ -6,7 +6,7 @@ import { Navigate, useLocation } from 'react-router-dom'
 // Tipos de acceso:
 // 1. SuperAdmin (scope='all'): acceso total a todo
 // 2. Sub-admin con scope='pirata': solo rutas /admin/pirata/*
-// 3. Sub-admin con scope='traficante': solo rutas /admin/traficante/*
+// 3. Sub-admin con scope='traficante': solo rutas /admin/packer/*
 // 4. Sub-admin con scope='both': acceso a Pirata + Traficante (sin Sub-Admins)
 
 // Rutas que solo puede ver el super_admin
@@ -14,7 +14,7 @@ const SUPER_ADMIN_ROUTES = ['/admin/sub-admins']
 
 // Prefijos de ruta por app
 const PIRATA_PREFIX = '/admin/pirata'
-const TRAFICANTE_PREFIX = '/admin/traficante'
+const TRAFICANTE_PREFIX = '/admin/packer'
 
 export default function AdminRoute({ children }) {
   const [status, setStatus] = useState('loading')
@@ -73,7 +73,7 @@ export default function AdminRoute({ children }) {
 
   if (status === 'denied') return <Navigate to="/admin" replace state={{ from: location }} />
   if (status === 'redirect_pirata') return <Navigate to="/admin/pirata" replace />
-  if (status === 'redirect_traficante') return <Navigate to="/admin/traficante" replace />
+  if (status === 'redirect_traficante') return <Navigate to="/admin/packer" replace />
 
   return children
 }

@@ -190,7 +190,7 @@ export default function PublicarCompactador({ user }) {
     if (dbError) {
       setError(dbError.message)
     } else {
-      navigate('/traficante/mi-cuenta/viajes')
+      navigate('/packer/mi-cuenta/viajes')
     }
   }
 
@@ -399,7 +399,7 @@ export default function PublicarCompactador({ user }) {
             )}
 
             <div className="pub-actions">
-              <button type="button" className="btn btn-secondary" onClick={() => navigate('/traficante')}>
+              <button type="button" className="btn btn-secondary" onClick={() => navigate('/packer')}>
                 Cancelar
               </button>
               <button type="submit" className="btn btn-primary t-btn-primary" disabled={loading}>

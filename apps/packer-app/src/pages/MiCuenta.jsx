@@ -182,7 +182,7 @@ export default function MiCuenta({ user, onProfileUpdate }) {
 
   // ── DETERMINAR SI ESTAMOS EN RUTA HIJA (verificacion, resenas, nivel) ──
   const path = location.pathname
-  const showChildRoute = path !== '/traficante/mi-cuenta'
+  const showChildRoute = path !== '/packer/mi-cuenta'
 
   if (loading) return (
     <div className="mc-loading">
@@ -407,12 +407,12 @@ export default function MiCuenta({ user, onProfileUpdate }) {
             )}
 
             {/* ══ MIS VIAJES ══ */}
-            {location.pathname === '/traficante/mi-cuenta/viajes' && (
+            {location.pathname === '/packer/mi-cuenta/viajes' && (
               <MiCuentaMisViajes user={user} />
             )}
 
             {/* ══ RUTAS HIJAS (Verificación / Reseñas / Nivel) ══ */}
-            {location.pathname !== '/traficante/mi-cuenta' && location.pathname !== '/traficante/mi-cuenta/viajes' && <Outlet />}
+            {location.pathname !== '/packer/mi-cuenta' && location.pathname !== '/packer/mi-cuenta/viajes' && <Outlet />}
 
           </main>
         </div>

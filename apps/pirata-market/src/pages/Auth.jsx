@@ -28,8 +28,8 @@ export default function Auth() {
   const allCountries = useMemo(() => Country.getAllCountries(), [])
 
   // Detectar contexto según de dónde viene
-  const fromTraficante = location.state?.from?.pathname?.startsWith('/traficante') ||
-    document.referrer.includes('/traficante')
+  const fromTraficante = location.state?.from?.pathname?.startsWith('/packer') ||
+    document.referrer.includes('/packer')
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
@@ -95,7 +95,7 @@ export default function Auth() {
             user_type: 'person' // Por defecto persona hasta que elija app
           },
           emailRedirectTo: fromTraficante
-            ? 'https://pirate-market.vercel.app/traficante/mi-cuenta'
+            ? 'https://pirate-market.vercel.app/packer/mi-cuenta'
             : 'https://pirate-market.vercel.app/mi-perfil'
         }
       })
@@ -144,7 +144,7 @@ export default function Auth() {
               </div>
               <div className="auth-app-badge-sep">·</div>
               <div className="auth-app-badge">
-                <img src="/traficante/logoPNG.png" alt="Traficante" className="auth-app-badge-logo" />
+                <img src="/packer/logoPNG.png" alt="Packer" className="auth-app-badge-logo" />
                 <span>Packer</span>
               </div>
             </div>

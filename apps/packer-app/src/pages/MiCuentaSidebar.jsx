@@ -2,11 +2,11 @@ import { Link, useLocation } from 'react-router-dom'
 import { Plane, User, Shield, Star, Trophy } from 'lucide-react'
 
 const SECTIONS = [
-  { key: 'viajes',       icon: Plane, label: 'Mis viajes', path: '/traficante/mi-cuenta/viajes' },
-  { key: 'personal',     icon: User, label: 'Información personal', path: '/traficante/mi-cuenta' },
-  { key: 'verificacion', icon: Shield, label: 'Verificación', path: '/traficante/mi-cuenta/verificacion' },
-  { key: 'resenas',      icon: Star, label: 'Mis reseñas', path: '/traficante/mi-cuenta/resenas' },
-  { key: 'nivel',        icon: Trophy, label: 'Mi nivel', path: '/traficante/mi-cuenta/nivel' },
+  { key: 'viajes',       icon: Plane, label: 'Mis viajes', path: '/packer/mi-cuenta/viajes' },
+  { key: 'personal',     icon: User, label: 'Información personal', path: '/packer/mi-cuenta' },
+  { key: 'verificacion', icon: Shield, label: 'Verificación', path: '/packer/mi-cuenta/verificacion' },
+  { key: 'resenas',      icon: Star, label: 'Mis reseñas', path: '/packer/mi-cuenta/resenas' },
+  { key: 'nivel',        icon: Trophy, label: 'Mi nivel', path: '/packer/mi-cuenta/nivel' },
 ]
 
 export default function MiCuentaSidebar({ user, profile, verifRequest, avgRating, reviewsCount }) {

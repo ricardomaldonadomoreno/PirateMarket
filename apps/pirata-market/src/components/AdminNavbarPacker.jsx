@@ -29,10 +29,10 @@ export default function AdminNavbarPacker() {
 
   // Links base para Packer
   const packerLinks = [
-    { path: '/admin/traficante', icon: '📊', label: 'Dashboard' },
-    { path: '/admin/traficante/viajes', icon: '🚛', label: 'Viajes' },
-    { path: '/admin/traficante/verificaciones', icon: '✅', label: 'Verificaciones' },
-    { path: '/admin/traficante/destacados', icon: '⭐', label: 'Destacados' },
+    { path: '/admin/packer', icon: '📊', label: 'Dashboard' },
+    { path: '/admin/packer/viajes', icon: '🚛', label: 'Viajes' },
+    { path: '/admin/packer/verificaciones', icon: '✅', label: 'Verificaciones' },
+    { path: '/admin/packer/destacados', icon: '⭐', label: 'Destacados' },
   ]
 
   // Sub-Admins solo para super_admin (scope='all')
@@ -76,7 +76,7 @@ export default function AdminNavbarPacker() {
             🔄 Cambiar app
           </Link>
         )}
-        <Link to="/traficante" className="admin-nav-link" target="_blank">
+        <Link to="/packer" className="admin-nav-link" target="_blank">
           🌐 Ver packer
         </Link>
         <button onClick={handleLogout} className="btn btn-ghost admin-logout">

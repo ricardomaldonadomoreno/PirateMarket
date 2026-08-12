@@ -6,9 +6,9 @@ export default function TraficanteNavbar(props) {
     <SharedNavbar
       {...props}
       brandName={<><span className="packer-gold">Packer</span><br /><span className="logo-suffix traficante-by">by buses app</span></>}
-      brandLogo="/traficante/logoPNG.png"
-      homeRoute="/traficante"
-      logoutRoute="/traficante"
+      brandLogo="/packer/logoPNG.png"
+      homeRoute="/packer"
+      logoutRoute="/packer"
       i18nNamespace="traficante"
       navClass="traficante-navbar"
     />

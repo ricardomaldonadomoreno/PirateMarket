@@ -109,13 +109,13 @@ export default function MiCuentaMisViajes({ user }) {
 
       {/* Botones de publicación prominentes */}
       <div className="mc-publish-row">
-        <button className="mc-publish-btn-lg" onClick={() => navigate('/traficante/publicar-viajero')}>
+        <button className="mc-publish-btn-lg" onClick={() => navigate('/packer/publicar-viajero')}>
           <Plane size={18} /> Publicar viaje
         </button>
-        <button className="mc-publish-btn-lg" onClick={() => navigate('/traficante/publicar-compactador')}>
+        <button className="mc-publish-btn-lg" onClick={() => navigate('/packer/publicar-compactador')}>
           <Package size={18} /> Publicar compactación
         </button>
-        <button className="mc-publish-btn-lg" onClick={() => navigate('/traficante/publicar-flete')}>
+        <button className="mc-publish-btn-lg" onClick={() => navigate('/packer/publicar-flete')}>
           <Truck size={18} /> Publicar flete
         </button>
       </div>

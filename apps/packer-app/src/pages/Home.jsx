@@ -26,21 +26,21 @@ const EARN_PROFILES = [
     title: 'Viajero',
     desc: 'Tienes un viaje programado y espacio libre en tu maleta. Cada paquete que llevas es dinero extra sin esfuerzo adicional.',
     cta: 'Publicar mi viaje',
-    route: '/traficante/publicar-viajero'
+    route: '/packer/publicar-viajero'
   },
   {
     Icon: Package,
     title: 'Compactador',
     desc: 'Recibes paquetes en tu domicilio, los consolidas en una caja y los envías. Sin viajar, desde tu casa, con horarios propios.',
     cta: 'Ser compactador',
-    route: '/traficante/publicar-compactador'
+    route: '/packer/publicar-compactador'
   },
   {
     Icon: Car,
     title: 'Fletero',
     desc: 'Tienes vehículo y viajas entre ciudades. Llena tu auto o camioneta con carga y convierte cada viaje en un negocio.',
     cta: 'Ofrecer mi vehículo',
-    route: '/traficante/publicar-flete'
+    route: '/packer/publicar-flete'
   },
 ]
 
@@ -77,7 +77,7 @@ export default function TraficanteHome({ user }) {
     const params = new URLSearchParams()
     if (origin) params.set('origen', origin)
     if (destination) params.set('destino', destination)
-    navigate(`/traficante/buscar?${params.toString()}`)
+    navigate(`/packer/buscar?${params.toString()}`)
   }
 
   return (
@@ -103,13 +103,13 @@ export default function TraficanteHome({ user }) {
             <div className="t-hero-actions">
               <button
                 className="btn btn-primary t-btn-primary"
-                onClick={() => navigate('/traficante/buscar')}
+                onClick={() => navigate('/packer/buscar')}
               >
                 <Package size={14} /> Quiero enviar algo
               </button>
               <button
                 className="btn btn-outline t-btn-outline"
-                onClick={() => navigate('/traficante/publicar-viajero')}
+                onClick={() => navigate('/packer/publicar-viajero')}
               >
                 <Plane size={14} /> Ofrecer mi espacio
               </button>
@@ -280,7 +280,7 @@ export default function TraficanteHome({ user }) {
                 </button>
                 <button
                   className="btn btn-outline t-btn-outline"
-                  onClick={() => navigate('/traficante/buscar')}
+                  onClick={() => navigate('/packer/buscar')}
                 >
                   <Search size={14} /> Buscar transportadores
                 </button>
@@ -302,7 +302,7 @@ export default function TraficanteHome({ user }) {
               <p className="t-footer-legal-text"><Scale size={13} /> Cada viajero es responsable de cumplir la legislación aduanera del país de destino.</p>
               <button
                 className="t-footer-legal-link"
-                onClick={() => navigate('/traficante/legal')}
+                onClick={() => navigate('/packer/legal')}
               >
                 <FileText size={12} /> Aviso legal completo
               </button>

@@ -225,7 +225,7 @@ export default function TraficanteBuscar() {
               <Package size={48} className="t-empty-icon" />
               <h3>No hay transportadores disponibles</h3>
               <p>No encontramos viajes que coincidan con tu búsqueda. Prueba cambiar los filtros o publicar tu propia ruta.</p>
-              <button className="btn btn-outline t-btn-outline" onClick={() => navigate('/traficante/publicar-viaje')}>
+              <button className="btn btn-outline t-btn-outline" onClick={() => navigate('/packer/publicar-viaje')}>
                 <Plane size={14} /> Publicar mi viaje
               </button>
             </div>
@@ -310,7 +310,7 @@ export default function TraficanteBuscar() {
                         </div>
                         <button
                           className="btn btn-primary t-btn-primary t-trip-btn"
-                          onClick={() => navigate(`/traficante/envio/${trip.id}`)}
+                          onClick={() => navigate(`/packer/envio/${trip.id}`)}
                         >
                           Contactar
                         </button>
