@@ -376,8 +376,6 @@ export default function Home() {
                 </div>
               )}
 
-              {/* Badge */}
-              <span className="banner-carousel-badge">⭐ Premium</span>
             </div>
           )}
 
