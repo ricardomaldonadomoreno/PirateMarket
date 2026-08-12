@@ -266,3 +266,215 @@
 .admin-report-meta {
   display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px;
 }
+
+/* ── Banners de la App ── */
+
+.admin-section {
+  margin-bottom: 2rem;
+}
+
+.admin-section-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--gold);
+  margin-bottom: 0.25rem;
+}
+
+.admin-section-sub {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+
+.admin-app-banner-form {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  background: var(--dark-surface);
+  border: 1px solid var(--dark-border);
+  border-radius: var(--radius-lg);
+  padding: 1rem;
+}
+
+.admin-app-banner-upload {
+  flex: 0 0 200px;
+}
+
+.admin-file-input {
+  display: none;
+}
+
+.admin-file-label {
+  display: block;
+  cursor: pointer;
+  border: 1px dashed var(--dark-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.admin-file-label:hover {
+  border-color: var(--gold);
+}
+
+.admin-file-preview {
+  width: 100%;
+  height: 80px;
+  object-fit: cover;
+  display: block;
+}
+
+.admin-file-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 80px;
+  gap: 0.25rem;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.admin-file-icon {
+  font-size: 1.5rem;
+}
+
+.admin-app-banner-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.admin-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.admin-select {
+  background: var(--dark);
+  border: 1px solid var(--dark-border);
+  color: var(--text-light);
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.admin-btn {
+  padding: 0.5rem 1.25rem;
+  border-radius: var(--radius-md);
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+}
+
+.admin-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-btn-gold {
+  background: rgba(212, 168, 67, 0.15);
+  color: var(--gold);
+  border: 1px solid rgba(212, 168, 67, 0.3);
+}
+
+.admin-btn-gold:hover:not(:disabled) {
+  background: rgba(212, 168, 67, 0.25);
+}
+
+/* Lista de banners de la app */
+.admin-app-banner-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.admin-app-banner-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: var(--dark-surface);
+  border: 1px solid var(--dark-border);
+  border-radius: var(--radius-lg);
+  padding: 0.75rem 1rem;
+  transition: border-color 0.2s;
+}
+
+.admin-app-banner-item.live {
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+.admin-app-banner-img {
+  flex: 0 0 180px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.admin-app-banner-img img {
+  width: 100%;
+  height: 48px;
+  object-fit: cover;
+  display: block;
+}
+
+.admin-app-banner-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.admin-app-banner-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Filters bar */
+.admin-filters-bar {
+  margin-bottom: 1rem;
+}
+
+.admin-filter-btns {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.filter-btn {
+  padding: 0.4rem 0.875rem;
+  border: 1px solid var(--dark-border);
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.filter-btn:hover {
+  border-color: var(--gold);
+  color: var(--text-light);
+}
+
+.filter-btn.active {
+  background: rgba(212, 168, 67, 0.15);
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.btn-secondary {
+  background: rgba(128, 128, 128, 0.1);
+  color: var(--text-muted);
+  border: 1px solid rgba(128, 128, 128, 0.2);
+}
+
+.btn-secondary:hover {
+  background: rgba(128, 128, 128, 0.2);
+}
