@@ -15,13 +15,42 @@ export default function DashboardDestacar({ user, profile }) {
   const [message, setMessage] = useState('')
   const [messageType, setMessageType] = useState('') // success, error, info
   const [loading, setLoading] = useState(true)
+  const [bannerBlocked, setBannerBlocked] = useState(false)
+  const [bannerStatus, setBannerStatus] = useState(null) // 'pending' | 'approved' | 'rejected' | null
 
   // Cargar los anuncios del usuario y estados de solicitudes
   useEffect(() => {
     if (!user) return
     loadListings()
     loadRequestStatuses()
+    loadBannerStatus()
   }, [user])
+
+  // Verificar si el usuario ya tiene un banner activo o pendiente
+  const loadBannerStatus = async () => {
+    try {
+      const now = new Date().toISOString()
+      const { data, error } = await supabase
+        .from('destacar_banners')
+        .select('id, status, is_live, live_until, banner_url')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+      if (error) throw error
+
+      if (data && data.length > 0) {
+        const latest = data[0]
+        // Bloquear si: pendiente, aprobado y aún vigente
+        if (latest.status === 'pending' || (latest.status === 'approved' && latest.is_live && latest.live_until && new Date(latest.live_until) > new Date(now))) {
+          setBannerBlocked(true)
+          setBannerStatus(latest.status)
+        } else {
+          setBannerBlocked(false)
+          setBannerStatus(null)
+        }
+      }
+    } catch (error) { console.error('Error checking banner:', error) }
+  }
 
   const loadListings = async () => {
     setLoading(true)
@@ -302,28 +331,41 @@ export default function DashboardDestacar({ user, profile }) {
           Sube una imagen de exactamente <strong>1200×300 px</strong>. Se mostrará en el banner rotatorio del Home (rotación cada 5 segundos).
         </p>
 
-        <div className="destacar-banner-upload">
-          <label htmlFor="banner-upload-input" className="destacar-banner-label">
-            {bannerPreview ? (
-              <div className="destacar-banner-preview-container">
-                <img src={bannerPreview} alt="Banner preview" className="destacar-banner-preview" />
-                <span className="destacar-banner-change">Cambiar imagen</span>
-              </div>
-            ) : (
-              <div className="destacar-banner-placeholder">
-                <span className="destacar-banner-placeholder-icon"><Upload size={32} /></span>
-                <span>Haz clic para subir tu banner (1200×300 px)</span>
-              </div>
-            )}
-          </label>
-          <input
-            id="banner-upload-input"
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            onChange={handleBannerUpload}
-            style={{ display: 'none' }}
-          />
-        </div>
+        {bannerBlocked && bannerStatus === 'approved' && (
+          <div className="destacar-message success">
+            Ya tienes un banner activo. Se mostrará en el Home hasta que expire.
+          </div>
+        )}
+        {bannerBlocked && bannerStatus === 'pending' && (
+          <div className="destacar-message info">
+            Ya tienes una solicitud de banner pendiente de revisión por el admin.
+          </div>
+        )}
+
+        {!bannerBlocked ? (
+          <div className="destacar-banner-upload">
+            <label htmlFor="banner-upload-input" className="destacar-banner-label">
+              {bannerPreview ? (
+                <div className="destacar-banner-preview-container">
+                  <img src={bannerPreview} alt="Banner preview" className="destacar-banner-preview" />
+                  <span className="destacar-banner-change">Cambiar imagen</span>
+                </div>
+              ) : (
+                <div className="destacar-banner-placeholder">
+                  <span className="destacar-banner-placeholder-icon"><Upload size={32} /></span>
+                  <span>Haz clic para subir tu banner (1200×300 px)</span>
+                </div>
+              )}
+            </label>
+            <input
+              id="banner-upload-input"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handleBannerUpload}
+              style={{ display: 'none' }}
+            />
+          </div>
+        ) : null}
 
         {bannerPreview && (
           <div className="destacar-banner-dimensions">
@@ -331,21 +373,22 @@ export default function DashboardDestacar({ user, profile }) {
           </div>
         )}
 
-        {/* Botón para enviar banner (dentro de la sección) */}
-        <div className="destacar-submit-section">
-          <button
-            className="btn btn-gold destacar-submit-btn"
-            onClick={handleSubmitBanner}
-            disabled={sending}
-          >
-            {sending ? 'Enviando...' : 'Enviar banner'}
-          </button>
-          {bannerFile && (
-            <span className="destacar-submit-info">
-              Banner adjunto (1200×300)
-            </span>
-          )}
-        </div>
+        {!bannerBlocked ? (
+          <div className="destacar-submit-section">
+            <button
+              className="btn btn-gold destacar-submit-btn"
+              onClick={handleSubmitBanner}
+              disabled={sending}
+            >
+              {sending ? 'Enviando...' : 'Enviar banner'}
+            </button>
+            {bannerFile && (
+              <span className="destacar-submit-info">
+                Banner adjunto (1200×300)
+              </span>
+            )}
+          </div>
+        ) : null}
       </div>
     </div>
   )
