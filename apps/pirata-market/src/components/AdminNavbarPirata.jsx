@@ -33,7 +33,7 @@ export default function AdminNavbarPirata() {
     { path: '/admin/perfiles', icon: '👤', label: 'Perfiles' },
     { path: '/admin/pirata/usuarios', icon: '👥', label: 'Usuarios' },
     { path: '/admin/pirata/anuncios', icon: '📋', label: 'Anuncios' },
-    { path: '/admin/pirata/reportes', icon: '🚨', label: 'Reportes' },
+    { path: '/admin/pirata/banners', icon: '🖼️', label: 'Banners' },
     { path: '/admin/pirata/catalogos', icon: '🏪', label: 'Catálogos' },
   ]
 
