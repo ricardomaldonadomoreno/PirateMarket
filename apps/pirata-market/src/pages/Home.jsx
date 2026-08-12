@@ -84,12 +84,13 @@ export default function Home() {
   const loadFeatured = async () => {
     const now = new Date().toISOString()
     try {
-      // Cargar banners aprobados y activos desde destacar_requests
+      // Cargar banners aprobados y activos desde destacar_banners
       const { data: bannerData } = await supabase
-        .from('destacar_requests')
-        .select('id, banner_url, banner_live_until')
-        .eq('banner_live', true)
-        .gt('banner_live_until', now)
+        .from('destacar_banners')
+        .select('id, banner_url, live_until')
+        .eq('status', 'approved')
+        .eq('is_live', true)
+        .gt('live_until', now)
         .order('created_at', { ascending: false })
 
       if (bannerData && bannerData.length > 0) {
