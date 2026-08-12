@@ -14,7 +14,7 @@ export default function TraficanteLegal() {
           ← Volver al inicio
         </button>
 
-        <h1 className="t-legal-title">Aviso Legal — Traficante</h1>
+        <h1 className="t-legal-title">Aviso Legal — Packer</h1>
 
         <section className="t-legal-content">
           <p>Contenido legal en construcción.</p>

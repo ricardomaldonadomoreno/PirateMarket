@@ -295,7 +295,7 @@ export default function TraficanteHome({ user }) {
         <div className="container">
           <div className="t-footer-legal-content">
             <div className="t-footer-legal-brand">
-              <span className="t-footer-legal-name">Traficante</span>
+              <span className="t-footer-legal-name">Packer</span>
               <span className="t-footer-legal-by">by Buses App</span>
             </div>
             <div className="t-footer-legal-right">

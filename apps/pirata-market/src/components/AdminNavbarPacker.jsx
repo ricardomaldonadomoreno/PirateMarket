@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import './AdminNavbar.css'
 
-export default function AdminNavbarTraficante() {
+export default function AdminNavbarPacker() {
   const location = useLocation()
   const navigate = useNavigate()
   const [isAdmin, setIsAdmin] = useState(false)
@@ -27,8 +27,8 @@ export default function AdminNavbarTraficante() {
     navigate('/admin')
   }
 
-  // Links base para Traficante
-  const traficanteLinks = [
+  // Links base para Packer
+  const packerLinks = [
     { path: '/admin/traficante', icon: '📊', label: 'Dashboard' },
     { path: '/admin/traficante/viajes', icon: '🚛', label: 'Viajes' },
     { path: '/admin/traficante/verificaciones', icon: '✅', label: 'Verificaciones' },
@@ -46,14 +46,14 @@ export default function AdminNavbarTraficante() {
     return null
   }
 
-  const links = [...traficanteLinks, ...subAdminLinks]
+  const links = [...packerLinks, ...subAdminLinks]
 
   return (
     <nav className="admin-navbar">
       <div className="admin-navbar-brand">
-        <img src="/logo-ico.png" alt="Traficante" className="admin-nav-logo" />
+        <img src="/logo-ico.png" alt="Packer" className="admin-nav-logo" />
         <div>
-          <span className="admin-nav-title serif">traficante</span>
+          <span className="admin-nav-title serif">packer</span>
           <span className="admin-nav-sub">backoffice</span>
         </div>
       </div>
@@ -77,7 +77,7 @@ export default function AdminNavbarTraficante() {
           </Link>
         )}
         <Link to="/traficante" className="admin-nav-link" target="_blank">
-          🌐 Ver traficante
+          🌐 Ver packer
         </Link>
         <button onClick={handleLogout} className="btn btn-ghost admin-logout">
           Salir

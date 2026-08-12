@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../../lib/supabase'
-import AdminNavbarTraficante from '../../../components/AdminNavbarTraficante'
+import AdminNavbarPacker from '../../../components/AdminNavbarPacker'
 
-export default function TraficanteAdminVerificaciones() {
+export default function PackerAdminVerificaciones() {
   const [requests, setRequests] = useState([])
   const [loading, setLoading] = useState(true)
   const [filterStatus, setFilterStatus] = useState('all')
@@ -98,7 +98,7 @@ export default function TraficanteAdminVerificaciones() {
 
   // ── REVOCAR ──
   const handleRevoke = async (userId) => {
-    if (!confirm('¿Revocar verificación completa del traficante?')) return
+    if (!confirm('¿Revocar verificación completa del packer?')) return
     await supabase.from('traficante_profiles').update({
       level: 'basico',
       identity_verified: false,
@@ -142,10 +142,10 @@ export default function TraficanteAdminVerificaciones() {
 
   return (
     <div className="admin-page">
-      <AdminNavbarTraficante />
+      <AdminNavbarPacker />
       <div className="admin-content">
         <div className="admin-page-header">
-          <h1 className="serif luxury-gold">Verificaciones Traficante</h1>
+          <h1 className="serif luxury-gold">Verificaciones Packer</h1>
           <p className="admin-page-sub">{requests.length} solicitudes</p>
         </div>
 
@@ -169,7 +169,7 @@ export default function TraficanteAdminVerificaciones() {
           ) : (
             <div className="admin-listings-table">
               <div className="admin-listings-header">
-                <span>Traficante</span>
+                <span>Packer</span>
                 <span>Estado</span>
                 <span>Documentos</span>
                 <span>Fecha</span>

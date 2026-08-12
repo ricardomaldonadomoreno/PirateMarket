@@ -395,7 +395,7 @@ export default function AdminPerfiles() {
                   <ul>
                     <li>Todos los datos del usuario (perfil, avatar)</li>
                     <li>Todos sus anuncios y publicaciones</li>
-                    <li>Todos sus viajes y envíos (traficante)</li>
+                    <li>Todos sus viajes y envíos (packer)</li>
                     <li>Sus verificaciones y documentos</li>
                     <li>Su cuenta de autenticación (login)</li>
                   </ul>

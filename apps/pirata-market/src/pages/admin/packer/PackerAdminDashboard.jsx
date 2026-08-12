@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../../lib/supabase'
-import AdminNavbarTraficante from '../../../components/AdminNavbarTraficante'
+import AdminNavbarPacker from '../../../components/AdminNavbarPacker'
 
-export default function TraficanteAdminDashboard() {
+export default function PackerAdminDashboard() {
   const [stats, setStats] = useState({
     total_traficantes: 0,
     trips: 0,
@@ -52,7 +52,7 @@ export default function TraficanteAdminDashboard() {
   }
 
   const statCards = [
-    { icon: '🚛', value: stats.total_traficantes, label: 'Traficantes', color: 'gold' },
+    { icon: '🚛', value: stats.total_traficantes, label: 'Packers', color: 'gold' },
     { icon: '🗺️', value: stats.trips, label: 'Viajes totales', color: 'gold' },
     { icon: '✅', value: stats.trips_active, label: 'Viajes activos', color: 'success' },
     { icon: '📄', value: stats.pending_verifications, label: 'Verificaciones pendientes', color: 'warning' },
@@ -62,11 +62,11 @@ export default function TraficanteAdminDashboard() {
 
   return (
     <div className="admin-page">
-      <AdminNavbarTraficante />
+      <AdminNavbarPacker />
       <div className="admin-content">
         <div className="admin-page-header">
-          <h1 className="serif luxury-gold">Dashboard Traficante</h1>
-          <p className="admin-page-sub">Resumen de la app Traficante</p>
+          <h1 className="serif luxury-gold">Dashboard Packer</h1>
+          <p className="admin-page-sub">Resumen de la app Packer</p>
         </div>
 
         <div className="admin-stats-grid">

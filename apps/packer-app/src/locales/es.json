@@ -1,6 +1,6 @@
 {
   "brand": {
-    "name": "TRAFICANTE app",
+    "name": "PACKER app",
     "tagline": "Envíos sin intermediarios",
     "by": "Un servicio de Buses"
   },
@@ -39,14 +39,14 @@
     "level_elite_desc": "Dirección verificada en dos países. Máxima confianza. Agente de logística.",
     "guarantee_title": "Tu dinero siempre protegido",
     "guarantee_desc": "El pago queda en escrow hasta que el receptor confirma la entrega. Nadie puede quedarse con tu dinero.",
-    "legal_note": "Cada viajero es responsable de cumplir la legislación aduanera del país de destino. Traficante no fomenta ni se hace responsable por el transporte de artículos ilegales.",
+    "legal_note": "Cada viajero es responsable de cumplir la legislación aduanera del país de destino. Packer no fomenta ni se hace responsable por el transporte de artículos ilegales.",
     "travelers_title": "Viajeros disponibles ahora",
     "badge_identity": "Identidad verificada",
     "badge_reputation": "Sistema de reputación",
     "badge_community": "Flota comunitaria",
     "btn_create_account": "Crear cuenta gratis",
     "legal_link": "Aviso legal completo",
-    "legal_page_title": "Aviso Legal — Traficante",
+    "legal_page_title": "Aviso Legal — Packer",
     "legal_page_content": "Contenido legal en construcción.",
     "btn_back": "Volver al inicio"
   }

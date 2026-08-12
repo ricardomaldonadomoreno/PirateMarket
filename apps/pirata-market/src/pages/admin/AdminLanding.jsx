@@ -219,7 +219,7 @@ export default function AdminLanding() {
             </p>
           </div>
 
-          {/* Traficante */}
+          {/* Packer */}
           <div
             onClick={() => navigate('/admin/traficante')}
             style={{
@@ -241,7 +241,7 @@ export default function AdminLanding() {
             }}
           >
             <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🚛</div>
-            <h2 className="serif" style={{ color: 'var(--gold)', marginBottom: '0.5rem', fontSize: '1.4rem' }}>Traficante</h2>
+            <h2 className="serif" style={{ color: 'var(--gold)', marginBottom: '0.5rem', fontSize: '1.4rem' }}>Packer</h2>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
               Viajes, verificaciones y destacados
             </p>
@@ -300,7 +300,7 @@ export default function AdminLanding() {
               <select className="input" value={form.scope} onChange={e => setForm(p => ({ ...p, scope: e.target.value }))} disabled={saving}>
                 <option value="both">Ambas plataformas</option>
                 <option value="pirata">Solo Pirata Market</option>
-                <option value="traficante">Solo Traficante</option>
+                <option value="traficante">Solo Packer</option>
               </select>
             </div>
             <div style={{ gridColumn: '1 / -1' }}>

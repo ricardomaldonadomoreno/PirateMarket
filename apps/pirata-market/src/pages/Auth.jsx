@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { Country } from 'country-state-city'
-import CountrySelect from '../../../traficante-app/src/components/CountrySelect'
+import CountrySelect from '../../../packer-app/src/components/CountrySelect'
 import './Auth.css'
 
 export default function Auth() {
@@ -145,7 +145,7 @@ export default function Auth() {
               <div className="auth-app-badge-sep">·</div>
               <div className="auth-app-badge">
                 <img src="/traficante/logoPNG.png" alt="Traficante" className="auth-app-badge-logo" />
-                <span>Traficante</span>
+                <span>Packer</span>
               </div>
             </div>
           </div>

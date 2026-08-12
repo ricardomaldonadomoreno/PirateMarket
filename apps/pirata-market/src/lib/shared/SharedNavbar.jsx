@@ -95,7 +95,7 @@ export default function SharedNavbar({
                   <Link to="/traficante/mi-cuenta/viajes" className="navbar-dropdown-item"
                     onClick={() => setMenuOpen(false)}>
                     <Star size={16} />
-                    <span>Panel Traficante</span>
+                    <span>Panel Packer</span>
                   </Link>
 
                   <div className="navbar-dropdown-divider" />

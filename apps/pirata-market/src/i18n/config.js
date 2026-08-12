@@ -10,8 +10,8 @@ import ar from '../locales/ar.json'
 import zh from '../locales/zh.json'
 
 // Traficante translations
-import trafEs from '../../../traficante-app/src/locales/es.json'
-import trafEn from '../../../traficante-app/src/locales/en.json'
+import trafEs from '../../../packer-app/src/locales/es.json'
+import trafEn from '../../../packer-app/src/locales/en.json'
 
 const resources = {
   es: { translation: es, traficante: trafEs },

@@ -19,20 +19,20 @@ import Legal from './pages/Legal'
 import MiPerfil from './pages/MiPerfil'
 
 // Pages — Traficante
-import TraficanteHome from '../../traficante-app/src/pages/Home'
-import TraficanteBuscar from '../../traficante-app/src/pages/Buscar'
-import TraficantePublicarViajero from '../../traficante-app/src/pages/PublicarViajero'
-import TraficantePublicarCompactador from '../../traficante-app/src/pages/PublicarCompactador'
-import TraficantePublicarFlete from '../../traficante-app/src/pages/PublicarFlete'
-import TraficanteDashboard from '../../traficante-app/src/pages/Dashboard'
-import TraficanteViajeDetalle from '../../traficante-app/src/pages/ViajeDetalle'
-import MiCuenta from '../../traficante-app/src/pages/MiCuenta'
-import MiCuentaVerificacion from '../../traficante-app/src/pages/MiCuentaVerificacion'
-import MiCuentaResenas from '../../traficante-app/src/pages/MiCuentaResenas'
-import MiCuentaNivel from '../../traficante-app/src/pages/MiCuentaNivel'
-import MiCuentaMisViajes from '../../traficante-app/src/pages/MiCuentaMisViajes'
-import TraficanteSolicitud from '../../traficante-app/src/pages/Solicitud'
-import TraficanteLegal from '../../traficante-app/src/pages/Legal'
+import TraficanteHome from '../../packer-app/src/pages/Home'
+import TraficanteBuscar from '../../packer-app/src/pages/Buscar'
+import TraficantePublicarViajero from '../../packer-app/src/pages/PublicarViajero'
+import TraficantePublicarCompactador from '../../packer-app/src/pages/PublicarCompactador'
+import TraficantePublicarFlete from '../../packer-app/src/pages/PublicarFlete'
+import TraficanteDashboard from '../../packer-app/src/pages/Dashboard'
+import TraficanteViajeDetalle from '../../packer-app/src/pages/ViajeDetalle'
+import MiCuenta from '../../packer-app/src/pages/MiCuenta'
+import MiCuentaVerificacion from '../../packer-app/src/pages/MiCuentaVerificacion'
+import MiCuentaResenas from '../../packer-app/src/pages/MiCuentaResenas'
+import MiCuentaNivel from '../../packer-app/src/pages/MiCuentaNivel'
+import MiCuentaMisViajes from '../../packer-app/src/pages/MiCuentaMisViajes'
+import TraficanteSolicitud from '../../packer-app/src/pages/Solicitud'
+import TraficanteLegal from '../../packer-app/src/pages/Legal'
 
 // Admin — Landing + SubAdmins
 import AdminLogin from './pages/admin/AdminLogin'
@@ -50,14 +50,14 @@ import AdminCatalogos from './pages/admin/pirata/AdminCatalogos'
 import AdminPerfiles from './pages/admin/AdminPerfiles'
 
 // Admin — Traficante
-import TraficanteAdminDashboard from './pages/admin/traficante/TraficanteAdminDashboard'
-import TraficanteAdminViajes from './pages/admin/traficante/TraficanteAdminViajes'
-import TraficanteAdminVerificaciones from './pages/admin/traficante/TraficanteAdminVerificaciones'
-import TraficanteAdminDestacados from './pages/admin/traficante/TraficanteAdminDestacados'
+import PackerAdminDashboard from './pages/admin/packer/PackerAdminDashboard'
+import PackerAdminViajes from './pages/admin/packer/PackerAdminViajes'
+import PackerAdminVerificaciones from './pages/admin/packer/PackerAdminVerificaciones'
+import PackerAdminDestacados from './pages/admin/packer/PackerAdminDestacados'
 
 // Components
 import Navbar from './components/Navbar'
-import TraficanteNavbar from '../../traficante-app/src/components/Navbar'
+import TraficanteNavbar from '../../packer-app/src/components/Navbar'
 import AdminRoute from './components/AdminRoute'
 
 function App() {
@@ -148,10 +148,10 @@ function App() {
         <Route path="/traficante/legal" element={<><TraficanteNavbar user={user} profile={profile} /><TraficanteLegal /></>} />
 
         {/* ── ADMIN TRAFICANTE ── */}
-        <Route path="/admin/traficante" element={<AdminRoute><TraficanteAdminDashboard /></AdminRoute>} />
-        <Route path="/admin/traficante/viajes" element={<AdminRoute><TraficanteAdminViajes /></AdminRoute>} />
-        <Route path="/admin/traficante/verificaciones" element={<AdminRoute><TraficanteAdminVerificaciones /></AdminRoute>} />
-        <Route path="/admin/traficante/destacados" element={<AdminRoute><TraficanteAdminDestacados /></AdminRoute>} />
+        <Route path="/admin/traficante" element={<AdminRoute><PackerAdminDashboard /></AdminRoute>} />
+        <Route path="/admin/traficante/viajes" element={<AdminRoute><PackerAdminViajes /></AdminRoute>} />
+        <Route path="/admin/traficante/verificaciones" element={<AdminRoute><PackerAdminVerificaciones /></AdminRoute>} />
+        <Route path="/admin/traficante/destacados" element={<AdminRoute><PackerAdminDestacados /></AdminRoute>} />
       </Routes>
     </Router>
   )

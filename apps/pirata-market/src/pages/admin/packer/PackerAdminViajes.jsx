@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../../lib/supabase'
-import AdminNavbarTraficante from '../../../components/AdminNavbarTraficante'
+import AdminNavbarPacker from '../../../components/AdminNavbarPacker'
 
-export default function TraficanteAdminViajes() {
+export default function PackerAdminViajes() {
   const [trips, setTrips] = useState([])
   const [loading, setLoading] = useState(true)
   const [filterStatus, setFilterStatus] = useState('all')
@@ -46,7 +46,7 @@ export default function TraficanteAdminViajes() {
 
   return (
     <div className="admin-page">
-      <AdminNavbarTraficante />
+      <AdminNavbarPacker />
       <div className="admin-content">
         <div className="admin-page-header">
           <h1 className="serif luxury-gold">Viajes</h1>
@@ -74,7 +74,7 @@ export default function TraficanteAdminViajes() {
             <div className="admin-listings-table">
               <div className="admin-listings-header">
                 <span>Viaje</span>
-                <span>Traficante</span>
+                <span>Packer</span>
                 <span>Tipo</span>
                 <span>Origen → Destino</span>
                 <span>Estado</span>

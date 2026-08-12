@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../../lib/supabase'
-import AdminNavbarTraficante from '../../../components/AdminNavbarTraficante'
+import AdminNavbarPacker from '../../../components/AdminNavbarPacker'
 
-export default function TraficanteAdminDestacados() {
+export default function PackerAdminDestacados() {
   const [featured, setFeatured] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -58,10 +58,10 @@ export default function TraficanteAdminDestacados() {
 
   return (
     <div className="admin-page">
-      <AdminNavbarTraficante />
+      <AdminNavbarPacker />
       <div className="admin-content">
         <div className="admin-page-header">
-          <h1 className="serif luxury-gold">Destacados — Traficante</h1>
+          <h1 className="serif luxury-gold">Destacados — Packer</h1>
           <p className="admin-page-sub">{featured.length} solicitudes de destacados de viajes</p>
         </div>
 
