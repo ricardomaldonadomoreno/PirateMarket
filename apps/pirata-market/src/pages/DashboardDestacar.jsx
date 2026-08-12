@@ -7,6 +7,7 @@ export default function DashboardDestacar({ user, profile }) {
   const { t } = useTranslation()
   const [listings, setListings] = useState([])
   const [selectedListings, setSelectedListings] = useState(new Set())
+  const [requestStatuses, setRequestStatuses] = useState({})
   const [bannerFile, setBannerFile] = useState(null)
   const [bannerPreview, setBannerPreview] = useState(null)
   const [sending, setSending] = useState(false)
@@ -14,10 +15,11 @@ export default function DashboardDestacar({ user, profile }) {
   const [messageType, setMessageType] = useState('') // success, error, info
   const [loading, setLoading] = useState(true)
 
-  // Cargar los anuncios del usuario
+  // Cargar los anuncios del usuario y estados de solicitudes
   useEffect(() => {
     if (!user) return
     loadListings()
+    loadRequestStatuses()
   }, [user])
 
   const loadListings = async () => {
@@ -33,6 +35,28 @@ export default function DashboardDestacar({ user, profile }) {
       setListings(data || [])
     } catch (error) { console.error(error) }
     finally { setLoading(false) }
+  }
+
+  // Cargar estados de solicitudes de destacar
+  const loadRequestStatuses = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('destacar_listings')
+        .select('listing_id, status, is_live, live_until')
+        .eq('user_id', user.id)
+      if (error) throw error
+
+      const statuses = {}
+      if (data) {
+        data.forEach(req => {
+          // Si hay múltiples solicitudes para el mismo anuncio, tomar la más reciente (última)
+          if (!statuses[req.listing_id]) {
+            statuses[req.listing_id] = { status: req.status, is_live: req.is_live, live_until: req.live_until }
+          }
+        })
+      }
+      setRequestStatuses(statuses)
+    } catch (error) { console.error(error) }
   }
 
   // Toggle selección de anuncio para destacar
@@ -209,6 +233,7 @@ export default function DashboardDestacar({ user, profile }) {
             <div className="destacar-listings">
               {listings.map(listing => {
                 const isSelected = selectedListings.has(listing.id)
+                const reqStatus = requestStatuses[listing.id]
                 const isFeatured = listing.is_featured && listing.featured_until && new Date(listing.featured_until) > new Date()
                 return (
                   <div key={listing.id}
@@ -228,7 +253,17 @@ export default function DashboardDestacar({ user, profile }) {
                       <div className="destacar-listing-title">{listing.title}</div>
                       <div className="destacar-listing-meta">
                         <span className="destacar-listing-price">{listing.price} {listing.currency}</span>
-                        {isFeatured && <span className="destacar-listing-badge">Ya destacado</span>}
+                        {isFeatured ? (
+                          <span className="destacar-listing-badge badge-featured">⭐ Destacado</span>
+                        ) : reqStatus ? (
+                          reqStatus.status === 'approved' ? (
+                            <span className="destacar-listing-badge badge-approved">✅ Aprobado</span>
+                          ) : reqStatus.status === 'pending' ? (
+                            <span className="destacar-listing-badge badge-pending">⏳ Pendiente</span>
+                          ) : reqStatus.status === 'rejected' ? (
+                            <span className="destacar-listing-badge badge-rejected">❌ Rechazado</span>
+                          ) : null
+                        ) : null}
                       </div>
                     </div>
                   </div>
