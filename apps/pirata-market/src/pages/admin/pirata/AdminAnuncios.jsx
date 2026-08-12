@@ -37,10 +37,9 @@ export default function AdminAnuncios() {
 
   const loadFeatured = async () => {
     const { data } = await supabase
-      .from('featured_listings')
-      .select(`id, status, show_in_banner, banner_image_url, price_per_week, activated_at, expires_at, created_at,
-        listing:listings(id, title, slug, photos, price, currency),
-        user:users(display_name, email)`)
+      .from('destacar_listings')
+      .select(`id, user_id, listing_id, status, is_live, live_until, admin_note, reviewed_at, created_at,
+        listing:listings(id, title, slug, photos, price, currency)`)
       .order('created_at', { ascending: false })
     if (data) setFeatured(data)
   }
@@ -57,32 +56,51 @@ export default function AdminAnuncios() {
   }
 
   // ── DESTACADOS ──
-  const handleActivateFeatured = async (id) => {
-    const expiresAt = new Date()
-    expiresAt.setDate(expiresAt.getDate() + 7) // 1 semana
-    await supabase.from('featured_listings').update({
-      status: 'active',
-      activated_at: new Date().toISOString(),
-      expires_at: expiresAt.toISOString()
+  const handleActivateFeatured = async (id, listingId) => {
+    const now = new Date()
+    const until = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
+
+    // Marcar anuncio como destacado en listings
+    await supabase.from('listings').update({
+      is_featured: true,
+      featured_until: until.toISOString()
+    }).eq('id', listingId)
+
+    // Actualizar solicitud
+    await supabase.from('destacar_listings').update({
+      status: 'approved',
+      is_live: true,
+      live_until: until.toISOString(),
+      reviewed_at: new Date().toISOString()
     }).eq('id', id)
+
     loadFeatured()
   }
 
-  const handleDeactivateFeatured = async (id) => {
-    await supabase.from('featured_listings').update({
-      status: 'expired'
+  const handleDeactivateFeatured = async (id, listingId) => {
+    // Quitar destacado del anuncio
+    await supabase.from('listings').update({
+      is_featured: false,
+      featured_until: null
+    }).eq('id', listingId)
+
+    // Actualizar solicitud
+    await supabase.from('destacar_listings').update({
+      status: 'expired',
+      is_live: false
     }).eq('id', id)
+
     loadFeatured()
   }
 
-  const handleToggleBanner = async (id, current) => {
-    await supabase.from('featured_listings').update({ show_in_banner: !current }).eq('id', id)
+  const handleToggleBanner = async (id, current, listingId) => {
+    // No se usa para esta nueva tabla, mantener compatibilidad
     loadFeatured()
   }
 
   const handleDeleteFeatured = async (id) => {
     if (!confirm('¿Eliminar este destacado?')) return
-    await supabase.from('featured_listings').delete().eq('id', id)
+    await supabase.from('destacar_listings').delete().eq('id', id)
     loadFeatured()
   }
 
@@ -104,7 +122,7 @@ export default function AdminAnuncios() {
       <div className="admin-content">
         <div className="admin-page-header">
           <h1 className="serif luxury-gold">Anuncios</h1>
-          <p className="admin-page-sub">{listings.length} anuncios · {featured.filter(f => f.status === 'active').length} destacados activos</p>
+          <p className="admin-page-sub">{listings.length} anuncios · {featured.filter(f => f.is_live).length} destacados activos</p>
         </div>
 
         {/* Tabs */}
@@ -220,10 +238,9 @@ export default function AdminAnuncios() {
               <div className="admin-listings-table">
                 <div className="admin-listings-header">
                   <span>Anuncio</span>
-                  <span>Vendedor</span>
+                  <span>Precio</span>
                   <span>Estado</span>
-                  <span>Banner</span>
-                  <span>Activa</span>
+                  <span>Creado</span>
                   <span>Expira</span>
                   <span>Acciones</span>
                 </div>
@@ -231,54 +248,45 @@ export default function AdminAnuncios() {
                   <div key={f.id} className="admin-listing-row">
                     <div className="admin-listing-info">
                       <div className="admin-listing-thumb">
-                        {f.banner_image_url
-                          ? <img src={f.banner_image_url} alt="Banner" />
-                          : f.listing?.photos?.[0]
-                            ? <img src={f.listing.photos[0]} alt={f.listing.title} />
-                            : <span>📦</span>
+                        {f.listing?.photos?.[0]
+                          ? <img src={f.listing.photos[0]} alt={f.listing.title} />
+                          : <span>📦</span>
                         }
                       </div>
                       <div>
                         <div className="admin-listing-title">{f.listing?.title || 'Anuncio eliminado'}</div>
-                        <div className="admin-listing-meta">${f.price_per_week}/semana</div>
+                        <div className="admin-listing-meta">
+                          {f.listing?.price} {f.listing?.currency || 'USD'}
+                        </div>
                       </div>
                     </div>
 
-                    <div className="admin-cell-muted">{f.user?.display_name || '—'}</div>
+                    <div className="admin-cell-gold">$1 × 30 días</div>
 
                     <div>
                       <span className={`admin-badge ${
-                        f.status === 'active' ? 'badge-verified' :
+                        f.status === 'approved' ? 'badge-verified' :
                         f.status === 'pending' ? 'badge-pending' :
-                        f.status === 'expired' ? 'badge-rejected' : 'badge-free'
+                        f.status === 'rejected' ? 'badge-rejected' : 'badge-free'
                       }`}>
-                        {f.status === 'active' ? '✓ Activo' :
+                        {f.status === 'approved' ? '✓ Activo' :
                          f.status === 'pending' ? '⏳ Pendiente' :
+                         f.status === 'rejected' ? 'Rechazado' :
                          f.status === 'expired' ? 'Expirado' : f.status}
                       </span>
                     </div>
 
-                    <div>
-                      <button
-                        className={`btn-small ${f.show_in_banner ? 'btn-premium' : 'btn-secondary'}`}
-                        onClick={() => handleToggleBanner(f.id, f.show_in_banner)}
-                        disabled={f.status !== 'active'}
-                      >
-                        {f.show_in_banner ? '🖼️ En banner' : '🖼️ No banner'}
-                      </button>
-                    </div>
-
-                    <div className="admin-cell-muted">{fmt(f.activated_at)}</div>
-                    <div className="admin-cell-muted">{fmt(f.expires_at)}</div>
+                    <div className="admin-cell-muted">{fmt(f.created_at)}</div>
+                    <div className="admin-cell-muted">{fmt(f.live_until)}</div>
 
                     <div className="admin-user-actions">
                       {f.status === 'pending' && (
-                        <button className="btn-small btn-success" onClick={() => handleActivateFeatured(f.id)}>
+                        <button className="btn-small btn-success" onClick={() => handleActivateFeatured(f.id, f.listing_id)}>
                           ✓ Activar
                         </button>
                       )}
-                      {f.status === 'active' && (
-                        <button className="btn-small btn-danger" onClick={() => handleDeactivateFeatured(f.id)}>
+                      {(f.status === 'approved') && (
+                        <button className="btn-small btn-danger" onClick={() => handleDeactivateFeatured(f.id, f.listing_id)}>
                           ✗ Expirar
                         </button>
                       )}
