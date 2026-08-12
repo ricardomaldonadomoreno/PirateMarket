@@ -153,13 +153,13 @@ export default function Home() {
     })
   }
 
-  // Construir set de IDs destacados y ordenar: destacados primero (aleatorio)
+  // Construir set de IDs destacados
   const featuredIds = new Set(featuredListings.map(f => f.id))
-  const displayedListings = filterByZone(listings).sort((a, b) => {
-    const aFeatured = featuredIds.has(a.id) ? 0 : 1
-    const bFeatured = featuredIds.has(b.id) ? 0 : 1
-    return aFeatured - bFeatured
-  })
+  // Mezclar todos los anuncios aleatoriamente (incluyendo destacados)
+  const displayedListings = filterByZone(listings)
+    .map(listing => ({ ...listing, _rand: Math.random() }))
+    .sort((a, b) => a._rand - b._rand)
+    .map(({ _rand, ...rest }) => rest)
 
   const handleSetZone = (latlng) => setZoneFilter({ lat: latlng.lat, lng: latlng.lng, radius_km: zoneRadius })
   const handleClearZone = () => { setZoneFilter(null); setShowZoneMap(false) }
