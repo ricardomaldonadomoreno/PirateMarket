@@ -122,8 +122,19 @@ export default function Home() {
   const loadListings = async () => {
     setLoading(true)
     try {
-      const data = await getListings(filters)
-      setListings(data)
+      // No pasar sellerTypes a supabase para que traiga todos (el filtro se aplica localmente)
+      const filtersForQuery = { ...filters, sellerTypes: [] }
+      const data = await getListings(filtersForQuery)
+
+      // Filtrar por seller_type localmente (lee de listings.seller_type directamente)
+      let filtered = data
+      if (filters.sellerTypes && filters.sellerTypes.length > 0) {
+        filtered = data.filter(listing =>
+          !listing.is_ghost && filters.sellerTypes.includes(listing.seller_type)
+        )
+      }
+
+      setListings(filtered)
     } catch (error) { console.error('Error loading listings:', error) }
     finally { setLoading(false) }
   }
