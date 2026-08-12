@@ -210,3 +210,35 @@
     text-align: center;
   }
 }
+
+/* ── TABS: Listados / Banners ── */
+.admin-tabs-bar {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  border-bottom: 2px solid var(--dark-border);
+  padding-bottom: 0;
+}
+
+.admin-tab-btn {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 0.6rem 1.2rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: -2px;
+}
+
+.admin-tab-btn:hover {
+  color: var(--text-light);
+  border-bottom-color: var(--gold);
+}
+
+.admin-tab-btn.active {
+  color: var(--gold);
+  border-bottom-color: var(--gold);
+}

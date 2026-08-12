@@ -4,58 +4,90 @@ import AdminNavbarPirata from '../../../components/AdminNavbarPirata'
 import './AdminReportes.css'
 
 export default function AdminReportes() {
+  const [activeTab, setActiveTab] = useState('listings') // 'listings' | 'banners'
   const [requests, setRequests] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('pending')
   const [expandedId, setExpandedId] = useState(null)
   const [rejectNote, setRejectNote] = useState('')
 
-  useEffect(() => { loadRequests() }, [filter])
+  useEffect(() => { loadRequests() }, [filter, activeTab])
 
   const loadRequests = async () => {
     setLoading(true)
     try {
-      // Cargar solicitudes de destacar_requests
-      let query = supabase
-        .from('destacar_requests')
-        .select(`*`)
-        .order('created_at', { ascending: false })
+      if (activeTab === 'listings') {
+        // Cargar solicitudes de destacar_listings
+        let query = supabase
+          .from('destacar_listings')
+          .select(`*`)
+          .order('created_at', { ascending: false })
 
-      if (filter !== 'all') query = query.eq('status', filter)
+        if (filter !== 'all') query = query.eq('status', filter)
 
-      const { data } = await query
+        const { data } = await query
 
-      if (data) {
-        // Cargar info de usuarios y anuncios para cada solicitud
-        const enriched = await Promise.all(
-          data.map(async (req) => {
-            const result = {}
+        if (data) {
+          const enriched = await Promise.all(
+            data.map(async (req) => {
+              const result = {}
 
-            // Buscar usuario
-            if (req.user_id) {
-              const { data: userData } = await supabase
-                .from('users')
-                .select('display_name, email, avatar_url')
-                .eq('id', req.user_id)
-                .single()
-              result.user = userData || null
-            }
+              // Buscar usuario
+              if (req.user_id) {
+                const { data: userData } = await supabase
+                  .from('users')
+                  .select('display_name, email, avatar_url')
+                  .eq('id', req.user_id)
+                  .single()
+                result.user = userData || null
+              }
 
-            // Buscar anuncios seleccionados
-            if (req.listing_ids && req.listing_ids.length > 0) {
-              const { data: listingsData } = await supabase
-                .from('listings')
-                .select('id, title, slug, photos, price, currency')
-                .in('id', req.listing_ids)
-              result.listings = listingsData || []
-            } else {
-              result.listings = []
-            }
+              // Buscar anuncio
+              if (req.listing_id) {
+                const { data: listingData } = await supabase
+                  .from('listings')
+                  .select('id, title, slug, photos, price, currency')
+                  .eq('id', req.listing_id)
+                  .single()
+                result.listing = listingData || null
+              }
 
-            return { ...req, ...result }
-          })
-        )
-        setRequests(enriched)
+              return { ...req, ...result }
+            })
+          )
+          setRequests(enriched)
+        }
+      } else {
+        // Cargar solicitudes de destacar_banners
+        let query = supabase
+          .from('destacar_banners')
+          .select(`*`)
+          .order('created_at', { ascending: false })
+
+        if (filter !== 'all') query = query.eq('status', filter)
+
+        const { data } = await query
+
+        if (data) {
+          const enriched = await Promise.all(
+            data.map(async (req) => {
+              const result = {}
+
+              // Buscar usuario
+              if (req.user_id) {
+                const { data: userData } = await supabase
+                  .from('users')
+                  .select('display_name, email, avatar_url')
+                  .eq('id', req.user_id)
+                  .single()
+                result.user = userData || null
+              }
+
+              return { ...req, ...result }
+            })
+          )
+          setRequests(enriched)
+        }
       }
     } catch (error) {
       console.error('Error loading requests:', error)
@@ -64,43 +96,42 @@ export default function AdminReportes() {
     }
   }
 
-  // Aprobar anuncios destacados (setear is_featured=true, featured_until=30 días)
-  const handleApproveListings = async (req) => {
-    if (!req.listing_ids || req.listing_ids.length === 0) return
+  // Aprobar anuncio destacado (setear is_featured=true, featured_until=30 días)
+  const handleApproveListing = async (req) => {
+    if (!req.listing_id) return
     const now = new Date()
     const until = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
 
-    const { error } = await supabase
+    const { error: listingError } = await supabase
       .from('listings')
       .update({ is_featured: true, featured_until: until.toISOString() })
-      .in('id', req.listing_ids)
+      .eq('id', req.listing_id)
 
-    if (error) {
-      console.error('Error approving listings:', error)
-      alert('Error al aprobar anuncios')
+    if (listingError) {
+      console.error('Error approving listing:', listingError)
+      alert('Error al aprobar anuncio')
       return
     }
 
     // Actualizar estado de la solicitud
     await supabase
-      .from('destacar_requests')
-      .update({ status: 'approved', admin_note: 'Anuncios destacados aprobados', reviewed_at: new Date().toISOString() })
+      .from('destacar_listings')
+      .update({ status: 'approved', admin_note: 'Anuncio destacado aprobado', reviewed_at: new Date().toISOString() })
       .eq('id', req.id)
 
     loadRequests()
   }
 
-  // Aprobar banner (setear banner_approved=true, banner_live=true, banner_live_until=30 días)
+  // Aprobar banner (setear is_live=true, live_until=30 días)
   const handleApproveBanner = async (req) => {
     const now = new Date()
     const until = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
 
     const { error } = await supabase
-      .from('destacar_requests')
+      .from('destacar_banners')
       .update({
-        banner_approved: true,
-        banner_live: true,
-        banner_live_until: until.toISOString(),
+        is_live: true,
+        live_until: until.toISOString(),
         status: 'approved',
         reviewed_at: new Date().toISOString()
       })
@@ -112,24 +143,16 @@ export default function AdminReportes() {
       return
     }
 
-    // Si también tenía anuncios, aprobarlos
-    if (req.listing_ids && req.listing_ids.length > 0) {
-      const untilFeatured = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
-      await supabase
-        .from('listings')
-        .update({ is_featured: true, featured_until: untilFeatured.toISOString() })
-        .in('id', req.listing_ids)
-    }
-
     loadRequests()
   }
 
   // Rechazar solicitud con nota
   const handleReject = async (req) => {
     const note = rejectNote.trim() || 'Solicitud rechazada'
+    const tableName = activeTab === 'listings' ? 'destacar_listings' : 'destacar_banners'
 
     const { error } = await supabase
-      .from('destacar_requests')
+      .from(tableName)
       .update({
         status: 'rejected',
         admin_note: note,
@@ -160,7 +183,23 @@ export default function AdminReportes() {
       <div className="admin-content">
         <div className="admin-page-header">
           <h1 className="serif luxury-gold">Solicitudes de Destacar</h1>
-          <p className="admin-page-sub">Anuncios destacados y banners publicitarios</p>
+          <p className="admin-page-sub">Administra anuncios destacados y banners publicitarios</p>
+        </div>
+
+        {/* Tabs: Listados / Banners */}
+        <div className="admin-tabs-bar">
+          <button
+            className={`admin-tab-btn ${activeTab === 'listings' ? 'active' : ''}`}
+            onClick={() => { setActiveTab('listings'); setFilter('pending') }}
+          >
+            📦 Anuncios Destacados
+          </button>
+          <button
+            className={`admin-tab-btn ${activeTab === 'banners' ? 'active' : ''}`}
+            onClick={() => { setActiveTab('banners'); setFilter('pending') }}
+          >
+            🖼️ Banners Publicitarios
+          </button>
         </div>
 
         <div className="admin-filters-bar">
@@ -199,37 +238,31 @@ export default function AdminReportes() {
 
               {expandedId === req.id && (
                 <div className="admin-report-expanded">
-                  {/* Anuncios seleccionados */}
-                  {req.listings && req.listings.length > 0 && (
+                  {activeTab === 'listings' && req.listing && (
                     <div className="admin-report-section">
-                      <div className="admin-report-section-title">📦 Anuncios seleccionados ({req.listings.length})</div>
-                      <div className="admin-report-listings-grid">
-                        {req.listings.map(listing => (
-                          <div key={listing.id} className="admin-report-listing-thumb">
-                            {listing.photos?.length > 0 ? (
-                              <img src={listing.photos[0]} alt={listing.title} />
-                            ) : (
-                              <div className="admin-report-listing-nophoto">📦</div>
-                            )}
-                            <div className="admin-report-listing-name">{listing.title}</div>
-                            <div className="admin-report-listing-price">{listing.price} {listing.currency}</div>
-                          </div>
-                        ))}
+                      <div className="admin-report-section-title">📦 Anuncio seleccionado</div>
+                      <div className="admin-report-listing-thumb">
+                        {req.listing.photos?.length > 0 ? (
+                          <img src={req.listing.photos[0]} alt={req.listing.title} />
+                        ) : (
+                          <div className="admin-report-listing-nophoto">📦</div>
+                        )}
+                        <div className="admin-report-listing-name">{req.listing.title}</div>
+                        <div className="admin-report-listing-price">{req.listing.price} {req.listing.currency}</div>
                       </div>
                     </div>
                   )}
 
-                  {/* Banner */}
-                  {req.banner_url && (
+                  {activeTab === 'banners' && (
                     <div className="admin-report-section">
                       <div className="admin-report-section-title">🖼️ Banner publicitario</div>
                       <div className="admin-report-banner-preview">
                         <img src={req.banner_url} alt="Banner" />
                       </div>
                       <div className="admin-report-banner-status">
-                        Aprobado: {req.banner_approved ? '✅ Sí' : '❌ No'} | Live: {req.banner_live ? '✅ Sí' : '❌ No'}
-                        {req.banner_live_until && (
-                          <span> | Hasta: {formatDate(req.banner_live_until)}</span>
+                        Live: {req.is_live ? '✅ Sí' : '❌ No'}
+                        {req.live_until && (
+                          <span> | Hasta: {formatDate(req.live_until)}</span>
                         )}
                       </div>
                     </div>
@@ -248,12 +281,12 @@ export default function AdminReportes() {
               {/* Acciones */}
               {req.status === 'pending' && (
                 <div className="admin-report-actions">
-                  {req.listings && req.listings.length > 0 && (
-                    <button className="btn-small btn-success" onClick={() => handleApproveListings(req)}>
-                      ✅ Aprobar anuncios ({req.listings.length} × $1)
+                  {activeTab === 'listings' && (
+                    <button className="btn-small btn-success" onClick={() => handleApproveListing(req)}>
+                      ✅ Aprobar anuncio ($1)
                     </button>
                   )}
-                  {req.banner_url && (
+                  {activeTab === 'banners' && (
                     <button className="btn-small btn-gold" onClick={() => handleApproveBanner(req)}>
                       🖼️ Aprobar banner ($30)
                     </button>

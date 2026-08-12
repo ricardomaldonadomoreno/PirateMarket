@@ -92,7 +92,7 @@ export default function DashboardDestacar({ user, profile }) {
     }
   }
 
-  // Enviar solicitud (destacados + banner en un solo proceso)
+  // Enviar solicitud (insertar en ambas tablas según lo seleccionado)
   const handleSubmit = async () => {
     if (selectedListings.size === 0 && !bannerFile) {
       setMessage('Selecciona al menos un anuncio o sube un banner para enviar la solicitud')
@@ -103,8 +103,20 @@ export default function DashboardDestacar({ user, profile }) {
     setSending(true)
     setMessage('')
     try {
-      // Subir banner si hay
-      let bannerUrl = null
+      // 1) Insertar solicitudes de anuncios destacados en destacar_listings
+      if (selectedListings.size > 0) {
+        const listingInserts = Array.from(selectedListings).map(listingId => ({
+          user_id: user.id,
+          listing_id: listingId,
+          status: 'pending',
+        }))
+        const { error: listingsError } = await supabase
+          .from('destacar_listings')
+          .insert(listingInserts)
+        if (listingsError) throw listingsError
+      }
+
+      // 2) Subir banner e insertar solicitud en destacar_banners
       if (bannerFile) {
         const fileName = `${user.id}/${Date.now()}_${bannerFile.name}`
         const { data: uploadData, error: uploadError } = await supabase.storage
@@ -114,20 +126,16 @@ export default function DashboardDestacar({ user, profile }) {
         const { data: { publicUrl } } = supabase.storage
           .from('banner-uploads')
           .getPublicUrl(uploadData.path)
-        bannerUrl = publicUrl
-      }
 
-      // Insertar solicitud en la tabla destacar_requests
-      const { error: insertError } = await supabase
-        .from('destacar_requests')
-        .insert({
-          user_id: user.id,
-          listing_ids: Array.from(selectedListings),
-          banner_url: bannerUrl,
-          status: 'pending',
-          created_at: new Date().toISOString(),
-        })
-      if (insertError) throw insertError
+        const { error: bannerError } = await supabase
+          .from('destacar_banners')
+          .insert({
+            user_id: user.id,
+            banner_url: publicUrl,
+            status: 'pending',
+          })
+        if (bannerError) throw bannerError
+      }
 
       setMessage('Solicitud enviada correctamente. El admin la revisará pronto.')
       setMessageType('success')
