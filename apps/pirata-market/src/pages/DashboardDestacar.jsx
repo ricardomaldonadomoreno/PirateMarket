@@ -113,7 +113,7 @@ export default function DashboardDestacar({ user, profile }) {
         .insert(listingInserts)
       if (listingsError) throw listingsError
 
-      setMessage('Solicitud de anuncios enviados. El admin la revisará pronto.')
+      setMessage('Solicitud de anuncios enviada. El admin la revisará pronto.')
       setMessageType('success')
       setSelectedListings(new Set())
     } catch (error) {
@@ -205,35 +205,53 @@ export default function DashboardDestacar({ user, profile }) {
             <p>No tienes anuncios activos. <a href="/publicar">Publica uno primero</a>.</p>
           </div>
         ) : (
-          <div className="destacar-listings">
-            {listings.map(listing => {
-              const isSelected = selectedListings.has(listing.id)
-              const isFeatured = listing.is_featured && listing.featured_until && new Date(listing.featured_until) > new Date()
-              return (
-                <div key={listing.id}
-                  className={`destacar-listing-item ${isSelected ? 'selected' : ''} ${isFeatured ? 'featured' : ''}`}
-                  onClick={() => toggleListing(listing.id)}
-                >
-                  <div className="destacar-listing-checkbox">
-                    {isSelected ? '✅' : '☐'}
-                  </div>
-                  <div className="destacar-listing-image">
-                    {listing.photos?.length > 0
-                      ? <img src={listing.photos[0]} alt={listing.title} />
-                      : <div className="destacar-listing-no-img">{listing.category?.icon || '📦'}</div>
-                    }
-                  </div>
-                  <div className="destacar-listing-info">
-                    <div className="destacar-listing-title">{listing.title}</div>
-                    <div className="destacar-listing-meta">
-                      <span className="destacar-listing-price">{listing.price} {listing.currency}</span>
-                      {isFeatured && <span className="destacar-listing-badge">Ya destacado</span>}
+          <>
+            <div className="destacar-listings">
+              {listings.map(listing => {
+                const isSelected = selectedListings.has(listing.id)
+                const isFeatured = listing.is_featured && listing.featured_until && new Date(listing.featured_until) > new Date()
+                return (
+                  <div key={listing.id}
+                    className={`destacar-listing-item ${isSelected ? 'selected' : ''} ${isFeatured ? 'featured' : ''}`}
+                    onClick={() => toggleListing(listing.id)}
+                  >
+                    <div className="destacar-listing-checkbox">
+                      {isSelected ? '✅' : '☐'}
+                    </div>
+                    <div className="destacar-listing-image">
+                      {listing.photos?.length > 0
+                        ? <img src={listing.photos[0]} alt={listing.title} />
+                        : <div className="destacar-listing-no-img">{listing.category?.icon || '📦'}</div>
+                      }
+                    </div>
+                    <div className="destacar-listing-info">
+                      <div className="destacar-listing-title">{listing.title}</div>
+                      <div className="destacar-listing-meta">
+                        <span className="destacar-listing-price">{listing.price} {listing.currency}</span>
+                        {isFeatured && <span className="destacar-listing-badge">Ya destacado</span>}
+                      </div>
                     </div>
                   </div>
-                </div>
-              )
-            })}
-          </div>
+                )
+              })}
+            </div>
+
+            {/* Botón para enviar anuncios destacados (dentro de la sección) */}
+            <div className="destacar-submit-section">
+              <button
+                className="btn btn-primary destacar-submit-btn"
+                onClick={handleSubmitListings}
+                disabled={sending}
+              >
+                {sending ? 'Enviando...' : 'Enviar anuncios para destacar'}
+              </button>
+              {selectedListings.size > 0 && (
+                <span className="destacar-submit-info">
+                  {selectedListings.size} anuncio(s) seleccionado(s)
+                </span>
+              )}
+            </div>
+          </>
         )}
       </div>
 
@@ -276,38 +294,22 @@ export default function DashboardDestacar({ user, profile }) {
             1200 × 300 px ✅
           </div>
         )}
-      </div>
 
-      {/* Botón para enviar anuncios destacados */}
-      <div className="destacar-submit-section">
-        <button
-          className="btn btn-primary destacar-submit-btn"
-          onClick={handleSubmitListings}
-          disabled={sending}
-        >
-          {sending ? 'Enviando...' : 'Enviar anuncios para destacar'}
-        </button>
-        {selectedListings.size > 0 && (
-          <span className="destacar-submit-info">
-            {selectedListings.size} anuncio(s) seleccionado(s)
-          </span>
-        )}
-      </div>
-
-      {/* Botón para enviar banner */}
-      <div className="destacar-submit-section">
-        <button
-          className="btn btn-gold destacar-submit-btn"
-          onClick={handleSubmitBanner}
-          disabled={sending}
-        >
-          {sending ? 'Enviando...' : 'Enviar banner'}
-        </button>
-        {bannerFile && (
-          <span className="destacar-submit-info">
-            Banner adjunto (1200×300)
-          </span>
-        )}
+        {/* Botón para enviar banner (dentro de la sección) */}
+        <div className="destacar-submit-section">
+          <button
+            className="btn btn-gold destacar-submit-btn"
+            onClick={handleSubmitBanner}
+            disabled={sending}
+          >
+            {sending ? 'Enviando...' : 'Enviar banner'}
+          </button>
+          {bannerFile && (
+            <span className="destacar-submit-info">
+              Banner adjunto (1200×300)
+            </span>
+          )}
+        </div>
       </div>
     </div>
   )
