@@ -398,7 +398,7 @@ export default function Home() {
           ) : (
             <div className="listings-grid">
               {displayedListings.map(listing => {
-                const uType = listing.user?.user_type
+                const uType = listing.seller_type || 'person'
                 const sellerIcon = listing.is_ghost ? '🏴‍☠️' : uType === 'shop' ? '🏪' : uType === 'wholesale' ? '📦' : '👤'
                 const sellerClass = listing.is_ghost ? 'pirate' : uType === 'shop' ? 'shop' : uType === 'wholesale' ? 'wholesale' : 'person'
                 return (
