@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
+import { Star, CheckCircle, Clock, XCircle, Upload, Image } from 'lucide-react'
 import './DashboardDestacar.css'
 
 export default function DashboardDestacar({ user, profile }) {
@@ -217,7 +218,7 @@ export default function DashboardDestacar({ user, profile }) {
       {/* Sección 1: Selección de anuncios */}
       <div className="destacar-section">
         <div className="destacar-section-title">
-          <span className="destacar-section-icon">📋</span>
+          <span className="destacar-section-icon">📦</span>
           <span>Seleccionar anuncios para destacar</span>
           <span className="destacar-price-badge">$1 × 30 días</span>
         </div>
@@ -241,7 +242,7 @@ export default function DashboardDestacar({ user, profile }) {
                     onClick={() => toggleListing(listing.id)}
                   >
                     <div className="destacar-listing-checkbox">
-                      {isSelected ? '✅' : '☐'}
+                      {isSelected ? '✓' : '☐'}
                     </div>
                     <div className="destacar-listing-image">
                       {listing.photos?.length > 0
@@ -254,14 +255,14 @@ export default function DashboardDestacar({ user, profile }) {
                       <div className="destacar-listing-meta">
                         <span className="destacar-listing-price">{listing.price} {listing.currency}</span>
                         {isFeatured ? (
-                          <span className="destacar-listing-badge badge-featured">⭐ Destacado</span>
+                          <span className="destacar-listing-badge badge-featured"><Star size={12} /> Destacado</span>
                         ) : reqStatus ? (
                           reqStatus.status === 'approved' ? (
-                            <span className="destacar-listing-badge badge-approved">✅ Aprobado</span>
+                            <span className="destacar-listing-badge badge-approved"><CheckCircle size={12} /> Aprobado</span>
                           ) : reqStatus.status === 'pending' ? (
-                            <span className="destacar-listing-badge badge-pending">⏳ Pendiente</span>
+                            <span className="destacar-listing-badge badge-pending"><Clock size={12} /> Pendiente</span>
                           ) : reqStatus.status === 'rejected' ? (
-                            <span className="destacar-listing-badge badge-rejected">❌ Rechazado</span>
+                            <span className="destacar-listing-badge badge-rejected"><XCircle size={12} /> Rechazado</span>
                           ) : null
                         ) : null}
                       </div>
@@ -293,7 +294,7 @@ export default function DashboardDestacar({ user, profile }) {
       {/* Sección 2: Banner publicitario */}
       <div className="destacar-section">
         <div className="destacar-section-title">
-          <span className="destacar-section-icon">🖼️</span>
+          <span className="destacar-section-icon"><Image size={20} /></span>
           <span>Solicitar banner publicitario</span>
           <span className="destacar-price-badge">$30 × 30 días</span>
         </div>
@@ -310,7 +311,7 @@ export default function DashboardDestacar({ user, profile }) {
               </div>
             ) : (
               <div className="destacar-banner-placeholder">
-                <span className="destacar-banner-placeholder-icon">📤</span>
+                <span className="destacar-banner-placeholder-icon"><Upload size={32} /></span>
                 <span>Haz clic para subir tu banner (1200×300 px)</span>
               </div>
             )}
