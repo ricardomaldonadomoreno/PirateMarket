@@ -98,18 +98,18 @@ export default function Home() {
         setFeaturedBanners(bannerData)
       }
 
-      // Cargar anuncios destacados (is_featured=true y featured_until > now)
+      // Cargar anuncios destacados desde destacar_listings (solo aprobados y activos)
       const { data: featuredData } = await supabase
-        .from('listings')
-        .select('id')
-        .eq('is_featured', true)
-        .gt('featured_until', now)
-        .eq('status', 'active')
+        .from('destacar_listings')
+        .select('listing_id')
+        .eq('status', 'approved')
+        .eq('is_live', true)
+        .gt('live_until', now)
 
       if (featuredData) {
         setFeaturedListings(featuredData)
         // Generar orden aleatorio UNA vez al cargar (solo para destacados)
-        setFeaturedShuffle(featuredData.map(f => ({ id: f.id, rand: Math.random() })).sort((a, b) => a.rand - b.rand))
+        setFeaturedShuffle(featuredData.map(f => ({ id: f.listing_id, rand: Math.random() })).sort((a, b) => a.rand - b.rand))
       }
     } catch (error) { console.error('Error loading featured:', error) }
   }
@@ -168,8 +168,8 @@ export default function Home() {
     })
   }
 
-  // Construir set de IDs destacados
-  const featuredIds = new Set(featuredListings.map(f => f.id))
+  // Construir set de IDs destacados (listing_id viene de destacar_listings)
+  const featuredIds = new Set(featuredListings.map(f => f.listing_id))
   // Ordenar los IDs destacados según el shuffle generado al cargar (no cambia en cada render)
   const featuredIdsOrdered = featuredShuffle ? featuredShuffle.map(f => f.id) : Array.from(featuredIds)
   
