@@ -54,6 +54,7 @@ export default function CreateListing() {
   const [photoFiles, setPhotoFiles] = useState([])
   const [videoFile, setVideoFile] = useState(null)
   const [errors, setErrors] = useState({})
+  const [confirmedContentRights, setConfirmedContentRights] = useState(false)
 
   useEffect(() => {
     checkUser()
@@ -165,6 +166,7 @@ export default function CreateListing() {
     if (!formData.category_id) newErrors.category_id = t('listing.create.category_error')
     if (!formData.description) newErrors.description = t('listing.create.description_error')
     if (user && !formData.whatsapp_number) newErrors.whatsapp_number = t('listing.create.whatsapp_error')
+    if (!confirmedContentRights) newErrors.content_rights = 'Debes confirmar que tienes los derechos o autorizaciones para publicar el contenido.'
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -463,6 +465,16 @@ export default function CreateListing() {
                 )}
               </>
             )}
+          </div>
+
+          {/* Confirmación legal */}
+          <div className="form-group" style={{ marginTop: '1rem' }}>
+            <label className="checkbox-label">
+              <input type="checkbox" checked={confirmedContentRights}
+                onChange={e => setConfirmedContentRights(e.target.checked)} />
+              <span>☑ Confirmo que tengo los derechos o autorizaciones necesarios para publicar las imágenes y demás contenido de este anuncio.</span>
+            </label>
+            {errors.content_rights && <p className="error" style={{ color: 'var(--danger, #ef4444)', marginTop: '0.25rem' }}>{errors.content_rights}</p>}
           </div>
 
           {/* Submit */}
