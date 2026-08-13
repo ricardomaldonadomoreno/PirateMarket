@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
-import AdminNavbarPirata from '../../components/AdminNavbarPirata'
+import AdminNavbarGeneral from '../../components/AdminNavbarGeneral'
 import { Eye, Ban } from 'lucide-react'
 import './AdminPerfiles.css'
 
@@ -140,7 +140,7 @@ export default function AdminPerfiles() {
 
   return (
     <div className="admin-page">
-      <AdminNavbarPirata />
+      <AdminNavbarGeneral />
       <div className="admin-content">
         <div className="admin-page-header">
           <h1 className="serif luxury-gold">Perfiles Generales</h1>

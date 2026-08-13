@@ -30,17 +30,11 @@ export default function AdminNavbarPirata() {
   // Links base para Pirata Market
   const pirataLinks = [
     { path: '/admin/pirata', icon: '📊', label: 'Dashboard' },
-    { path: '/admin/perfiles', icon: '👤', label: 'Perfiles' },
     { path: '/admin/pirata/usuarios', icon: '👥', label: 'Usuarios' },
     { path: '/admin/pirata/anuncios', icon: '📋', label: 'Anuncios' },
     { path: '/admin/pirata/banners', icon: '🖼️', label: 'Banners' },
     { path: '/admin/pirata/catalogos', icon: '🏪', label: 'Catálogos' },
   ]
-
-  // Sub-Admins solo para super_admin (scope='all')
-  const subAdminLinks = adminScope === 'all'
-    ? [{ path: '/admin/sub-admins', icon: '🔐', label: 'Sub-Admins' }]
-    : []
 
   // Si el sub-admin solo tiene acceso a traficante, redirigir
   if (isAdmin && adminScope === 'traficante') {
@@ -48,7 +42,7 @@ export default function AdminNavbarPirata() {
     return null
   }
 
-  const links = [...pirataLinks, ...subAdminLinks]
+  const links = pirataLinks
 
   return (
     <nav className="admin-navbar">
@@ -73,11 +67,9 @@ export default function AdminNavbarPirata() {
       </div>
 
       <div className="admin-navbar-actions">
-        {adminScope === 'all' && (
-          <Link to="/admin" className="admin-nav-link">
-            🔄 Cambiar app
-          </Link>
-        )}
+        <Link to="/admin/home" className="admin-nav-link">
+          🔄 Cambiar app
+        </Link>
         <Link to="/" className="admin-nav-link" target="_blank">
           🌐 Ver tienda
         </Link>
