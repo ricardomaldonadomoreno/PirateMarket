@@ -24,6 +24,7 @@ export default function Home() {
   const [currentBannerIdx, setCurrentBannerIdx] = useState(0)
   const [isBannerPaused, setIsBannerPaused] = useState(false)
   const [featuredListings, setFeaturedListings] = useState([])
+  const [featuredShuffle, setFeaturedShuffle] = useState(null) // Se genera una sola vez al cargar
   const [filters, setFilters] = useState({
     category: null,
     minPrice: '',
@@ -107,6 +108,8 @@ export default function Home() {
 
       if (featuredData) {
         setFeaturedListings(featuredData)
+        // Generar orden aleatorio UNA vez al cargar (solo para destacados)
+        setFeaturedShuffle(featuredData.map(f => ({ id: f.id, rand: Math.random() })).sort((a, b) => a.rand - b.rand))
       }
     } catch (error) { console.error('Error loading featured:', error) }
   }
@@ -167,11 +170,29 @@ export default function Home() {
 
   // Construir set de IDs destacados
   const featuredIds = new Set(featuredListings.map(f => f.id))
-  // Mezclar todos los anuncios aleatoriamente (incluyendo destacados)
-  const displayedListings = filterByZone(listings)
-    .map(listing => ({ ...listing, _rand: Math.random() }))
-    .sort((a, b) => a._rand - b._rand)
-    .map(({ _rand, ...rest }) => rest)
+  // Ordenar los IDs destacados según el shuffle generado al cargar (no cambia en cada render)
+  const featuredIdsOrdered = featuredShuffle ? featuredShuffle.map(f => f.id) : Array.from(featuredIds)
+  
+  // Separar destacados de no destacados, mantener orden original de los normales
+  const allListings = filterByZone(listings)
+  const nonFeatured = allListings.filter(l => !featuredIds.has(l.id))
+  
+  // Construir lista final: destacados intercalados según orden aleatorio fijo + normales en orden original
+  let displayedListings = [...nonFeatured]
+  if (featuredIdsOrdered.length > 0 && displayedListings.length > 0) {
+    // Insertar destacados en posiciones aleatorias fijas entre los normales
+    const step = Math.max(1, Math.floor(displayedListings.length / (featuredIdsOrdered.length + 1)))
+    featuredIdsOrdered.forEach((id, i) => {
+      const featured = allListings.find(l => l.id === id)
+      if (featured) {
+        const pos = Math.min(i * step + i, displayedListings.length)
+        displayedListings.splice(pos, 0, featured)
+      }
+    })
+  } else {
+    // Si solo hay destacados
+    displayedListings = allListings
+  }
 
   const handleSetZone = (latlng) => setZoneFilter({ lat: latlng.lat, lng: latlng.lng, radius_km: zoneRadius })
   const handleClearZone = () => { setZoneFilter(null); setShowZoneMap(false) }
