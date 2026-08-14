@@ -67,7 +67,7 @@ export default function AdminNavbarPacker() {
 
       <div className="admin-navbar-actions">
         {adminScope === 'all' && (
-          <Link to="/admin" className="admin-nav-link">
+          <Link to="/admin/home" className="admin-nav-link">
             🔄 Cambiar app
           </Link>
         )}
