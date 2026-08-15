@@ -47,7 +47,7 @@ export default function ListingDetail({ user }) {
       if (auctionData) {
         const { data: resultData, error: resultError } = await supabase
           .from('pirata_auction_results')
-          .select('winning_amount, winning_bid_id, finalized_at, winner:users (id, email, display_name)')
+          .select('winner_id, winning_amount, winning_bid_id, finalized_at, winner:users (id, email, display_name, whatsapp, avatar_url, country)')
           .eq('auction_id', auctionData.id)
           .maybeSingle()
 
@@ -206,6 +206,8 @@ export default function ListingDetail({ user }) {
       : 'Subasta finalizada'
   const finalWinnerName = auctionResult?.winner?.display_name || auctionResult?.winner?.email || 'Sin ganador'
   const isAuctionOwner = Boolean(user?.id && listing.user_id === user.id)
+  const isAuctionWinner = Boolean(user?.id && auctionResult?.winner_id === user.id)
+  const hasWinningBid = auctionResult?.winning_amount !== null && auctionResult?.winning_amount !== undefined
   const currentBid = bidHistory[0]?.amount || auction?.start_price
   const minimumBid = auction && bidHistory.length > 0
     ? currentBid + auction.minimum_increment
@@ -315,10 +317,25 @@ export default function ListingDetail({ user }) {
                 </div>
               )}
               {auctionResult && (
-                <div className="auction-final-result">
-                  <strong>{auctionResult.winning_amount !== null ? 'Monto final' : 'Subasta sin pujas'}</strong>
-                  {auctionResult.winning_amount !== null && <span>{formatPrice(auctionResult.winning_amount, listing.currency)}</span>}
-                  <span>Ganador: {finalWinnerName}</span>
+                <div className={`auction-final-result ${isAuctionWinner ? 'auction-winner-result' : ''}`}>
+                  {isAuctionWinner ? (
+                    <>
+                      <strong>Ganaste esta subasta</strong>
+                      <span>{formatPrice(auctionResult.winning_amount, listing.currency)}</span>
+                    </>
+                  ) : isAuctionOwner && hasWinningBid ? (
+                    <>
+                      <strong>Comprador ganador</strong>
+                      <span>{formatPrice(auctionResult.winning_amount, listing.currency)}</span>
+                      <span>{finalWinnerName}</span>
+                    </>
+                  ) : (
+                    <>
+                      <strong>{hasWinningBid ? 'Monto final' : 'Subasta sin pujas'}</strong>
+                      {hasWinningBid && <span>{formatPrice(auctionResult.winning_amount, listing.currency)}</span>}
+                      {hasWinningBid && <span>Ganador: {finalWinnerName}</span>}
+                    </>
+                  )}
                 </div>
               )}
               <h1 className="listing-title-detail">{listing.title}</h1>
@@ -373,11 +390,30 @@ export default function ListingDetail({ user }) {
                 </div>
               ) : auction && auction.status !== 'cancelled' ? (
                 <div className="auction-contact-notice auction-finished-notice">
-                  <strong>Esta subasta ha finalizado.</strong>
-                  {auctionResult?.winning_amount !== null && auctionResult?.winning_amount !== undefined ? (
-                    <span>Ganador: {finalWinnerName} · {formatPrice(auctionResult.winning_amount, listing.currency)}</span>
+                  {isAuctionOwner && hasWinningBid ? (
+                    <>
+                      <strong>Datos del comprador ganador</strong>
+                      {auctionResult.winner?.avatar_url && <img src={auctionResult.winner.avatar_url} alt={finalWinnerName} className="auction-contact-avatar" />}
+                      <span>Nombre: {finalWinnerName}</span>
+                      <span>Correo: {auctionResult.winner?.email || 'No disponible'}</span>
+                      <span>WhatsApp: {auctionResult.winner?.whatsapp || 'No registrado'}</span>
+                      <span>País: {auctionResult.winner?.country || 'No registrado'}</span>
+                    </>
+                  ) : isAuctionWinner ? (
+                    <>
+                      <strong>Ganaste esta subasta.</strong>
+                      <span>Monto final: {formatPrice(auctionResult.winning_amount, listing.currency)}</span>
+                      <span>El anunciante podrá contactarte para coordinar.</span>
+                    </>
                   ) : (
-                    <span>La subasta terminó sin pujas.</span>
+                    <>
+                      <strong>Esta subasta ha finalizado.</strong>
+                      {hasWinningBid ? (
+                        <span>Monto final: {formatPrice(auctionResult.winning_amount, listing.currency)}</span>
+                      ) : (
+                        <span>La subasta terminó sin pujas.</span>
+                      )}
+                    </>
                   )}
                 </div>
               ) : listing.is_ghost ? (
