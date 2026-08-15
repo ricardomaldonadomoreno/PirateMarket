@@ -14,6 +14,7 @@ export default function ListingDetail({ user }) {
   const navigate = useNavigate()
   const [listing, setListing] = useState(null)
   const [auction, setAuction] = useState(null)
+  const [auctionResult, setAuctionResult] = useState(null)
   const [bidHistory, setBidHistory] = useState([])
   const [bidCount, setBidCount] = useState(0)
   const [bidAmount, setBidAmount] = useState('')
@@ -44,6 +45,17 @@ export default function ListingDetail({ user }) {
       }
 
       if (auctionData) {
+        const { data: resultData, error: resultError } = await supabase
+          .from('pirata_auction_results')
+          .select('winning_amount, winning_bid_id, finalized_at, winner:users (id, email, display_name)')
+          .eq('auction_id', auctionData.id)
+          .maybeSingle()
+
+        if (resultError) {
+          console.warn('No se pudo cargar el resultado de la subasta:', resultError)
+        }
+        setAuctionResult(resultData || null)
+
         const { data: bidData, count: bidTotal, error: bidsError } = await supabase
           .from('pirata_auction_bids')
           .select('id, amount, created_at', { count: 'exact' })
@@ -58,6 +70,7 @@ export default function ListingDetail({ user }) {
           setBidCount(bidTotal || 0)
         }
       } else {
+        setAuctionResult(null)
         setBidHistory([])
         setBidCount(0)
       }
@@ -191,12 +204,15 @@ export default function ListingDetail({ user }) {
     : auction?.status === 'cancelled'
       ? 'Subasta cancelada'
       : 'Subasta finalizada'
+  const finalWinnerName = auctionResult?.winner?.display_name || auctionResult?.winner?.email || 'Sin ganador'
   const isAuctionOwner = Boolean(user?.id && listing.user_id === user.id)
   const currentBid = bidHistory[0]?.amount || auction?.start_price
   const minimumBid = auction && bidHistory.length > 0
     ? currentBid + auction.minimum_increment
     : auction?.start_price
-  const auctionPrice = auctionIsActive ? currentBid : listing.price
+  const auctionPrice = auctionIsActive
+    ? currentBid
+    : auctionResult?.winning_amount ?? listing.price
 
   return (
     <div className="listing-detail">
@@ -298,6 +314,13 @@ export default function ListingDetail({ user }) {
                   {bidCount} {bidCount === 1 ? 'puja' : 'pujas'} · Puja mínima: {formatPrice(minimumBid, listing.currency)}
                 </div>
               )}
+              {auctionResult && (
+                <div className="auction-final-result">
+                  <strong>{auctionResult.winning_amount !== null ? 'Monto final' : 'Subasta sin pujas'}</strong>
+                  {auctionResult.winning_amount !== null && <span>{formatPrice(auctionResult.winning_amount, listing.currency)}</span>}
+                  <span>Ganador: {finalWinnerName}</span>
+                </div>
+              )}
               <h1 className="listing-title-detail">{listing.title}</h1>
               <div className="listing-meta-detail">
                 <span className={`badge badge-${badge.color}`}>{badge.icon} {badge.label}</span>
@@ -346,6 +369,15 @@ export default function ListingDetail({ user }) {
                   {bidMessage && <span className="auction-bid-success">{bidMessage}</span>}
                   {bidHistory.length > 0 && (
                     <span className="auction-bid-history">Última puja: {formatPrice(bidHistory[0].amount, listing.currency)}</span>
+                  )}
+                </div>
+              ) : auction && auction.status !== 'cancelled' ? (
+                <div className="auction-contact-notice auction-finished-notice">
+                  <strong>Esta subasta ha finalizado.</strong>
+                  {auctionResult?.winning_amount !== null && auctionResult?.winning_amount !== undefined ? (
+                    <span>Ganador: {finalWinnerName} · {formatPrice(auctionResult.winning_amount, listing.currency)}</span>
+                  ) : (
+                    <span>La subasta terminó sin pujas.</span>
                   )}
                 </div>
               ) : listing.is_ghost ? (

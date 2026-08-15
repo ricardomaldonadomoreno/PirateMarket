@@ -157,6 +157,20 @@
   color: var(--text-muted);
   font-size: 0.78rem;
 }
+.auction-final-result {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--gold);
+  border-radius: var(--radius-md);
+  background: rgba(212, 175, 55, 0.08);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+.auction-final-result strong { color: var(--gold); }
+.auction-final-result span:nth-child(2) { color: var(--text-light); font-weight: 700; }
 
 .listing-title-detail {
   font-size: 1.25rem;
@@ -207,6 +221,7 @@
   line-height: 1.5;
 }
 .auction-contact-notice strong { color: var(--gold); }
+.auction-finished-notice { border-color: var(--dark-border); background: rgba(255, 255, 255, 0.03); }
 .auction-contact-notice span { color: var(--text-muted); }
 .auction-bid-form {
   display: flex;
