@@ -13,6 +13,10 @@ export default function Dashboard({ user, profile: externalProfile }) {
   const [stats, setStats] = useState({ total_views: 0, total_contacts: 0, active_listings: 0 })
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('active')
+  const [auctionListingId, setAuctionListingId] = useState(null)
+  const [auctionForm, setAuctionForm] = useState({ start_price: '', minimum_increment: '1', ends_at: '' })
+  const [auctionError, setAuctionError] = useState('')
+  const [auctionSaving, setAuctionSaving] = useState(false)
 
   // Cargar profile detallado para el sidebar (selfie de verificación)
   useEffect(() => {
@@ -81,11 +85,33 @@ export default function Dashboard({ user, profile: externalProfile }) {
       if (filter !== 'all') query = query.eq('status', filter)
       const { data: listingsData, error: listingsError } = await query
       if (listingsError) throw listingsError
-      setListings(listingsData)
+      const listingIds = (listingsData || []).map(listing => listing.id)
+      let auctionsData = []
+      if (listingIds.length > 0) {
+        const { data, error } = await supabase
+          .from('pirata_auctions')
+          .select('id, listing_id, start_price, minimum_increment, ends_at, status')
+          .in('listing_id', listingIds)
+        if (error) {
+          console.warn('No se pudieron cargar las subastas:', error)
+        } else {
+          auctionsData = data || []
+        }
+      }
+
+      const auctionsByListing = Object.fromEntries(
+        auctionsData.map(auction => [auction.listing_id, auction])
+      )
+      const listingsWithAuctions = (listingsData || []).map(listing => ({
+        ...listing,
+        auction: auctionsByListing[listing.id] || null,
+      }))
+
+      setListings(listingsWithAuctions)
       setStats({
-        total_views: listingsData.reduce((sum, l) => sum + (l.views_count || 0), 0),
-        total_contacts: listingsData.reduce((sum, l) => sum + (l.contacts_count || 0), 0),
-        active_listings: listingsData.filter(l => l.status === 'active').length
+        total_views: listingsWithAuctions.reduce((sum, l) => sum + (l.views_count || 0), 0),
+        total_contacts: listingsWithAuctions.reduce((sum, l) => sum + (l.contacts_count || 0), 0),
+        active_listings: listingsWithAuctions.filter(l => l.status === 'active').length
       })
     } catch (error) { console.error(error) }
     finally { setLoading(false) }
@@ -104,6 +130,75 @@ export default function Dashboard({ user, profile: externalProfile }) {
       await supabase.from('listings').delete().eq('id', listingId)
       loadDashboard()
     } catch (error) { alert(t('messages.error')) }
+  }
+
+  const openAuctionForm = (listing) => {
+    const defaultEnd = new Date(Date.now() + 24 * 60 * 60 * 1000)
+    defaultEnd.setMinutes(defaultEnd.getMinutes() - defaultEnd.getTimezoneOffset())
+    setAuctionListingId(listing.id)
+    setAuctionError('')
+    setAuctionForm({
+      start_price: listing.price ?? '',
+      minimum_increment: '1',
+      ends_at: defaultEnd.toISOString().slice(0, 16),
+    })
+  }
+
+  const closeAuctionForm = () => {
+    setAuctionListingId(null)
+    setAuctionError('')
+  }
+
+  const handleCreateAuction = async (listing) => {
+    const startPrice = Number(auctionForm.start_price)
+    const minimumIncrement = Number(auctionForm.minimum_increment)
+    const endsAt = new Date(auctionForm.ends_at)
+
+    if (!Number.isFinite(startPrice) || startPrice < 0) {
+      setAuctionError('Ingresa un precio inicial válido.')
+      return
+    }
+    if (!Number.isFinite(minimumIncrement) || minimumIncrement <= 0) {
+      setAuctionError('El incremento mínimo debe ser mayor a cero.')
+      return
+    }
+    if (!auctionForm.ends_at || Number.isNaN(endsAt.getTime()) || endsAt <= new Date()) {
+      setAuctionError('La fecha de cierre debe ser futura.')
+      return
+    }
+
+    setAuctionSaving(true)
+    setAuctionError('')
+    try {
+      const { error } = await supabase.from('pirata_auctions').insert({
+        listing_id: listing.id,
+        start_price: startPrice,
+        minimum_increment: minimumIncrement,
+        ends_at: endsAt.toISOString(),
+        status: 'active',
+      })
+      if (error) throw error
+
+      setListings(currentListings => currentListings.map(currentListing =>
+        currentListing.id === listing.id
+          ? {
+              ...currentListing,
+              auction: {
+                listing_id: listing.id,
+                start_price: startPrice,
+                minimum_increment: minimumIncrement,
+                ends_at: endsAt.toISOString(),
+                status: 'active',
+              },
+            }
+          : currentListing
+      ))
+      closeAuctionForm()
+    } catch (error) {
+      setAuctionError(error.message || 'No se pudo crear la subasta.')
+    } finally {
+      setAuctionSaving(false)
+    }
   }
 
   if (!user) return null
@@ -172,40 +267,103 @@ export default function Dashboard({ user, profile: externalProfile }) {
                   </div>
                 ) : (
                   <div className="listings-list">
-                    {listings.map(listing => (
-                      <div key={listing.id} className="listing-row card">
-                        <div className="listing-row-image">
-                          {listing.photos?.length > 0
-                            ? <img src={listing.photos[0]} alt={listing.title} />
-                            : <div className="listing-row-no-image">{listing.category?.icon || '📦'}</div>}
-                        </div>
-                        <div className="listing-row-info">
-                          <a href={`/ficha/${listing.slug}`} className="listing-row-title">{listing.title}</a>
-                          <div className="listing-row-meta">
-                            <span className="listing-row-price luxury-gold">{listing.price} {listing.currency}</span>
-                            <span className="listing-row-category">{listing.category?.icon} {listing.category?.name}</span>
+                    {listings.map(listing => {
+                      const auction = listing.auction
+                      return (
+                        <div key={listing.id} className="listing-item">
+                          <div className="listing-row card">
+                            <div className="listing-row-image">
+                              {listing.photos?.length > 0
+                                ? <img src={listing.photos[0]} alt={listing.title} />
+                                : <div className="listing-row-no-image">{listing.category?.icon || '📦'}</div>}
+                            </div>
+                            <div className="listing-row-info">
+                              <a href={`/ficha/${listing.slug}`} className="listing-row-title">{listing.title}</a>
+                              <div className="listing-row-meta">
+                                <span className="listing-row-price luxury-gold">{listing.price} {listing.currency}</span>
+                                <span className="listing-row-category">{listing.category?.icon} {listing.category?.name}</span>
+                              </div>
+                            </div>
+                            <div className="listing-row-actions">
+                              {listing.status === 'active' && !auction && (
+                                <button onClick={() => openAuctionForm(listing)} className="btn-text-action auction" title="Poner en subasta">
+                                  Poner en subasta
+                                </button>
+                              )}
+                              {auction && (
+                                <span className={`listing-auction-status ${auction.status}`}>
+                                  {auction.status === 'active' ? 'Subasta activa' : auction.status === 'finished' ? 'Subasta finalizada' : 'Subasta cancelada'}
+                                </span>
+                              )}
+                              {listing.status === 'active' && (
+                                <button onClick={() => handleStatusChange(listing.id, 'paused')} className="btn-text-action" title="Pausar">
+                                  Pausar
+                                </button>
+                              )}
+                              {listing.status === 'paused' && (
+                                <button onClick={() => handleStatusChange(listing.id, 'active')} className="btn-text-action" title="Activar">
+                                  Activar
+                                </button>
+                              )}
+                              <button onClick={() => handleStatusChange(listing.id, 'sold')} className="btn-text-action" title="Vendido">
+                                Vendido
+                              </button>
+                              <button onClick={() => handleDelete(listing.id)} className="btn-text-action delete" title="Eliminar">
+                                Eliminar
+                              </button>
+                            </div>
                           </div>
-                        </div>
-                        <div className="listing-row-actions">
-                          {listing.status === 'active' && (
-                            <button onClick={() => handleStatusChange(listing.id, 'paused')} className="btn-text-action" title="Pausar">
-                              Pausar
-                            </button>
+
+                          {auctionListingId === listing.id && !auction && (
+                            <div className="auction-config-panel card">
+                              <div className="auction-config-header">
+                                <div>
+                                  <h3>Configurar subasta</h3>
+                                  <p>{listing.title}</p>
+                                </div>
+                                <button type="button" className="btn-text-action" onClick={closeAuctionForm}>Cerrar</button>
+                              </div>
+                              <div className="auction-form-grid">
+                                <label>
+                                  Precio inicial ({listing.currency})
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value={auctionForm.start_price}
+                                    onChange={event => setAuctionForm({ ...auctionForm, start_price: event.target.value })}
+                                  />
+                                </label>
+                                <label>
+                                  Incremento mínimo ({listing.currency})
+                                  <input
+                                    type="number"
+                                    min="0.01"
+                                    step="0.01"
+                                    value={auctionForm.minimum_increment}
+                                    onChange={event => setAuctionForm({ ...auctionForm, minimum_increment: event.target.value })}
+                                  />
+                                </label>
+                                <label>
+                                  Fecha y hora de cierre
+                                  <input
+                                    type="datetime-local"
+                                    value={auctionForm.ends_at}
+                                    onChange={event => setAuctionForm({ ...auctionForm, ends_at: event.target.value })}
+                                  />
+                                </label>
+                              </div>
+                              {auctionError && <p className="auction-form-error">{auctionError}</p>}
+                              <div className="auction-config-actions">
+                                <button type="button" className="btn btn-primary" onClick={() => handleCreateAuction(listing)} disabled={auctionSaving}>
+                                  {auctionSaving ? 'Guardando...' : 'Activar subasta'}
+                                </button>
+                              </div>
+                            </div>
                           )}
-                          {listing.status === 'paused' && (
-                            <button onClick={() => handleStatusChange(listing.id, 'active')} className="btn-text-action" title="Activar">
-                              Activar
-                            </button>
-                          )}
-                          <button onClick={() => handleStatusChange(listing.id, 'sold')} className="btn-text-action" title="Vendido">
-                            Vendido
-                          </button>
-                          <button onClick={() => handleDelete(listing.id)} className="btn-text-action delete" title="Eliminar">
-                            Eliminar
-                          </button>
                         </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 )}
               </div>

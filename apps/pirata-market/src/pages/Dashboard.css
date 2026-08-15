@@ -261,6 +261,103 @@
 .listing-row-actions {
   display: flex;
   gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.btn-text-action.auction {
+  color: var(--gold);
+  border-color: color-mix(in srgb, var(--gold) 45%, var(--dark-border));
+}
+
+.listing-auction-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0.45rem 0.75rem;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--gold) 12%, var(--dark));
+  color: var(--gold);
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.listing-auction-status.finished,
+.listing-auction-status.cancelled {
+  color: var(--text-muted);
+  background: var(--dark);
+}
+
+.auction-config-panel {
+  margin-top: 0.75rem;
+  padding: 1rem !important;
+  border-color: color-mix(in srgb, var(--gold) 35%, var(--dark-border));
+}
+
+.auction-config-header,
+.auction-config-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.auction-config-header {
+  margin-bottom: 1rem;
+}
+
+.auction-config-header h3,
+.auction-config-header p {
+  margin: 0;
+}
+
+.auction-config-header h3 {
+  color: var(--text-light);
+  font-size: 1rem;
+}
+
+.auction-config-header p {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+}
+
+.auction-form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+
+.auction-form-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.auction-form-grid input {
+  width: 100%;
+  min-height: 38px;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--dark-border);
+  border-radius: var(--radius-sm);
+  background: var(--dark);
+  color: var(--text-light);
+  font: inherit;
+}
+
+.auction-form-grid input:focus {
+  outline: 1px solid var(--gold);
+  border-color: var(--gold);
+}
+
+.auction-form-error {
+  margin: 0.75rem 0 0;
+  color: var(--danger);
+  font-size: 0.8rem;
 }
 
 /* Botones de acción en texto (reemplazan los antiguos .btn-icon con emoji) */
@@ -670,8 +767,11 @@
 @media (max-width: 768px) {
   .db-layout { grid-template-columns: 1fr; }
   .dashboard-stats { grid-template-columns: 1fr; }
-  .real-data-grid, .premium-form-grid { grid-template-columns: 1fr; }
+  .real-data-grid, .premium-form-grid, .auction-form-grid { grid-template-columns: 1fr; }
   .account-type-layer .type-change-options { flex-direction: column; }
+  .listing-row-actions { justify-content: flex-start; }
+  .auction-config-header { align-items: flex-start; flex-direction: column; }
+  .auction-config-actions { justify-content: flex-start; }
 }
 
 /* ── DESTACADOS EN DASHBOARD ── */
