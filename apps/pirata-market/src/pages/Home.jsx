@@ -137,7 +137,30 @@ export default function Home() {
         )
       }
 
-      setListings(filtered)
+      const listingIds = filtered.map(listing => listing.id)
+      let auctionByListing = {}
+      if (listingIds.length > 0) {
+        const { data: auctionData, error: auctionError } = await supabase
+          .from('pirata_auctions')
+          .select('listing_id, start_price, ends_at, status')
+          .in('listing_id', listingIds)
+          .eq('status', 'active')
+
+        if (auctionError) {
+          console.warn('No se pudieron cargar las subastas del Home:', auctionError)
+        } else {
+          auctionByListing = Object.fromEntries(
+            (auctionData || [])
+              .filter(auction => new Date(auction.ends_at) > new Date())
+              .map(auction => [auction.listing_id, auction])
+          )
+        }
+      }
+
+      setListings(filtered.map(listing => ({
+        ...listing,
+        auction: auctionByListing[listing.id] || null,
+      })))
     } catch (error) { console.error('Error loading listings:', error) }
     finally { setLoading(false) }
   }
@@ -431,6 +454,8 @@ export default function Home() {
                 const uType = listing.seller_type || 'person'
                 const sellerIcon = listing.is_ghost ? '🏴‍☠️' : uType === 'shop' ? '🏪' : uType === 'wholesale' ? '📦' : '👤'
                 const sellerClass = listing.is_ghost ? 'pirate' : uType === 'shop' ? 'shop' : uType === 'wholesale' ? 'wholesale' : 'person'
+                const auctionIsActive = listing.auction?.status === 'active' && new Date(listing.auction.ends_at) > new Date()
+                const cardPrice = auctionIsActive ? listing.auction.start_price : listing.price
                 return (
                   <Link key={listing.id} to={`/ficha/${listing.slug}`}
                     className="listing-card" onClick={handleCardClick}>
@@ -441,12 +466,15 @@ export default function Home() {
                         <div className="listing-no-image"><span>{listing.category?.icon || '📦'}</span></div>
                       )}
                       {listing.video_url && <div className="video-badge">▶ 6s</div>}
+                      {auctionIsActive && <div className="auction-badge">Subasta activa</div>}
                       {featuredIds.has(listing.id) && <div className="featured-badge">⭐ Destacado</div>}
                       <div className={`seller-badge ${sellerClass}`}>{sellerIcon}</div>
                       {listing.location_lat && <div className="location-dot" title="Tiene ubicación">📍</div>}
                     </div>
                     <div className="listing-info">
-                      <p className="listing-price">{formatPrice(listing.price, listing.currency)}</p>
+                      <p className={`listing-price ${auctionIsActive ? 'auction-card-price' : ''}`}>
+                        {auctionIsActive ? 'Desde ' : ''}{formatPrice(cardPrice, listing.currency)}
+                      </p>
                       <span className={`listing-seller-type listing-seller-${sellerClass}`}>
                         {sellerIcon} {listing.is_ghost ? t('badges.pirate') : uType === 'shop' ? t('badges.shop') : uType === 'wholesale' ? t('badges.wholesale') : t('badges.verified')}
                       </span>

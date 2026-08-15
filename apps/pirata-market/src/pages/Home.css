@@ -108,6 +108,19 @@
   backdrop-filter: blur(10px);
 }
 
+.auction-badge {
+  position: absolute;
+  left: 0.5rem;
+  bottom: 0.5rem;
+  background: var(--gold);
+  color: var(--dark);
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-full);
+  font-size: 0.68rem;
+  font-weight: 700;
+  backdrop-filter: blur(10px);
+}
+
 .seller-badge {
   position: absolute; top: 0.5rem; right: 0.5rem;
   width: 28px; height: 28px; border-radius: 50%;
@@ -122,6 +135,7 @@
 
 .listing-info { padding: 0.5rem 0.6rem; display: flex; flex-direction: column; gap: 0.15rem; }
 .listing-price { font-size: 0.9rem; font-weight: 700; font-family: 'Inter', sans-serif; line-height: 1.1; color: var(--gold); }
+.auction-card-price { color: var(--gold); }
 
 .listing-seller-type {
   display: inline-flex; align-items: center; gap: 0.2rem;
