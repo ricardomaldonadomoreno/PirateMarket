@@ -5,14 +5,20 @@ import { supabase } from '../lib/supabase'
 import DashboardSidebar from './DashboardSidebar'
 import './Dashboard.css'
 
+const dashboardCache = new Map()
+const profileCache = new Map()
+const selfieCache = new Map()
+
 export default function Dashboard({ user, profile: externalProfile }) {
   const { t } = useTranslation()
   const location = useLocation()
   const [profile, setProfile] = useState(null)
-  const [listings, setListings] = useState([])
-  const [stats, setStats] = useState({ total_views: 0, total_contacts: 0, active_listings: 0 })
-  const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('active')
+  const initialDashboard = user ? dashboardCache.get(user.id) : null
+  const [allListings, setAllListings] = useState(() => initialDashboard?.listings || [])
+  const [listings, setListings] = useState(() => initialDashboard?.listings?.filter(listing => listing.status === 'active') || [])
+  const [stats, setStats] = useState(() => initialDashboard?.stats || { total_views: 0, total_contacts: 0, active_listings: 0 })
+  const [loading, setLoading] = useState(() => !user || !initialDashboard)
   const [auctionListingId, setAuctionListingId] = useState(null)
   const [auctionForm, setAuctionForm] = useState({ start_price: '', minimum_increment: '1', ends_at: '' })
   const [auctionError, setAuctionError] = useState('')
@@ -25,6 +31,11 @@ export default function Dashboard({ user, profile: externalProfile }) {
   }, [user])
 
   const loadProfileDetail = async () => {
+    const cachedProfile = profileCache.get(user.id)
+    if (cachedProfile) {
+      setProfile(cachedProfile)
+      return
+    }
     try {
       const { data } = await supabase
         .from('users')
@@ -42,12 +53,15 @@ export default function Dashboard({ user, profile: externalProfile }) {
         .single()
       if (data && data.pirata_profiles) {
         // Fusionar: datos de users + pirata_profiles + shop_profiles en un solo objeto
-        setProfile({
+        const nextProfile = {
           ...data,
           ...data.pirata_profiles,
           ...(data.shop_profiles || {}),
-        })
+        }
+        profileCache.set(user.id, nextProfile)
+        setProfile(nextProfile)
       } else if (data) {
+        profileCache.set(user.id, data)
         setProfile(data)
       }
     } catch (error) { console.error(error) }
@@ -59,11 +73,17 @@ export default function Dashboard({ user, profile: externalProfile }) {
   useEffect(() => {
     if (!user) return
     const loadSelfie = async () => {
+      const cachedSelfie = selfieCache.get(user.id)
+      if (cachedSelfie !== undefined) {
+        if (cachedSelfie) setVerificationSelfie(cachedSelfie)
+        return
+      }
       const { data } = await supabase
         .from('pirata_profiles')
         .select('selfie_url')
         .eq('user_id', user.id)
         .single()
+      selfieCache.set(user.id, data?.selfie_url || null)
       if (data?.selfie_url) setVerificationSelfie(data.selfie_url)
     }
     loadSelfie()
@@ -75,14 +95,35 @@ export default function Dashboard({ user, profile: externalProfile }) {
     loadDashboard()
   }, [user, filter, location.pathname])
 
+  const applyDashboardListings = (nextAllListings) => {
+    const nextStats = {
+      total_views: nextAllListings.reduce((sum, l) => sum + (l.views_count || 0), 0),
+      total_contacts: nextAllListings.reduce((sum, l) => sum + (l.contacts_count || 0), 0),
+      active_listings: nextAllListings.filter(l => l.status === 'active').length,
+    }
+    const visibleListings = filter === 'all'
+      ? nextAllListings
+      : nextAllListings.filter(listing => listing.status === filter)
+    dashboardCache.set(user.id, { listings: nextAllListings, stats: nextStats })
+    setAllListings(nextAllListings)
+    setListings(visibleListings)
+    setStats(nextStats)
+  }
+
   const loadDashboard = async () => {
+    const cachedDashboard = dashboardCache.get(user.id)
+    if (cachedDashboard) {
+      applyDashboardListings(cachedDashboard.listings)
+      setLoading(false)
+      return
+    }
+
     setLoading(true)
     try {
       let query = supabase.from('listings')
         .select(`*, category:categories(name, slug, icon)`)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-      if (filter !== 'all') query = query.eq('status', filter)
       const { data: listingsData, error: listingsError } = await query
       if (listingsError) throw listingsError
       const listingIds = (listingsData || []).map(listing => listing.id)
@@ -107,28 +148,27 @@ export default function Dashboard({ user, profile: externalProfile }) {
         auction: auctionsByListing[listing.id] || null,
       }))
 
-      setListings(listingsWithAuctions)
-      setStats({
-        total_views: listingsWithAuctions.reduce((sum, l) => sum + (l.views_count || 0), 0),
-        total_contacts: listingsWithAuctions.reduce((sum, l) => sum + (l.contacts_count || 0), 0),
-        active_listings: listingsWithAuctions.filter(l => l.status === 'active').length
-      })
+      applyDashboardListings(listingsWithAuctions)
     } catch (error) { console.error(error) }
     finally { setLoading(false) }
   }
 
   const handleStatusChange = async (listingId, newStatus) => {
     try {
-      await supabase.from('listings').update({ status: newStatus }).eq('id', listingId)
-      loadDashboard()
+      const { error } = await supabase.from('listings').update({ status: newStatus }).eq('id', listingId)
+      if (error) throw error
+      const nextListings = allListings
+        .map(listing => listing.id === listingId ? { ...listing, status: newStatus } : listing)
+      applyDashboardListings(nextListings)
     } catch (error) { alert(t('messages.error')) }
   }
 
   const handleDelete = async (listingId) => {
     if (!confirm(t('messages.confirm_delete'))) return
     try {
-      await supabase.from('listings').delete().eq('id', listingId)
-      loadDashboard()
+      const { error } = await supabase.from('listings').delete().eq('id', listingId)
+      if (error) throw error
+      applyDashboardListings(allListings.filter(listing => listing.id !== listingId))
     } catch (error) { alert(t('messages.error')) }
   }
 
@@ -179,7 +219,7 @@ export default function Dashboard({ user, profile: externalProfile }) {
       })
       if (error) throw error
 
-      setListings(currentListings => currentListings.map(currentListing =>
+      applyDashboardListings(allListings.map(currentListing =>
         currentListing.id === listing.id
           ? {
               ...currentListing,
@@ -255,7 +295,7 @@ export default function Dashboard({ user, profile: externalProfile }) {
                     ))}
                   </div>
                 </div>
-                {loading ? (
+                {loading && listings.length === 0 ? (
                   <div className="listings-loading">
                     {[...Array(3)].map((_, i) => <div key={i} className="listing-row skeleton" style={{ height: '100px' }} />)}
                   </div>
