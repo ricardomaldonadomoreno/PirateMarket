@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { supabase, uploadImage, uploadVideo, getCategories } from '../lib/supabase'
 import { validateImage, validateVideo, compressImage } from '../lib/utils'
@@ -26,8 +26,11 @@ function MapClickHandler({ onMapClick }) {
 export default function CreateListing() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const { id: editId } = useParams()
+  const isEditMode = Boolean(editId)
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [loadingExisting, setLoadingExisting] = useState(isEditMode)
   const [uploadingMedia, setUploadingMedia] = useState(false)
   const [categories, setCategories] = useState([])
 
@@ -52,7 +55,10 @@ export default function CreateListing() {
   const mapCenter = pinLocation || { lat: -17.7863, lng: -63.1812 } // Santa Cruz por defecto
 
   const [photoFiles, setPhotoFiles] = useState([])
+  const [existingPhotos, setExistingPhotos] = useState([])
   const [videoFile, setVideoFile] = useState(null)
+  const [existingVideoUrl, setExistingVideoUrl] = useState(null)
+  const [editingListing, setEditingListing] = useState(null)
   const [errors, setErrors] = useState({})
   const [confirmedContentRights, setConfirmedContentRights] = useState(false)
 
@@ -60,6 +66,11 @@ export default function CreateListing() {
     checkUser()
     loadCategories()
   }, [])
+
+  useEffect(() => {
+    if (!editId) return
+    loadListingForEdit()
+  }, [editId])
 
   const checkUser = async () => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -73,6 +84,68 @@ export default function CreateListing() {
       if (userData?.whatsapp) {
         setFormData(prev => ({ ...prev, whatsapp_number: userData.whatsapp }))
       }
+    }
+  }
+
+  const loadListingForEdit = async () => {
+    try {
+      const { data: { user: currentUser } } = await supabase.auth.getUser()
+      if (!currentUser) {
+        navigate('/auth')
+        return
+      }
+      setUser(currentUser)
+
+      const { data: listing, error } = await supabase
+        .from('listings')
+        .select('*')
+        .eq('id', editId)
+        .eq('user_id', currentUser.id)
+        .single()
+      if (error) throw error
+
+      const { data: auction } = await supabase
+        .from('pirata_auctions')
+        .select('status, ends_at')
+        .eq('listing_id', listing.id)
+        .maybeSingle()
+      if (auction?.status === 'active' && new Date(auction.ends_at) > new Date()) {
+        alert('No puedes editar un anuncio con una subasta activa.')
+        navigate('/dashboard')
+        return
+      }
+
+      setEditingListing(listing)
+      setFormData({
+        title: listing.title || '',
+        price: listing.price ?? '',
+        currency: listing.currency || 'BOB',
+        category_id: listing.category_id || '',
+        description: listing.description || '',
+        whatsapp_number: listing.whatsapp_number || '',
+        accepts_offers: Boolean(listing.accepts_offers),
+        location: listing.display_location || '',
+      })
+      setExistingPhotos(listing.photos || [])
+      setExistingVideoUrl(listing.video_url || null)
+      if (listing.location_lat && listing.location_lng) {
+        setPinLocation({ lat: listing.location_lat, lng: listing.location_lng })
+        setLocationMode(listing.visibility_zones ? 'approximate' : 'exact')
+      } else {
+        setLocationMode('none')
+      }
+      if (listing.visibility_zones) {
+        setSaleZone(listing.visibility_zones)
+        setSaleZoneRadius(listing.visibility_zones.radius_km || 2)
+        setShowSaleZone(true)
+      }
+      setConfirmedContentRights(true)
+    } catch (error) {
+      console.error('Error loading listing for edit:', error)
+      alert('No se pudo cargar el anuncio para editarlo.')
+      navigate('/dashboard')
+    } finally {
+      setLoadingExisting(false)
     }
   }
 
@@ -98,7 +171,7 @@ export default function CreateListing() {
   const handlePhotoChange = async (e) => {
     const files = Array.from(e.target.files)
     const newErrors = {}
-    if (photoFiles.length + files.length > 5) {
+    if (existingPhotos.length + photoFiles.length + files.length > 5) {
       newErrors.photos = t('listing.create.max_photos_error')
       setErrors(prev => ({ ...prev, ...newErrors }))
       return
@@ -125,7 +198,11 @@ export default function CreateListing() {
   }
 
   const removePhoto = (index) => setPhotoFiles(prev => prev.filter((_, i) => i !== index))
-  const removeVideo = () => setVideoFile(null)
+  const removeExistingPhoto = (index) => setExistingPhotos(prev => prev.filter((_, i) => i !== index))
+  const removeVideo = () => {
+    setVideoFile(null)
+    setExistingVideoUrl(null)
+  }
 
   // GPS
   const handleGetGPS = () => {
@@ -177,12 +254,12 @@ export default function CreateListing() {
     setLoading(true)
     setUploadingMedia(true)
     try {
-      const photoUrls = []
+      const photoUrls = [...existingPhotos]
       for (let i = 0; i < photoFiles.length; i++) {
         const url = await uploadImage(photoFiles[i])
         photoUrls.push(url)
       }
-      let videoUrl = null
+      let videoUrl = existingVideoUrl
       if (videoFile) videoUrl = await uploadVideo(videoFile)
       setUploadingMedia(false)
 
@@ -196,25 +273,24 @@ export default function CreateListing() {
         video_url: videoUrl,
         accepts_offers: formData.accepts_offers,
         display_location: formData.location || 'Santa Cruz',
-        is_ghost: !user,
-        user_id: user?.id || null,
+        is_ghost: isEditMode ? false : !user,
+        user_id: isEditMode ? user.id : (user?.id || null),
         whatsapp_number: user ? formData.whatsapp_number : null,
-        status: 'active',
+        status: editingListing?.status || 'active',
         // Nuevos campos GPS
         location_lat: locationMode !== 'none' && pinLocation ? pinLocation.lat : null,
         location_lng: locationMode !== 'none' && pinLocation ? pinLocation.lng : null,
         visibility_zones: saleZone ? saleZone : null,
       }
 
-      const { data, error } = await supabase
-        .from('listings')
-        .insert([listingData])
-        .select()
-        .single()
+      const query = isEditMode
+        ? supabase.from('listings').update(listingData).eq('id', editId).eq('user_id', user.id)
+        : supabase.from('listings').insert([listingData])
+      const { data, error } = await query.select().single()
 
       if (error) throw error
 
-      alert(t('listing.create.success'))
+      alert(isEditMode ? 'Anuncio actualizado correctamente.' : t('listing.create.success'))
       navigate(`/ficha/${data.slug}`)
     } catch (error) {
       console.error('Error al publicar:', error)
@@ -227,14 +303,22 @@ export default function CreateListing() {
 
   const isPirate = !user
 
+  if (loadingExisting) {
+    return (
+      <div className="create-listing">
+        <div className="create-listing-container"><div className="skeleton" style={{ height: '220px' }}>Cargando anuncio...</div></div>
+      </div>
+    )
+  }
+
   return (
     <div className="create-listing">
       <div className="create-listing-container">
         <div className="create-header">
           <h1 className="serif luxury-gold">
-            {isPirate ? t('listing.create.title_pirate') : t('listing.create.title_registered')}
+            {isEditMode ? 'Editar anuncio' : isPirate ? t('listing.create.title_pirate') : t('listing.create.title_registered')}
           </h1>
-          {isPirate && (
+          {isPirate && !isEditMode && (
             <div className="pirate-notice">
               <span>⏱️</span>
               <div>
@@ -308,14 +392,22 @@ export default function CreateListing() {
               <label>{t('listing.create.fields.photos')}</label>
               <div className="photo-upload">
                 <input type="file" accept="image/*" multiple onChange={handlePhotoChange}
-                  disabled={photoFiles.length >= 5} id="photo-input" style={{ display: 'none' }} />
-                <label htmlFor="photo-input" className="btn btn-secondary upload-btn">
-                  📷 {t('listing.create.upload_photos')} ({photoFiles.length}/5)
+                                      disabled={existingPhotos.length + photoFiles.length >= 5} id="photo-input" style={{ display: 'none' }} />
+
+                                  <label htmlFor="photo-input" className="btn btn-secondary upload-btn">
+                  📷 {t('listing.create.upload_photos')} ({existingPhotos.length + photoFiles.length}/5)
+
                 </label>
               </div>
               {errors.photos && <span className="error">{errors.photos}</span>}
-              {photoFiles.length > 0 && (
+              {(existingPhotos.length > 0 || photoFiles.length > 0) && (
                 <div className="photo-preview-grid">
+                  {existingPhotos.map((photo, index) => (
+                    <div key={`existing-${index}`} className="photo-preview-item">
+                      <img src={photo} alt={`Foto existente ${index + 1}`} />
+                      <button type="button" className="photo-remove" onClick={() => removeExistingPhoto(index)}>×</button>
+                    </div>
+                  ))}
                   {photoFiles.map((file, index) => (
                     <div key={index} className="photo-preview-item">
                       <img src={URL.createObjectURL(file)} alt={`Preview ${index + 1}`} />
@@ -327,7 +419,7 @@ export default function CreateListing() {
             </div>
             <div className="form-group">
               <label>{t('listing.create.fields.video')}</label>
-              {!videoFile ? (
+              {!videoFile && !existingVideoUrl ? (
                 <>
                   <input type="file" accept="video/*" onChange={handleVideoChange}
                     id="video-input" style={{ display: 'none' }} />
@@ -337,7 +429,7 @@ export default function CreateListing() {
                 </>
               ) : (
                 <div className="video-preview">
-                  <video src={URL.createObjectURL(videoFile)} controls />
+                  <video src={videoFile ? URL.createObjectURL(videoFile) : existingVideoUrl} controls />
                   <button type="button" className="btn btn-ghost" onClick={removeVideo}>
                     {t('buttons.delete')}
                   </button>
@@ -489,7 +581,7 @@ export default function CreateListing() {
                   {uploadingMedia ? t('listing.create.uploading') : t('listing.create.publishing')}
                 </>
               ) : (
-                <>🏴‍☠️ {isPirate ? t('listing.create.submit_pirate') : t('listing.create.submit')}</>
+                <>{isEditMode ? 'Guardar cambios' : <>🏴‍☠️ {isPirate ? t('listing.create.submit_pirate') : t('listing.create.submit')}</>}</>
               )}
             </button>
           </div>

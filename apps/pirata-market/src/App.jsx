@@ -104,6 +104,7 @@ function App() {
         <Route path="/" element={<><Navbar user={user} profile={profile} /><Home /></>} />
         <Route path="/ficha/:slug" element={<><Navbar user={user} profile={profile} /><ListingDetail user={user} /></>} />
         <Route path="/publicar" element={<><Navbar user={user} profile={profile} /><CreateListing user={user} /></>} />
+        <Route path="/editar/:id" element={<><Navbar user={user} profile={profile} /><CreateListing user={user} /></>} />
         <Route path="/dashboard" element={<><Navbar user={user} profile={profile} /><Dashboard user={user} profile={profile} /></>}>
           <Route path="verificacion" element={<DashboardVerificacion user={user} profile={profile} onProfileUpdate={loadProfile} />} />
           <Route path="tienda" element={<DashboardTienda user={user} profile={profile} />} />

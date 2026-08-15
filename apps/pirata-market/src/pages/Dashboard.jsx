@@ -269,6 +269,7 @@ export default function Dashboard({ user, profile: externalProfile }) {
                   <div className="listings-list">
                     {listings.map(listing => {
                       const auction = listing.auction
+                      const auctionIsActive = auction?.status === 'active' && new Date(auction.ends_at) > new Date()
                       return (
                         <div key={listing.id} className="listing-item">
                           <div className="listing-row card">
@@ -285,6 +286,15 @@ export default function Dashboard({ user, profile: externalProfile }) {
                               </div>
                             </div>
                             <div className="listing-row-actions">
+                              {auctionIsActive ? (
+                                <span className="listing-edit-blocked" title="No puedes editar un anuncio con una subasta activa.">
+                                  Edición bloqueada
+                                </span>
+                              ) : (
+                                <a href={`/editar/${listing.id}`} className="btn-text-action" title="Editar anuncio">
+                                  Editar
+                                </a>
+                              )}
                               {listing.status === 'active' && !auction && (
                                 <button onClick={() => openAuctionForm(listing)} className="btn-text-action auction" title="Poner en subasta">
                                   Poner en subasta
