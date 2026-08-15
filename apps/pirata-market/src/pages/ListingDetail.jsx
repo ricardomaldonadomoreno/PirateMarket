@@ -45,9 +45,13 @@ export default function ListingDetail({ user }) {
       }
 
       if (auctionData) {
+        const canViewWinnerContact = Boolean(user?.id && data.user_id === user.id)
+        const resultSelect = canViewWinnerContact
+          ? 'winner_id, winning_amount, winning_bid_id, finalized_at, winner:users (id, email, display_name, whatsapp, avatar_url, country)'
+          : 'winner_id, winning_amount, winning_bid_id, finalized_at, winner:users (id, display_name)'
         const { data: resultData, error: resultError } = await supabase
           .from('pirata_auction_results')
-          .select('winner_id, winning_amount, winning_bid_id, finalized_at, winner:users (id, email, display_name, whatsapp, avatar_url, country)')
+          .select(resultSelect)
           .eq('auction_id', auctionData.id)
           .maybeSingle()
 
