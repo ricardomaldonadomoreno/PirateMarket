@@ -14,6 +14,12 @@ export default function ListingDetail({ user }) {
   const navigate = useNavigate()
   const [listing, setListing] = useState(null)
   const [auction, setAuction] = useState(null)
+  const [bidHistory, setBidHistory] = useState([])
+  const [bidCount, setBidCount] = useState(0)
+  const [bidAmount, setBidAmount] = useState('')
+  const [bidError, setBidError] = useState('')
+  const [bidMessage, setBidMessage] = useState('')
+  const [bidSaving, setBidSaving] = useState(false)
   const [loading, setLoading] = useState(true)
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0)
   const [showMapOptions, setShowMapOptions] = useState(false)
@@ -29,12 +35,31 @@ export default function ListingDetail({ user }) {
       const data = await getListingBySlug(slug)
       const { data: auctionData, error: auctionError } = await supabase
         .from('pirata_auctions')
-        .select('id, start_price, ends_at, status')
+        .select('id, start_price, minimum_increment, ends_at, status')
         .eq('listing_id', data.id)
         .maybeSingle()
 
       if (auctionError) {
         console.warn('No se pudo cargar la subasta del anuncio:', auctionError)
+      }
+
+      if (auctionData) {
+        const { data: bidData, count: bidTotal, error: bidsError } = await supabase
+          .from('pirata_auction_bids')
+          .select('id, amount, created_at', { count: 'exact' })
+          .eq('auction_id', auctionData.id)
+          .order('amount', { ascending: false })
+          .limit(5)
+
+        if (bidsError) {
+          console.warn('No se pudieron cargar las pujas:', bidsError)
+        } else {
+          setBidHistory(bidData || [])
+          setBidCount(bidTotal || 0)
+        }
+      } else {
+        setBidHistory([])
+        setBidCount(0)
       }
 
       setAuction(auctionData || null)
@@ -55,6 +80,56 @@ export default function ListingDetail({ user }) {
     if (whatsappNumber) {
       const url = generateWhatsAppURL(whatsappNumber, listing.title, listing.slug)
       window.open(url, '_blank')
+    }
+  }
+
+  const getBidErrorMessage = (message) => {
+    if (message?.includes('AUTH_REQUIRED')) return 'Debes iniciar sesión para pujar.'
+    if (message?.includes('AUCTION_CLOSED')) return 'Esta subasta ya terminó.'
+    if (message?.includes('SELLER_CANNOT_BID')) return 'No puedes pujar en tu propio anuncio.'
+    if (message?.includes('INVALID_AMOUNT')) return 'Ingresa un monto válido.'
+    const minimumMatch = message?.match(/BID_TOO_LOW:([0-9.]+)/)
+    if (minimumMatch) return `La puja mínima ahora es ${formatPrice(Number(minimumMatch[1]), listing.currency)}.`
+    return 'No se pudo registrar la puja. Intenta nuevamente.'
+  }
+
+  const handlePlaceBid = async (event) => {
+    event.preventDefault()
+    if (!auction || !auctionIsActive || !user) return
+
+    const amount = Number(bidAmount)
+    const currentBid = bidHistory[0]?.amount || auction.start_price
+    const minimumBid = bidHistory.length > 0
+      ? currentBid + auction.minimum_increment
+      : auction.start_price
+
+    if (!Number.isFinite(amount) || amount < minimumBid) {
+      setBidError(`La puja mínima es ${formatPrice(minimumBid, listing.currency)}.`)
+      return
+    }
+
+    setBidSaving(true)
+    setBidError('')
+    setBidMessage('')
+    try {
+      const { data, error } = await supabase.rpc('place_pirata_bid', {
+        p_auction_id: auction.id,
+        p_amount: amount,
+      })
+      if (error) throw error
+
+      const newBid = Array.isArray(data) ? data[0] : data
+      setBidHistory(currentBids => [
+        { id: newBid.bid_id, amount: newBid.amount, created_at: newBid.created_at },
+        ...currentBids,
+      ].sort((a, b) => Number(b.amount) - Number(a.amount)).slice(0, 5))
+      setBidCount(currentCount => currentCount + 1)
+      setBidAmount('')
+      setBidMessage('Puja registrada correctamente.')
+    } catch (error) {
+      setBidError(getBidErrorMessage(error.message))
+    } finally {
+      setBidSaving(false)
     }
   }
 
@@ -116,7 +191,12 @@ export default function ListingDetail({ user }) {
     : auction?.status === 'cancelled'
       ? 'Subasta cancelada'
       : 'Subasta finalizada'
-  const auctionPrice = auctionIsActive ? auction.start_price : listing.price
+  const isAuctionOwner = Boolean(user?.id && listing.user_id === user.id)
+  const currentBid = bidHistory[0]?.amount || auction?.start_price
+  const minimumBid = auction && bidHistory.length > 0
+    ? currentBid + auction.minimum_increment
+    : auction?.start_price
+  const auctionPrice = auctionIsActive ? currentBid : listing.price
 
   return (
     <div className="listing-detail">
@@ -213,7 +293,11 @@ export default function ListingDetail({ user }) {
               <div className={`listing-price luxury-gold ${auctionIsActive ? 'auction-price' : ''}`}>
                 {auctionIsActive ? 'Desde ' : ''}{formatPrice(auctionPrice, listing.currency)}
               </div>
-              {auctionIsActive && <div className="auction-detail-note">Precio inicial. Las pujas se habilitarán próximamente.</div>}
+              {auctionIsActive && (
+                <div className="auction-detail-note">
+                  {bidCount} {bidCount === 1 ? 'puja' : 'pujas'} · Puja mínima: {formatPrice(minimumBid, listing.currency)}
+                </div>
+              )}
               <h1 className="listing-title-detail">{listing.title}</h1>
               <div className="listing-meta-detail">
                 <span className={`badge badge-${badge.color}`}>{badge.icon} {badge.label}</span>
@@ -233,7 +317,36 @@ export default function ListingDetail({ user }) {
               {auctionIsActive ? (
                 <div className="auction-contact-notice">
                   <strong>Este anuncio está en subasta.</strong>
-                  <span>La información de pujas estará disponible próximamente.</span>
+                  <span>Precio actual: {formatPrice(currentBid, listing.currency)}</span>
+                  {isAuctionOwner ? (
+                    <span>No puedes pujar en tu propio anuncio.</span>
+                  ) : !user ? (
+                    <button type="button" className="btn btn-primary" onClick={() => navigate('/auth')}>Inicia sesión para pujar</button>
+                  ) : (
+                    <form className="auction-bid-form" onSubmit={handlePlaceBid}>
+                      <label htmlFor="auction-bid-amount">Tu puja ({listing.currency})</label>
+                      <div className="auction-bid-input-row">
+                        <input
+                          id="auction-bid-amount"
+                          type="number"
+                          min={minimumBid}
+                          step="0.01"
+                          value={bidAmount}
+                          onChange={event => setBidAmount(event.target.value)}
+                          placeholder={String(minimumBid)}
+                        />
+                        <button type="submit" className="btn btn-primary" disabled={bidSaving}>
+                          {bidSaving ? 'Enviando...' : 'Pujar'}
+                        </button>
+                      </div>
+                      <small>Mínimo permitido: {formatPrice(minimumBid, listing.currency)}</small>
+                    </form>
+                  )}
+                  {bidError && <span className="auction-bid-error">{bidError}</span>}
+                  {bidMessage && <span className="auction-bid-success">{bidMessage}</span>}
+                  {bidHistory.length > 0 && (
+                    <span className="auction-bid-history">Última puja: {formatPrice(bidHistory[0].amount, listing.currency)}</span>
+                  )}
                 </div>
               ) : listing.is_ghost ? (
                 <div className="contact-ghost">
