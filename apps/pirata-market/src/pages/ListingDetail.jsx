@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { MapContainer, TileLayer, Marker, Circle } from 'react-leaflet'
 import { X, ZoomIn } from 'lucide-react'
 import 'leaflet/dist/leaflet.css'
-import { getListingBySlug, incrementViews, incrementContacts, incrementShares } from '../lib/supabase'
+import { supabase, getListingBySlug, incrementViews, incrementContacts, incrementShares } from '../lib/supabase'
 import { formatPrice, timeAgo, timeUntilExpiry, generateWhatsAppURL, generateShareURL, copyToClipboard, openInMaps, getUserBadge } from '../lib/utils'
 import './ListingDetail.css'
 
@@ -13,6 +13,7 @@ export default function ListingDetail({ user }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [listing, setListing] = useState(null)
+  const [auction, setAuction] = useState(null)
   const [loading, setLoading] = useState(true)
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0)
   const [showMapOptions, setShowMapOptions] = useState(false)
@@ -26,6 +27,17 @@ export default function ListingDetail({ user }) {
     window.scrollTo(0, 0)
     try {
       const data = await getListingBySlug(slug)
+      const { data: auctionData, error: auctionError } = await supabase
+        .from('pirata_auctions')
+        .select('id, start_price, ends_at, status')
+        .eq('listing_id', data.id)
+        .maybeSingle()
+
+      if (auctionError) {
+        console.warn('No se pudo cargar la subasta del anuncio:', auctionError)
+      }
+
+      setAuction(auctionData || null)
       setListing(data)
       await incrementViews(data.id)
     } catch (error) {
@@ -98,6 +110,13 @@ export default function ListingDetail({ user }) {
 
   const hasPhotos = listing.photos && listing.photos.length > 0
   const hasLocation = listing.location_lat && listing.location_lng
+  const auctionIsActive = auction?.status === 'active' && new Date(auction.ends_at) > new Date()
+  const auctionStatusLabel = auctionIsActive
+    ? 'Subasta activa'
+    : auction?.status === 'cancelled'
+      ? 'Subasta cancelada'
+      : 'Subasta finalizada'
+  const auctionPrice = auctionIsActive ? auction.start_price : listing.price
 
   return (
     <div className="listing-detail">
@@ -185,7 +204,16 @@ export default function ListingDetail({ user }) {
           {/* Right Column — sin cambios */}
           <div className="listing-info-column">
             <div className="listing-header card">
-              <div className="listing-price luxury-gold">{formatPrice(listing.price, listing.currency)}</div>
+              {auction && (
+                <div className={`auction-detail-status ${auctionIsActive ? 'active' : 'closed'}`}>
+                  <span>{auctionStatusLabel}</span>
+                  {auctionIsActive && <span>Finaliza {new Date(auction.ends_at).toLocaleString('es-BO', { dateStyle: 'short', timeStyle: 'short' })}</span>}
+                </div>
+              )}
+              <div className={`listing-price luxury-gold ${auctionIsActive ? 'auction-price' : ''}`}>
+                {auctionIsActive ? 'Desde ' : ''}{formatPrice(auctionPrice, listing.currency)}
+              </div>
+              {auctionIsActive && <div className="auction-detail-note">Precio inicial. Las pujas se habilitarán próximamente.</div>}
               <h1 className="listing-title-detail">{listing.title}</h1>
               <div className="listing-meta-detail">
                 <span className={`badge badge-${badge.color}`}>{badge.icon} {badge.label}</span>
@@ -202,7 +230,12 @@ export default function ListingDetail({ user }) {
             </div>
 
             <div className="listing-contact card">
-              {listing.is_ghost ? (
+              {auctionIsActive ? (
+                <div className="auction-contact-notice">
+                  <strong>Este anuncio está en subasta.</strong>
+                  <span>La información de pujas estará disponible próximamente.</span>
+                </div>
+              ) : listing.is_ghost ? (
                 <div className="contact-ghost">
                   <p className="contact-notice">🏴‍☠️ {t('listing.detail.pirate_contact_notice')}</p>
                   <p className="contact-info">{listing.description}</p>

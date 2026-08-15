@@ -131,6 +131,33 @@
   line-height: 1; color: var(--gold);
 }
 
+.auction-detail-status {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.auction-detail-status.active {
+  background: rgba(212, 175, 55, 0.12);
+  border: 1px solid var(--gold);
+  color: var(--gold);
+}
+.auction-detail-status.closed {
+  background: var(--dark-border);
+  color: var(--text-muted);
+}
+.auction-price { margin-bottom: 0.25rem; }
+.auction-detail-note {
+  margin-bottom: 0.65rem;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
 .listing-title-detail {
   font-size: 1.25rem;
   font-family: 'Playfair Display', serif;
@@ -166,6 +193,21 @@
 }
 
 .listing-contact { padding: 1.25rem; display: flex; flex-direction: column; gap: 0.75rem; }
+
+.auction-contact-notice {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.875rem;
+  background: rgba(212, 175, 55, 0.1);
+  border: 1px solid var(--gold);
+  border-radius: var(--radius-md);
+  color: var(--text-light);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+.auction-contact-notice strong { color: var(--gold); }
+.auction-contact-notice span { color: var(--text-muted); }
 .btn-contact { width: 100%; font-size: 0.95rem; padding: 0.875rem; }
 
 .contact-ghost {
