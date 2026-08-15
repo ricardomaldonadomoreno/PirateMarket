@@ -32,6 +32,7 @@ export default function AdminNavbarPirata() {
     { path: '/admin/pirata', icon: '📊', label: 'Dashboard' },
     { path: '/admin/pirata/usuarios', icon: '👥', label: 'Usuarios' },
     { path: '/admin/pirata/anuncios', icon: '📋', label: 'Anuncios' },
+    { path: '/admin/pirata/subastas', icon: '🔨', label: 'Subastas' },
     { path: '/admin/pirata/banners', icon: '🖼️', label: 'Banners' },
     { path: '/admin/pirata/catalogos', icon: '🏪', label: 'Catálogos' },
   ]
