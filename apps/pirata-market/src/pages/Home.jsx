@@ -31,6 +31,7 @@ export default function Home() {
     maxPrice: '',
     isPirate: false,
     sellerTypes: [],
+    auctionOnly: false,
     search: ''
   })
 
@@ -157,10 +158,13 @@ export default function Home() {
         }
       }
 
-      setListings(filtered.map(listing => ({
+      const listingsWithAuctions = filtered.map(listing => ({
         ...listing,
         auction: auctionByListing[listing.id] || null,
-      })))
+      }))
+      setListings(filters.auctionOnly
+        ? listingsWithAuctions.filter(listing => listing.auction)
+        : listingsWithAuctions)
     } catch (error) { console.error('Error loading listings:', error) }
     finally { setLoading(false) }
   }
@@ -226,6 +230,7 @@ export default function Home() {
     filters.maxPrice,
     filters.isPirate,
     filters.sellerTypes.length > 0,
+    filters.auctionOnly,
     zoneFilter
   ].filter(Boolean).length
 
@@ -234,6 +239,7 @@ export default function Home() {
     { type: 'person', icon: '👤', label: t('home.filters.persons') },
     { type: 'shop', icon: '🏪', label: t('home.filters.shops') },
     { type: 'wholesale', icon: '📦', label: t('home.filters.wholesale') },
+    { type: 'auction', icon: '🔨', label: 'Subastas' },
   ]
 
   // Contenido de filtros — reutilizado en sidebar y drawer
@@ -244,8 +250,12 @@ export default function Home() {
         <div className="seller-type-filters">
           {sellerTypeButtons.map(({ type, icon, label }) => (
             <button key={type}
-              className={`seller-type-btn seller-type-${type} ${type === 'pirate' ? filters.isPirate ? 'active' : '' : filters.sellerTypes.includes(type) ? 'active' : ''}`}
-              onClick={() => { if (type === 'pirate') handleFilterChange('isPirate', !filters.isPirate); else toggleSellerType(type) }}>
+              className={`seller-type-btn seller-type-${type} ${type === 'pirate' ? filters.isPirate ? 'active' : '' : type === 'auction' ? filters.auctionOnly ? 'active' : '' : filters.sellerTypes.includes(type) ? 'active' : ''}`}
+              onClick={() => {
+                if (type === 'pirate') handleFilterChange('isPirate', !filters.isPirate)
+                else if (type === 'auction') handleFilterChange('auctionOnly', !filters.auctionOnly)
+                else toggleSellerType(type)
+              }}>
               {icon} {label}
             </button>
           ))}
@@ -501,7 +511,7 @@ export default function Home() {
               <div className="drawer-header-actions">
                 {activeFiltersCount > 0 && (
                   <button className="drawer-clear-btn" onClick={() => {
-                    setFilters({ category: null, minPrice: '', maxPrice: '', isPirate: false, sellerTypes: [], search: filters.search })
+                    setFilters({ category: null, minPrice: '', maxPrice: '', isPirate: false, sellerTypes: [], auctionOnly: false, search: filters.search })
                     handleClearZone()
                   }}>
                     Limpiar todo

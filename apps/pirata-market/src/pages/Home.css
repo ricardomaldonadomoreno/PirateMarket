@@ -177,6 +177,7 @@
 .seller-type-person.active { background: rgba(212,175,55,0.1); border-color: var(--gold); color: var(--gold); }
 .seller-type-shop.active { background: rgba(255,183,3,0.1); border-color: var(--warning); color: var(--warning); }
 .seller-type-wholesale.active { background: rgba(6,214,160,0.1); border-color: var(--success); color: var(--success); }
+.seller-type-auction.active { background: rgba(212,175,55,0.15); border-color: var(--gold); color: var(--gold); }
 
 /* GPS zona */
 .zone-filter-btn {
