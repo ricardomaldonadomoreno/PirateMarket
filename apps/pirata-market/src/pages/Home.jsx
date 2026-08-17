@@ -4,6 +4,7 @@ import { getListings, getCategories } from '../lib/supabase'
 import { supabase } from '../lib/supabase'
 import { formatPrice, timeAgo } from '../lib/utils'
 import { Link, useNavigate } from 'react-router-dom'
+import { Ban, Gavel, Globe2, Map, MapPin, Package, Skull, SlidersHorizontal, Store, Tag, Tv, Unlock, User, X, Zap } from 'lucide-react'
 import { MapContainer, TileLayer, Circle, useMapEvents } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import './Home.css'
@@ -235,11 +236,11 @@ export default function Home() {
   ].filter(Boolean).length
 
   const sellerTypeButtons = [
-    { type: 'pirate', icon: '🏴‍☠️', label: t('home.filters.pirates') },
-    { type: 'person', icon: '👤', label: t('home.filters.persons') },
-    { type: 'shop', icon: '🏪', label: t('home.filters.shops') },
-    { type: 'wholesale', icon: '📦', label: t('home.filters.wholesale') },
-    { type: 'auction', icon: '🔨', label: 'Subastas' },
+    { type: 'pirate', Icon: Skull, label: t('home.filters.pirates') },
+    { type: 'person', Icon: User, label: t('home.filters.persons') },
+    { type: 'shop', Icon: Store, label: t('home.filters.shops') },
+    { type: 'wholesale', Icon: Package, label: t('home.filters.wholesale') },
+    { type: 'auction', Icon: Gavel, label: 'Subastas' },
   ]
 
   // Contenido de filtros — reutilizado en sidebar y drawer
@@ -248,7 +249,7 @@ export default function Home() {
       <div className="filter-section">
         <h4 className="filter-subtitle">{t('home.filters.seller_type')}</h4>
         <div className="seller-type-filters">
-          {sellerTypeButtons.map(({ type, icon, label }) => (
+          {sellerTypeButtons.map(({ type, Icon, label }) => (
             <button key={type}
               className={`seller-type-btn seller-type-${type} ${type === 'pirate' ? filters.isPirate ? 'active' : '' : type === 'auction' ? filters.auctionOnly ? 'active' : '' : filters.sellerTypes.includes(type) ? 'active' : ''}`}
               onClick={() => {
@@ -256,20 +257,20 @@ export default function Home() {
                 else if (type === 'auction') handleFilterChange('auctionOnly', !filters.auctionOnly)
                 else toggleSellerType(type)
               }}>
-              {icon} {label}
+              <Icon size={16} strokeWidth={1.8} aria-hidden="true" /> {label}
             </button>
           ))}
         </div>
       </div>
 
       <div className="filter-section">
-        <h4 className="filter-subtitle">🗺️ Buscar por zona</h4>
+        <h4 className="filter-subtitle"><Map size={16} strokeWidth={1.8} aria-hidden="true" /> Buscar por zona</h4>
         <button className={`zone-filter-btn ${zoneFilter ? 'active' : ''}`}
           onClick={() => setShowZoneMap(!showZoneMap)}>
-          {zoneFilter ? `📍 Zona activa (${zoneFilter.radius_km}km)` : '🗺️ Seleccionar zona'}
+          {zoneFilter ? <><MapPin size={15} strokeWidth={1.8} aria-hidden="true" /> Zona activa ({zoneFilter.radius_km}km)</> : <><Map size={15} strokeWidth={1.8} aria-hidden="true" /> Seleccionar zona</>}
         </button>
         {zoneFilter && (
-          <button className="zone-clear-btn" onClick={handleClearZone}>✕ Quitar filtro de zona</button>
+          <button className="zone-clear-btn" onClick={handleClearZone}><X size={14} strokeWidth={2} aria-hidden="true" /> Quitar filtro de zona</button>
         )}
         {showZoneMap && (
           <div className="zone-map-container">
@@ -304,7 +305,7 @@ export default function Home() {
 
       <div className="filter-section">
         <button className="ventas-tv-btn" onClick={() => { navigate('/ventas-tv'); setShowDrawer(false) }}>
-          📺 VentasTV
+          <Tv size={16} strokeWidth={1.8} aria-hidden="true" /> VentasTV
           <span className="ventas-tv-badge">{t('home.filters.live')}</span>
         </button>
       </div>
@@ -314,14 +315,14 @@ export default function Home() {
         <div className="category-list">
           <button className={`category-item ${!filters.category ? 'active' : ''}`}
             onClick={() => handleFilterChange('category', null)}>
-            <span className="category-icon">🌐</span>
+            <span className="category-icon"><Globe2 size={16} strokeWidth={1.8} aria-hidden="true" /></span>
             <span>{t('home.filters.all')}</span>
           </button>
           {categories.map(cat => (
             <button key={cat.id}
               className={`category-item ${filters.category === cat.id ? 'active' : ''}`}
               onClick={() => handleFilterChange('category', cat.id)}>
-              <span className="category-icon">{cat.icon}</span>
+              <span className="category-icon"><Tag size={16} strokeWidth={1.8} aria-hidden="true" /></span>
               <span>{t(`categories.${cat.slug}`)}</span>
             </button>
           ))}
@@ -351,7 +352,7 @@ export default function Home() {
           onChange={e => handleFilterChange('search', e.target.value)} />
         <button className={`mobile-filter-btn ${activeFiltersCount > 0 ? 'has-filters' : ''}`}
           onClick={() => setShowDrawer(true)}>
-          ⚙️ Buscar Anuncio
+          <SlidersHorizontal size={16} strokeWidth={1.8} aria-hidden="true" /> Buscar Anuncio
           {activeFiltersCount > 0 && (
             <span className="filter-count-badge">{activeFiltersCount}</span>
           )}
@@ -362,7 +363,7 @@ export default function Home() {
       <div className="mobile-categories-bar">
         <button className={`cat-chip ${!filters.category ? 'active' : ''}`}
           onClick={() => handleFilterChange('category', null)}>
-          🌐 {t('home.filters.all')}
+          <Globe2 size={15} strokeWidth={1.8} aria-hidden="true" /> {t('home.filters.all')}
         </button>
         {categories.map(cat => (
           <button key={cat.id}
@@ -436,9 +437,9 @@ export default function Home() {
           <div className="content-header">
             <h2 className="serif">{t('home.title')}</h2>
             <div className="differentiators">
-              <span>🚫 {t('home.diff.no_bans')}</span>
-              <span>🔓 {t('home.diff.no_restrictions')}</span>
-              <span>⚡ {t('home.diff.no_algorithms')}</span>
+              <span><Ban size={15} strokeWidth={1.8} aria-hidden="true" /> {t('home.diff.no_bans')}</span>
+              <span><Unlock size={15} strokeWidth={1.8} aria-hidden="true" /> {t('home.diff.no_restrictions')}</span>
+              <span><Zap size={15} strokeWidth={1.8} aria-hidden="true" /> {t('home.diff.no_algorithms')}</span>
               <Link to="/como-funciona" className="how-it-works-btn">{t('home.how_it_works')} →</Link>
             </div>
             <p className="results-count">
@@ -455,14 +456,14 @@ export default function Home() {
             </div>
           ) : displayedListings.length === 0 ? (
             <div className="no-results">
-              <span className="no-results-icon">🏴‍☠️</span>
+              <span className="no-results-icon"><Skull size={48} strokeWidth={1.5} aria-hidden="true" /></span>
               <p>{zoneFilter ? 'No hay anuncios en esta zona' : t('home.no_results')}</p>
             </div>
           ) : (
             <div className="listings-grid">
               {displayedListings.map(listing => {
                 const uType = listing.seller_type || 'person'
-                const sellerIcon = listing.is_ghost ? '🏴‍☠️' : uType === 'shop' ? '🏪' : uType === 'wholesale' ? '📦' : '👤'
+                const SellerIcon = listing.is_ghost ? Skull : uType === 'shop' ? Store : uType === 'wholesale' ? Package : User
                 const sellerClass = listing.is_ghost ? 'pirate' : uType === 'shop' ? 'shop' : uType === 'wholesale' ? 'wholesale' : 'person'
                 const auctionIsActive = listing.auction?.status === 'active' && new Date(listing.auction.ends_at) > new Date()
                 const cardPrice = auctionIsActive ? listing.auction.start_price : listing.price
@@ -473,24 +474,24 @@ export default function Home() {
                       {listing.photos && listing.photos.length > 0 ? (
                         <img src={listing.photos[0]} alt={listing.title} />
                       ) : (
-                        <div className="listing-no-image"><span>{listing.category?.icon || '📦'}</span></div>
+                        <div className="listing-no-image"><Package size={32} strokeWidth={1.5} aria-hidden="true" /></div>
                       )}
                       {listing.video_url && <div className="video-badge">▶ 6s</div>}
                       {auctionIsActive && <div className="auction-badge">Subasta activa</div>}
                       {featuredIds.has(listing.id) && <div className="featured-badge">⭐ Destacado</div>}
-                      <div className={`seller-badge ${sellerClass}`}>{sellerIcon}</div>
-                      {listing.location_lat && <div className="location-dot" title="Tiene ubicación">📍</div>}
+                      <div className={`seller-badge ${sellerClass}`}><SellerIcon size={15} strokeWidth={1.8} aria-hidden="true" /></div>
+                      {listing.location_lat && <div className="location-dot" title="Tiene ubicación"><MapPin size={14} strokeWidth={1.8} aria-hidden="true" /></div>}
                     </div>
                     <div className="listing-info">
                       <p className={`listing-price ${auctionIsActive ? 'auction-card-price' : ''}`}>
                         {auctionIsActive ? 'Desde ' : ''}{formatPrice(cardPrice, listing.currency)}
                       </p>
                       <span className={`listing-seller-type listing-seller-${sellerClass}`}>
-                        {sellerIcon} {listing.is_ghost ? t('badges.pirate') : uType === 'shop' ? t('badges.shop') : uType === 'wholesale' ? t('badges.wholesale') : t('badges.verified')}
+                        <SellerIcon size={13} strokeWidth={1.8} aria-hidden="true" /> {listing.is_ghost ? t('badges.pirate') : uType === 'shop' ? t('badges.shop') : uType === 'wholesale' ? t('badges.wholesale') : t('badges.verified')}
                       </span>
                       <p className="listing-title">{listing.title}</p>
                       <div className="listing-meta">
-                        <span className="listing-location">📍 {listing.display_location}</span>
+                        <span className="listing-location"><MapPin size={13} strokeWidth={1.8} aria-hidden="true" /> {listing.display_location}</span>
                         <span className="listing-time">{timeAgo(listing.created_at, t)}</span>
                       </div>
                     </div>
@@ -517,7 +518,7 @@ export default function Home() {
                     Limpiar todo
                   </button>
                 )}
-                <button className="drawer-close" onClick={() => setShowDrawer(false)}>✕</button>
+                <button className="drawer-close" onClick={() => setShowDrawer(false)} aria-label="Cerrar filtros"><X size={18} strokeWidth={2} aria-hidden="true" /></button>
               </div>
             </div>
             <div className="drawer-body">
