@@ -480,7 +480,6 @@ export default function Home() {
                       {auctionIsActive && <div className="auction-badge">Subasta activa</div>}
                       {featuredIds.has(listing.id) && <div className="featured-badge">⭐ Destacado</div>}
                       <div className={`seller-badge ${sellerClass}`}><SellerIcon size={15} strokeWidth={1.8} aria-hidden="true" /></div>
-                      {listing.location_lat && <div className="location-dot" title="Tiene ubicación"><MapPin size={14} strokeWidth={1.8} aria-hidden="true" /></div>}
                     </div>
                     <div className="listing-info">
                       <p className={`listing-price ${auctionIsActive ? 'auction-card-price' : ''}`}>
@@ -491,6 +490,7 @@ export default function Home() {
                       </span>
                       <p className="listing-title">{listing.title}</p>
                       <div className="listing-meta">
+                        {listing.location_lat && <span className="listing-location" title="Tiene ubicación"><MapPin size={13} strokeWidth={1.8} aria-hidden="true" /></span>}
                         <span className="listing-time">{timeAgo(listing.created_at, t)}</span>
                       </div>
                     </div>
