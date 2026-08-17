@@ -479,7 +479,6 @@ export default function Home() {
                       {listing.video_url && <div className="video-badge">▶ 6s</div>}
                       {auctionIsActive && <div className="auction-badge">Subasta activa</div>}
                       {featuredIds.has(listing.id) && <div className="featured-badge">⭐ Destacado</div>}
-                      <div className={`seller-badge ${sellerClass}`}><SellerIcon size={15} strokeWidth={1.8} aria-hidden="true" /></div>
                     </div>
                     <div className="listing-info">
                       <p className={`listing-price ${auctionIsActive ? 'auction-card-price' : ''}`}>
