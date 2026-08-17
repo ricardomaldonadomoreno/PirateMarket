@@ -489,7 +489,7 @@ export default function Home() {
                       </span>
                       <p className="listing-title">{listing.title}</p>
                       <div className="listing-meta">
-                        <span className="listing-location"><MapPin size={13} strokeWidth={1.8} aria-hidden="true" /> {listing.location_lat ? 'Marcada' : 'No marcada'}</span>
+                        <span className="home-listing-location"><MapPin size={13} strokeWidth={1.8} aria-hidden="true" /> {listing.location_lat ? 'Marcada' : 'No marcada'}</span>
                         <span className="listing-time">{timeAgo(listing.created_at, t)}</span>
                       </div>
                     </div>

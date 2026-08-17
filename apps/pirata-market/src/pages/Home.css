@@ -169,7 +169,7 @@
   display: flex; justify-content: space-between; align-items: center;
   font-size: 0.7rem; color: var(--text-muted); margin-top: 0.15rem; padding-top: 0;
 }
-.listing-location { display: flex; align-items: center; gap: 0.25rem; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.home-listing-location { display: flex; align-items: center; gap: 0.25rem; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .listing-time { flex-shrink: 0; font-size: 0.72rem; white-space: nowrap; }
 
 .no-results { text-align: center; padding: 4rem 2rem; color: var(--text-muted); }
