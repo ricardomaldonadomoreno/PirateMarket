@@ -134,10 +134,11 @@
 .seller-badge.wholesale { background: rgba(6,214,160,0.2); border-color: var(--success); }
 .seller-badge.person { background: rgba(212,175,55,0.2); border-color: var(--gold); }
 
-.listing-info { padding: 0.5rem 0.6rem; display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+.listing-info { padding: 0.5rem 0.6rem; display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
 .listing-price {
   height: 1.1em; min-height: 1.1em;
   font-size: 0.9rem; font-weight: 700; font-family: 'Inter', sans-serif; line-height: 1.1; color: var(--gold);
+  margin: 0;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .auction-card-price { color: var(--gold); }
@@ -160,13 +161,13 @@
   font-size: 0.8rem; font-weight: 600; line-height: 1.2;
   display: block; white-space: nowrap;
   overflow: hidden; text-overflow: ellipsis;
-  color: var(--text-light); font-family: 'Inter', sans-serif; margin: 0;
+  color: var(--text-light); font-family: 'Inter', sans-serif; margin: 0.15rem 0 0;
 }
 
 .listing-meta {
   height: 1.1rem; min-height: 1.1rem; box-sizing: border-box;
   display: flex; justify-content: space-between; align-items: center;
-  font-size: 0.7rem; color: var(--text-muted); margin-top: 0.15rem; padding-top: 0.15rem;
+  font-size: 0.7rem; color: var(--text-muted); margin-top: 0.15rem; padding-top: 0;
 }
 .listing-location { display: flex; align-items: center; gap: 0.25rem; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .listing-time { flex-shrink: 0; font-size: 0.72rem; white-space: nowrap; }
