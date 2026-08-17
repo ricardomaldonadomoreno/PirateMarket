@@ -120,6 +120,10 @@
 .listing-description h3 { font-size: 1.1rem; margin-bottom: 0.75rem; color: var(--gold); }
 .listing-description p { line-height: 1.7; white-space: pre-wrap; color: var(--text-light); font-size: 0.9rem; }
 
+.listing-location-reference { padding: 1rem 1.25rem; }
+.listing-location-reference h3 { font-size: 0.95rem; margin-bottom: 0.4rem; color: var(--gold); }
+.listing-location-reference p { color: var(--text-light); font-size: 0.9rem; line-height: 1.5; margin: 0; }
+
 .listing-info-column { display: flex; flex-direction: column; gap: 1rem; }
 
 .listing-header { padding: 1.25rem; }

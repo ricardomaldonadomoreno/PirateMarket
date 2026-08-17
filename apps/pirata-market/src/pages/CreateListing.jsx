@@ -272,7 +272,7 @@ export default function CreateListing() {
         photos: photoUrls,
         video_url: videoUrl,
         accepts_offers: formData.accepts_offers,
-        display_location: formData.location || 'Santa Cruz',
+        display_location: formData.location.trim() || null,
         is_ghost: isEditMode ? false : !user,
         user_id: isEditMode ? user.id : (user?.id || null),
         whatsapp_number: user ? formData.whatsapp_number : null,
@@ -453,16 +453,17 @@ export default function CreateListing() {
             </div>
           )}
 
-          {/* Location — NUEVO con mapa */}
+          {/* Location — referencia escrita y mapa GPS */}
           <div className="form-section card">
-            <h3>📍 {t('listing.create.fields.location')}</h3>
+            <h3>📍 Ubicación del anuncio</h3>
 
             <div className="form-group">
+              <label>Referencia de ubicación</label>
               <input type="text" name="location" className="input"
-                placeholder="Ej: Equipetrol, Santa Cruz"
+                placeholder="Ej: casa con árbol en la puerta, edificio azul frente a la plaza"
                 value={formData.location} onChange={handleInputChange} />
               <p className="form-hint">
-                {isPirate ? t('listing.create.location_hint_pirate') : t('listing.create.location_hint_registered')}
+                Escribe una referencia que ayude a encontrar el lugar. No es una dirección exacta; la ubicación geográfica se selecciona aparte en el mapa.
               </p>
             </div>
 

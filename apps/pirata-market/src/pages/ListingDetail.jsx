@@ -201,6 +201,7 @@ export default function ListingDetail({ user }) {
     : { icon: '🏴‍☠️', label: t('badges.pirate'), color: 'gold' }
 
   const hasPhotos = listing.photos && listing.photos.length > 0
+  const hasReference = Boolean(listing.display_location?.trim())
   const hasLocation = listing.location_lat && listing.location_lng
   const auctionIsActive = auction?.status === 'active' && new Date(auction.ends_at) > new Date()
   const auctionStatusLabel = auctionIsActive
@@ -272,10 +273,17 @@ export default function ListingDetail({ user }) {
               <p>{listing.description}</p>
             </div>
 
+            {hasReference && (
+              <div className="listing-location-reference card">
+                <h3>Referencia de ubicación</h3>
+                <p>{listing.display_location}</p>
+              </div>
+            )}
+
             {/* Mini mapa Leaflet si tiene coordenadas */}
             {hasLocation && (
               <div className="listing-map-preview card">
-                <h3>📍 Ubicación</h3>
+                <h3>Ubicación en mapa</h3>
                 <MapContainer
                   center={[listing.location_lat, listing.location_lng]}
                   zoom={14}
