@@ -465,6 +465,7 @@ export default function Home() {
                 const uType = listing.seller_type || 'person'
                 const SellerIcon = listing.is_ghost ? Skull : uType === 'shop' ? Store : uType === 'wholesale' ? Package : User
                 const sellerClass = listing.is_ghost ? 'pirate' : uType === 'shop' ? 'shop' : uType === 'wholesale' ? 'wholesale' : 'person'
+                const displayLocation = listing.display_location?.trim()
                 const auctionIsActive = listing.auction?.status === 'active' && new Date(listing.auction.ends_at) > new Date()
                 const cardPrice = auctionIsActive ? listing.auction.start_price : listing.price
                 return (
@@ -491,7 +492,9 @@ export default function Home() {
                       </span>
                       <p className="listing-title">{listing.title}</p>
                       <div className="listing-meta">
-                        <span className="listing-location"><MapPin size={13} strokeWidth={1.8} aria-hidden="true" /> {listing.display_location}</span>
+                        {displayLocation && (
+                          <span className="listing-location"><MapPin size={13} strokeWidth={1.8} aria-hidden="true" /> {displayLocation}</span>
+                        )}
                         <span className="listing-time">{timeAgo(listing.created_at, t)}</span>
                       </div>
                     </div>
