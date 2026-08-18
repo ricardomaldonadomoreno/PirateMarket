@@ -59,6 +59,7 @@ export async function getListings(filters = {}) {
     `)
     .eq('status', 'active')
     .order('created_at', { ascending: false })
+    .limit(24)
 
   if (filters.category) {
     query = query.eq('category_id', filters.category)
