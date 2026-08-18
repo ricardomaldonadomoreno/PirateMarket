@@ -120,7 +120,6 @@ export default function Home() {
     try {
       const cats = await getCategories()
       setCategories(cats)
-      await loadListings()
     } catch (error) { console.error('Error loading data:', error) }
   }
 
