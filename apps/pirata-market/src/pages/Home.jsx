@@ -20,6 +20,9 @@ export default function Home() {
   const [listings, setListings] = useState([])
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [listingsOffset, setListingsOffset] = useState(0)
+  const [hasMoreListings, setHasMoreListings] = useState(true)
   const [showDrawer, setShowDrawer] = useState(false)
   const [featuredBanners, setFeaturedBanners] = useState([])
   const [currentBannerIdx, setCurrentBannerIdx] = useState(0)
@@ -133,12 +136,13 @@ export default function Home() {
     } catch (error) { console.error('Error loading data:', error) }
   }
 
-  const loadListings = async () => {
-    setLoading(true)
+  const loadListings = async (offset = 0, append = false) => {
+    if (append) setLoadingMore(true)
+    else setLoading(true)
     try {
       // No pasar sellerTypes a supabase para que traiga todos (el filtro se aplica localmente)
       const filtersForQuery = { ...appliedFilters, sellerTypes: [] }
-      const data = await getListings(filtersForQuery)
+      const data = await getListings(filtersForQuery, offset)
 
       // Filtrar por seller_type localmente (lee de listings.seller_type directamente)
       let filtered = data
@@ -172,11 +176,17 @@ export default function Home() {
         ...listing,
         auction: auctionByListing[listing.id] || null,
       }))
-      setListings(appliedFilters.auctionOnly
+      const visibleListings = appliedFilters.auctionOnly
         ? listingsWithAuctions.filter(listing => listing.auction)
-        : listingsWithAuctions)
+        : listingsWithAuctions
+      setListings(current => append ? [...current, ...visibleListings] : visibleListings)
+      setListingsOffset(offset + data.length)
+      setHasMoreListings(data.length === 24)
     } catch (error) { console.error('Error loading listings:', error) }
-    finally { setLoading(false) }
+    finally {
+      setLoading(false)
+      setLoadingMore(false)
+    }
   }
 
   const handleFilterChange = (key, value) => setFilters(prev => ({ ...prev, [key]: value }))
@@ -236,6 +246,9 @@ export default function Home() {
     setAppliedFilters(filters)
     setAppliedZoneFilter(zoneFilter)
     setShowDrawer(false)
+  }
+  const handleLoadMore = () => {
+    if (!loadingMore && hasMoreListings) loadListings(listingsOffset, true)
   }
   const handleClearZone = () => { setZoneFilter(null); setShowZoneMap(false) }
 
@@ -515,6 +528,14 @@ export default function Home() {
                   </Link>
                 )
               })}
+            </div>
+          )}
+
+          {!loading && hasMoreListings && (
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '1.5rem' }}>
+              <button className="btn btn-secondary" onClick={handleLoadMore} disabled={loadingMore}>
+                {loadingMore ? t('buttons.loading') : t('buttons.load_more')}
+              </button>
             </div>
           )}
         </main>

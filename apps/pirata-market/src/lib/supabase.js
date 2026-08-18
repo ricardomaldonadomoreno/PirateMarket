@@ -49,7 +49,7 @@ export async function getCurrentUser() {
 }
 
 // Get listings with filters
-export async function getListings(filters = {}) {
+export async function getListings(filters = {}, offset = 0) {
   let query = supabase
     .from('listings')
     .select(`
@@ -59,7 +59,7 @@ export async function getListings(filters = {}) {
     `)
     .eq('status', 'active')
     .order('created_at', { ascending: false })
-    .limit(24)
+    .range(offset, offset + 23)
 
   if (filters.category) {
     query = query.eq('category_id', filters.category)
