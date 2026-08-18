@@ -35,10 +35,20 @@ export default function Home() {
     auctionOnly: false,
     search: ''
   })
+  const [appliedFilters, setAppliedFilters] = useState({
+    category: null,
+    minPrice: '',
+    maxPrice: '',
+    isPirate: false,
+    sellerTypes: [],
+    auctionOnly: false,
+    search: ''
+  })
 
   // Filtro de zona
   const [showZoneMap, setShowZoneMap] = useState(false)
   const [zoneFilter, setZoneFilter] = useState(null)
+  const [appliedZoneFilter, setAppliedZoneFilter] = useState(null)
   const [zoneRadius, setZoneRadius] = useState(3)
   const zoneMapCenter = zoneFilter || { lat: -17.7863, lng: -63.1812 }
 
@@ -82,7 +92,7 @@ export default function Home() {
   const goToBanner = (idx) => setCurrentBannerIdx(idx)
   const prevBanner = () => setCurrentBannerIdx(prev => (prev - 1 + featuredBanners.length) % featuredBanners.length)
   const nextBanner = () => setCurrentBannerIdx(prev => (prev + 1) % featuredBanners.length)
-  useEffect(() => { loadListings() }, [filters])
+  useEffect(() => { loadListings() }, [appliedFilters, appliedZoneFilter])
 
   const loadFeatured = async () => {
     const now = new Date().toISOString()
@@ -127,14 +137,14 @@ export default function Home() {
     setLoading(true)
     try {
       // No pasar sellerTypes a supabase para que traiga todos (el filtro se aplica localmente)
-      const filtersForQuery = { ...filters, sellerTypes: [] }
+      const filtersForQuery = { ...appliedFilters, sellerTypes: [] }
       const data = await getListings(filtersForQuery)
 
       // Filtrar por seller_type localmente (lee de listings.seller_type directamente)
       let filtered = data
-      if (filters.sellerTypes && filters.sellerTypes.length > 0) {
+      if (appliedFilters.sellerTypes && appliedFilters.sellerTypes.length > 0) {
         filtered = data.filter(listing =>
-          !listing.is_ghost && filters.sellerTypes.includes(listing.seller_type)
+          !listing.is_ghost && appliedFilters.sellerTypes.includes(listing.seller_type)
         )
       }
 
@@ -162,7 +172,7 @@ export default function Home() {
         ...listing,
         auction: auctionByListing[listing.id] || null,
       }))
-      setListings(filters.auctionOnly
+      setListings(appliedFilters.auctionOnly
         ? listingsWithAuctions.filter(listing => listing.auction)
         : listingsWithAuctions)
     } catch (error) { console.error('Error loading listings:', error) }
@@ -182,16 +192,16 @@ export default function Home() {
   const handleCardClick = () => sessionStorage.setItem('home_scroll', window.scrollY.toString())
 
   const filterByZone = (listings) => {
-    if (!zoneFilter) return listings
+    if (!appliedZoneFilter) return listings
     return listings.filter(l => {
       if (!l.location_lat || !l.location_lng) return false
       const R = 6371
-      const dLat = (l.location_lat - zoneFilter.lat) * Math.PI / 180
-      const dLng = (l.location_lng - zoneFilter.lng) * Math.PI / 180
+      const dLat = (l.location_lat - appliedZoneFilter.lat) * Math.PI / 180
+      const dLng = (l.location_lng - appliedZoneFilter.lng) * Math.PI / 180
       const a = Math.sin(dLat/2) ** 2 +
-        Math.cos(zoneFilter.lat * Math.PI / 180) * Math.cos(l.location_lat * Math.PI / 180) * Math.sin(dLng/2) ** 2
+        Math.cos(appliedZoneFilter.lat * Math.PI / 180) * Math.cos(l.location_lat * Math.PI / 180) * Math.sin(dLng/2) ** 2
       const dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
-      return dist <= zoneFilter.radius_km
+      return dist <= appliedZoneFilter.radius_km
     })
   }
 
@@ -222,6 +232,11 @@ export default function Home() {
   }
 
   const handleSetZone = (latlng) => setZoneFilter({ lat: latlng.lat, lng: latlng.lng, radius_km: zoneRadius })
+  const handleApplyFilters = () => {
+    setAppliedFilters(filters)
+    setAppliedZoneFilter(zoneFilter)
+    setShowDrawer(false)
+  }
   const handleClearZone = () => { setZoneFilter(null); setShowZoneMap(false) }
 
   const activeFiltersCount = [
@@ -387,6 +402,11 @@ export default function Home() {
             </Link>
           </div>
           <FiltersContent />
+          <div className="filter-section">
+            <button className="btn btn-primary" style={{ width: '100%' }} onClick={handleApplyFilters}>
+              Aplicar filtros
+            </button>
+          </div>
         </aside>
 
         <main className="content">
@@ -526,8 +546,8 @@ export default function Home() {
             </div>
             <div className="drawer-footer">
               <button className="btn btn-primary" style={{ width: '100%' }}
-                onClick={() => setShowDrawer(false)}>
-                Ver {displayedListings.length} {displayedListings.length === 1 ? 'anuncio' : 'anuncios'}
+                onClick={handleApplyFilters}>
+                Aplicar filtros
               </button>
             </div>
           </div>
