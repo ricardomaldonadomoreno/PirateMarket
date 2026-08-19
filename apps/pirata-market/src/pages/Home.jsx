@@ -14,22 +14,24 @@ function ZoneDrawHandler({ onZoneSet }) {
   return null
 }
 
+let homeViewCache = null
+
 export default function Home() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const [listings, setListings] = useState([])
-  const [categories, setCategories] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [listings, setListings] = useState(() => homeViewCache?.listings || [])
+  const [categories, setCategories] = useState(() => homeViewCache?.categories || [])
+  const [loading, setLoading] = useState(() => !homeViewCache)
   const [loadingMore, setLoadingMore] = useState(false)
-  const [listingsOffset, setListingsOffset] = useState(0)
-  const [hasMoreListings, setHasMoreListings] = useState(true)
+  const [listingsOffset, setListingsOffset] = useState(() => homeViewCache?.listingsOffset || 0)
+  const [hasMoreListings, setHasMoreListings] = useState(() => homeViewCache?.hasMoreListings ?? true)
   const [showDrawer, setShowDrawer] = useState(false)
-  const [featuredBanners, setFeaturedBanners] = useState([])
-  const [currentBannerIdx, setCurrentBannerIdx] = useState(0)
+  const [featuredBanners, setFeaturedBanners] = useState(() => homeViewCache?.featuredBanners || [])
+  const [currentBannerIdx, setCurrentBannerIdx] = useState(() => homeViewCache?.currentBannerIdx || 0)
   const [isBannerPaused, setIsBannerPaused] = useState(false)
-  const [featuredListings, setFeaturedListings] = useState([])
-  const [featuredShuffle, setFeaturedShuffle] = useState(null) // Se genera una sola vez al cargar
-  const [filters, setFilters] = useState({
+  const [featuredListings, setFeaturedListings] = useState(() => homeViewCache?.featuredListings || [])
+  const [featuredShuffle, setFeaturedShuffle] = useState(() => homeViewCache?.featuredShuffle || null) // Se genera una sola vez al cargar
+  const [filters, setFilters] = useState(() => homeViewCache?.filters || {
     category: null,
     minPrice: '',
     maxPrice: '',
@@ -38,7 +40,7 @@ export default function Home() {
     auctionOnly: false,
     search: ''
   })
-  const [appliedFilters, setAppliedFilters] = useState({
+  const [appliedFilters, setAppliedFilters] = useState(() => homeViewCache?.appliedFilters || {
     category: null,
     minPrice: '',
     maxPrice: '',
@@ -50,9 +52,9 @@ export default function Home() {
 
   // Filtro de zona
   const [showZoneMap, setShowZoneMap] = useState(false)
-  const [zoneFilter, setZoneFilter] = useState(null)
-  const [appliedZoneFilter, setAppliedZoneFilter] = useState(null)
-  const [zoneRadius, setZoneRadius] = useState(3)
+  const [zoneFilter, setZoneFilter] = useState(() => homeViewCache?.zoneFilter || null)
+  const [appliedZoneFilter, setAppliedZoneFilter] = useState(() => homeViewCache?.appliedZoneFilter || null)
+  const [zoneRadius, setZoneRadius] = useState(() => homeViewCache?.zoneRadius || 3)
   const zoneMapCenter = zoneFilter || { lat: -17.7863, lng: -63.1812 }
 
   // Cerrar drawer con ESC
@@ -68,20 +70,23 @@ export default function Home() {
     return () => { document.body.style.overflow = '' }
   }, [showDrawer])
 
-  // Restaurar scroll
+  // Restaurar la vista guardada al volver desde una ficha
   useEffect(() => {
-    if (!loading && listings.length > 0) {
-      const savedScroll = sessionStorage.getItem('home_scroll')
-      if (savedScroll) {
-        setTimeout(() => {
-          window.scrollTo(0, parseInt(savedScroll))
-          sessionStorage.removeItem('home_scroll')
-        }, 50)
+    if (!homeViewCache || loading) return
+    const savedScroll = homeViewCache.scrollY
+    const restoreTimer = setTimeout(() => {
+      if (homeViewCache) {
+        window.scrollTo(0, savedScroll)
+        homeViewCache = null
       }
-    }
-  }, [loading, listings])
+    }, 50)
+    return () => clearTimeout(restoreTimer)
+  }, [loading])
 
-  useEffect(() => { loadData(); loadFeatured() }, [])
+  useEffect(() => {
+    if (homeViewCache) return
+    loadData(); loadFeatured()
+  }, [])
 
   // Rotación de banners cada 5 segundos (con pausa al hover)
   useEffect(() => {
@@ -95,7 +100,10 @@ export default function Home() {
   const goToBanner = (idx) => setCurrentBannerIdx(idx)
   const prevBanner = () => setCurrentBannerIdx(prev => (prev - 1 + featuredBanners.length) % featuredBanners.length)
   const nextBanner = () => setCurrentBannerIdx(prev => (prev + 1) % featuredBanners.length)
-  useEffect(() => { loadListings() }, [appliedFilters, appliedZoneFilter])
+  useEffect(() => {
+    if (homeViewCache) return
+    loadListings()
+  }, [appliedFilters, appliedZoneFilter])
 
   const loadFeatured = async () => {
     const now = new Date().toISOString()
@@ -199,7 +207,24 @@ export default function Home() {
     })
   }
 
-  const handleCardClick = () => sessionStorage.setItem('home_scroll', window.scrollY.toString())
+  const handleCardClick = () => {
+    homeViewCache = {
+      listings,
+      categories,
+      listingsOffset,
+      hasMoreListings,
+      featuredBanners,
+      currentBannerIdx,
+      featuredListings,
+      featuredShuffle,
+      filters,
+      appliedFilters,
+      zoneFilter,
+      appliedZoneFilter,
+      zoneRadius,
+      scrollY: window.scrollY,
+    }
+  }
 
   const filterByZone = (listings) => {
     if (!appliedZoneFilter) return listings
@@ -243,6 +268,7 @@ export default function Home() {
 
   const handleSetZone = (latlng) => setZoneFilter({ lat: latlng.lat, lng: latlng.lng, radius_km: zoneRadius })
   const handleApplyFilters = () => {
+    homeViewCache = null
     setAppliedFilters(filters)
     setAppliedZoneFilter(zoneFilter)
     setShowDrawer(false)
