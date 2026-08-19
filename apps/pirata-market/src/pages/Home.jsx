@@ -435,9 +435,6 @@ export default function Home() {
       <div className="home-container">
         {/* DESKTOP: sidebar normal */}
         <aside className="sidebar">
-          <div className="filter-section">
-            <h3 className="filter-title">{t('home.filters.title')}</h3>
-          </div>
           <div className="home-sidebar-intro">
             <h2 className="serif">{t('home.title')}</h2>
             <div className="home-sidebar-differentiators">
@@ -523,13 +520,6 @@ export default function Home() {
                 <span>BUSCAR</span>
               </button>
             </form>
-          </div>
-
-          <div className="content-header">
-            <p className="results-count">
-              {displayedListings.length} {displayedListings.length === 1 ? 'anuncio' : 'anuncios'}
-              {zoneFilter && <span style={{ color: 'var(--gold)', marginLeft: '0.5rem' }}>en zona seleccionada</span>}
-            </p>
           </div>
 
           {loading ? (
