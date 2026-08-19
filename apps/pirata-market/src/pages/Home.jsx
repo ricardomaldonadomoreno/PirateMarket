@@ -4,7 +4,7 @@ import { getListings, getCategories } from '../lib/supabase'
 import { supabase } from '../lib/supabase'
 import { formatPrice, timeAgo } from '../lib/utils'
 import { Link, useNavigate } from 'react-router-dom'
-import { Ban, CircleHelp, Gavel, Globe2, Map, MapPin, Package, Search, Skull, SlidersHorizontal, Store, Tag, Tv, Unlock, User, X, Zap } from 'lucide-react'
+import { Ban, ChevronDown, CircleHelp, Gavel, Globe2, Map, MapPin, Package, Search, Skull, SlidersHorizontal, Store, Tag, Tv, Unlock, User, X, Zap } from 'lucide-react'
 import { MapContainer, TileLayer, Circle, useMapEvents } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import './Home.css'
@@ -55,6 +55,8 @@ export default function Home() {
   const [zoneFilter, setZoneFilter] = useState(() => homeViewCache?.zoneFilter || null)
   const [appliedZoneFilter, setAppliedZoneFilter] = useState(() => homeViewCache?.appliedZoneFilter || null)
   const [zoneRadius, setZoneRadius] = useState(() => homeViewCache?.zoneRadius || 3)
+  const [showSellerTypes, setShowSellerTypes] = useState(false)
+  const [showCategories, setShowCategories] = useState(false)
   const zoneMapCenter = zoneFilter || { lat: -17.7863, lng: -63.1812 }
 
   // Cerrar drawer con ESC
@@ -308,8 +310,18 @@ export default function Home() {
   // Contenido de filtros — reutilizado en sidebar y drawer
   const FiltersContent = () => (
     <>
-      <div className="filter-section">
-        <h4 className="filter-subtitle">{t('home.filters.seller_type')}</h4>
+      <div className="filter-section filter-collapsible">
+        <button
+          type="button"
+          className="filter-collapse-toggle"
+          aria-expanded={showSellerTypes}
+          aria-controls="home-seller-type-options"
+          onClick={() => setShowSellerTypes(prev => !prev)}
+        >
+          <span><User size={15} strokeWidth={1.8} aria-hidden="true" /> {t('home.filters.seller_type')}</span>
+          <ChevronDown size={16} strokeWidth={1.8} aria-hidden="true" />
+        </button>
+        {showSellerTypes && <div id="home-seller-type-options" className="filter-collapse-content">
         <div className="seller-type-filters">
           {sellerTypeButtons.map(({ type, Icon, label }) => (
             <button key={type}
@@ -323,6 +335,7 @@ export default function Home() {
             </button>
           ))}
         </div>
+        </div>}
       </div>
 
       <div className="filter-section">
@@ -379,23 +392,34 @@ export default function Home() {
   )
 
   const CategoriesContent = () => (
-    <div className="filter-section">
-      <h4 className="filter-subtitle">{t('home.filters.categories')}</h4>
-      <div className="category-list">
-        <button className={`category-item ${!filters.category ? 'active' : ''}`}
-          onClick={() => handleFilterChange('category', null)}>
-          <span className="category-icon"><Globe2 size={16} strokeWidth={1.8} aria-hidden="true" /></span>
-          <span>{t('home.filters.all')}</span>
-        </button>
-        {categories.map(cat => (
-          <button key={cat.id}
-            className={`category-item ${filters.category === cat.id ? 'active' : ''}`}
-            onClick={() => handleFilterChange('category', cat.id)}>
-            <span className="category-icon"><Tag size={16} strokeWidth={1.8} aria-hidden="true" /></span>
-            <span>{t(`categories.${cat.slug}`)}</span>
+    <div className="filter-section filter-collapsible">
+      <button
+        type="button"
+        className="filter-collapse-toggle"
+        aria-expanded={showCategories}
+        aria-controls="home-category-options"
+        onClick={() => setShowCategories(prev => !prev)}
+      >
+        <span><Tag size={15} strokeWidth={1.8} aria-hidden="true" /> {t('home.filters.categories')}</span>
+        <ChevronDown size={16} strokeWidth={1.8} aria-hidden="true" />
+      </button>
+      {showCategories && <div id="home-category-options" className="filter-collapse-content">
+        <div className="category-list">
+          <button className={`category-item ${!filters.category ? 'active' : ''}`}
+            onClick={() => handleFilterChange('category', null)}>
+            <span className="category-icon"><Globe2 size={16} strokeWidth={1.8} aria-hidden="true" /></span>
+            <span>{t('home.filters.all')}</span>
           </button>
-        ))}
-      </div>
+          {categories.map(cat => (
+            <button key={cat.id}
+              className={`category-item ${filters.category === cat.id ? 'active' : ''}`}
+              onClick={() => handleFilterChange('category', cat.id)}>
+              <span className="category-icon"><Tag size={16} strokeWidth={1.8} aria-hidden="true" /></span>
+              <span>{t(`categories.${cat.slug}`)}</span>
+            </button>
+          ))}
+        </div>
+      </div>}
     </div>
   )
 

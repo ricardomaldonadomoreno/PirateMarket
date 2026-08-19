@@ -74,6 +74,27 @@
 .sidebar-filter-group .filter-section { margin-bottom: 1.1rem; }
 .sidebar-filter-group .filter-section:last-child { margin-bottom: 0; }
 .filter-subtitle { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.75rem; font-weight: 600; }
+.filter-collapse-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.15rem 0;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: left;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.filter-collapse-toggle > span { display: inline-flex; align-items: center; gap: 0.4rem; }
+.filter-collapse-toggle:hover,
+.filter-collapse-toggle[aria-expanded='true'] { color: var(--gold); }
+.filter-collapse-toggle > svg { transition: transform 0.2s ease; }
+.filter-collapse-toggle[aria-expanded='true'] > svg { transform: rotate(180deg); }
+.filter-collapse-content { padding-top: 0.75rem; }
 
 .pirate-filter { background: rgba(212, 175, 55, 0.08); border: 1px solid var(--dark-border); border-radius: var(--radius-md); padding: 0.6rem 0.875rem; transition: all 0.2s; }
 .pirate-filter:hover { border-color: var(--gold); background: rgba(212, 175, 55, 0.15); }
