@@ -546,19 +546,6 @@ export default function Home() {
               <span className="mobile-action-separator" aria-hidden="true">/</span>
             </div>
 
-            <div className="mobile-categories-bar">
-              <button className={`cat-chip ${!filters.category ? 'active' : ''}`}
-                onClick={() => handleFilterChange('category', null)}>
-                <Globe2 size={15} strokeWidth={1.8} aria-hidden="true" /> {t('home.filters.all')}
-              </button>
-              {categories.map(cat => (
-                <button key={cat.id}
-                  className={`cat-chip ${filters.category === cat.id ? 'active' : ''}`}
-                  onClick={() => handleFilterChange('category', cat.id)}>
-                  {cat.icon} {t(`categories.${cat.slug}`)}
-                </button>
-              ))}
-            </div>
           </div>
 
           {loading ? (

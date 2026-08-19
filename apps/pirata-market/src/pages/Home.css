@@ -366,7 +366,6 @@
    MOBILE FILTER BAR — oculto en desktop
    ============================================ */
 .mobile-filter-bar { display: none; }
-.mobile-categories-bar { display: none; }
 
 /* ============================================
    DRAWER — oculto en desktop
@@ -434,35 +433,7 @@
     display: flex; align-items: center; justify-content: center;
   }
 
-  /* Chips de categorías en tablet */
-  .mobile-categories-bar {
-    display: flex;
-    gap: 0.5rem;
-    padding: 0.6rem 1rem;
-    overflow-x: auto;
-    scrollbar-width: none;
-    background: var(--dark);
-    border-bottom: 1px solid var(--dark-border);
-    position: sticky;
-    top: 108px;
-    z-index: 99;
-  }
-  .mobile-categories-bar::-webkit-scrollbar { display: none; }
 
-  .cat-chip {
-    display: flex; align-items: center; gap: 0.3rem;
-    padding: 0.35rem 0.75rem;
-    background: var(--dark-surface);
-    border: 1.5px solid var(--dark-border);
-    border-radius: var(--radius-full);
-    color: var(--text-light);
-    font-size: 0.78rem; font-weight: 600;
-    cursor: pointer; white-space: nowrap;
-    transition: all 0.2s; font-family: 'Inter', sans-serif;
-    flex-shrink: 0;
-  }
-  .cat-chip:hover { border-color: var(--gold); }
-  .cat-chip.active { background: rgba(212,175,55,0.15); border-color: var(--gold); color: var(--gold); }
 }
 
 /* ============================================
@@ -518,35 +489,7 @@
     display: flex; align-items: center; justify-content: center;
   }
 
-  /* Chips de categorías */
-  .mobile-categories-bar {
-    display: flex;
-    gap: 0.5rem;
-    padding: 0.6rem 1rem;
-    overflow-x: auto;
-    scrollbar-width: none;
-    background: var(--dark);
-    border-bottom: 1px solid var(--dark-border);
-    position: sticky;
-    top: 108px;
-    z-index: 99;
-  }
-  .mobile-categories-bar::-webkit-scrollbar { display: none; }
 
-  .cat-chip {
-    display: flex; align-items: center; gap: 0.3rem;
-    padding: 0.35rem 0.75rem;
-    background: var(--dark-surface);
-    border: 1.5px solid var(--dark-border);
-    border-radius: var(--radius-full);
-    color: var(--text-light);
-    font-size: 0.78rem; font-weight: 600;
-    cursor: pointer; white-space: nowrap;
-    transition: all 0.2s; font-family: 'Inter', sans-serif;
-    flex-shrink: 0;
-  }
-  .cat-chip:hover { border-color: var(--gold); }
-  .cat-chip.active { background: rgba(212,175,55,0.15); border-color: var(--gold); color: var(--gold); }
 
   /* Ocultar sidebar en móvil */
   .sidebar { display: none; }
@@ -662,7 +605,6 @@
   .home-search-input { height: 38px; padding: 0.55rem 0.8rem; font-size: 0.85rem; }
   .home-search-submit { min-width: 36px; width: 36px; height: 36px; }
   .listings-grid { grid-template-columns: repeat(2, 1fr); }
-  .mobile-categories-bar { top: 104px; }
   .mobile-publish-btn, .mobile-filter-btn { font-size: 0.76rem; }
   .mobile-action-separator { font-size: 1rem; }
 }
