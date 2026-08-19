@@ -783,7 +783,16 @@
   .dashboard-stats { grid-template-columns: 1fr; }
   .real-data-grid, .premium-form-grid, .auction-form-grid { grid-template-columns: 1fr; }
   .account-type-layer .type-change-options { flex-direction: column; }
-  .listing-row-actions { justify-content: flex-start; }
+  .listing-row {
+    grid-template-columns: 80px minmax(0, 1fr);
+    align-items: start;
+  }
+  .listing-row-info { min-width: 0; }
+  .listing-row-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+    min-width: 0;
+  }
   .auction-config-header { align-items: flex-start; flex-direction: column; }
   .auction-config-actions { justify-content: flex-start; }
 }
