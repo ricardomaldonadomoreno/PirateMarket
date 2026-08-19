@@ -199,6 +199,15 @@ export default function Home() {
 
   const handleFilterChange = (key, value) => setFilters(prev => ({ ...prev, [key]: value }))
 
+  const handleSearchSubmit = (event) => {
+    event?.preventDefault()
+    homeViewCache = null
+    setAppliedFilters(prev => ({ ...prev, search: filters.search }))
+  }
+  const handleSearchKeyDown = (event) => {
+    if (event.key === 'Enter') handleSearchSubmit(event)
+  }
+
   const toggleSellerType = (type) => {
     setFilters(prev => {
       const current = prev.sellerTypes
@@ -269,7 +278,7 @@ export default function Home() {
   const handleSetZone = (latlng) => setZoneFilter({ lat: latlng.lat, lng: latlng.lng, radius_km: zoneRadius })
   const handleApplyFilters = () => {
     homeViewCache = null
-    setAppliedFilters(filters)
+    setAppliedFilters(prev => ({ ...filters, search: prev.search }))
     setAppliedZoneFilter(zoneFilter)
     setShowDrawer(false)
   }
@@ -402,7 +411,8 @@ export default function Home() {
         <input type="text" className="input mobile-search-input"
           placeholder={t('home.title')}
           value={filters.search}
-          onChange={e => handleFilterChange('search', e.target.value)} />
+          onChange={e => handleFilterChange('search', e.target.value)}
+          onKeyDown={handleSearchKeyDown} />
         <button className={`mobile-filter-btn ${activeFiltersCount > 0 ? 'has-filters' : ''}`}
           onClick={() => setShowDrawer(true)}>
           <SlidersHorizontal size={16} strokeWidth={1.8} aria-hidden="true" /> Buscar Anuncio
@@ -433,7 +443,9 @@ export default function Home() {
           <div className="filter-section">
             <h3 className="filter-title">{t('home.filters.title')}</h3>
             <input type="text" className="input" placeholder={t('home.title')}
-              value={filters.search} onChange={e => handleFilterChange('search', e.target.value)} />
+              value={filters.search}
+              onChange={e => handleFilterChange('search', e.target.value)}
+              onKeyDown={handleSearchKeyDown} />
           </div>
           <div className="filter-section">
             <Link to="/publicar" className="btn btn-primary sidebar-publish-btn">
