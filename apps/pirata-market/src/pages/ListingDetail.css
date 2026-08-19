@@ -493,3 +493,30 @@
     bottom: 1rem;
   }
 }
+
+/* ============================================
+   RESPONSIVE — orden visual de la ficha
+   ============================================ */
+@media (max-width: 1024px) {
+  .listing-detail-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .listing-media-column,
+  .listing-info-column {
+    display: contents;
+  }
+
+  .photo-gallery,
+  .photo-placeholder { order: 1; }
+  .listing-video { order: 2; }
+  .listing-header { order: 3; }
+  .listing-contact { order: 4; }
+  .seller-info { order: 5; }
+  .listing-description { order: 6; }
+  .listing-location-reference { order: 7; }
+  .listing-map-preview { order: 8; }
+  .btn-report { order: 9; }
+}
