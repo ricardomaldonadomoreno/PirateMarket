@@ -381,7 +381,7 @@
 }
 
 /* ============================================
-   TABLET — sidebar oculto, filtros debajo de la búsqueda
+   TABLET — sidebar oculto, filtros arriba
    ============================================ */
 @media (max-width: 1024px) {
   .mobile-filter-bar {
@@ -390,7 +390,9 @@
     padding: 0.75rem 1rem;
     background: var(--dark-surface);
     border-bottom: 1px solid var(--dark-border);
-    position: static;
+    position: sticky;
+    top: 56px;
+    z-index: 100;
   }
 
   .mobile-search-input {
@@ -430,7 +432,9 @@
     scrollbar-width: none;
     background: var(--dark);
     border-bottom: 1px solid var(--dark-border);
-    position: static;
+    position: sticky;
+    top: 108px;
+    z-index: 99;
   }
   .mobile-categories-bar::-webkit-scrollbar { display: none; }
 
@@ -463,7 +467,9 @@
     padding: 0.75rem 1rem;
     background: var(--dark-surface);
     border-bottom: 1px solid var(--dark-border);
-    position: static;
+    position: sticky;
+    top: 56px;
+    z-index: 100;
   }
 
   .mobile-search-input {
@@ -503,7 +509,9 @@
     scrollbar-width: none;
     background: var(--dark);
     border-bottom: 1px solid var(--dark-border);
-    position: static;
+    position: sticky;
+    top: 108px;
+    z-index: 99;
   }
   .mobile-categories-bar::-webkit-scrollbar { display: none; }
 
@@ -529,7 +537,7 @@
   .home-container { grid-template-columns: 1fr; padding: 0 0.75rem; gap: 1rem; }
 
   .content { padding-top: 1rem; }
-  .home-search-bar { gap: 0.5rem; margin: 0.75rem 0 0.5rem; padding: 0.45rem; }
+  .home-search-bar { gap: 0.5rem; margin: 0.75rem 0 1.25rem; padding: 0.45rem; }
   .home-search-help { width: 40px; height: 40px; justify-content: center; padding: 0; }
   .home-search-help span, .home-search-submit span { display: none; }
   .home-search-form { width: 100%; gap: 0.4rem; }
@@ -636,7 +644,7 @@
   .home-search-input { height: 38px; padding: 0.55rem 0.8rem; font-size: 0.85rem; }
   .home-search-submit { min-width: 36px; width: 36px; height: 36px; }
   .listings-grid { grid-template-columns: repeat(2, 1fr); }
-  .mobile-categories-bar { top: auto; }
+  .mobile-categories-bar { top: 104px; }
 }
 
 .featured-badge {
