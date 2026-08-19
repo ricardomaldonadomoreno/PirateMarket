@@ -638,9 +638,6 @@ export default function Home() {
               </div>
             </div>
             <div className="drawer-body">
-              <Link to="/publicar" className="drawer-publish-btn" onClick={() => setShowDrawer(false)}>
-                + {t('navbar.publish')}
-              </Link>
               <FiltersContent />
               <CategoriesContent />
               <VentasTvContent />
