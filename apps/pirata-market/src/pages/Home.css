@@ -817,3 +817,7 @@
     padding: 3px 8px;
   }
 }
+
+@media (max-width: 1024px) {
+  .banner-carousel { margin-bottom: 0.175rem; }
+}
