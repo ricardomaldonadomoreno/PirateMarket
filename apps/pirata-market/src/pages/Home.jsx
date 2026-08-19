@@ -438,6 +438,14 @@ export default function Home() {
           <div className="filter-section">
             <h3 className="filter-title">{t('home.filters.title')}</h3>
           </div>
+          <div className="home-sidebar-intro">
+            <h2 className="serif">{t('home.title')}</h2>
+            <div className="home-sidebar-differentiators">
+              <span><Ban size={15} strokeWidth={1.8} aria-hidden="true" /> {t('home.diff.no_bans')}</span>
+              <span><Unlock size={15} strokeWidth={1.8} aria-hidden="true" /> {t('home.diff.no_restrictions')}</span>
+              <span><Zap size={15} strokeWidth={1.8} aria-hidden="true" /> {t('home.diff.no_algorithms')}</span>
+            </div>
+          </div>
           <div className="filter-section">
             <Link to="/publicar" className="btn btn-primary sidebar-publish-btn">
               + {t('navbar.publish')}
@@ -518,12 +526,6 @@ export default function Home() {
           </div>
 
           <div className="content-header">
-            <h2 className="serif">{t('home.title')}</h2>
-            <div className="differentiators">
-              <span><Ban size={15} strokeWidth={1.8} aria-hidden="true" /> {t('home.diff.no_bans')}</span>
-              <span><Unlock size={15} strokeWidth={1.8} aria-hidden="true" /> {t('home.diff.no_restrictions')}</span>
-              <span><Zap size={15} strokeWidth={1.8} aria-hidden="true" /> {t('home.diff.no_algorithms')}</span>
-            </div>
             <p className="results-count">
               {displayedListings.length} {displayedListings.length === 1 ? 'anuncio' : 'anuncios'}
               {zoneFilter && <span style={{ color: 'var(--gold)', marginLeft: '0.5rem' }}>en zona seleccionada</span>}
