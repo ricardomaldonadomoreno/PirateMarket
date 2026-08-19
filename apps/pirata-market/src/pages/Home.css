@@ -353,6 +353,16 @@
 }
 .zone-clear-btn:hover { background: var(--danger); color: white; }
 .zone-map-container { margin-top: 0.5rem; }
+.zone-map-actions { display: flex; justify-content: flex-end; margin-bottom: 0.5rem; }
+.zone-gps-btn {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  padding: 0.4rem 0.65rem; background: transparent;
+  border: 1px solid var(--dark-border); border-radius: var(--radius-md);
+  color: var(--gold); cursor: pointer; font-size: 0.78rem;
+  font-weight: 600; font-family: 'Inter', sans-serif;
+}
+.zone-gps-btn:hover { border-color: var(--gold); background: rgba(212,175,55,0.1); }
+.zone-gps-btn:disabled { opacity: 0.65; cursor: wait; }
 .zone-slider { width: 100%; margin-top: 0.4rem; accent-color: var(--gold); }
 
 .location-dot {

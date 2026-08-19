@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase'
 import { formatPrice, timeAgo } from '../lib/utils'
 import { Link, useNavigate } from 'react-router-dom'
 import { Ban, ChevronDown, CircleHelp, Gavel, Globe2, Map, MapPin, Package, Search, Skull, SlidersHorizontal, Store, Tag, Tv, Unlock, User, X, Zap } from 'lucide-react'
-import { MapContainer, TileLayer, Circle, useMapEvents } from 'react-leaflet'
+import { MapContainer, TileLayer, Circle, useMap, useMapEvents } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import './Home.css'
 
@@ -14,6 +14,15 @@ function ZoneDrawHandler({ onZoneSet }) {
   return null
 }
 
+function ZoneCenterUpdater({ center, zoom }) {
+  const map = useMap()
+  useEffect(() => {
+    map.setView([center.lat, center.lng], zoom)
+  }, [center, zoom, map])
+  return null
+}
+
+const GLOBAL_MAP_CENTER = { lat: 20, lng: 0 }
 let homeViewCache = null
 
 export default function Home() {
@@ -55,9 +64,12 @@ export default function Home() {
   const [zoneFilter, setZoneFilter] = useState(() => homeViewCache?.zoneFilter || null)
   const [appliedZoneFilter, setAppliedZoneFilter] = useState(() => homeViewCache?.appliedZoneFilter || null)
   const [zoneRadius, setZoneRadius] = useState(() => homeViewCache?.zoneRadius || 3)
+  const [gpsLocation, setGpsLocation] = useState(null)
+  const [gpsLoading, setGpsLoading] = useState(false)
   const [showSellerTypes, setShowSellerTypes] = useState(false)
   const [showCategories, setShowCategories] = useState(false)
-  const zoneMapCenter = zoneFilter || { lat: -17.7863, lng: -63.1812 }
+  const zoneMapCenter = zoneFilter || gpsLocation || GLOBAL_MAP_CENTER
+  const zoneMapZoom = zoneFilter || gpsLocation ? 12 : 2
 
   // Cerrar drawer con ESC
   useEffect(() => {
@@ -278,6 +290,27 @@ export default function Home() {
   }
 
   const handleSetZone = (latlng) => setZoneFilter({ lat: latlng.lat, lng: latlng.lng, radius_km: zoneRadius })
+  const handleUseCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      setGpsLocation(null)
+      setShowZoneMap(false)
+      alert('Activa el GPS o selecciona manualmente una ubicación en el mapa.')
+      return
+    }
+    setGpsLoading(true)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setGpsLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude })
+        setGpsLoading(false)
+      },
+      () => {
+        setGpsLocation(null)
+        setGpsLoading(false)
+        setShowZoneMap(false)
+        alert('No se pudo obtener tu ubicación. Activa el permiso GPS o selecciona manualmente una ubicación en el mapa.')
+      }
+    )
+  }
   const handleApplyFilters = () => {
     homeViewCache = null
     setAppliedFilters(prev => ({ ...filters, search: prev.search }))
@@ -349,12 +382,19 @@ export default function Home() {
         )}
         {showZoneMap && (
           <div className="zone-map-container">
-            <p className="form-hint" style={{ marginBottom: '0.5rem' }}>Haz clic en el mapa para centrar la zona</p>
+            <div className="zone-map-actions">
+              <button type="button" className="zone-gps-btn" onClick={handleUseCurrentLocation} disabled={gpsLoading}>
+                <MapPin size={15} strokeWidth={1.8} aria-hidden="true" />
+                {gpsLoading ? 'Detectando ubicación...' : 'Usar mi ubicación'}
+              </button>
+            </div>
+            <p className="form-hint" style={{ marginBottom: '0.5rem' }}>Elige un punto en el mapa o usa tu ubicación para centrarlo</p>
             <MapContainer
               center={[zoneMapCenter.lat, zoneMapCenter.lng]}
-              zoom={12}
+              zoom={zoneMapZoom}
               style={{ height: '200px', width: '100%', borderRadius: '10px' }}
             >
+              <ZoneCenterUpdater center={zoneMapCenter} zoom={zoneMapZoom} />
               <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='© OpenStreetMap' />
               <ZoneDrawHandler onZoneSet={handleSetZone} />
               {zoneFilter && (
