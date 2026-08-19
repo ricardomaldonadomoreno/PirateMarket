@@ -531,16 +531,19 @@ export default function Home() {
 
           <div className="mobile-controls">
             <div className="mobile-filter-bar">
-              <Link to="/publicar" className="btn btn-primary mobile-publish-btn">
-                + Publicar Anuncio
+              <span className="mobile-action-separator" aria-hidden="true">/</span>
+              <Link to="/publicar" className="mobile-publish-btn">
+                Publicar Anuncio
               </Link>
-              <button className={`mobile-filter-btn ${activeFiltersCount > 0 ? 'has-filters' : ''}`}
+              <span className="mobile-action-separator" aria-hidden="true">/</span>
+              <button type="button" className={`mobile-filter-btn ${activeFiltersCount > 0 ? 'has-filters' : ''}`}
                 onClick={() => setShowDrawer(true)}>
-                <SlidersHorizontal size={16} strokeWidth={1.8} aria-hidden="true" /> Buscar con filtros
+                Buscar con filtros
                 {activeFiltersCount > 0 && (
                   <span className="filter-count-badge">{activeFiltersCount}</span>
                 )}
               </button>
+              <span className="mobile-action-separator" aria-hidden="true">/</span>
             </div>
 
             <div className="mobile-categories-bar">
