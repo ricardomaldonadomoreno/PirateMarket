@@ -496,7 +496,7 @@ export default function Home() {
           )}
 
           <div className="home-search-bar">
-            <Link to="/como-funciona" className="home-search-help">
+            <Link to="/como-funciona" className="home-search-help" aria-label={t('home.how_it_works')}>
               <CircleHelp size={16} strokeWidth={1.8} aria-hidden="true" />
               <span>{t('home.how_it_works')}</span>
             </Link>
@@ -510,7 +510,7 @@ export default function Home() {
                 onKeyDown={handleSearchKeyDown}
                 aria-label={t('home.filters.title')}
               />
-              <button type="submit" className="home-search-submit">
+              <button type="submit" className="home-search-submit" aria-label={t('home.filters.title')}>
                 <Search size={16} strokeWidth={2} aria-hidden="true" />
                 <span>BUSCAR</span>
               </button>

@@ -470,10 +470,11 @@
   .home-container { grid-template-columns: 1fr; padding: 0 0.75rem; gap: 1rem; }
 
   .content { padding-top: 1rem; }
-  .home-search-bar { flex-direction: column; align-items: stretch; gap: 0.65rem; margin: 0.75rem 0 1.25rem; padding: 0.65rem; }
-  .home-search-help { justify-content: center; }
-  .home-search-form { width: 100%; gap: 0.5rem; }
-  .home-search-submit { min-width: 96px; padding: 0.65rem 0.85rem; }
+  .home-search-bar { gap: 0.5rem; margin: 0.75rem 0 1.25rem; padding: 0.45rem; }
+  .home-search-help { width: 40px; height: 40px; justify-content: center; padding: 0; }
+  .home-search-help span, .home-search-submit span { display: none; }
+  .home-search-form { width: 100%; gap: 0.4rem; }
+  .home-search-submit { min-width: 40px; width: 40px; height: 40px; padding: 0; }
   .content-header h2 { font-size: 1.5rem; }
   .differentiators { gap: 0.5rem; }
 
@@ -571,9 +572,10 @@
 }
 
 @media (max-width: 480px) {
-  .home-search-form { gap: 0.4rem; }
-  .home-search-submit { min-width: 88px; padding: 0.65rem 0.7rem; }
-  .home-search-submit svg { display: none; }
+  .home-search-bar { gap: 0.35rem; padding: 0.35rem; }
+  .home-search-help { width: 36px; height: 36px; }
+  .home-search-input { height: 38px; padding: 0.55rem 0.8rem; font-size: 0.85rem; }
+  .home-search-submit { min-width: 36px; width: 36px; height: 36px; }
   .listings-grid { grid-template-columns: repeat(2, 1fr); }
   .mobile-categories-bar { top: 104px; }
 }
