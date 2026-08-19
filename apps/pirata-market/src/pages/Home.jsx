@@ -531,6 +531,9 @@ export default function Home() {
 
           <div className="mobile-controls">
             <div className="mobile-filter-bar">
+              <Link to="/publicar" className="btn btn-primary mobile-publish-btn">
+                + Publicar Anuncio
+              </Link>
               <button className={`mobile-filter-btn ${activeFiltersCount > 0 ? 'has-filters' : ''}`}
                 onClick={() => setShowDrawer(true)}>
                 <SlidersHorizontal size={16} strokeWidth={1.8} aria-hidden="true" /> Buscar con filtros
