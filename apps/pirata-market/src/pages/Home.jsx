@@ -547,29 +547,30 @@ export default function Home() {
             </div>
           )}
 
-          <div className="home-search-bar">
-            <Link to="/como-funciona" className="home-search-help" aria-label={t('home.how_it_works')}>
-              <CircleHelp size={16} strokeWidth={1.8} aria-hidden="true" />
-              <span>{t('home.how_it_works')}</span>
-            </Link>
-            <form className="home-search-form" onSubmit={handleSearchSubmit}>
-              <input
-                type="text"
-                className="home-search-input"
-                placeholder={t('home.title')}
-                value={filters.search}
-                onChange={e => handleFilterChange('search', e.target.value)}
-                onKeyDown={handleSearchKeyDown}
-                aria-label={t('home.filters.title')}
-              />
-              <button type="submit" className="home-search-submit" aria-label={t('home.filters.title')}>
-                <Search size={16} strokeWidth={2} aria-hidden="true" />
-                <span>BUSCAR</span>
-              </button>
-            </form>
-          </div>
+          <div className="home-search-tools">
+            <div className="home-search-bar">
+              <Link to="/como-funciona" className="home-search-help" aria-label={t('home.how_it_works')}>
+                <CircleHelp size={16} strokeWidth={1.8} aria-hidden="true" />
+                <span>{t('home.how_it_works')}</span>
+              </Link>
+              <form className="home-search-form" onSubmit={handleSearchSubmit}>
+                <input
+                  type="text"
+                  className="home-search-input"
+                  placeholder={t('home.title')}
+                  value={filters.search}
+                  onChange={e => handleFilterChange('search', e.target.value)}
+                  onKeyDown={handleSearchKeyDown}
+                  aria-label={t('home.filters.title')}
+                />
+                <button type="submit" className="home-search-submit" aria-label={t('home.filters.title')}>
+                  <Search size={16} strokeWidth={2} aria-hidden="true" />
+                  <span>BUSCAR</span>
+                </button>
+              </form>
+            </div>
 
-          <div className="mobile-controls">
+            <div className="mobile-controls">
             <div className="mobile-filter-bar">
               <span className="mobile-action-separator" aria-hidden="true">/</span>
               <Link to="/publicar" className="mobile-publish-btn">
@@ -585,7 +586,7 @@ export default function Home() {
               </button>
               <span className="mobile-action-separator" aria-hidden="true">/</span>
             </div>
-
+            </div>
           </div>
 
           {loading ? (

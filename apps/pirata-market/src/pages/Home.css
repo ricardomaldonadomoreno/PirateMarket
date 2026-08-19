@@ -821,3 +821,24 @@
 @media (max-width: 1024px) {
   .banner-carousel { margin-bottom: 0.175rem; }
 }
+
+.home-search-tools {
+  position: sticky;
+  top: 64px;
+  z-index: 900;
+  width: 100%;
+  min-width: 0;
+  background: var(--dark);
+}
+.home-search-tools .mobile-filter-bar {
+  position: static;
+  top: auto;
+}
+
+@media (max-width: 1024px) {
+  .home-search-tools {
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.25rem;
+  }
+  .home-search-tools .mobile-controls { margin-bottom: 0; }
+}
