@@ -455,13 +455,13 @@ export default function Home() {
           <div className="sidebar-filter-group">
             <h3 className="sidebar-section-title"><SlidersHorizontal size={16} strokeWidth={1.8} aria-hidden="true" /> Filtros</h3>
             <FiltersContent />
+            <CategoriesContent />
             <div className="filter-section">
               <button className="btn btn-primary" style={{ width: '100%' }} onClick={handleApplyFilters}>
                 Aplicar filtros
               </button>
             </div>
           </div>
-          <CategoriesContent />
           <VentasTvContent />
         </aside>
 
