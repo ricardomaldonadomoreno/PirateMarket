@@ -533,7 +533,7 @@ export default function Home() {
             <div className="mobile-filter-bar">
               <button className={`mobile-filter-btn ${activeFiltersCount > 0 ? 'has-filters' : ''}`}
                 onClick={() => setShowDrawer(true)}>
-                <SlidersHorizontal size={16} strokeWidth={1.8} aria-hidden="true" /> Buscar Anuncio
+                <SlidersHorizontal size={16} strokeWidth={1.8} aria-hidden="true" /> Buscar con filtros
                 {activeFiltersCount > 0 && (
                   <span className="filter-count-badge">{activeFiltersCount}</span>
                 )}
