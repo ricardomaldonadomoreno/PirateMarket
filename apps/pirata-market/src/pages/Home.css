@@ -48,6 +48,12 @@
   line-height: 1.25;
 }
 .home-sidebar-differentiators svg { flex: 0 0 auto; color: var(--gold); }
+.sidebar-publish-btn {
+  width: 100%;
+  padding: 0.55rem 1rem;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
 .filter-subtitle { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.75rem; font-weight: 600; }
 
 .pirate-filter { background: rgba(212, 175, 55, 0.08); border: 1px solid var(--dark-border); border-radius: var(--radius-md); padding: 0.6rem 0.875rem; transition: all 0.2s; }

@@ -445,7 +445,7 @@ export default function Home() {
           </div>
           <div className="filter-section">
             <Link to="/publicar" className="btn btn-primary sidebar-publish-btn">
-              + {t('navbar.publish')}
+              + Publicar Anuncio
             </Link>
           </div>
           <FiltersContent />
