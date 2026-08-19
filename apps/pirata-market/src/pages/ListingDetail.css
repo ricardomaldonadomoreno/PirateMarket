@@ -513,9 +513,9 @@
   .photo-placeholder { order: 1; }
   .listing-video { order: 2; }
   .listing-header { order: 3; }
-  .listing-contact { order: 4; }
-  .seller-info { order: 5; }
-  .listing-description { order: 6; }
+  .listing-description { order: 4; }
+  .listing-contact { order: 5; }
+  .seller-info { order: 6; }
   .listing-location-reference { order: 7; }
   .listing-map-preview { order: 8; }
   .btn-report { order: 9; }
