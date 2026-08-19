@@ -4,7 +4,7 @@ import { getListings, getCategories } from '../lib/supabase'
 import { supabase } from '../lib/supabase'
 import { formatPrice, timeAgo } from '../lib/utils'
 import { Link, useNavigate } from 'react-router-dom'
-import { Ban, Gavel, Globe2, Map, MapPin, Package, Skull, SlidersHorizontal, Store, Tag, Tv, Unlock, User, X, Zap } from 'lucide-react'
+import { Ban, CircleHelp, Gavel, Globe2, Map, MapPin, Package, Search, Skull, SlidersHorizontal, Store, Tag, Tv, Unlock, User, X, Zap } from 'lucide-react'
 import { MapContainer, TileLayer, Circle, useMapEvents } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import './Home.css'
@@ -408,11 +408,6 @@ export default function Home() {
     <div className="home">
       {/* MÓVIL: barra superior fija */}
       <div className="mobile-filter-bar">
-        <input type="text" className="input mobile-search-input"
-          placeholder={t('home.title')}
-          value={filters.search}
-          onChange={e => handleFilterChange('search', e.target.value)}
-          onKeyDown={handleSearchKeyDown} />
         <button className={`mobile-filter-btn ${activeFiltersCount > 0 ? 'has-filters' : ''}`}
           onClick={() => setShowDrawer(true)}>
           <SlidersHorizontal size={16} strokeWidth={1.8} aria-hidden="true" /> Buscar Anuncio
@@ -442,10 +437,6 @@ export default function Home() {
         <aside className="sidebar">
           <div className="filter-section">
             <h3 className="filter-title">{t('home.filters.title')}</h3>
-            <input type="text" className="input" placeholder={t('home.title')}
-              value={filters.search}
-              onChange={e => handleFilterChange('search', e.target.value)}
-              onKeyDown={handleSearchKeyDown} />
           </div>
           <div className="filter-section">
             <Link to="/publicar" className="btn btn-primary sidebar-publish-btn">
@@ -504,13 +495,34 @@ export default function Home() {
             </div>
           )}
 
+          <div className="home-search-bar">
+            <Link to="/como-funciona" className="home-search-help">
+              <CircleHelp size={16} strokeWidth={1.8} aria-hidden="true" />
+              <span>{t('home.how_it_works')}</span>
+            </Link>
+            <form className="home-search-form" onSubmit={handleSearchSubmit}>
+              <input
+                type="text"
+                className="home-search-input"
+                placeholder={t('home.title')}
+                value={filters.search}
+                onChange={e => handleFilterChange('search', e.target.value)}
+                onKeyDown={handleSearchKeyDown}
+                aria-label={t('home.filters.title')}
+              />
+              <button type="submit" className="home-search-submit">
+                <Search size={16} strokeWidth={2} aria-hidden="true" />
+                <span>BUSCAR</span>
+              </button>
+            </form>
+          </div>
+
           <div className="content-header">
             <h2 className="serif">{t('home.title')}</h2>
             <div className="differentiators">
               <span><Ban size={15} strokeWidth={1.8} aria-hidden="true" /> {t('home.diff.no_bans')}</span>
               <span><Unlock size={15} strokeWidth={1.8} aria-hidden="true" /> {t('home.diff.no_restrictions')}</span>
               <span><Zap size={15} strokeWidth={1.8} aria-hidden="true" /> {t('home.diff.no_algorithms')}</span>
-              <Link to="/como-funciona" className="how-it-works-btn">{t('home.how_it_works')} →</Link>
             </div>
             <p className="results-count">
               {displayedListings.length} {displayedListings.length === 1 ? 'anuncio' : 'anuncios'}
