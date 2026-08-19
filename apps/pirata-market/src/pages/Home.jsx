@@ -366,32 +366,6 @@ export default function Home() {
       </div>
 
       <div className="filter-section">
-        <button className="ventas-tv-btn" onClick={() => { navigate('/ventas-tv'); setShowDrawer(false) }}>
-          <Tv size={16} strokeWidth={1.8} aria-hidden="true" /> VentasTV
-          <span className="ventas-tv-badge">{t('home.filters.live')}</span>
-        </button>
-      </div>
-
-      <div className="filter-section">
-        <h4 className="filter-subtitle">{t('home.filters.categories')}</h4>
-        <div className="category-list">
-          <button className={`category-item ${!filters.category ? 'active' : ''}`}
-            onClick={() => handleFilterChange('category', null)}>
-            <span className="category-icon"><Globe2 size={16} strokeWidth={1.8} aria-hidden="true" /></span>
-            <span>{t('home.filters.all')}</span>
-          </button>
-          {categories.map(cat => (
-            <button key={cat.id}
-              className={`category-item ${filters.category === cat.id ? 'active' : ''}`}
-              onClick={() => handleFilterChange('category', cat.id)}>
-              <span className="category-icon"><Tag size={16} strokeWidth={1.8} aria-hidden="true" /></span>
-              <span>{t(`categories.${cat.slug}`)}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="filter-section">
         <h4 className="filter-subtitle">{t('home.filters.price')}</h4>
         <div className="price-inputs">
           <input type="number" className="input" placeholder={t('home.filters.min')}
@@ -402,6 +376,36 @@ export default function Home() {
         </div>
       </div>
     </>
+  )
+
+  const CategoriesContent = () => (
+    <div className="filter-section">
+      <h4 className="filter-subtitle">{t('home.filters.categories')}</h4>
+      <div className="category-list">
+        <button className={`category-item ${!filters.category ? 'active' : ''}`}
+          onClick={() => handleFilterChange('category', null)}>
+          <span className="category-icon"><Globe2 size={16} strokeWidth={1.8} aria-hidden="true" /></span>
+          <span>{t('home.filters.all')}</span>
+        </button>
+        {categories.map(cat => (
+          <button key={cat.id}
+            className={`category-item ${filters.category === cat.id ? 'active' : ''}`}
+            onClick={() => handleFilterChange('category', cat.id)}>
+            <span className="category-icon"><Tag size={16} strokeWidth={1.8} aria-hidden="true" /></span>
+            <span>{t(`categories.${cat.slug}`)}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+
+  const VentasTvContent = () => (
+    <div className="filter-section">
+      <button className="ventas-tv-btn" onClick={() => { navigate('/ventas-tv'); setShowDrawer(false) }}>
+        <Tv size={16} strokeWidth={1.8} aria-hidden="true" /> VentasTV
+        <span className="ventas-tv-badge">{t('home.filters.live')}</span>
+      </button>
+    </div>
   )
 
   return (
@@ -448,12 +452,17 @@ export default function Home() {
               + Publicar Anuncio
             </Link>
           </div>
-          <FiltersContent />
-          <div className="filter-section">
-            <button className="btn btn-primary" style={{ width: '100%' }} onClick={handleApplyFilters}>
-              Aplicar filtros
-            </button>
+          <div className="sidebar-filter-group">
+            <h3 className="sidebar-section-title"><SlidersHorizontal size={16} strokeWidth={1.8} aria-hidden="true" /> Filtros</h3>
+            <FiltersContent />
+            <div className="filter-section">
+              <button className="btn btn-primary" style={{ width: '100%' }} onClick={handleApplyFilters}>
+                Aplicar filtros
+              </button>
+            </div>
           </div>
+          <CategoriesContent />
+          <VentasTvContent />
         </aside>
 
         <main className="content">
@@ -606,6 +615,8 @@ export default function Home() {
                 + {t('navbar.publish')}
               </Link>
               <FiltersContent />
+              <CategoriesContent />
+              <VentasTvContent />
             </div>
             <div className="drawer-footer">
               <button className="btn btn-primary" style={{ width: '100%' }}

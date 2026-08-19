@@ -54,6 +54,25 @@
   font-size: 0.85rem;
   white-space: nowrap;
 }
+.sidebar-filter-group {
+  margin-bottom: 1.5rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid var(--dark-border);
+}
+.sidebar-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0.9rem 0 1rem;
+  color: var(--gold);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.sidebar-section-title svg { flex: 0 0 auto; }
+.sidebar-filter-group .filter-section { margin-bottom: 1.1rem; }
+.sidebar-filter-group .filter-section:last-child { margin-bottom: 0; }
 .filter-subtitle { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.75rem; font-weight: 600; }
 
 .pirate-filter { background: rgba(212, 175, 55, 0.08); border: 1px solid var(--dark-border); border-radius: var(--radius-md); padding: 0.6rem 0.875rem; transition: all 0.2s; }
