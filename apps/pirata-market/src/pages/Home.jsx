@@ -341,7 +341,7 @@ export default function Home() {
   ]
 
   // Contenido de filtros — reutilizado en sidebar y drawer
-  const FiltersContent = () => (
+  const renderFiltersContent = () => (
     <>
       <div className="filter-section filter-collapsible">
         <button
@@ -492,7 +492,7 @@ export default function Home() {
           </div>
           <div className="sidebar-filter-group">
             <h3 className="sidebar-section-title"><SlidersHorizontal size={16} strokeWidth={1.8} aria-hidden="true" /> Filtros</h3>
-            <FiltersContent />
+            {renderFiltersContent()}
             <CategoriesContent />
             <div className="filter-section">
               <button className="btn btn-primary" style={{ width: '100%' }} onClick={handleApplyFilters}>
@@ -668,7 +668,7 @@ export default function Home() {
               </div>
             </div>
             <div className="drawer-body">
-              <FiltersContent />
+              {renderFiltersContent()}
               <CategoriesContent />
               <VentasTvContent />
             </div>
