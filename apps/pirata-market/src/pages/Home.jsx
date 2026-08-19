@@ -434,32 +434,6 @@ export default function Home() {
 
   return (
     <div className="home">
-      {/* MÓVIL: barra superior fija */}
-      <div className="mobile-filter-bar">
-        <button className={`mobile-filter-btn ${activeFiltersCount > 0 ? 'has-filters' : ''}`}
-          onClick={() => setShowDrawer(true)}>
-          <SlidersHorizontal size={16} strokeWidth={1.8} aria-hidden="true" /> Buscar Anuncio
-          {activeFiltersCount > 0 && (
-            <span className="filter-count-badge">{activeFiltersCount}</span>
-          )}
-        </button>
-      </div>
-
-      {/* MÓVIL: chips de categorías */}
-      <div className="mobile-categories-bar">
-        <button className={`cat-chip ${!filters.category ? 'active' : ''}`}
-          onClick={() => handleFilterChange('category', null)}>
-          <Globe2 size={15} strokeWidth={1.8} aria-hidden="true" /> {t('home.filters.all')}
-        </button>
-        {categories.map(cat => (
-          <button key={cat.id}
-            className={`cat-chip ${filters.category === cat.id ? 'active' : ''}`}
-            onClick={() => handleFilterChange('category', cat.id)}>
-            {cat.icon} {t(`categories.${cat.slug}`)}
-          </button>
-        ))}
-      </div>
-
       <div className="home-container">
         {/* DESKTOP: sidebar normal */}
         <aside className="sidebar">
@@ -553,6 +527,32 @@ export default function Home() {
                 <span>BUSCAR</span>
               </button>
             </form>
+          </div>
+
+          <div className="mobile-controls">
+            <div className="mobile-filter-bar">
+              <button className={`mobile-filter-btn ${activeFiltersCount > 0 ? 'has-filters' : ''}`}
+                onClick={() => setShowDrawer(true)}>
+                <SlidersHorizontal size={16} strokeWidth={1.8} aria-hidden="true" /> Buscar Anuncio
+                {activeFiltersCount > 0 && (
+                  <span className="filter-count-badge">{activeFiltersCount}</span>
+                )}
+              </button>
+            </div>
+
+            <div className="mobile-categories-bar">
+              <button className={`cat-chip ${!filters.category ? 'active' : ''}`}
+                onClick={() => handleFilterChange('category', null)}>
+                <Globe2 size={15} strokeWidth={1.8} aria-hidden="true" /> {t('home.filters.all')}
+              </button>
+              {categories.map(cat => (
+                <button key={cat.id}
+                  className={`cat-chip ${filters.category === cat.id ? 'active' : ''}`}
+                  onClick={() => handleFilterChange('category', cat.id)}>
+                  {cat.icon} {t(`categories.${cat.slug}`)}
+                </button>
+              ))}
+            </div>
           </div>
 
           {loading ? (
