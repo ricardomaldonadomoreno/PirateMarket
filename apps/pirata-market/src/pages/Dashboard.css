@@ -779,6 +779,10 @@
 
 /* ── RESPONSIVE ── */
 @media (max-width: 768px) {
+  .db-sidebar {
+    position: static;
+    top: auto;
+  }
   .dashboard { padding: 0.75rem 0 2rem; }
   .dashboard-container { padding: 0 0.875rem; }
   .db-layout { grid-template-columns: 1fr; }
