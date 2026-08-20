@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
-import { Star, CheckCircle, Clock, XCircle, Upload, Image } from 'lucide-react'
+import { Star, Check, CheckCircle, Clock, XCircle, Upload, Image, Package } from 'lucide-react'
 import './DashboardDestacar.css'
 
 export default function DashboardDestacar({ user, profile }) {
@@ -230,7 +230,7 @@ export default function DashboardDestacar({ user, profile }) {
   return (
     <div className="destacar-page">
       <div className="destacar-header">
-        <h2>⭐ Destacar Anuncios</h2>
+        <h2><Star size={20} strokeWidth={2} aria-hidden="true" /> Destacar Anuncios</h2>
         <p className="destacar-subtitle">
           Selecciona tus anuncios para destacar y/o sube un banner publicitario.
           Los anuncios destacados aparecen aleatoriamente en el Home.
@@ -247,7 +247,7 @@ export default function DashboardDestacar({ user, profile }) {
       {/* Sección 1: Selección de anuncios */}
       <div className="destacar-section">
         <div className="destacar-section-title">
-          <span className="destacar-section-icon">📦</span>
+          <span className="destacar-section-icon"><Package size={20} strokeWidth={2} aria-hidden="true" /></span>
           <span>Seleccionar anuncios para destacar</span>
           <span className="destacar-price-badge">$1 × 30 días</span>
         </div>
@@ -276,7 +276,7 @@ export default function DashboardDestacar({ user, profile }) {
                     <div className="destacar-listing-image">
                       {listing.photos?.length > 0
                         ? <img src={listing.photos[0]} alt={listing.title} />
-                        : <div className="destacar-listing-no-img">{listing.category?.icon || '📦'}</div>
+                        : <div className="destacar-listing-no-img"><Package size={28} strokeWidth={2} aria-hidden="true" /></div>
                       }
                     </div>
                     <div className="destacar-listing-info">
@@ -369,7 +369,7 @@ export default function DashboardDestacar({ user, profile }) {
 
         {bannerPreview && (
           <div className="destacar-banner-dimensions">
-            1200 × 300 px ✅
+            <Check size={16} strokeWidth={2} aria-hidden="true" /> 1200 × 300 px
           </div>
         )}
 

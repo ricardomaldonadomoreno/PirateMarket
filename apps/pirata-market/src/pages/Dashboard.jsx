@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { ClipboardList, Eye, Flag, MessageCircle, Package, Tag } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import DashboardSidebar from './DashboardSidebar'
 import './Dashboard.css'
@@ -256,12 +257,12 @@ export default function Dashboard({ user, profile: externalProfile }) {
         {showStats && (
           <div className="dashboard-stats">
             {[
-              { icon: '👁️', value: stats.total_views.toLocaleString(),   label: t('dashboard.stats.total_views') },
-              { icon: '📱', value: stats.total_contacts.toLocaleString(), label: t('dashboard.stats.total_contacts') },
-              { icon: '🏴‍☠️', value: stats.active_listings,               label: t('dashboard.stats.active_listings') },
+              { icon: Eye, value: stats.total_views.toLocaleString(),   label: t('dashboard.stats.total_views') },
+              { icon: MessageCircle, value: stats.total_contacts.toLocaleString(), label: t('dashboard.stats.total_contacts') },
+              { icon: Flag, value: stats.active_listings,               label: t('dashboard.stats.active_listings') },
             ].map((s, i) => (
               <div key={i} className="stat-card">
-                <div className="stat-icon">{s.icon}</div>
+                <div className="stat-icon"><s.icon size={20} strokeWidth={2} aria-hidden="true" /></div>
                 <div className="stat-info">
                   <div className="stat-value">{s.value}</div>
                   <div className="stat-label">{s.label}</div>
@@ -284,7 +285,7 @@ export default function Dashboard({ user, profile: externalProfile }) {
             {location.pathname === '/dashboard' && (
               <div className="db-section">
                 <div className="db-section-header">
-                  <h2>📋 Mis anuncios</h2>
+                  <h2><ClipboardList size={20} strokeWidth={2} aria-hidden="true" /> Mis anuncios</h2>
                   <div className="db-filters">
                     {['all', 'active', 'sold', 'paused'].map(f => (
                       <button key={f}
@@ -301,7 +302,7 @@ export default function Dashboard({ user, profile: externalProfile }) {
                   </div>
                 ) : listings.length === 0 ? (
                   <div className="no-listings">
-                    <span className="no-listings-icon">🏴‍☠️</span>
+                    <span className="no-listings-icon"><Flag size={28} strokeWidth={2} aria-hidden="true" /></span>
                     <p>{t('dashboard.no_listings')}</p>
                     <a href="/publicar" className="btn btn-primary">{t('dashboard.create_first')}</a>
                   </div>
@@ -316,13 +317,13 @@ export default function Dashboard({ user, profile: externalProfile }) {
                             <div className="listing-row-image">
                               {listing.photos?.length > 0
                                 ? <img src={listing.photos[0]} alt={listing.title} />
-                                : <div className="listing-row-no-image">{listing.category?.icon || '📦'}</div>}
+                                : <div className="listing-row-no-image"><Package size={28} strokeWidth={2} aria-hidden="true" /></div>}
                             </div>
                             <div className="listing-row-info">
                               <a href={`/ficha/${listing.slug}`} className="listing-row-title">{listing.title}</a>
                               <div className="listing-row-meta">
                                 <span className="listing-row-price luxury-gold">{listing.price} {listing.currency}</span>
-                                <span className="listing-row-category">{listing.category?.icon} {listing.category?.name}</span>
+                                <span className="listing-row-category"><Tag size={14} strokeWidth={2} aria-hidden="true" /> {listing.category?.name}</span>
                               </div>
                             </div>
                             <div className="listing-row-actions">

@@ -2,19 +2,29 @@ import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
+import {
+  BadgeCheck,
+  ClipboardList,
+  Package,
+  Rocket,
+  ShieldCheck,
+  Star,
+  Store,
+  UserRound,
+} from 'lucide-react'
 
 const SECTIONS = [
-  { key: 'anuncios',     icon: '📋', label: 'Mis anuncios', path: '/dashboard' },
-  { key: 'verificacion', icon: '🏅', label: 'Verificación', path: '/dashboard/verificacion' },
-  { key: 'catalogo',     icon: '⭐', label: 'Catálogo Premium', path: '/dashboard/tienda' },
-  { key: 'destacar',     icon: '🚀', label: 'Destacar', path: '/dashboard/destacar' },
+  { key: 'anuncios',     icon: ClipboardList, label: 'Mis anuncios', path: '/dashboard' },
+  { key: 'verificacion', icon: BadgeCheck,    label: 'Verificación', path: '/dashboard/verificacion' },
+  { key: 'catalogo',     icon: Star,          label: 'Catálogo Premium', path: '/dashboard/tienda' },
+  { key: 'destacar',     icon: Rocket,       label: 'Destacar', path: '/dashboard/destacar' },
 ]
 
 const ACCOUNT_TYPES = {
-  person:    { label: 'Persona',    icon: '👤' },
-  shop:      { label: 'Tienda',     icon: '🏪' },
-  wholesale: { label: 'Mayorista',  icon: '📦' },
-  admin:     { label: 'Admin',      icon: '🔐' },
+  person:    { label: 'Persona',    icon: UserRound },
+  shop:      { label: 'Tienda',     icon: Store },
+  wholesale: { label: 'Mayorista',  icon: Package },
+  admin:     { label: 'Admin',      icon: ShieldCheck },
 }
 
 export default function DashboardSidebar({ user, profile, verificationSelfie }) {
@@ -77,10 +87,14 @@ export default function DashboardSidebar({ user, profile, verificationSelfie }) 
         </div>
         <div className="db-sidebar-name">{displayName}</div>
         <span className={`user-type-badge user-type-${userType}`}>
-          {userTypeInfo.icon} {t(`auth.${userType}`)}
+          <userTypeInfo.icon size={14} strokeWidth={2} aria-hidden="true" />
+          {t(`auth.${userType}`)}
         </span>
         {shopPremium && (
-          <div className="db-premium-badge">⭐ Premium — hasta {new Date(shop.premium_until).toLocaleDateString()}</div>
+          <div className="db-premium-badge">
+            <Star size={13} strokeWidth={2} aria-hidden="true" />
+            Premium — hasta {new Date(shop.premium_until).toLocaleDateString()}
+          </div>
         )}
         <Link to="/publicar" className="btn btn-primary db-publish-btn">+ {t('navbar.publish')}</Link>
       </div>
@@ -91,7 +105,7 @@ export default function DashboardSidebar({ user, profile, verificationSelfie }) 
             to={s.path}
             className={`db-nav-item ${location.pathname === s.path ? 'active' : ''}`}
           >
-            <span>{s.icon}</span>
+            <span className="db-nav-icon"><s.icon size={16} strokeWidth={2} aria-hidden="true" /></span>
             <span>{s.label}</span>
             {s.key === 'verificacion' && (!identityVerified || (isShopOrWholesale && !businessVerified)) && (
               <span className="db-nav-dot" />

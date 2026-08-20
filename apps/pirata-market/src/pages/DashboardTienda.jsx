@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
+import { LockKeyhole, Pencil, Store } from 'lucide-react'
 import './Dashboard.css'
 
 export default function DashboardTienda({ user, profile }) {
@@ -119,8 +120,8 @@ export default function DashboardTienda({ user, profile }) {
     <div className="db-section">
       {/* ── CATÁLOGO PREMIUM ── */}
       <div className="db-section-header">
-        <h2>🏪 Catálogo Premium</h2>
-        {isPremium ? <span className="premium-active-badge">✓ Activo</span> : <span className="premium-inactive-badge">🔒 Inactivo</span>}
+        <h2><Store size={20} strokeWidth={2} aria-hidden="true" /> Catálogo Premium</h2>
+        {isPremium ? <span className="premium-active-badge">✓ Activo</span> : <span className="premium-inactive-badge"><LockKeyhole size={14} strokeWidth={2} aria-hidden="true" /> Inactivo</span>}
       </div>
       {!isPremium ? (
         <div className="premium-locked">
@@ -209,7 +210,7 @@ export default function DashboardTienda({ user, profile }) {
             </div>
           </div>
           <button className="btn btn-primary" onClick={() => setEditing(true)}>
-            ✏️ Editar
+            <Pencil size={16} strokeWidth={2} aria-hidden="true" /> Editar
           </button>
         </div>
       )}
