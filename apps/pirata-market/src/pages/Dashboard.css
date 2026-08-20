@@ -779,8 +779,42 @@
 
 /* ── RESPONSIVE ── */
 @media (max-width: 768px) {
+  .dashboard { padding: 0.75rem 0 2rem; }
+  .dashboard-container { padding: 0 0.875rem; }
   .db-layout { grid-template-columns: 1fr; }
-  .dashboard-stats { grid-template-columns: 1fr; }
+  .dashboard-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  .stat-card {
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.6rem 0.35rem;
+    text-align: center;
+  }
+  .stat-icon { font-size: 1rem; }
+  .stat-value { font-size: 1rem; }
+  .stat-label {
+    margin-top: 0.1rem;
+    font-size: 0.62rem;
+    line-height: 1.1;
+  }
+  .db-section { padding: 1rem; }
+  .db-section-header {
+    align-items: stretch;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
+  .db-section-header h2 { font-size: 1.1rem; }
+  .db-filters {
+    flex-wrap: nowrap;
+    gap: 0.35rem;
+    overflow-x: auto;
+    padding-bottom: 0.15rem;
+  }
+  .db-filters .filter-btn { flex: 0 0 auto; }
   .real-data-grid, .premium-form-grid, .auction-form-grid { grid-template-columns: 1fr; }
   .account-type-layer .type-change-options { flex-direction: column; }
   .listing-row {
