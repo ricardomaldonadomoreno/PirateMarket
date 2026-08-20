@@ -783,6 +783,58 @@
     position: static;
     top: auto;
   }
+  .db-sidebar-profile {
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr);
+    column-gap: 0.75rem;
+    row-gap: 0.2rem;
+    align-items: center;
+    padding: 0.75rem;
+    text-align: left;
+  }
+  .db-avatar {
+    width: 48px;
+    height: 48px;
+    grid-column: 1;
+    grid-row: 1 / span 3;
+    margin: 0;
+  }
+  .db-sidebar-name,
+  .db-sidebar-profile .user-type-badge,
+  .db-premium-badge {
+    grid-column: 2;
+  }
+  .db-sidebar-name {
+    margin: 0;
+    font-size: 0.85rem;
+  }
+  .db-sidebar-profile .user-type-badge {
+    justify-self: start;
+    font-size: 0.7rem;
+  }
+  .db-premium-badge {
+    margin: 0;
+    font-size: 0.65rem;
+  }
+  .db-publish-btn {
+    grid-column: 1 / -1;
+    margin-top: 0.5rem;
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.8rem !important;
+  }
+  .db-nav {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.25rem;
+    padding: 0.4rem;
+  }
+  .db-nav-item {
+    width: auto;
+    min-width: 0;
+    gap: 0.4rem;
+    padding: 0.6rem 0.55rem;
+    font-size: 0.78rem;
+  }
   .dashboard { padding: 0.75rem 0 2rem; }
   .dashboard-container { padding: 0 0.875rem; }
   .db-layout { grid-template-columns: 1fr; }
