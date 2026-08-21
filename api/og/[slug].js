@@ -74,7 +74,7 @@ export default async function handler(req, res) {
         ? listing.description.slice(0, 200)
         : 'Comercio sin intermediarios — Pirata Market'
   const pageUrl = listing ? `${siteUrl}/ficha/${slug}` : siteUrl
-  const imageUrl = `${siteUrl}/api/og/${slug}?img=1`
+  const imageUrl = photo || `${siteUrl}/api/og/${slug}?img=1`
 
   if (img === '1') {
     const titleSafe = escapeMarkup(title.slice(0, 55))
