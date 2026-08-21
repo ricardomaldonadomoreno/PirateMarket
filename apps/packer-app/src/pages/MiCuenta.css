@@ -155,9 +155,9 @@
 }
 
 .mc-cta-sub-btn:hover {
-  border-color: rgba(212, 175, 55, 0.3);
+  border-color: rgba(203, 149, 70, 0.3);
   color: var(--text-light);
-  background: rgba(212, 175, 55, 0.04);
+  background: rgba(203, 149, 70, 0.04);
 }
 
 /* ── NAV ── */
@@ -406,7 +406,7 @@
 
 /* ── VERIFICACIÓN INFO BOX ── */
 .verif-info-box {
-  background: rgba(212,175,55,0.04);
+  background: rgba(203,149,70,0.04);
   border: 1px solid var(--dark-border);
   border-radius: var(--radius-md);
   padding: 1.25rem;
@@ -442,7 +442,7 @@
   transition: border-color 0.2s;
 }
 
-.verif-type-card:hover { border-color: rgba(212,175,55,0.3); }
+.verif-type-card:hover { border-color: rgba(203,149,70,0.3); }
 
 .verif-type-title { color: var(--text-light); font-size: 0.9rem; font-weight: 600; }
 .verif-type-desc { color: var(--text-muted); font-size: 0.8rem; }
@@ -560,7 +560,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(212, 175, 55, 0.08);
+  background: rgba(203, 149, 70, 0.08);
   border: 1px solid var(--dark-border);
 }
 
@@ -820,14 +820,14 @@
 
 .mc-trip-card {
   background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(212, 175, 55, 0.15);
+  border: 1px solid rgba(203, 149, 70, 0.15);
   border-radius: 12px;
   padding: 1.25rem;
   transition: border-color 0.2s;
 }
 
 .mc-trip-card:hover {
-  border-color: rgba(212, 175, 55, 0.3);
+  border-color: rgba(203, 149, 70, 0.3);
 }
 
 .mc-trip-card-header {
@@ -919,7 +919,7 @@
 .mc-trip-status-select {
   padding: 0.35rem 0.75rem;
   border-radius: 6px;
-  border: 1px solid rgba(212, 175, 55, 0.3);
+  border: 1px solid rgba(203, 149, 70, 0.3);
   background: rgba(0, 0, 0, 0.3);
   color: #fff;
   font-size: 0.8rem;

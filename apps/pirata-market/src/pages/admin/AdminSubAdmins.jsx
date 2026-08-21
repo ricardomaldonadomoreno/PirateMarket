@@ -275,7 +275,7 @@ export default function AdminSubAdmins() {
                       <td style={{ padding: '0.75rem 1rem' }}>{admin.email}</td>
                       <td style={{ padding: '0.75rem 1rem' }}>{admin.full_name}</td>
                       <td style={{ padding: '0.75rem 1rem' }}>
-                        <span className="badge" style={{ background: 'rgba(212,175,55,0.15)', color: 'var(--gold)', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem' }}>
+                        <span className="badge" style={{ background: 'rgba(203,149,70,0.15)', color: 'var(--gold)', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem' }}>
                           {scopeLabel(admin.scope)}
                         </span>
                       </td>

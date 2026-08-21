@@ -69,8 +69,8 @@ export default function AdminLanding() {
           <div
             onClick={() => navigate('/admin/perfiles')}
             style={{
-              background: 'rgba(212,175,55,0.05)',
-              border: '1px solid rgba(212,175,55,0.2)',
+              background: 'rgba(203,149,70,0.05)',
+              border: '1px solid rgba(203,149,70,0.2)',
               borderRadius: 'var(--radius-md)',
               padding: '1.5rem 1.25rem',
               cursor: 'pointer',
@@ -78,12 +78,12 @@ export default function AdminLanding() {
               textAlign: 'center',
             }}
             onMouseEnter={e => {
-              e.currentTarget.style.background = 'rgba(212,175,55,0.1)'
-              e.currentTarget.style.borderColor = 'rgba(212,175,55,0.5)'
+              e.currentTarget.style.background = 'rgba(203,149,70,0.1)'
+              e.currentTarget.style.borderColor = 'rgba(203,149,70,0.5)'
             }}
             onMouseLeave={e => {
-              e.currentTarget.style.background = 'rgba(212,175,55,0.05)'
-              e.currentTarget.style.borderColor = 'rgba(212,175,55,0.2)'
+              e.currentTarget.style.background = 'rgba(203,149,70,0.05)'
+              e.currentTarget.style.borderColor = 'rgba(203,149,70,0.2)'
             }}
           >
             <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>👤</div>
@@ -98,8 +98,8 @@ export default function AdminLanding() {
           <div
             onClick={() => navigate('/admin/sub-admins')}
             style={{
-              background: 'rgba(212,175,55,0.05)',
-              border: '1px solid rgba(212,175,55,0.2)',
+              background: 'rgba(203,149,70,0.05)',
+              border: '1px solid rgba(203,149,70,0.2)',
               borderRadius: 'var(--radius-md)',
               padding: '1.5rem 1.25rem',
               cursor: 'pointer',
@@ -107,12 +107,12 @@ export default function AdminLanding() {
               textAlign: 'center',
             }}
             onMouseEnter={e => {
-              e.currentTarget.style.background = 'rgba(212,175,55,0.1)'
-              e.currentTarget.style.borderColor = 'rgba(212,175,55,0.5)'
+              e.currentTarget.style.background = 'rgba(203,149,70,0.1)'
+              e.currentTarget.style.borderColor = 'rgba(203,149,70,0.5)'
             }}
             onMouseLeave={e => {
-              e.currentTarget.style.background = 'rgba(212,175,55,0.05)'
-              e.currentTarget.style.borderColor = 'rgba(212,175,55,0.2)'
+              e.currentTarget.style.background = 'rgba(203,149,70,0.05)'
+              e.currentTarget.style.borderColor = 'rgba(203,149,70,0.2)'
             }}
           >
             <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🔐</div>
@@ -131,8 +131,8 @@ export default function AdminLanding() {
           <div
             onClick={() => navigate('/admin/pirata')}
             style={{
-              background: 'rgba(212,175,55,0.05)',
-              border: '1px solid rgba(212,175,55,0.2)',
+              background: 'rgba(203,149,70,0.05)',
+              border: '1px solid rgba(203,149,70,0.2)',
               borderRadius: 'var(--radius-md)',
               padding: '2rem 1.5rem',
               cursor: 'pointer',
@@ -140,12 +140,12 @@ export default function AdminLanding() {
               textAlign: 'center',
             }}
             onMouseEnter={e => {
-              e.currentTarget.style.background = 'rgba(212,175,55,0.1)'
-              e.currentTarget.style.borderColor = 'rgba(212,175,55,0.5)'
+              e.currentTarget.style.background = 'rgba(203,149,70,0.1)'
+              e.currentTarget.style.borderColor = 'rgba(203,149,70,0.5)'
             }}
             onMouseLeave={e => {
-              e.currentTarget.style.background = 'rgba(212,175,55,0.05)'
-              e.currentTarget.style.borderColor = 'rgba(212,175,55,0.2)'
+              e.currentTarget.style.background = 'rgba(203,149,70,0.05)'
+              e.currentTarget.style.borderColor = 'rgba(203,149,70,0.2)'
             }}
           >
             <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🏴‍☠️</div>
@@ -159,8 +159,8 @@ export default function AdminLanding() {
           <div
             onClick={() => navigate('/admin/packer')}
             style={{
-              background: 'rgba(212,175,55,0.05)',
-              border: '1px solid rgba(212,175,55,0.2)',
+              background: 'rgba(203,149,70,0.05)',
+              border: '1px solid rgba(203,149,70,0.2)',
               borderRadius: 'var(--radius-md)',
               padding: '2rem 1.5rem',
               cursor: 'pointer',
@@ -168,12 +168,12 @@ export default function AdminLanding() {
               textAlign: 'center',
             }}
             onMouseEnter={e => {
-              e.currentTarget.style.background = 'rgba(212,175,55,0.1)'
-              e.currentTarget.style.borderColor = 'rgba(212,175,55,0.5)'
+              e.currentTarget.style.background = 'rgba(203,149,70,0.1)'
+              e.currentTarget.style.borderColor = 'rgba(203,149,70,0.5)'
             }}
             onMouseLeave={e => {
-              e.currentTarget.style.background = 'rgba(212,175,55,0.05)'
-              e.currentTarget.style.borderColor = 'rgba(212,175,55,0.2)'
+              e.currentTarget.style.background = 'rgba(203,149,70,0.05)'
+              e.currentTarget.style.borderColor = 'rgba(203,149,70,0.2)'
             }}
           >
             <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🚛</div>

@@ -46,7 +46,7 @@
   padding: 1.5rem;
   text-align: center;
   border-bottom: 1px solid var(--dark-border);
-  background: linear-gradient(135deg, rgba(212,175,55,0.06), transparent);
+  background: linear-gradient(135deg, rgba(203,149,70,0.06), transparent);
 }
 
 .db-avatar {
@@ -113,7 +113,7 @@
 .type-change-options button.active {
   opacity: 0.5;
   cursor: default;
-  background: rgba(212,175,55,0.1);
+  background: rgba(203,149,70,0.1);
   border-color: var(--gold);
   color: var(--gold);
 }
@@ -152,10 +152,10 @@
   font-family: 'Inter', sans-serif;
 }
 
-.db-nav-item:hover { background: rgba(212,175,55,0.05); color: var(--text-light); }
+.db-nav-item:hover { background: rgba(203,149,70,0.05); color: var(--text-light); }
 
 .db-nav-item.active {
-  background: rgba(212,175,55,0.08);
+  background: rgba(203,149,70,0.08);
   color: var(--gold);
   border-left-color: var(--gold);
   font-weight: 600;
@@ -500,14 +500,14 @@
 .type-selector-btn:hover:not(:disabled) {
   border-color: var(--gold);
   color: var(--gold);
-  background: rgba(212,175,55,0.06);
+  background: rgba(203,149,70,0.06);
 }
 
 .type-selector-btn:disabled,
 .type-selector-btn.active {
   opacity: 1;
   cursor: default;
-  background: rgba(212,175,55,0.12);
+  background: rgba(203,149,70,0.12);
   border-color: var(--gold);
   color: var(--gold);
   font-weight: 600;
@@ -520,7 +520,7 @@
 /* ── INFO COMPACTA ── */
 .verif-info-compact {
   padding: 0.75rem 1rem;
-  background: rgba(212,175,55,0.04);
+  background: rgba(203,149,70,0.04);
   border: 1px solid var(--dark-border);
   border-radius: var(--radius-sm);
   margin-bottom: 1rem;
@@ -533,7 +533,7 @@
 }
 
 .verif-info-box {
-  background: rgba(212,175,55,0.04);
+  background: rgba(203,149,70,0.04);
   border: 1px solid var(--dark-border);
   border-radius: var(--radius-md);
   padding: 1.25rem;
@@ -563,7 +563,7 @@
   transition: border-color 0.2s;
 }
 
-.verif-type-card:hover { border-color: rgba(212,175,55,0.3); }
+.verif-type-card:hover { border-color: rgba(203,149,70,0.3); }
 
 .verif-type-icon { font-size: 1.25rem; flex-shrink: 0; margin-top: 0.1rem; }
 
@@ -950,8 +950,8 @@
 .featured-payment-notice {
   margin-top: 1rem;
   padding: 0.75rem;
-  background: rgba(212, 175, 55, 0.08);
-  border: 1px solid rgba(212, 175, 55, 0.2);
+  background: rgba(203, 149, 70, 0.08);
+  border: 1px solid rgba(203, 149, 70, 0.2);
   border-radius: 8px;
   font-size: 0.85rem;
   color: var(--gold);
@@ -971,13 +971,13 @@
 
 /* ── DESTACADO EN CREATE LISTING ── */
 .featured-section {
-  border: 2px solid rgba(212, 175, 55, 0.3);
-  background: rgba(212, 175, 55, 0.03);
+  border: 2px solid rgba(203, 149, 70, 0.3);
+  background: rgba(203, 149, 70, 0.03);
 }
 .featured-details {
   margin-top: 1rem;
   padding: 1rem;
-  background: rgba(212, 175, 55, 0.05);
+  background: rgba(203, 149, 70, 0.05);
   border-radius: 8px;
 }
 .featured-benefits p {

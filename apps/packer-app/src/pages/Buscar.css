@@ -75,7 +75,7 @@
 .t-filter-toggle.active {
   border-color: var(--gold);
   color: var(--gold);
-  background: rgba(212, 175, 55, 0.06);
+  background: rgba(203, 149, 70, 0.06);
 }
 
 /* ── Filtros panel ── */
@@ -155,7 +155,7 @@
 }
 
 .t-trip-card:hover {
-  border-color: rgba(212, 175, 55, 0.3);
+  border-color: rgba(203, 149, 70, 0.3);
   transform: translateY(-2px);
 }
 
@@ -177,14 +177,14 @@
   height: 36px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid rgba(212, 175, 55, 0.2);
+  border: 2px solid rgba(203, 149, 70, 0.2);
 }
 
 .t-trip-avatar-placeholder {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: rgba(212, 175, 55, 0.15);
+  background: rgba(203, 149, 70, 0.15);
   color: var(--gold);
   display: flex;
   align-items: center;

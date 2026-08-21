@@ -399,7 +399,7 @@ export default function Home() {
               <ZoneDrawHandler onZoneSet={handleSetZone} />
               {zoneFilter && (
                 <Circle center={[zoneFilter.lat, zoneFilter.lng]}
-                  radius={zoneFilter.radius_km * 1000} color="#D4AF37" fillOpacity={0.15} />
+                  radius={zoneFilter.radius_km * 1000} color="#CB9546" fillOpacity={0.15} />
               )}
             </MapContainer>
             <div style={{ marginTop: '0.75rem' }}>

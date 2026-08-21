@@ -101,11 +101,11 @@
 }
 
 .country-select-option:hover {
-  background: rgba(212, 175, 55, 0.08);
+  background: rgba(203, 149, 70, 0.08);
 }
 
 .country-select-option.selected {
-  background: rgba(212, 175, 55, 0.15);
+  background: rgba(203, 149, 70, 0.15);
   color: var(--gold);
 }
 

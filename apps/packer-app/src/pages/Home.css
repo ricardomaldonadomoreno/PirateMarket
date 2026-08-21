@@ -36,7 +36,7 @@
   transform: translateX(-50%);
   width: 600px;
   height: 600px;
-  background: radial-gradient(circle, rgba(212, 175, 55, 0.15) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(203, 149, 70, 0.15) 0%, transparent 70%);
   pointer-events: none;
   z-index: 0;
 }
@@ -197,12 +197,12 @@
   align-items: center;
   gap: 0.4rem;
   padding: 0.35rem 0.85rem;
-  border: 1px solid rgba(212, 175, 55, 0.3);
+  border: 1px solid rgba(203, 149, 70, 0.3);
   border-radius: var(--radius-full);
   font-size: 0.8rem;
   color: var(--gold);
   margin-bottom: 0.75rem;
-  background: rgba(212, 175, 55, 0.08);
+  background: rgba(203, 149, 70, 0.08);
 }
 
 .t-earn-subtitle {
@@ -230,7 +230,7 @@
 }
 
 .t-earn-card:hover {
-  border-color: rgba(212, 175, 55, 0.4);
+  border-color: rgba(203, 149, 70, 0.4);
   transform: translateY(-4px);
 }
 
@@ -268,8 +268,8 @@
 .t-earn-cta-text {
   max-width: 680px;
   margin: 0 auto;
-  background: rgba(212, 175, 55, 0.06);
-  border: 1px solid rgba(212, 175, 55, 0.15);
+  background: rgba(203, 149, 70, 0.06);
+  border: 1px solid rgba(203, 149, 70, 0.15);
   border-radius: var(--radius-md);
   padding: 1rem 1.5rem;
 }
@@ -384,7 +384,7 @@
 }
 
 .t-escrow-step:hover {
-  border-color: rgba(212, 175, 55, 0.3);
+  border-color: rgba(203, 149, 70, 0.3);
 }
 
 .t-escrow-icon {
@@ -489,7 +489,7 @@
 .t-footer-legal {
   padding: 1.5rem 0;
   background: rgba(18, 18, 18, 0.95);
-  border-top: 1px solid rgba(212, 175, 55, 0.12);
+  border-top: 1px solid rgba(203, 149, 70, 0.12);
 }
 
 .t-footer-legal-content {
@@ -554,7 +554,7 @@
 
 .t-footer-legal-link:hover {
   border-color: var(--gold);
-  background: rgba(212, 175, 55, 0.08);
+  background: rgba(203, 149, 70, 0.08);
 }
 
 /* ── RESPONSIVE ── */

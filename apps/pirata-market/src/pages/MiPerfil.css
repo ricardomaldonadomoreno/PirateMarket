@@ -24,7 +24,7 @@
 .mp-header {
   padding: 1.75rem 2rem 1.25rem;
   border-bottom: 1px solid var(--dark-border);
-  background: linear-gradient(135deg, rgba(212,175,55,0.06), transparent);
+  background: linear-gradient(135deg, rgba(203,149,70,0.06), transparent);
 }
 
 .mp-header h1 {

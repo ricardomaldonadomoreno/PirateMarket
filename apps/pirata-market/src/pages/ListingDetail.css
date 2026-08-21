@@ -86,7 +86,7 @@
   background: var(--dark-border);
 }
 .photo-thumb:hover { border-color: var(--gold); }
-.photo-thumb.active { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.3); }
+.photo-thumb.active { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(203, 149, 70, 0.3); }
 .photo-thumb img { width: 100%; height: 100%; object-fit: cover; }
 
 .photo-placeholder {
@@ -147,7 +147,7 @@
   font-weight: 600;
 }
 .auction-detail-status.active {
-  background: rgba(212, 175, 55, 0.12);
+  background: rgba(203, 149, 70, 0.12);
   border: 1px solid var(--gold);
   color: var(--gold);
 }
@@ -169,7 +169,7 @@
   padding: 0.7rem 0.8rem;
   border: 1px solid var(--gold);
   border-radius: var(--radius-md);
-  background: rgba(212, 175, 55, 0.08);
+  background: rgba(203, 149, 70, 0.08);
   color: var(--text-muted);
   font-size: 0.8rem;
 }
@@ -217,7 +217,7 @@
   flex-direction: column;
   gap: 0.35rem;
   padding: 0.875rem;
-  background: rgba(212, 175, 55, 0.1);
+  background: rgba(203, 149, 70, 0.1);
   border: 1px solid var(--gold);
   border-radius: var(--radius-md);
   color: var(--text-light);
@@ -275,7 +275,7 @@
 
 .contact-ghost {
   padding: 0.875rem;
-  background: rgba(212, 175, 55, 0.1);
+  background: rgba(203, 149, 70, 0.1);
   border: 1.5px solid var(--gold);
   border-radius: var(--radius-md);
 }

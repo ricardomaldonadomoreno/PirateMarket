@@ -1,8 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-  --gold: #D4AF37;
-  --gold-rgb: 212, 175, 55;
+  --gold: #CB9546;
+  --gold-rgb: 203, 149, 70;
   --gold-light: #E5C76B;
   --gold-dark: #B8962F;
   --dark: #000000;
@@ -110,7 +110,7 @@ input, textarea, select { font-family: 'Inter', sans-serif; font-size: 1rem; }
   transition: all 0.2s ease;
   font-size: 0.95rem;
 }
-.input:focus { outline: none; border-color: var(--gold); background: var(--dark); box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1); }
+.input:focus { outline: none; border-color: var(--gold); background: var(--dark); box-shadow: 0 0 0 3px rgba(203, 149, 70, 0.1); }
 .input::placeholder { color: var(--text-muted); }
 .textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
 .select {
@@ -137,7 +137,7 @@ input, textarea, select { font-family: 'Inter', sans-serif; font-size: 1rem; }
   padding: 0.4rem 0.875rem; border-radius: var(--radius-full);
   font-size: 0.8rem; font-weight: 600; letter-spacing: 0.03em;
 }
-.badge-pirate { background: rgba(212, 175, 55, 0.15); color: var(--gold); border: 1.5px solid var(--gold); }
+.badge-pirate { background: rgba(203, 149, 70, 0.15); color: var(--gold); border: 1.5px solid var(--gold); }
 .badge-verified { background: rgba(6, 214, 160, 0.15); color: var(--success); border: 1.5px solid var(--success); }
 .badge-shop { background: rgba(255, 183, 3, 0.15); color: var(--warning); border: 1.5px solid var(--warning); }
 

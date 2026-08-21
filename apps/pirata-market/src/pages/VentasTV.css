@@ -48,8 +48,8 @@
     ),
     repeating-linear-gradient(
       90deg,
-      rgba(212, 175, 55, 0.03),
-      rgba(212, 175, 55, 0.06) 1px,
+      rgba(203, 149, 70, 0.03),
+      rgba(203, 149, 70, 0.06) 1px,
       transparent 1px,
       transparent 3px
     );
@@ -74,7 +74,7 @@
   background: rgba(0,0,0,0.6);
   padding: 2rem 3rem;
   border-radius: 8px;
-  border: 1px solid rgba(212, 175, 55, 0.3);
+  border: 1px solid rgba(203, 149, 70, 0.3);
 }
 
 .channel {
@@ -89,7 +89,7 @@
   font-weight: 900;
   color: white;
   font-family: 'Playfair Display', serif;
-  text-shadow: 0 0 20px rgba(212, 175, 55, 0.8);
+  text-shadow: 0 0 20px rgba(203, 149, 70, 0.8);
 }
 
 .subtitle {
