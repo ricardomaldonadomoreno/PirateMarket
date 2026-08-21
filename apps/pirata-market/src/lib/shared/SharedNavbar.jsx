@@ -92,7 +92,7 @@ export default function SharedNavbar({
                     <span>Panel Pirata</span>
                   </Link>
 
-                  <Link to="/packer" className="navbar-dropdown-item"
+                  <Link to="/packer/mi-cuenta" className="navbar-dropdown-item"
                     onClick={() => setMenuOpen(false)}>
                     <Star size={16} />
                     <span>Panel Packer</span>
