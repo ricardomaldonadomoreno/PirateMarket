@@ -101,7 +101,7 @@ export default function MiCuenta({ user, onProfileUpdate }) {
 
   const loadVerification = async () => {
     const { data } = await supabase
-      .from('traficante_verification_requests')
+      .from('packer_verification_requests')
       .select('*')
       .eq('user_id', user.id)
       .single()
