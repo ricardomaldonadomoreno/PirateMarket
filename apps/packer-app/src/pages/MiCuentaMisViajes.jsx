@@ -77,7 +77,9 @@ export default function MiCuentaMisViajes({ user }) {
     if (error) {
       console.error('Error updating status:', error)
     } else {
-      loadTrips()
+      setTrips(prev => prev.map(trip =>
+        trip.id === tripId ? { ...trip, status: newStatus } : trip
+      ))
     }
   }
 
@@ -92,7 +94,7 @@ export default function MiCuentaMisViajes({ user }) {
     if (error) {
       console.error('Error deleting trip:', error)
     } else {
-      loadTrips()
+      setTrips(prev => prev.filter(trip => trip.id !== tripId))
     }
   }
 
