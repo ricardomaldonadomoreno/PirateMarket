@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react'
-import { supabase } from '../../../pirata-market/src/lib/supabase'
+import { useOutletContext } from 'react-router-dom'
 import './MiCuenta.css'
 
 const LEVEL_INFO = {
@@ -16,22 +15,9 @@ const LEVEL_REQUIREMENTS = {
   elite:  ['Todo lo anterior', 'Dirección verificada en segundo país', 'Historial sólido de envíos'],
 }
 
-export default function MiCuentaNivel({ user }) {
-  const [currentLevel, setCurrentLevel] = useState('basico')
-
-  useEffect(() => {
-    if (!user) return
-    loadLevel()
-  }, [user])
-
-  const loadLevel = async () => {
-    const { data } = await supabase
-      .from('traficante_profiles')
-      .select('level')
-      .eq('id', user.id)
-      .single()
-    if (data?.level) setCurrentLevel(data.level)
-  }
+export default function MiCuentaNivel() {
+  const { profile } = useOutletContext()
+  const currentLevel = profile?.level || 'basico'
 
   return (
     <div className="mc-section">

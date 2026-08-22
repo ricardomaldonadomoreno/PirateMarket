@@ -417,7 +417,7 @@ export default function MiCuenta({ user, onProfileUpdate }) {
 
             {/* ══ RUTAS HIJAS (Verificación / Reseñas / Nivel) ══ */}
             {location.pathname !== '/packer/mi-cuenta' && location.pathname !== '/packer/mi-cuenta/viajes' && (
-              <Outlet context={{ reviews, reviewsLoading }} />
+              <Outlet context={{ profile, reviews, reviewsLoading }} />
             )}
 
           </main>
