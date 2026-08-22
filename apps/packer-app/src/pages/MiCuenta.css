@@ -731,6 +731,8 @@
   .mc-nav-item { white-space: nowrap; border-left: none; border-bottom: 3px solid transparent; padding: 0.6rem 1rem; border-radius: var(--radius-full); }
   .mc-nav-item.active { border-bottom-color: var(--gold); border-left: none; }
   .mc-section { padding: 1.5rem 1rem; }
+  .real-data-grid,
+  .mc-locked-personal .real-data-grid { grid-template-columns: 1fr; }
   .mc-avatar-actions { flex-direction: column; align-items: flex-start; }
   .mc-locked-address { flex-direction: column; }
   .mc-locked-badge-lg { margin-left: 0; }
