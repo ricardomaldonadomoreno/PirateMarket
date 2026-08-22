@@ -50,7 +50,7 @@ export default function MiCuentaMisViajes({ user }) {
     setLoading(true)
     try {
       const { data, error } = await supabase
-        .from('traficante_trips')
+        .from('packer_trips')
         .select('id, type, status, origin_city, destination_city, departure_date, transport_mode, currency, description, created_at')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
@@ -69,7 +69,7 @@ export default function MiCuentaMisViajes({ user }) {
 
   const handleStatusChange = async (tripId, newStatus) => {
     const { error } = await supabase
-      .from('traficante_trips')
+      .from('packer_trips')
       .update({ status: newStatus })
       .eq('id', tripId)
       .eq('user_id', user.id)
@@ -86,7 +86,7 @@ export default function MiCuentaMisViajes({ user }) {
   const handleDelete = async (tripId) => {
     if (!window.confirm('¿Eliminar este viaje? Esta acción no se puede deshacer.')) return
     const { error } = await supabase
-      .from('traficante_trips')
+      .from('packer_trips')
       .delete()
       .eq('id', tripId)
       .eq('user_id', user.id)

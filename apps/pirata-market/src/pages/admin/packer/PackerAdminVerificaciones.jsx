@@ -17,22 +17,8 @@ export default function PackerAdminVerificaciones() {
     setLoading(true)
     try {
       let query = supabase
-        .from('traficante_verification_requests')
-        .select(`
-          *,
-          user:users(
-            display_name, email, whatsapp,
-            avatar_url,
-            traficante_profiles(
-              full_name, phone, birth_country, doc_type, doc_number,
-              personal_locked, phone_locked,
-              address_city, address_country, address_text,
-              address_lat, address_lng,
-              address_locked,
-              identity_verified, address_verified, bank_verified
-            )
-          )
-        `)
+        .from('packer_verification_requests')
+        .select('*')
         .order('created_at', { ascending: false })
 
       if (filterStatus !== 'all') {
@@ -42,12 +28,19 @@ export default function PackerAdminVerificaciones() {
       const { data, error } = await query
       if (error) { console.error(error); return }
       if (data) {
-        // Aplanar traficante_profiles en user para mantener compatibilidad con la UI
+        const userIds = [...new Set(data.map(req => req.user_id).filter(Boolean))]
+        const [{ data: usersData }, { data: profilesData }] = await Promise.all([
+          supabase.from('users').select('id, display_name, email, whatsapp, avatar_url').in('id', userIds),
+          supabase.from('packer_profiles').select('id, full_name, phone, birth_country, doc_type, doc_number, personal_locked, phone_locked, address_city, address_country, address_text, address_lat, address_lng, address_locked, identity_verified, address_verified, bank_verified').in('id', userIds),
+        ])
+        const usersMap = Object.fromEntries((usersData || []).map(user => [user.id, user]))
+        const profilesMap = Object.fromEntries((profilesData || []).map(profile => [profile.id, profile]))
         const flattened = data.map(req => {
-          const tp = req.user?.traficante_profiles?.[0]
+          const user = usersMap[req.user_id]
+          const profile = profilesMap[req.user_id]
           return {
             ...req,
-            user: tp ? { ...req.user, ...tp } : req.user
+            user: user ? { ...user, ...(profile || {}) } : profile || null,
           }
         })
         setRequests(flattened)
@@ -62,7 +55,7 @@ export default function PackerAdminVerificaciones() {
   // ── APROBAR ──
   const handleApprove = async (requestId, userId) => {
     const now = new Date().toISOString()
-    await supabase.from('traficante_verification_requests').update({
+    await supabase.from('packer_verification_requests').update({
       status: 'approved', reviewed_at: now
     }).eq('id', requestId)
 
@@ -73,7 +66,7 @@ export default function PackerAdminVerificaciones() {
     if (req?.domicile_docs?.length > 0 && req?.bank_docs?.length > 0) level = 'pro'
     if (req?.selfie_url) level = 'elite'
 
-    await supabase.from('traficante_profiles').update({
+    await supabase.from('packer_profiles').update({
       level,
       identity_verified: true,
       address_verified: true,
@@ -88,7 +81,7 @@ export default function PackerAdminVerificaciones() {
   const handleReject = async (requestId, userId) => {
     if (!rejectNote.trim()) { alert('Escribe un motivo de rechazo'); return }
     const now = new Date().toISOString()
-    await supabase.from('traficante_verification_requests').update({
+    await supabase.from('packer_verification_requests').update({
       status: 'rejected', admin_note: rejectNote.trim(), reviewed_at: now
     }).eq('id', requestId)
     setRejectNote('')
@@ -99,7 +92,7 @@ export default function PackerAdminVerificaciones() {
   // ── REVOCAR ──
   const handleRevoke = async (userId) => {
     if (!confirm('¿Revocar verificación completa del packer?')) return
-    await supabase.from('traficante_profiles').update({
+    await supabase.from('packer_profiles').update({
       level: 'basico',
       identity_verified: false,
       address_verified: false,
@@ -113,7 +106,7 @@ export default function PackerAdminVerificaciones() {
   const handleSendNote = async () => {
     if (!infoNote.trim()) return
     if (detailModal?.request?.id) {
-      await supabase.from('traficante_verification_requests').update({
+      await supabase.from('packer_verification_requests').update({
         admin_note: infoNote.trim()
       }).eq('id', detailModal.request.id)
       setInfoNote('')
@@ -270,7 +263,7 @@ export default function PackerAdminVerificaciones() {
                 </span>
               </div>
 
-              {/* ── DATOS PERSONALES (de traficante_profiles) ── */}
+              {/* ── DATOS PERSONALES (de packer_profiles) ── */}
               <div className="docs-section">
                 <h4>Datos personales</h4>
                 {detailModal.user?.personal_locked && (
@@ -310,7 +303,7 @@ export default function PackerAdminVerificaciones() {
                 </div>
               </div>
 
-              {/* ── DIRECCIÓN (de traficante_profiles) ── */}
+              {/* ── DIRECCIÓN (de packer_profiles) ── */}
               <div className="docs-section">
                 <h4>Dirección</h4>
                 <div className="traf-data-grid">
@@ -346,7 +339,7 @@ export default function PackerAdminVerificaciones() {
                 </div>
               </div>
 
-              {/* ── DOCUMENTOS DE VERIFICACIÓN (de traficante_verification_requests) ── */}
+              {/* ── DOCUMENTOS DE VERIFICACIÓN (de packer_verification_requests) ── */}
               <div className="docs-section">
                 <h4>Documento de identidad</h4>
                 {detailModal.request?.identity_docs?.length > 0 ? (

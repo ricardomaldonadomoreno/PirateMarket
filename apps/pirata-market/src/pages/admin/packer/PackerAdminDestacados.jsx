@@ -12,9 +12,9 @@ export default function PackerAdminDestacados() {
     setLoading(true)
     try {
       const { data, error } = await supabase
-        .from('featured_trips')
+        .from('packer_featured_trips')
         .select(`id, status, show_in_banner, banner_image_url, price_per_week, activated_at, expires_at, created_at,
-          trip:traficante_trips(id, origin, destination, departure_date, available_seats),
+          trip:packer_trips(id, origin:origin_city, destination:destination_city, departure_date, available_seats:max_units),
           user:users(display_name, email)`)
         .order('created_at', { ascending: false })
 
@@ -30,7 +30,7 @@ export default function PackerAdminDestacados() {
   const handleActivate = async (id) => {
     const expiresAt = new Date()
     expiresAt.setDate(expiresAt.getDate() + 7) // 1 semana
-    await supabase.from('featured_trips').update({
+    await supabase.from('packer_featured_trips').update({
       status: 'active',
       activated_at: new Date().toISOString(),
       expires_at: expiresAt.toISOString()
@@ -39,18 +39,18 @@ export default function PackerAdminDestacados() {
   }
 
   const handleDeactivate = async (id) => {
-    await supabase.from('featured_trips').update({ status: 'expired' }).eq('id', id)
+    await supabase.from('packer_featured_trips').update({ status: 'expired' }).eq('id', id)
     loadFeatured()
   }
 
   const handleToggleBanner = async (id, current) => {
-    await supabase.from('featured_trips').update({ show_in_banner: !current }).eq('id', id)
+    await supabase.from('packer_featured_trips').update({ show_in_banner: !current }).eq('id', id)
     loadFeatured()
   }
 
   const handleDelete = async (id) => {
     if (!confirm('¿Eliminar este destacado?')) return
-    await supabase.from('featured_trips').delete().eq('id', id)
+    await supabase.from('packer_featured_trips').delete().eq('id', id)
     loadFeatured()
   }
 

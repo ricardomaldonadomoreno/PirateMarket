@@ -31,7 +31,7 @@ export default function MiCuentaVerificacion({ user, profile }) {
 
   const loadVerification = async () => {
     const { data } = await supabase
-      .from('traficante_verification_requests')
+      .from('packer_verification_requests')
       .select('*')
       .eq('user_id', user.id)
       .single()
@@ -40,7 +40,7 @@ export default function MiCuentaVerificacion({ user, profile }) {
 
   const loadLevel = async () => {
     const { data } = await supabase
-      .from('traficante_profiles')
+      .from('packer_profiles')
       .select('level')
       .eq('id', user.id)
       .single()
@@ -137,10 +137,10 @@ export default function MiCuentaVerificacion({ user, profile }) {
         selfie_url: selfieUrl,
       }
       if (verifRequest) {
-        await supabase.from('traficante_verification_requests')
+        await supabase.from('packer_verification_requests')
           .update(payload).eq('id', verifRequest.id)
       } else {
-        await supabase.from('traficante_verification_requests')
+        await supabase.from('packer_verification_requests')
           .insert([payload])
       }
       setVerifSaved(true)

@@ -27,11 +27,11 @@ export default function PackerAdminDashboard() {
         { count: featCount },
         { count: reviewCount }
       ] = await Promise.all([
-        supabase.from('traficante_profiles').select('id', { count: 'exact' }),
-        supabase.from('traficante_trips').select('id, status'),
-        supabase.from('traficante_verification_requests').select('id', { count: 'exact' }).eq('status', 'pending'),
-        supabase.from('featured_trips').select('id', { count: 'exact' }).eq('status', 'pending'),
-        supabase.from('traficante_reviews').select('id', { count: 'exact' })
+        supabase.from('packer_profiles').select('id', { count: 'exact' }),
+        supabase.from('packer_trips').select('id, status'),
+        supabase.from('packer_verification_requests').select('id', { count: 'exact' }).eq('status', 'pending'),
+        supabase.from('packer_featured_trips').select('id', { count: 'exact' }).eq('status', 'pending'),
+        supabase.from('packer_reviews').select('id', { count: 'exact' })
       ])
 
       const activeTrips = trips?.filter(t => t.status === 'activo').length || 0

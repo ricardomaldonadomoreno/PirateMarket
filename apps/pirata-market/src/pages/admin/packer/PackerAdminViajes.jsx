@@ -13,8 +13,8 @@ export default function PackerAdminViajes() {
     setLoading(true)
     try {
       let query = supabase
-        .from('traficante_trips')
-        .select(`*, user:users(display_name, email, traficante_profiles(identity_verified))`)
+        .from('packer_trips')
+        .select('*')
         .order('created_at', { ascending: false })
 
       if (filterStatus !== 'all') {
@@ -23,7 +23,21 @@ export default function PackerAdminViajes() {
 
       const { data, error } = await query
       if (error) { console.error(error); return }
-      if (data) setTrips(data)
+      if (data) {
+        const userIds = [...new Set(data.map(trip => trip.user_id).filter(Boolean))]
+        const [{ data: usersData }, { data: profilesData }] = await Promise.all([
+          supabase.from('users').select('id, display_name, email').in('id', userIds),
+          supabase.from('packer_profiles').select('id, identity_verified').in('id', userIds),
+        ])
+        const usersMap = Object.fromEntries((usersData || []).map(user => [user.id, user]))
+        const profilesMap = Object.fromEntries((profilesData || []).map(profile => [profile.id, profile]))
+        setTrips(data.map(trip => ({
+          ...trip,
+          user: usersMap[trip.user_id]
+            ? { ...usersMap[trip.user_id], packer_profiles: profilesMap[trip.user_id] ? [profilesMap[trip.user_id]] : [] }
+            : null,
+        })))
+      }
     } catch (error) {
       console.error('loadTrips error:', error)
     } finally {
@@ -33,12 +47,12 @@ export default function PackerAdminViajes() {
 
   const handleDeleteTrip = async (id) => {
     if (!confirm('¿Eliminar este viaje?')) return
-    await supabase.from('traficante_trips').delete().eq('id', id)
+    await supabase.from('packer_trips').delete().eq('id', id)
     loadTrips()
   }
 
   const handleStatusChange = async (id, status) => {
-    await supabase.from('traficante_trips').update({ status }).eq('id', id)
+    await supabase.from('packer_trips').update({ status }).eq('id', id)
     loadTrips()
   }
 
@@ -97,7 +111,7 @@ export default function PackerAdminViajes() {
 
                   <div className="admin-cell-muted">
                     {trip.user?.display_name || '—'}
-                    {trip.user?.traficante_profiles?.identity_verified && <span style={{ marginLeft: '0.3rem', fontSize: '0.7rem' }}>✓</span>}
+                    {trip.user?.packer_profiles?.identity_verified && <span style={{ marginLeft: '0.3rem', fontSize: '0.7rem' }}>✓</span>}
                   </div>
 
                   <div>{trip.type}</div>

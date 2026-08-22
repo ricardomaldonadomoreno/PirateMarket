@@ -64,7 +64,7 @@ export default function TraficanteBuscar() {
     setSearched(true)
 
     let query = sb
-      .from('traficante_trips')
+      .from('packer_trips')
       .select('*')
       .eq('status', 'activo')
 
@@ -88,17 +88,17 @@ export default function TraficanteBuscar() {
 
       setTrips(filtered)
 
-      // Cargar datos de los usuarios
-      const userIds = [...new Set(filtered.map(t => t.user_id))]
+      // Cargar datos de los usuarios y sus perfiles Packer
+      const userIds = [...new Set(filtered.map(t => t.user_id).filter(Boolean))]
       if (userIds.length > 0) {
-        const { data: usersData } = await sb
-          .from('users')
-          .select('id, display_name, avatar_url, traficante_profiles!inner(identity_verified, address_verified, bank_verified)')
-          .in('id', userIds)
+        const [{ data: usersData }, { data: profilesData }] = await Promise.all([
+          sb.from('users').select('id, display_name, avatar_url').in('id', userIds),
+          sb.from('packer_profiles').select('id, identity_verified, address_verified, bank_verified').in('id', userIds),
+        ])
+        const profilesMap = Object.fromEntries((profilesData || []).map(profile => [profile.id, profile]))
         const usersMap = {}
-        usersData?.forEach(u => {
-          const tp = u.traficante_profiles?.[0] || {}
-          usersMap[u.id] = { ...u, ...tp }
+        ;(usersData || []).forEach(u => {
+          usersMap[u.id] = { ...u, ...(profilesMap[u.id] || {}) }
         })
         setUsers(usersMap)
       }

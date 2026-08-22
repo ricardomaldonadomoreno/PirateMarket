@@ -90,12 +90,27 @@ export default function MiCuenta({ user, onProfileUpdate }) {
 
   const loadReviews = async () => {
     setReviewsLoading(true)
-    const { data } = await supabase
-      .from('traficante_reviews')
-      .select('id, rating, comment, reviewer_role, created_at, reviewer:reviewer_id(display_name, avatar_url)')
+    const { data: reviewData } = await supabase
+      .from('packer_reviews')
+      .select('id, rating, comment, reviewer_role, created_at, reviewer_id')
       .eq('reviewed_id', user.id)
       .order('created_at', { ascending: false })
-    setReviews(data || [])
+
+    const reviewerIds = [...new Set((reviewData || []).map(review => review.reviewer_id).filter(Boolean))]
+    let reviewers = []
+    if (reviewerIds.length > 0) {
+      const { data } = await supabase
+        .from('users')
+        .select('id, display_name, avatar_url')
+        .in('id', reviewerIds)
+      reviewers = data || []
+    }
+
+    const reviewerMap = Object.fromEntries(reviewers.map(reviewer => [reviewer.id, reviewer]))
+    setReviews((reviewData || []).map(review => ({
+      ...review,
+      reviewer: reviewerMap[review.reviewer_id] || null,
+    })))
     setReviewsLoading(false)
   }
 

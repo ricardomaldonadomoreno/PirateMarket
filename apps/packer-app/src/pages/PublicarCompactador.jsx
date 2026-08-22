@@ -85,7 +85,7 @@ export default function PublicarCompactador({ user }) {
     if (!user) { navigate('/auth'); return }
     setLoadingProfile(true)
     supabase
-      .from('traficante_profiles')
+      .from('packer_profiles')
       .select('address_city, address_country, address_text, address_lat, address_lng, address_locked, identity_verified')
       .eq('id', user.id)
       .maybeSingle()
@@ -184,7 +184,7 @@ export default function PublicarCompactador({ user }) {
       rejected_types: [],
     }
 
-    const { error: dbError } = await supabase.from('traficante_trips').insert(payload)
+    const { error: dbError } = await supabase.from('packer_trips').insert(payload)
     setLoading(false)
 
     if (dbError) {
