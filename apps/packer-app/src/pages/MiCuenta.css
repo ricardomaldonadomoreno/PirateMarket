@@ -727,6 +727,49 @@
 @media (max-width: 900px) {
   .mc-layout { grid-template-columns: 1fr; }
   .mc-sidebar { position: static; }
+  .mc-sidebar-profile {
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr);
+    grid-template-areas: "avatar name" "avatar email" "avatar rating";
+    column-gap: 0.75rem;
+    row-gap: 0.1rem;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    text-align: left;
+  }
+  .mc-avatar-wrap {
+    grid-area: avatar;
+    width: 48px;
+    height: 48px;
+    margin: 0;
+  }
+  .mc-avatar,
+  .mc-avatar-placeholder {
+    width: 48px;
+    height: 48px;
+  }
+  .mc-avatar-placeholder { font-size: 1.25rem; }
+  .mc-sidebar-name {
+    grid-area: name;
+    margin-bottom: 0;
+    font-size: 0.85rem;
+    line-height: 1.2;
+  }
+  .mc-sidebar-email {
+    grid-area: email;
+    margin-bottom: 0;
+    font-size: 0.72rem;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .mc-sidebar-rating {
+    grid-area: rating;
+    font-size: 0.75rem;
+    line-height: 1.2;
+  }
+  .mc-sidebar-rating span { font-size: 0.7rem; }
   .mc-nav { display: flex; overflow-x: auto; padding: 0.5rem; gap: 0.25rem; }
   .mc-nav-item { white-space: nowrap; border-left: none; border-bottom: 3px solid transparent; padding: 0.6rem 1rem; border-radius: var(--radius-full); }
   .mc-nav-item.active { border-bottom-color: var(--gold); border-left: none; }
