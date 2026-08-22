@@ -63,7 +63,7 @@ export default function MiCuenta({ user, onProfileUpdate }) {
       .eq('id', user.id)
       .single()
     const { data: profileData } = await supabase
-      .from('traficante_profiles')
+      .from('packer_profiles')
       .select('*')
       .eq('id', user.id)
       .maybeSingle()
@@ -125,7 +125,7 @@ export default function MiCuenta({ user, onProfileUpdate }) {
 
     setSaving(true)
     setError('')
-    const { error: err } = await supabase.from('traficante_profiles').update({
+    const { error: err } = await supabase.from('packer_profiles').update({
       full_name: fullName.trim(),
       phone: phone.trim(),
       birth_country: birthCountry.trim(),
@@ -155,7 +155,7 @@ export default function MiCuenta({ user, onProfileUpdate }) {
     if (!addressCity || !addressText) return setError('Completa la ciudad y dirección')
     setSaving(true)
     setError('')
-    const { error: err } = await supabase.from('traficante_profiles').update({
+    const { error: err } = await supabase.from('packer_profiles').update({
       address_city: addressCityObj?.city || addressCity,
       address_country: addressCityObj?.country || addressCountry,
       address_text: addressText,
