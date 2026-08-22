@@ -58,11 +58,11 @@ export default function MiCuentaVerificacion({ user, profile }) {
           : (file.name.split('.').pop() || 'pdf')
         const path = `${user.id}/${folder}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`
         const { error } = await supabase.storage
-          .from('traficante-docs')
+          .from('packer-docs')
           .upload(path, processed, { contentType: isImage ? processed.type : file.type })
         if (error) throw error
         const { data: { publicUrl } } = supabase.storage
-          .from('traficante-docs')
+          .from('packer-docs')
           .getPublicUrl(path)
         urls.push(publicUrl)
       } catch (err) {
@@ -119,11 +119,11 @@ export default function MiCuentaVerificacion({ user, profile }) {
         const selfieExt = compressedSelfie.type.split('/').pop() || 'jpg'
         const selfiePath = `${user.id}/identity/selfie_${Date.now()}.${selfieExt}`
         const { error: selfieErr } = await supabase.storage
-          .from('traficante-docs')
+          .from('packer-docs')
           .upload(selfiePath, compressedSelfie, { contentType: compressedSelfie.type })
         if (selfieErr) throw new Error('Error al subir foto personal: ' + selfieErr.message)
         const { data: { publicUrl } } = supabase.storage
-          .from('traficante-docs')
+          .from('packer-docs')
           .getPublicUrl(selfiePath)
         selfieUrl = publicUrl
       }
