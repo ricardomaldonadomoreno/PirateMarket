@@ -1,31 +1,14 @@
-import { useState, useEffect } from 'react'
-import { supabase } from '../../../pirata-market/src/lib/supabase'
+import { useOutletContext } from 'react-router-dom'
 import './MiCuenta.css'
 
-export default function MiCuentaResenas({ user }) {
-  const [reviews, setReviews] = useState([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    if (!user) return
-    loadReviews()
-  }, [user])
-
-  const loadReviews = async () => {
-    const { data } = await supabase
-      .from('traficante_reviews')
-      .select('*, reviewer:reviewer_id(display_name, avatar_url)')
-      .eq('reviewed_id', user.id)
-      .order('created_at', { ascending: false })
-    setReviews(data || [])
-    setLoading(false)
-  }
+export default function MiCuentaResenas() {
+  const { reviews, reviewsLoading } = useOutletContext()
 
   const avgRating = reviews.length
     ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
     : null
 
-  if (loading) return (
+  if (reviewsLoading) return (
     <div className="mc-section">
       <div className="mc-loading">
         <div className="loading" style={{ width: 40, height: 40 }} />

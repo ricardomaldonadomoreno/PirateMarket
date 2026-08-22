@@ -46,6 +46,7 @@ export default function MiCuenta({ user, onProfileUpdate }) {
   // Para sidebar
   const [verifRequest, setVerifRequest] = useState(null)
   const [reviews, setReviews] = useState([])
+  const [reviewsLoading, setReviewsLoading] = useState(true)
 
   useEffect(() => {
     if (!user) return navigate('/auth')
@@ -88,11 +89,14 @@ export default function MiCuenta({ user, onProfileUpdate }) {
   }
 
   const loadReviews = async () => {
+    setReviewsLoading(true)
     const { data } = await supabase
       .from('traficante_reviews')
-      .select('*')
+      .select('id, rating, comment, reviewer_role, created_at, reviewer:reviewer_id(display_name, avatar_url)')
       .eq('reviewed_id', user.id)
+      .order('created_at', { ascending: false })
     setReviews(data || [])
+    setReviewsLoading(false)
   }
 
   const loadVerification = async () => {
@@ -412,7 +416,9 @@ export default function MiCuenta({ user, onProfileUpdate }) {
             )}
 
             {/* ══ RUTAS HIJAS (Verificación / Reseñas / Nivel) ══ */}
-            {location.pathname !== '/packer/mi-cuenta' && location.pathname !== '/packer/mi-cuenta/viajes' && <Outlet />}
+            {location.pathname !== '/packer/mi-cuenta' && location.pathname !== '/packer/mi-cuenta/viajes' && (
+              <Outlet context={{ reviews, reviewsLoading }} />
+            )}
 
           </main>
         </div>
