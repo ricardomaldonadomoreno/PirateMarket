@@ -81,7 +81,7 @@ INSERT INTO categories (name, slug, icon) VALUES
 ON CONFLICT (slug) DO NOTHING;
 
 -- ================================================
--- USERS (Cuenta base + perfil Pirata + perfil Traficante)
+-- USERS (Cuenta base + perfil Pirata + perfil Packer)
 -- ================================================
 
 CREATE TABLE IF NOT EXISTS users (
@@ -121,8 +121,8 @@ CREATE TABLE IF NOT EXISTS users (
   shop_banner_url TEXT
 );
 
--- Datos del traficante viven en traficante_profiles, no en users.
--- La tabla traficante_profiles tiene las columnas:
+-- Datos de Packer viven en packer_profiles, no en users.
+-- La tabla packer_profiles tiene las columnas:
 -- full_name, phone, phone_locked, address_city, address_text, address_lat, address_lng,
 -- address_locked, address_country, address_state, address_state_code, address_country_code,
 -- birth_country, doc_type, doc_number, personal_locked, bio, bank_verified,
@@ -261,10 +261,10 @@ CREATE INDEX IF NOT EXISTS idx_verif_user ON verification_requests(user_id);
 CREATE INDEX IF NOT EXISTS idx_verif_status ON verification_requests(status) WHERE status = 'pending';
 
 -- ================================================
--- TRAFICANTE VERIFICATION REQUESTS
+-- PACKER VERIFICATION REQUESTS
 -- ================================================
 
-CREATE TABLE IF NOT EXISTS traficante_verification_requests (
+CREATE TABLE IF NOT EXISTS packer_verification_requests (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   created_at TIMESTAMPTZ DEFAULT NOW(),
 
@@ -280,14 +280,14 @@ CREATE TABLE IF NOT EXISTS traficante_verification_requests (
   reviewed_at TIMESTAMPTZ
 );
 
-CREATE INDEX IF NOT EXISTS idx_tverif_user ON traficante_verification_requests(user_id);
-CREATE INDEX IF NOT EXISTS idx_tverif_status ON traficante_verification_requests(status) WHERE status = 'pending';
+CREATE INDEX IF NOT EXISTS idx_packer_verif_user ON packer_verification_requests(user_id);
+CREATE INDEX IF NOT EXISTS idx_packer_verif_status ON packer_verification_requests(status) WHERE status = 'pending';
 
 -- ================================================
--- TRAFICANTE PROFILES
+-- PACKER PROFILES
 -- ================================================
 
-CREATE TABLE IF NOT EXISTS traficante_profiles (
+CREATE TABLE IF NOT EXISTS packer_profiles (
   id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
   level traf_level DEFAULT 'basico',
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -295,10 +295,10 @@ CREATE TABLE IF NOT EXISTS traficante_profiles (
 );
 
 -- ================================================
--- TRAFICANTE REVIEWS
+-- PACKER REVIEWS
 -- ================================================
 
-CREATE TABLE IF NOT EXISTS traficante_reviews (
+CREATE TABLE IF NOT EXISTS packer_reviews (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   created_at TIMESTAMPTZ DEFAULT NOW(),
 
@@ -310,8 +310,8 @@ CREATE TABLE IF NOT EXISTS traficante_reviews (
   reviewer_role TEXT
 );
 
-CREATE INDEX IF NOT EXISTS idx_treviews_reviewed ON traficante_reviews(reviewed_id);
-CREATE INDEX IF NOT EXISTS idx_treviews_reviewer ON traficante_reviews(reviewer_id);
+CREATE INDEX IF NOT EXISTS idx_packer_reviews_reviewed ON packer_reviews(reviewed_id);
+CREATE INDEX IF NOT EXISTS idx_packer_reviews_reviewer ON packer_reviews(reviewer_id);
 
 -- ================================================
 -- ROW LEVEL SECURITY
@@ -323,9 +323,9 @@ ALTER TABLE listing_views ENABLE ROW LEVEL SECURITY;
 ALTER TABLE listing_contacts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE reports ENABLE ROW LEVEL SECURITY;
 ALTER TABLE verification_requests ENABLE ROW LEVEL SECURITY;
-ALTER TABLE traficante_verification_requests ENABLE ROW LEVEL SECURITY;
-ALTER TABLE traficante_profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE traficante_reviews ENABLE ROW LEVEL SECURITY;
+ALTER TABLE packer_verification_requests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE packer_profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE packer_reviews ENABLE ROW LEVEL SECURITY;
 
 -- USERS POLICIES
 DO $$ BEGIN
@@ -437,58 +437,58 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
--- TRAFICANTE VERIFICATION REQUESTS POLICIES
+-- PACKER VERIFICATION REQUESTS POLICIES
 DO $$ BEGIN
-  CREATE POLICY "Users can view own traficante verifications"
-  ON traficante_verification_requests FOR SELECT USING (auth.uid() = user_id);
+  CREATE POLICY "Users can view own packer verifications"
+  ON packer_verification_requests FOR SELECT USING (auth.uid() = user_id);
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
-  CREATE POLICY "Users can create own traficante verification"
-  ON traficante_verification_requests FOR INSERT WITH CHECK (auth.uid() = user_id);
+  CREATE POLICY "Users can create own packer verification"
+  ON packer_verification_requests FOR INSERT WITH CHECK (auth.uid() = user_id);
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
-  CREATE POLICY "Users can update own traficante verification"
-  ON traficante_verification_requests FOR UPDATE USING (auth.uid() = user_id);
+  CREATE POLICY "Users can update own packer verification"
+  ON packer_verification_requests FOR UPDATE USING (auth.uid() = user_id);
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
-  CREATE POLICY "Admins can manage traficante verifications"
-  ON traficante_verification_requests FOR ALL USING (
+  CREATE POLICY "Admins can manage packer verifications"
+  ON packer_verification_requests FOR ALL USING (
     EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND user_type = 'admin')
   );
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
--- TRAFICANTE PROFILES POLICIES
+-- PACKER PROFILES POLICIES
 DO $$ BEGIN
-  CREATE POLICY "Anyone can view traficante profiles"
-  ON traficante_profiles FOR SELECT USING (TRUE);
+  CREATE POLICY "Anyone can view packer profiles"
+  ON packer_profiles FOR SELECT USING (TRUE);
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
-  CREATE POLICY "Admins can update traficante profiles"
-  ON traficante_profiles FOR UPDATE USING (
+  CREATE POLICY "Admins can update packer profiles"
+  ON packer_profiles FOR UPDATE USING (
     EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND user_type = 'admin')
   );
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
--- TRAFICANTE REVIEWS POLICIES
+-- PACKER REVIEWS POLICIES
 DO $$ BEGIN
   CREATE POLICY "Anyone can view reviews"
-  ON traficante_reviews FOR SELECT USING (TRUE);
+  ON packer_reviews FOR SELECT USING (TRUE);
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
   CREATE POLICY "Authenticated users can write reviews"
-  ON traficante_reviews FOR INSERT WITH CHECK (auth.uid() = reviewer_id);
+  ON packer_reviews FOR INSERT WITH CHECK (auth.uid() = reviewer_id);
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
@@ -561,9 +561,9 @@ BEFORE UPDATE ON users
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_at();
 
-DROP TRIGGER IF EXISTS update_tprofiles_updated_at ON traficante_profiles;
-CREATE TRIGGER update_tprofiles_updated_at
-BEFORE UPDATE ON traficante_profiles
+DROP TRIGGER IF EXISTS update_packer_profiles_updated_at ON packer_profiles;
+CREATE TRIGGER update_packer_profiles_updated_at
+BEFORE UPDATE ON packer_profiles
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_at();
 
@@ -626,21 +626,21 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Auto-create traficante_profile on user creation
-CREATE OR REPLACE FUNCTION create_traficante_profile()
+-- Auto-create packer_profile on user creation
+CREATE OR REPLACE FUNCTION create_packer_profile()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO traficante_profiles (id) VALUES (NEW.id)
+  INSERT INTO packer_profiles (id) VALUES (NEW.id)
   ON CONFLICT (id) DO NOTHING;
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
-DROP TRIGGER IF EXISTS create_traficante_profile_trigger ON users;
-CREATE TRIGGER create_traficante_profile_trigger
+DROP TRIGGER IF EXISTS create_packer_profile_trigger ON users;
+CREATE TRIGGER create_packer_profile_trigger
 AFTER INSERT ON users
 FOR EACH ROW
-EXECUTE FUNCTION create_traficante_profile();
+EXECUTE FUNCTION create_packer_profile();
 
 -- ================================================
 -- STORAGE BUCKETS
@@ -649,7 +649,7 @@ EXECUTE FUNCTION create_traficante_profile();
 --   avatars (public)            — Foto de perfil: avatars/{user_id}.{ext}
 --   listing-photos (public)     — Fotos de anuncios: listing-photos/{listing_id}/...
 --   verification-docs (private) — Docs Pirata: verification-docs/{user_id}/identity/ y business/
---   traficante-docs (private)   — Docs Traficante: traficante-docs/{user_id}/identity/, domicile/, bank/
+--   traficante-docs (private; nombre histórico del bucket Storage de Packer): traficante-docs/{user_id}/identity/, domicile/, bank/
 
 -- ================================================
 -- PAÍSES DE AMÉRICA
@@ -695,54 +695,54 @@ GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon;
 -- MIGRATIONS (aplicar en orden en Supabase SQL Editor)
 -- ================================================
 
--- Migration: Las columnas de documento ya viven en traficante_profiles.
+-- Migration: Las columnas de documento ya viven en packer_profiles.
 -- Estas líneas estaban en users y fueron eliminadas.
 
--- Migration: Corregir policies de traficante_verification_requests
+-- Migration: Corregir policies de packer_verification_requests
 -- (las policies actuales no permiten INSERT porque usan EXCEPTION y no se reemplazan)
 
 DO $$ BEGIN
-  DROP POLICY IF EXISTS "Users can view own traficante verifications" ON traficante_verification_requests;
+  DROP POLICY IF EXISTS "Users can view own packer verifications" ON packer_verification_requests;
 EXCEPTION WHEN OTHERS THEN NULL;
 END $$;
 
 DO $$ BEGIN
-  DROP POLICY IF EXISTS "Users can create own traficante verification" ON traficante_verification_requests;
+  DROP POLICY IF EXISTS "Users can create own packer verification" ON packer_verification_requests;
 EXCEPTION WHEN OTHERS THEN NULL;
 END $$;
 
 DO $$ BEGIN
-  DROP POLICY IF EXISTS "Users can update own traficante verification" ON traficante_verification_requests;
+  DROP POLICY IF EXISTS "Users can update own packer verification" ON packer_verification_requests;
 EXCEPTION WHEN OTHERS THEN NULL;
 END $$;
 
 DO $$ BEGIN
-  DROP POLICY IF EXISTS "Admins can manage traficante verifications" ON traficante_verification_requests;
+  DROP POLICY IF EXISTS "Admins can manage packer verifications" ON packer_verification_requests;
 EXCEPTION WHEN OTHERS THEN NULL;
 END $$;
 
-CREATE POLICY "Users can view own traficante verifications"
-  ON traficante_verification_requests FOR SELECT
+CREATE POLICY "Users can view own packer verifications"
+  ON packer_verification_requests FOR SELECT
   USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can create own traficante verification"
-  ON traficante_verification_requests FOR INSERT
+CREATE POLICY "Users can create own packer verification"
+  ON packer_verification_requests FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Users can update own traficante verification"
-  ON traficante_verification_requests FOR UPDATE
+CREATE POLICY "Users can update own packer verification"
+  ON packer_verification_requests FOR UPDATE
   USING (auth.uid() = user_id);
 
-CREATE POLICY "Admins can manage traficante verifications"
-  ON traficante_verification_requests FOR ALL
+CREATE POLICY "Admins can manage packer verifications"
+  ON packer_verification_requests FOR ALL
   USING (
     EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND user_type = 'admin')
   );
 
--- Migration: Corregir policy de SELECT en traficante_verification_requests para admin
+-- Migration: Corregir policy de SELECT en packer_verification_requests para admin
 -- (el admin necesita poder seleccionar TODAS las solicitudes, no solo las suyas)
-CREATE POLICY "Admins can select all traficante verifications"
-  ON traficante_verification_requests FOR SELECT
+CREATE POLICY "Admins can select all packer verifications"
+  ON packer_verification_requests FOR SELECT
   USING (
     EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND user_type = 'admin')
   );
