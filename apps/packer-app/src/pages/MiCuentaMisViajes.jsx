@@ -44,7 +44,7 @@ export default function MiCuentaMisViajes({ user }) {
   useEffect(() => {
     if (!user) return
     loadTrips()
-  }, [user])
+  }, [user?.id])
 
   const loadTrips = async () => {
     setLoading(true)

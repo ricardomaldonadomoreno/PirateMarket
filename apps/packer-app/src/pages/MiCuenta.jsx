@@ -53,7 +53,7 @@ export default function MiCuenta({ user, onProfileUpdate }) {
     loadProfile()
     loadReviews()
     loadVerification()
-  }, [user])
+  }, [user?.id])
 
   const loadProfile = async () => {
     setLoading(true)
