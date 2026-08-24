@@ -48,7 +48,7 @@ export default function MiCuentaVerificacion({ user, profile }) {
   }
 
   const uploadDocFiles = async (files, folder) => {
-    const urls = []
+    const paths = []
     for (const file of files) {
       try {
         const isImage = file.type.startsWith('image/')
@@ -61,15 +61,12 @@ export default function MiCuentaVerificacion({ user, profile }) {
           .from('packer-docs')
           .upload(path, processed, { contentType: isImage ? processed.type : file.type })
         if (error) throw error
-        const { data: { publicUrl } } = supabase.storage
-          .from('packer-docs')
-          .getPublicUrl(path)
-        urls.push(publicUrl)
+        paths.push(path)
       } catch (err) {
         throw new Error(`Error al procesar ${file.name}: ${err.message}`)
       }
     }
-    return urls
+    return paths
   }
 
   const handleSelfieChange = async (e) => {
@@ -122,10 +119,7 @@ export default function MiCuentaVerificacion({ user, profile }) {
           .from('packer-docs')
           .upload(selfiePath, compressedSelfie, { contentType: compressedSelfie.type })
         if (selfieErr) throw new Error('Error al subir foto personal: ' + selfieErr.message)
-        const { data: { publicUrl } } = supabase.storage
-          .from('packer-docs')
-          .getPublicUrl(selfiePath)
-        selfieUrl = publicUrl
+        selfieUrl = selfiePath
       }
 
       const payload = {
