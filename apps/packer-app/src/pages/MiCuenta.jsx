@@ -140,14 +140,15 @@ export default function MiCuenta({ user, onProfileUpdate }) {
 
     setSaving(true)
     setError('')
-    const { error: err } = await supabase.from('packer_profiles').update({
+    const { error: err } = await supabase.from('packer_profiles').upsert({
+      id: user.id,
       full_name: fullName.trim(),
       phone: phone.trim(),
       birth_country: birthCountry.trim(),
       doc_type: docType,
       doc_number: docNumber.trim(),
       personal_locked: true,
-    }).eq('id', user.id)
+    }, { onConflict: 'id' })
     setSaving(false)
     if (err) return setError(err.message)
     setProfile(prev => ({
@@ -170,14 +171,15 @@ export default function MiCuenta({ user, onProfileUpdate }) {
     if (!addressCity || !addressText) return setError('Completa la ciudad y dirección')
     setSaving(true)
     setError('')
-    const { error: err } = await supabase.from('packer_profiles').update({
+    const { error: err } = await supabase.from('packer_profiles').upsert({
+      id: user.id,
       address_city: addressCityObj?.city || addressCity,
       address_country: addressCityObj?.country || addressCountry,
       address_text: addressText,
       address_lat: addressCoords?.lat || addressCoordsFromCity?.lat || addressCityObj?.lat || null,
       address_lng: addressCoords?.lng || addressCoordsFromCity?.lng || addressCityObj?.lng || null,
       address_locked: true,
-    }).eq('id', user.id)
+    }, { onConflict: 'id' })
     setSaving(false)
     if (err) return setError(err.message)
     setProfile(prev => ({ ...prev, address_locked: true }))
