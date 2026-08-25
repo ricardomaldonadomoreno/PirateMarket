@@ -1,485 +1,619 @@
-import { useState, useEffect } from 'react'
-import { supabase } from '../../../lib/supabase'
+import { useEffect, useMemo, useState } from 'react'
 import AdminNavbarPacker from '../../../components/AdminNavbarPacker'
+import { supabase } from '../../../lib/supabase'
+import './PackerAdminVerificaciones.css'
+
+const STATUS_LABELS = {
+  pending: 'Pendiente',
+  approved: 'Aprobada',
+  rejected: 'Rechazada',
+}
+
+const DOCUMENT_GROUPS = [
+  { key: 'identity_docs', label: 'Identidad', shortLabel: 'ID' },
+  { key: 'domicile_docs', label: 'Domicilio', shortLabel: 'DOM' },
+  { key: 'bank_docs', label: 'Banco', shortLabel: 'BANCO' },
+  { key: 'selfie_url', label: 'Selfie', shortLabel: 'FOTO' },
+]
+
+const formatDate = (value, withTime = false) => {
+  if (!value) return '—'
+  return new Date(value).toLocaleString('es-BO', withTime
+    ? { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }
+    : { day: '2-digit', month: '2-digit', year: 'numeric' })
+}
+
+const getDisplayName = (item) => (
+  item?.user?.display_name ||
+  item?.user?.full_name ||
+  item?.user?.email ||
+  item?.user_id ||
+  'Usuario sin identificar'
+)
+
+const getInitial = (item) => getDisplayName(item).charAt(0).toUpperCase()
+
+const getDocumentValues = (request, key) => {
+  if (!request) return []
+  if (key === 'selfie_url') return request.selfie_url ? [request.selfie_url] : []
+  return Array.isArray(request[key]) ? request[key].filter(Boolean) : []
+}
+
+const isUrl = (value) => /^https?:\/\//i.test(value)
+
+const getFileName = (value) => {
+  if (!value) return 'Documento'
+  try {
+    const path = isUrl(value) ? new URL(value).pathname : value
+    return decodeURIComponent(path.split('/').pop() || 'Documento')
+  } catch {
+    return value.split('/').pop() || 'Documento'
+  }
+}
+
+const resolveDocument = async (value) => {
+  if (isUrl(value)) return { value, url: value, name: getFileName(value) }
+
+  const { data, error } = await supabase.storage
+    .from('packer-docs')
+    .createSignedUrl(value, 300)
+
+  if (error) throw error
+  return { value, url: data?.signedUrl || '', name: getFileName(value) }
+}
+
+const DataItem = ({ label, value, locked = false }) => (
+  <div className="pv-data-item">
+    <span className="pv-data-label">{label}</span>
+    <span className="pv-data-value">{value || '—'}</span>
+    {locked && <span className="pv-locked-tag">Fijado</span>}
+  </div>
+)
+
+const DocumentGallery = ({ group, values, resolved, loading, onPreview }) => (
+  <section className="pv-section pv-doc-section">
+    <div className="pv-section-heading">
+      <div>
+        <h3>{group.label}</h3>
+        <p>{values.length} archivo{values.length === 1 ? '' : 's'} enviado{values.length === 1 ? '' : 's'}</p>
+      </div>
+    </div>
+
+    {loading ? (
+      <div className="pv-doc-empty">Generando acceso privado...</div>
+    ) : values.length === 0 ? (
+      <div className="pv-doc-empty">No se envió este documento.</div>
+    ) : (
+      <div className="pv-document-grid">
+        {(resolved || []).map((document, index) => (
+          <div key={`${document.value}-${index}`} className="pv-document-card">
+            {document.url ? (
+              document.name.toLowerCase().endsWith('.pdf') ? (
+                <button type="button" className="pv-pdf-card" onClick={() => onPreview(document)}>
+                  <span className="pv-pdf-icon">PDF</span>
+                  <span>{document.name}</span>
+                </button>
+              ) : (
+                <button type="button" className="pv-image-card" onClick={() => onPreview(document)}>
+                  <img src={document.url} alt={`${group.label} ${index + 1}`} />
+                </button>
+              )
+            ) : (
+              <div className="pv-doc-unavailable">Sin acceso al archivo</div>
+            )}
+            <span className="pv-document-name">{document.name}</span>
+          </div>
+        ))}
+      </div>
+    )}
+  </section>
+)
 
 export default function PackerAdminVerificaciones() {
   const [requests, setRequests] = useState([])
-  const [loading, setLoading] = useState(true)
   const [filterStatus, setFilterStatus] = useState('all')
-  const [detailModal, setDetailModal] = useState(null)
-  const [rejectNote, setRejectNote] = useState('')
-  const [infoNote, setInfoNote] = useState('')
+  const [selected, setSelected] = useState(null)
+  const [resolvedDocuments, setResolvedDocuments] = useState({})
+  const [documentLoading, setDocumentLoading] = useState(false)
   const [lightbox, setLightbox] = useState(null)
-
-  useEffect(() => { loadRequests() }, [filterStatus])
+  const [rejectNote, setRejectNote] = useState('')
+  const [adminNote, setAdminNote] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [actionLoading, setActionLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
 
   const loadRequests = async () => {
     setLoading(true)
-    try {
-      let query = supabase
-        .from('packer_verification_requests')
-        .select('*')
-        .order('created_at', { ascending: false })
+    setError('')
 
-      if (filterStatus !== 'all') {
-        query = query.eq('status', filterStatus)
-      }
+    const { data, error: requestError } = await supabase
+      .from('packer_verification_requests')
+      .select('*')
+      .order('created_at', { ascending: false })
 
-      const { data, error } = await query
-      if (error) { console.error(error); return }
-      if (data) {
-        const userIds = [...new Set(data.map(req => req.user_id).filter(Boolean))]
-        const [{ data: usersData }, { data: profilesData }] = await Promise.all([
-          supabase.from('users').select('id, display_name, email, whatsapp, avatar_url').in('id', userIds),
-          supabase.from('packer_profiles').select('id, full_name, phone, birth_country, doc_type, doc_number, personal_locked, phone_locked, address_city, address_country, address_text, address_lat, address_lng, address_locked, identity_verified, address_verified, bank_verified').in('id', userIds),
-        ])
-        const usersMap = Object.fromEntries((usersData || []).map(user => [user.id, user]))
-        const profilesMap = Object.fromEntries((profilesData || []).map(profile => [profile.id, profile]))
-        const flattened = data.map(req => {
-          const user = usersMap[req.user_id]
-          const profile = profilesMap[req.user_id]
-          return {
-            ...req,
-            user: user ? { ...user, ...(profile || {}) } : profile || null,
-          }
-        })
-        setRequests(flattened)
-      }
-    } catch (error) {
-      console.error('loadRequests error:', error)
-    } finally {
+    if (requestError) {
+      setError(`No se pudieron cargar las solicitudes: ${requestError.message}`)
+      setRequests([])
       setLoading(false)
+      return
     }
-  }
 
-  // ── APROBAR ──
-  const handleApprove = async (requestId, userId) => {
-    const now = new Date().toISOString()
-    await supabase.from('packer_verification_requests').update({
-      status: 'approved', reviewed_at: now
-    }).eq('id', requestId)
+    const rows = data || []
+    const userIds = [...new Set(rows.map(request => request.user_id).filter(Boolean))]
 
-    // Calcular nivel basado en documentos subidos
-    const req = requests.find(r => r.id === requestId)
-    let level = 'basico'
-    if (req?.identity_docs?.length > 0) level = 'medio'
-    if (req?.domicile_docs?.length > 0 && req?.bank_docs?.length > 0) level = 'pro'
-    if (req?.selfie_url) level = 'elite'
-
-    await supabase.from('packer_profiles').update({
-      level,
-      identity_verified: true,
-      address_verified: true,
-      bank_verified: true,
-    }).eq('id', userId)
-
-    setDetailModal(null)
-    loadRequests()
-  }
-
-  // ── RECHAZAR ──
-  const handleReject = async (requestId, userId) => {
-    if (!rejectNote.trim()) { alert('Escribe un motivo de rechazo'); return }
-    const now = new Date().toISOString()
-    await supabase.from('packer_verification_requests').update({
-      status: 'rejected', admin_note: rejectNote.trim(), reviewed_at: now
-    }).eq('id', requestId)
-    setRejectNote('')
-    setDetailModal(null)
-    loadRequests()
-  }
-
-  // ── REVOCAR ──
-  const handleRevoke = async (userId) => {
-    if (!confirm('¿Revocar verificación completa del packer?')) return
-    await supabase.from('packer_profiles').update({
-      level: 'basico',
-      identity_verified: false,
-      address_verified: false,
-      bank_verified: false,
-    }).eq('id', userId)
-    setDetailModal(null)
-    loadRequests()
-  }
-
-  // ── ENVIAR NOTA INFORMATIVA ──
-  const handleSendNote = async () => {
-    if (!infoNote.trim()) return
-    if (detailModal?.request?.id) {
-      await supabase.from('packer_verification_requests').update({
-        admin_note: infoNote.trim()
-      }).eq('id', detailModal.request.id)
-      setInfoNote('')
+    if (userIds.length === 0) {
+      setRequests([])
+      setLoading(false)
+      return
     }
-  }
 
-  // ── LIGHTBOX ──
-  const openLightbox = (images, index) => setLightbox({ images, index })
-  const closeLightbox = () => setLightbox(null)
-  const lbPrev = () => setLightbox(p => ({ ...p, index: Math.max(0, p.index - 1) }))
-  const lbNext = () => setLightbox(p => ({ ...p, index: Math.min(p.images.length - 1, p.index + 1) }))
+    const [{ data: usersData, error: usersError }, { data: profilesData, error: profilesError }] = await Promise.all([
+      supabase
+        .from('users')
+        .select('id, display_name, email, whatsapp, avatar_url')
+        .in('id', userIds),
+      supabase
+        .from('packer_profiles')
+        .select('id, full_name, phone, birth_country, doc_type, doc_number, personal_locked, phone_locked, address_city, address_country, address_text, address_lat, address_lng, address_locked, identity_verified, address_verified, bank_verified, level')
+        .in('id', userIds),
+    ])
+
+    if (usersError || profilesError) {
+      setError(`No se pudieron completar los datos del cotejo: ${(usersError || profilesError).message}`)
+    }
+
+    const usersMap = Object.fromEntries((usersData || []).map(user => [user.id, user]))
+    const profilesMap = Object.fromEntries((profilesData || []).map(profile => [profile.id, profile]))
+    const merged = rows.map(request => ({
+      ...request,
+      user: {
+        ...(usersMap[request.user_id] || {}),
+        ...(profilesMap[request.user_id] || {}),
+      },
+    }))
+
+    setRequests(merged)
+    setLoading(false)
+  }
 
   useEffect(() => {
-    if (!lightbox) return
-    const fn = (e) => {
-      if (e.key === 'ArrowLeft') lbPrev()
-      if (e.key === 'ArrowRight') lbNext()
-      if (e.key === 'Escape') closeLightbox()
+    loadRequests()
+  }, [])
+
+  useEffect(() => {
+    if (!selected) return undefined
+
+    let cancelled = false
+    const loadDocumentUrls = async () => {
+      setDocumentLoading(true)
+      setResolvedDocuments({})
+      try {
+        const entries = DOCUMENT_GROUPS.flatMap(group => (
+          getDocumentValues(selected, group.key).map((value, index) => ({ groupKey: group.key, value, index }))
+        ))
+        const resolved = await Promise.all(entries.map(async entry => ({
+          ...entry,
+          document: await resolveDocument(entry.value),
+        })))
+
+        if (cancelled) return
+        const grouped = {}
+        resolved.forEach(({ groupKey, document }) => {
+          if (!grouped[groupKey]) grouped[groupKey] = []
+          grouped[groupKey].push(document)
+        })
+        setResolvedDocuments(grouped)
+      } catch (documentError) {
+        if (!cancelled) setError(`No se pudieron abrir todos los documentos: ${documentError.message}`)
+      } finally {
+        if (!cancelled) setDocumentLoading(false)
+      }
     }
-    window.addEventListener('keydown', fn)
-    return () => window.removeEventListener('keydown', fn)
+
+    loadDocumentUrls()
+    return () => { cancelled = true }
+  }, [selected])
+
+  useEffect(() => {
+    if (!lightbox) return undefined
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') setLightbox(null)
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
   }, [lightbox])
 
-  const fmt = (date) => date ? new Date(date).toLocaleDateString('es-BO', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '—'
-  const fmtFull = (date) => date ? new Date(date).toLocaleString('es-BO', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—'
+  const visibleRequests = useMemo(() => (
+    filterStatus === 'all'
+      ? requests
+      : requests.filter(request => request.status === filterStatus)
+  ), [filterStatus, requests])
+
+  const openRequest = (request) => {
+    setSelected(request)
+    setRejectNote('')
+    setAdminNote(request.admin_note || '')
+    setSuccess('')
+    setError('')
+  }
+
+  const updateRequestInState = (requestId, patch) => {
+    setRequests(previous => previous.map(request => (
+      request.id === requestId
+        ? { ...request, ...patch }
+        : request
+    )))
+    setSelected(previous => previous && previous.id === requestId ? { ...previous, ...patch } : previous)
+  }
+
+  const handleApprove = async () => {
+    if (!selected || actionLoading) return
+    setActionLoading(true)
+    setError('')
+    setSuccess('')
+    const now = new Date().toISOString()
+
+    const { error: profileError } = await supabase
+      .from('packer_profiles')
+      .update({
+        level: selected.identity_docs?.length && selected.domicile_docs?.length && selected.bank_docs?.length && selected.selfie_url
+          ? 'elite'
+          : selected.identity_docs?.length && selected.domicile_docs?.length && selected.bank_docs?.length
+            ? 'pro'
+            : selected.identity_docs?.length
+              ? 'medio'
+              : 'basico',
+        identity_verified: true,
+        address_verified: true,
+        bank_verified: true,
+      })
+      .eq('id', selected.user_id)
+
+    if (profileError) {
+      setError(`No se pudo actualizar el perfil Packer: ${profileError.message}`)
+      setActionLoading(false)
+      return
+    }
+
+    const { error: requestError } = await supabase
+      .from('packer_verification_requests')
+      .update({ status: 'approved', reviewed_at: now })
+      .eq('id', selected.id)
+
+    if (requestError) {
+      setError(`El perfil se actualizó, pero la solicitud no pudo aprobarse: ${requestError.message}`)
+      setActionLoading(false)
+      return
+    }
+
+    updateRequestInState(selected.id, {
+      status: 'approved',
+      reviewed_at: now,
+      user: { ...selected.user, identity_verified: true, address_verified: true, bank_verified: true },
+    })
+    setSuccess('Solicitud aprobada correctamente.')
+    setActionLoading(false)
+  }
+
+  const handleReject = async () => {
+    if (!selected || actionLoading) return
+    if (!rejectNote.trim()) {
+      setError('Escribe el motivo del rechazo antes de continuar.')
+      return
+    }
+
+    setActionLoading(true)
+    setError('')
+    setSuccess('')
+    const now = new Date().toISOString()
+    const { error: requestError } = await supabase
+      .from('packer_verification_requests')
+      .update({ status: 'rejected', admin_note: rejectNote.trim(), reviewed_at: now })
+      .eq('id', selected.id)
+
+    if (requestError) {
+      setError(`No se pudo rechazar la solicitud: ${requestError.message}`)
+      setActionLoading(false)
+      return
+    }
+
+    updateRequestInState(selected.id, {
+      status: 'rejected',
+      admin_note: rejectNote.trim(),
+      reviewed_at: now,
+    })
+    setSuccess('Solicitud rechazada y motivo guardado.')
+    setActionLoading(false)
+  }
+
+  const handleRevoke = async () => {
+    if (!selected || actionLoading) return
+    setActionLoading(true)
+    setError('')
+    setSuccess('')
+
+    const { error: profileError } = await supabase
+      .from('packer_profiles')
+      .update({
+        level: 'basico',
+        identity_verified: false,
+        address_verified: false,
+        bank_verified: false,
+      })
+      .eq('id', selected.user_id)
+
+    if (profileError) {
+      setError(`No se pudo revocar la verificación: ${profileError.message}`)
+      setActionLoading(false)
+      return
+    }
+
+    updateRequestInState(selected.id, {
+      user: { ...selected.user, identity_verified: false, address_verified: false, bank_verified: false, level: 'basico' },
+    })
+    setSuccess('Verificación revocada del perfil Packer.')
+    setActionLoading(false)
+  }
+
+  const handleSaveNote = async () => {
+    if (!selected || actionLoading || !adminNote.trim()) return
+    setActionLoading(true)
+    setError('')
+    setSuccess('')
+
+    const note = adminNote.trim()
+    const { error: noteError } = await supabase
+      .from('packer_verification_requests')
+      .update({ admin_note: note })
+      .eq('id', selected.id)
+
+    if (noteError) {
+      setError(`No se pudo guardar la nota: ${noteError.message}`)
+      setActionLoading(false)
+      return
+    }
+
+    updateRequestInState(selected.id, { admin_note: note })
+    setSuccess('Nota guardada correctamente.')
+    setActionLoading(false)
+  }
 
   return (
-    <div className="admin-page">
+    <div className="pv-page">
       <AdminNavbarPacker />
-      <div className="admin-content">
-        <div className="admin-page-header">
-          <h1 className="serif luxury-gold">Verificaciones Packer</h1>
-          <p className="admin-page-sub">{requests.length} solicitudes</p>
-        </div>
 
-        <div className="admin-filters-bar">
-          <div className="admin-filter-btns">
-            {['all', 'pending', 'approved', 'rejected'].map(s => (
-              <button key={s} className={`filter-btn ${filterStatus === s ? 'active' : ''}`} onClick={() => setFilterStatus(s)}>
-                {s === 'all' ? 'Todos' : s === 'pending' ? 'Pendientes' : s === 'approved' ? 'Aprobados' : 'Rechazados'}
+      <main className="pv-shell">
+        <header className="pv-header">
+          <div>
+            <p className="pv-kicker">Packer · Backoffice</p>
+            <h1>Verificaciones</h1>
+            <p className="pv-subtitle">Revisa la solicitud, coteja los datos declarados y valida los documentos enviados.</p>
+          </div>
+          <div className="pv-total-card">
+            <strong>{requests.length}</strong>
+            <span>solicitudes registradas</span>
+          </div>
+        </header>
+
+        {error && <div className="pv-alert pv-alert-error" role="alert">{error}</div>}
+        {success && <div className="pv-alert pv-alert-success" role="status">{success}</div>}
+
+        <div className="pv-toolbar">
+          <div className="pv-filters" role="tablist" aria-label="Filtrar solicitudes">
+            {['all', 'pending', 'approved', 'rejected'].map(status => (
+              <button
+                key={status}
+                type="button"
+                role="tab"
+                aria-selected={filterStatus === status}
+                className={`pv-filter ${filterStatus === status ? 'is-active' : ''}`}
+                onClick={() => setFilterStatus(status)}
+              >
+                {status === 'all' ? 'Todas' : STATUS_LABELS[status]}
+                <span>{status === 'all' ? requests.length : requests.filter(request => request.status === status).length}</span>
               </button>
             ))}
           </div>
+          <button type="button" className="pv-refresh" onClick={loadRequests} disabled={loading}>
+            {loading ? 'Cargando…' : 'Actualizar solicitudes'}
+          </button>
         </div>
 
-        <div className="admin-card">
-          {loading ? (
-            <div className="admin-loading">Cargando verificaciones...</div>
-          ) : requests.length === 0 ? (
-            <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-              No hay solicitudes de verificación.
-            </div>
-          ) : (
-            <div className="admin-listings-table">
-              <div className="admin-listings-header">
-                <span>Packer</span>
-                <span>Estado</span>
-                <span>Documentos</span>
-                <span>Fecha</span>
-                <span>Acciones</span>
-              </div>
-              {requests.map(req => (
-                <div key={req.id} className="admin-listing-row">
-                  <div className="admin-listing-info">
-                    <div className="admin-listing-thumb">
-                      {req.user?.avatar_url
-                        ? <img src={req.user.avatar_url} alt="" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }} />
-                        : <span style={{ fontSize: '1.5rem' }}>📄</span>
-                      }
-                    </div>
-                    <div>
-                      <div className="admin-listing-title">{req.user?.display_name || '—'}</div>
-                      <div className="admin-listing-meta">
-                        {req.user?.email}
-                        {req.user?.full_name && (
-                          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                            {req.user.full_name}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <span className={`admin-badge ${
-                      req.status === 'approved' ? 'badge-verified' :
-                      req.status === 'rejected' ? 'badge-rejected' : 'badge-pending'
-                    }`}>
-                      {req.status === 'pending' ? 'Pendiente' :
-                       req.status === 'approved' ? 'Aprobado' : 'Rechazado'}
-                    </span>
-                  </div>
-
-                  <div style={{ fontSize: '0.8rem' }}>
-                    {req.identity_docs?.length > 0 && <span style={{ marginRight: '0.5rem' }}>ID {req.identity_docs.length}</span>}
-                    {req.domicile_docs?.length > 0 && <span style={{ marginRight: '0.5rem' }}>DOM {req.domicile_docs.length}</span>}
-                    {req.bank_docs?.length > 0 && <span style={{ marginRight: '0.5rem' }}>BANCO {req.bank_docs.length}</span>}
-                    {req.selfie_url && <span>FOTO</span>}
-                  </div>
-
-                  <div className="admin-cell-muted">{fmt(req.created_at)}</div>
-
-                  <div className="admin-user-actions">
-                    <button className="btn-small btn-docs" onClick={() => {
-                      setRejectNote('')
-                      setInfoNote(req.admin_note || '')
-                      setDetailModal({ user: req.user, request: req })
-                    }}>
-                      Revisar
-                    </button>
-                    {req.status === 'pending' && (
-                      <button className="btn-small btn-success" onClick={() => handleApprove(req.id, req.user_id)}>
-                        Aprobar
-                      </button>
-                    )}
-                    {req.status === 'approved' && (
-                      <button className="btn-small btn-danger" onClick={() => handleRevoke(req.user_id)}>
-                        Revocar
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* ════════════════════════════════════════════════════════════ */}
-      {/* MODAL DE DETALLE — TODOS LOS DATOS DEL USUARIO               */}
-      {/* ════════════════════════════════════════════════════════════ */}
-      {detailModal && (
-        <div className="docs-modal-overlay" onClick={() => setDetailModal(null)}>
-          <div className="docs-modal traficante-detail-modal" onClick={e => e.stopPropagation()}>
-            <div className="docs-modal-header">
-              <h3>{detailModal.user?.display_name || '—'}</h3>
-              <button className="docs-modal-close" onClick={() => setDetailModal(null)}>X</button>
-            </div>
-
-            <div className="docs-modal-body">
-              <div className="traf-modal-status-bar">
-                <span className={`admin-badge ${
-                  detailModal.request?.status === 'approved' ? 'badge-verified' :
-                  detailModal.request?.status === 'rejected' ? 'badge-rejected' : 'badge-pending'
-                }`}>
-                  {detailModal.request?.status === 'pending' ? 'Pendiente' :
-                   detailModal.request?.status === 'approved' ? 'Aprobado' : 'Rechazado'}
-                </span>
-                {detailModal.user?.identity_verified && (
-                  <span className="admin-badge badge-verified" style={{ marginLeft: '0.5rem' }}>Verificado</span>
-                )}
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginLeft: 'auto' }}>
-                  Enviado: {fmtFull(detailModal.request?.created_at)}
-                </span>
-              </div>
-
-              {/* ── DATOS PERSONALES (de packer_profiles) ── */}
-              <div className="docs-section">
-                <h4>Datos personales</h4>
-                {detailModal.user?.personal_locked && (
-                  <div className="traf-locked-banner">Datos personales fijados por el usuario</div>
-                )}
-                <div className="traf-data-grid">
-                  {detailModal.user?.full_name && (
-                    <div className="traf-data-item">
-                      <label>Nombre completo real</label>
-                      <span>{detailModal.user.full_name}</span>
-                    </div>
-                  )}
-                  {detailModal.user?.phone && (
-                    <div className="traf-data-item">
-                      <label>Teléfono</label>
-                      <span>{detailModal.user.phone}</span>
-                    </div>
-                  )}
-                  {detailModal.user?.birth_country && (
-                    <div className="traf-data-item">
-                      <label>País de nacimiento</label>
-                      <span>{detailModal.user.birth_country}</span>
-                    </div>
-                  )}
-                  {detailModal.user?.doc_type && (
-                    <div className="traf-data-item">
-                      <label>Tipo de documento</label>
-                      <span>{detailModal.user.doc_type === 'ci' ? 'Cédula de Identidad (CI)' : detailModal.user.doc_type === 'pasaporte' ? 'Pasaporte' : detailModal.user.doc_type}</span>
-                    </div>
-                  )}
-                  {detailModal.user?.doc_number && (
-                    <div className="traf-data-item traf-data-full">
-                      <label>Número de documento</label>
-                      <span>{detailModal.user.doc_number}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* ── DIRECCIÓN (de packer_profiles) ── */}
-              <div className="docs-section">
-                <h4>Dirección</h4>
-                <div className="traf-data-grid">
-                  {detailModal.user?.address_city && (
-                    <div className="traf-data-item">
-                      <label>Ciudad</label>
-                      <span>{detailModal.user.address_city}</span>
-                    </div>
-                  )}
-                  {detailModal.user?.address_country && (
-                    <div className="traf-data-item">
-                      <label>País</label>
-                      <span>{detailModal.user.address_country}</span>
-                    </div>
-                  )}
-                  {detailModal.user?.address_text && (
-                    <div className="traf-data-item traf-data-full">
-                      <label>Dirección exacta</label>
-                      <span>{detailModal.user.address_text}</span>
-                    </div>
-                  )}
-                  {detailModal.user?.address_lat && detailModal.user?.address_lng && (
-                    <div className="traf-data-item">
-                      <label>Coordenadas GPS</label>
-                      <span>
-                        {Number(detailModal.user.address_lat).toFixed(5)}, {Number(detailModal.user.address_lng).toFixed(5)}
-                        {detailModal.user.address_locked && (
-                          <span className="traf-locked-tag">Fija</span>
-                        )}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* ── DOCUMENTOS DE VERIFICACIÓN (de packer_verification_requests) ── */}
-              <div className="docs-section">
-                <h4>Documento de identidad</h4>
-                {detailModal.request?.identity_docs?.length > 0 ? (
-                  <div className="docs-grid">
-                    {detailModal.request.identity_docs.map((url, i) => (
-                      <div key={i} className="doc-card" onClick={() => openLightbox(detailModal.request.identity_docs, i)}>
-                        <img src={url} alt={`ID ${i+1}`} className="doc-thumb" />
-                        <span className="doc-label">{i === 0 ? 'Anverso' : i === 1 ? 'Reverso' : `Doc ${i+1}`}</span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="docs-empty">Sin documentos de identidad subidos.</p>
-                )}
-              </div>
-
-              <div className="docs-section">
-                <h4>Comprobante de domicilio</h4>
-                {detailModal.request?.domicile_docs?.length > 0 ? (
-                  <div className="docs-grid">
-                    {detailModal.request.domicile_docs.map((url, i) => (
-                      <div key={i} className="doc-card" onClick={() => openLightbox(detailModal.request.domicile_docs, i)}>
-                        <img src={url} alt={`Dom ${i+1}`} className="doc-thumb" />
-                        <span className="doc-label">Doc {i+1}</span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="docs-empty">Sin comprobante de domicilio subido.</p>
-                )}
-              </div>
-
-              <div className="docs-section">
-                <h4>Extracto bancario</h4>
-                {detailModal.request?.bank_docs?.length > 0 ? (
-                  <div className="docs-grid">
-                    {detailModal.request.bank_docs.map((url, i) => (
-                      <div key={i} className="doc-card" onClick={() => openLightbox(detailModal.request.bank_docs, i)}>
-                        <img src={url} alt={`Bank ${i+1}`} className="doc-thumb" />
-                        <span className="doc-label">Doc {i+1}</span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="docs-empty">Sin extracto bancario subido.</p>
-                )}
-              </div>
-
-              <div className="docs-section">
-                <h4>Foto personal (selfie)</h4>
-                {detailModal.request?.selfie_url ? (
-                  <div className="docs-grid">
-                    <div className="doc-card doc-card-selfie" onClick={() => openLightbox([detailModal.request.selfie_url], 0)}>
-                      <img src={detailModal.request.selfie_url} alt="Selfie" className="doc-thumb doc-thumb-selfie" />
-                      <span className="doc-label">Foto personal</span>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="docs-empty">Sin foto personal subida.</p>
-                )}
-              </div>
-
-              {/* ── NOTA DEL ADMIN ── */}
-              <div className="docs-section docs-section-note">
-                <h4>Nota para el usuario</h4>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
-                  El usuario la verá en su panel de verificación.
-                </p>
-                {detailModal.request?.admin_note && (
-                  <div className="traf-admin-note-current">
-                    <div style={{ fontSize: '0.7rem', color: 'var(--gold)', fontWeight: 700, marginBottom: '0.35rem' }}>NOTA ACTUAL</div>
-                    <p style={{ fontSize: '0.85rem', margin: 0, fontStyle: 'italic' }}>"{detailModal.request.admin_note}"</p>
-                  </div>
-                )}
-                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
-                  <textarea className="input" rows={3} placeholder="Ej: Tu foto está borrosa, sube una más clara..."
-                    value={infoNote} onChange={e => setInfoNote(e.target.value)}
-                    style={{ flex: 1, resize: 'vertical', fontFamily: 'Inter, sans-serif', fontSize: '0.875rem' }} />
-                  <button className="btn btn-secondary" onClick={handleSendNote} disabled={!infoNote.trim()} style={{ whiteSpace: 'nowrap' }}>
-                    Enviar nota
-                  </button>
-                </div>
-              </div>
-
-              {/* ── ACCIONES DE APROBACIÓN/RECHAZO ── */}
-              {detailModal.request?.status === 'pending' && (
-                <div className="traf-modal-actions">
-                  <button className="btn btn-primary traf-btn-approve" onClick={() => handleApprove(detailModal.request.id, detailModal.user.id)}>
-                    Aprobar verificación
-                  </button>
-                  <div className="traf-reject-row">
-                    <input type="text" className="input" placeholder="Motivo de rechazo..."
-                      value={rejectNote} onChange={e => setRejectNote(e.target.value)}
-                      style={{ flex: 1 }} />
-                    <button className="btn btn-secondary traf-btn-reject" onClick={() => handleReject(detailModal.request.id, detailModal.user.id)}>
-                      Rechazar
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {detailModal.request?.status === 'approved' && (
-                <div className="traf-modal-actions">
-                  <button className="btn btn-danger" onClick={() => handleRevoke(detailModal.user.id)}>
-                    Revocar verificación
-                  </button>
-                </div>
-              )}
-
-              {detailModal.request?.status === 'rejected' && (
-                <div className="traf-modal-actions">
-                  <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                    Rechazado el {fmtFull(detailModal.request.reviewed_at)}. El usuario puede re-enviar documentos.
-                  </p>
-                </div>
-              )}
-
-            </div>
+        {loading ? (
+          <div className="pv-empty-state">Cargando solicitudes de verificación…</div>
+        ) : visibleRequests.length === 0 ? (
+          <div className="pv-empty-state">
+            <strong>No hay solicitudes en este filtro.</strong>
+            <span>Cuando un usuario envíe su verificación, aparecerá aquí.</span>
           </div>
+        ) : (
+          <section className="pv-request-list" aria-label="Solicitudes de verificación">
+            {visibleRequests.map(request => (
+              <article key={request.id} className="pv-request-card">
+                <div className="pv-request-person">
+                  <div className="pv-avatar">
+                    {request.user?.avatar_url
+                      ? <img src={request.user.avatar_url} alt="" />
+                      : getInitial(request)}
+                  </div>
+                  <div>
+                    <h2>{getDisplayName(request)}</h2>
+                    <p>{request.user?.email || 'Email no disponible'}</p>
+                    {request.user?.full_name && <span>{request.user.full_name}</span>}
+                  </div>
+                </div>
+
+                <div className="pv-request-status">
+                  <span className={`pv-status pv-status-${request.status || 'pending'}`}>
+                    {STATUS_LABELS[request.status] || request.status || 'Pendiente'}
+                  </span>
+                  <small>{formatDate(request.created_at, true)}</small>
+                </div>
+
+                <div className="pv-document-summary">
+                  {DOCUMENT_GROUPS.map(group => {
+                    const count = getDocumentValues(request, group.key).length
+                    return count > 0 ? <span key={group.key}>{group.shortLabel} {count}</span> : null
+                  })}
+                  {DOCUMENT_GROUPS.every(group => getDocumentValues(request, group.key).length === 0) && <span>Sin archivos</span>}
+                </div>
+
+                <button type="button" className="pv-review-button" onClick={() => openRequest(request)}>
+                  Revisar solicitud
+                </button>
+              </article>
+            ))}
+          </section>
+        )}
+      </main>
+
+      {selected && (
+        <div className="pv-modal-backdrop" onClick={() => setSelected(null)}>
+          <section className="pv-modal" role="dialog" aria-modal="true" aria-labelledby="pv-modal-title" onClick={event => event.stopPropagation()}>
+            <header className="pv-modal-header">
+              <div>
+                <p className="pv-kicker">Cotejo de verificación</p>
+                <h2 id="pv-modal-title">{getDisplayName(selected)}</h2>
+                <span>{selected.user?.email || selected.user_id}</span>
+              </div>
+              <button type="button" className="pv-close-button" onClick={() => setSelected(null)} aria-label="Cerrar revisión">×</button>
+            </header>
+
+            <div className="pv-modal-body">
+              <div className="pv-review-meta">
+                <span className={`pv-status pv-status-${selected.status || 'pending'}`}>
+                  {STATUS_LABELS[selected.status] || selected.status || 'Pendiente'}
+                </span>
+                <span>Enviada: {formatDate(selected.created_at, true)}</span>
+                {selected.reviewed_at && <span>Revisada: {formatDate(selected.reviewed_at, true)}</span>}
+              </div>
+
+              <div className="pv-review-grid">
+                <section className="pv-panel">
+                  <div className="pv-panel-heading">
+                    <div>
+                      <p className="pv-kicker">Origen · Mi Cuenta</p>
+                      <h3>Datos declarados</h3>
+                    </div>
+                    <span className="pv-panel-source">packer_profiles</span>
+                  </div>
+                  <div className="pv-data-grid">
+                    <DataItem label="Nombre real" value={selected.user?.full_name} locked={selected.user?.personal_locked} />
+                    <DataItem label="Teléfono" value={selected.user?.phone} locked={selected.user?.phone_locked} />
+                    <DataItem label="País de nacimiento" value={selected.user?.birth_country} />
+                    <DataItem label="Tipo de documento" value={selected.user?.doc_type === 'ci' ? 'Cédula de Identidad (CI)' : selected.user?.doc_type === 'pasaporte' ? 'Pasaporte' : selected.user?.doc_type} />
+                    <DataItem label="Número de documento" value={selected.user?.doc_number} />
+                    <DataItem label="Nivel actual" value={selected.user?.level} />
+                    <DataItem label="Ciudad" value={selected.user?.address_city} locked={selected.user?.address_locked} />
+                    <DataItem label="País del domicilio" value={selected.user?.address_country} />
+                    <DataItem label="Domicilio exacto" value={selected.user?.address_text} />
+                    <DataItem label="Coordenadas" value={selected.user?.address_lat && selected.user?.address_lng ? `${Number(selected.user.address_lat).toFixed(5)}, ${Number(selected.user.address_lng).toFixed(5)}` : ''} />
+                  </div>
+                  <div className="pv-verification-flags">
+                    <span className={selected.user?.identity_verified ? 'is-verified' : ''}>Identidad {selected.user?.identity_verified ? 'verificada' : 'pendiente'}</span>
+                    <span className={selected.user?.address_verified ? 'is-verified' : ''}>Domicilio {selected.user?.address_verified ? 'verificado' : 'pendiente'}</span>
+                    <span className={selected.user?.bank_verified ? 'is-verified' : ''}>Banco {selected.user?.bank_verified ? 'verificado' : 'pendiente'}</span>
+                  </div>
+                </section>
+
+                <section className="pv-panel">
+                  <div className="pv-panel-heading">
+                    <div>
+                      <p className="pv-kicker">Origen · Verificación</p>
+                      <h3>Solicitud enviada</h3>
+                    </div>
+                    <span className="pv-panel-source">packer_verification_requests</span>
+                  </div>
+                  <div className="pv-request-facts">
+                    <div><span>Usuario UUID</span><strong>{selected.user_id}</strong></div>
+                    <div><span>Documentos de identidad</span><strong>{getDocumentValues(selected, 'identity_docs').length}</strong></div>
+                    <div><span>Comprobantes de domicilio</span><strong>{getDocumentValues(selected, 'domicile_docs').length}</strong></div>
+                    <div><span>Documentos bancarios</span><strong>{getDocumentValues(selected, 'bank_docs').length}</strong></div>
+                    <div><span>Selfie</span><strong>{selected.selfie_url ? 'Enviada' : 'No enviada'}</strong></div>
+                  </div>
+                  <div className="pv-cotejo-note">
+                    <strong>Cotejo manual</strong>
+                    <p>Compara nombre, documento, teléfono, ciudad y domicilio declarados con la información visible en los archivos enviados.</p>
+                  </div>
+                </section>
+              </div>
+
+              <div className="pv-document-sections">
+                {DOCUMENT_GROUPS.map(group => (
+                  <DocumentGallery
+                    key={group.key}
+                    group={group}
+                    values={getDocumentValues(selected, group.key)}
+                    resolved={resolvedDocuments[group.key]}
+                    loading={documentLoading}
+                    onPreview={setLightbox}
+                  />
+                ))}
+              </div>
+
+              <section className="pv-panel pv-note-panel">
+                <div className="pv-panel-heading">
+                  <div>
+                    <p className="pv-kicker">Comunicación</p>
+                    <h3>Nota para el usuario</h3>
+                  </div>
+                </div>
+                {selected.admin_note && <div className="pv-current-note">Nota guardada: “{selected.admin_note}”</div>}
+                <div className="pv-note-form">
+                  <textarea
+                    value={adminNote}
+                    onChange={event => setAdminNote(event.target.value)}
+                    rows={3}
+                    placeholder="Escribe una indicación para el usuario..."
+                  />
+                  <button type="button" className="pv-secondary-button" onClick={handleSaveNote} disabled={actionLoading || !adminNote.trim()}>
+                    Guardar nota
+                  </button>
+                </div>
+              </section>
+
+              <section className="pv-actions-panel">
+                {selected.status === 'pending' && (
+                  <>
+                    <button type="button" className="pv-approve-button" onClick={handleApprove} disabled={actionLoading}>
+                      {actionLoading ? 'Procesando…' : 'Aprobar verificación'}
+                    </button>
+                    <div className="pv-reject-form">
+                      <input
+                        value={rejectNote}
+                        onChange={event => setRejectNote(event.target.value)}
+                        placeholder="Motivo obligatorio para rechazar"
+                      />
+                      <button type="button" className="pv-reject-button" onClick={handleReject} disabled={actionLoading}>
+                        Rechazar
+                      </button>
+                    </div>
+                  </>
+                )}
+                {selected.status === 'approved' && (
+                  <button type="button" className="pv-revoke-button" onClick={handleRevoke} disabled={actionLoading}>
+                    {actionLoading ? 'Procesando…' : 'Revocar verificación'}
+                  </button>
+                )}
+                {selected.status === 'rejected' && <p className="pv-rejected-copy">El usuario puede enviar una nueva solicitud corregida.</p>}
+              </section>
+            </div>
+          </section>
         </div>
       )}
 
-      {/* ════════════════════════════════════════════════════════════ */}
-      {/* LIGHTBOX                                                    */}
-      {/* ════════════════════════════════════════════════════════════ */}
       {lightbox && (
-        <div className="docs-lightbox" onClick={closeLightbox}>
-          <button className="lightbox-nav-btn lightbox-prev"
-            onClick={e => { e.stopPropagation(); lbPrev() }}
-            disabled={lightbox.index === 0}>‹</button>
-          <div onClick={e => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <img src={lightbox.images[lightbox.index]} alt="" style={{ maxWidth: '90vw', maxHeight: '82vh', objectFit: 'contain', borderRadius: 'var(--radius-md)' }} />
-            <div style={{ marginTop: '0.75rem', color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem' }}>
-              {lightbox.index + 1} / {lightbox.images.length}
-            </div>
+        <div className="pv-lightbox-backdrop" onClick={() => setLightbox(null)}>
+          <div className="pv-lightbox-content" onClick={event => event.stopPropagation()}>
+            <button type="button" className="pv-lightbox-close" onClick={() => setLightbox(null)} aria-label="Cerrar documento">×</button>
+            {lightbox.name.toLowerCase().endsWith('.pdf') ? (
+              <iframe src={lightbox.url} title={lightbox.name} className="pv-pdf-viewer" />
+            ) : (
+              <img src={lightbox.url} alt={lightbox.name} />
+            )}
+            <span>{lightbox.name}</span>
           </div>
-          <button className="lightbox-nav-btn lightbox-next"
-            onClick={e => { e.stopPropagation(); lbNext() }}
-            disabled={lightbox.index === lightbox.images.length - 1}>›</button>
-          <button onClick={closeLightbox} style={{ position: 'fixed', top: '1rem', right: '1rem', width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', cursor: 'pointer', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
         </div>
       )}
     </div>
