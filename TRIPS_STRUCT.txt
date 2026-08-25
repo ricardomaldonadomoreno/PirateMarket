@@ -1,4 +1,4 @@
-Estructura de traficante_trips (deducida de código):
+Estructura de packer_trips (deducida de código):
 - id UUID
 - user_id UUID (referencia a users)
 - type TEXT ('viajero' | 'compactador')

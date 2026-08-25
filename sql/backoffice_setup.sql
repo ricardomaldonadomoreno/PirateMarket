@@ -116,12 +116,12 @@ CREATE POLICY "Admins can delete listing banners"
   );
 
 -- ═══════════════════════════════════════════════════════════════════════════
--- 3. TABLA: featured_trips (si no existe — para traficante)
+-- 3. TABLA: packer_featured_trips (si no existe — para Packer)
 -- ═══════════════════════════════════════════════════════════════════════════
 
-CREATE TABLE IF NOT EXISTS public.featured_trips (
+CREATE TABLE IF NOT EXISTS public.packer_featured_trips (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  trip_id UUID NOT NULL REFERENCES public.traficante_trips(id) ON DELETE CASCADE,
+  trip_id UUID NOT NULL REFERENCES public.packer_trips(id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
   banner_image_url TEXT,
   status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'active', 'expired', 'cancelled')),
@@ -133,15 +133,15 @@ CREATE TABLE IF NOT EXISTS public.featured_trips (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_featured_trips_status ON public.featured_trips(status);
-CREATE INDEX IF NOT EXISTS idx_featured_trips_user ON public.featured_trips(user_id);
+CREATE INDEX IF NOT EXISTS idx_packer_featured_trips_status ON public.packer_featured_trips(status);
+CREATE INDEX IF NOT EXISTS idx_packer_featured_trips_user ON public.packer_featured_trips(user_id);
 
--- RLS para featured_trips
-ALTER TABLE public.featured_trips ENABLE ROW LEVEL SECURITY;
+-- RLS para packer_featured_trips
+ALTER TABLE public.packer_featured_trips ENABLE ROW LEVEL SECURITY;
 
 -- Admins pueden ver todos
-CREATE POLICY "Admins can view featured_trips"
-  ON public.featured_trips
+CREATE POLICY "Admins can view packer_featured_trips"
+  ON public.packer_featured_trips
   FOR SELECT
   USING (
     EXISTS (SELECT 1 FROM public.admin_roles WHERE user_id = auth.uid())
@@ -149,8 +149,8 @@ CREATE POLICY "Admins can view featured_trips"
   );
 
 -- Admins pueden actualizar estado
-CREATE POLICY "Admins can update featured_trips"
-  ON public.featured_trips
+CREATE POLICY "Admins can update packer_featured_trips"
+  ON public.packer_featured_trips
   FOR UPDATE
   USING (
     EXISTS (SELECT 1 FROM public.admin_roles WHERE user_id = auth.uid())
@@ -159,9 +159,9 @@ CREATE POLICY "Admins can update featured_trips"
     EXISTS (SELECT 1 FROM public.admin_roles WHERE user_id = auth.uid())
   );
 
--- Traficantes pueden insertar solicitudes
-CREATE POLICY "Traficantes can create featured trip requests"
-  ON public.featured_trips
+-- Packers pueden insertar solicitudes
+CREATE POLICY "Packers can create featured trip requests"
+  ON public.packer_featured_trips
   FOR INSERT
   WITH CHECK (user_id = auth.uid());
 

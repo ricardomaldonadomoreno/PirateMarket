@@ -649,7 +649,7 @@ EXECUTE FUNCTION create_packer_profile();
 --   avatars (public)            — Foto de perfil: avatars/{user_id}.{ext}
 --   listing-photos (public)     — Fotos de anuncios: listing-photos/{listing_id}/...
 --   verification-docs (private) — Docs Pirata: verification-docs/{user_id}/identity/ y business/
---   traficante-docs (private; nombre histórico del bucket Storage de Packer): traficante-docs/{user_id}/identity/, domicile/, bank/
+--   packer-docs (private): packer-docs/{user_id}/identity/, domicile/, bank/ (selfie dentro de identity/)
 
 -- ================================================
 -- PAÍSES DE AMÉRICA
