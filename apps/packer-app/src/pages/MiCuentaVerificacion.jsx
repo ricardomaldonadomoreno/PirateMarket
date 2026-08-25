@@ -162,36 +162,6 @@ export default function MiCuentaVerificacion({ user, profile }) {
       <div className="verif-info-box">
         <h4>Requisitos para la verificación</h4>
         <p>Completa los siguientes documentos para que nuestro equipo pueda verificar tu identidad. El proceso toma 24-48 horas.</p>
-        <div className="verif-types-info">
-          <div className="verif-type-card">
-            <div className="verif-type-icon">📄</div>
-            <div>
-              <strong>Documento de identidad</strong>
-              <p>Carnet de identidad, cédula o pasaporte vigente. Foto frontal y dorsal. Obligatorio.</p>
-            </div>
-          </div>
-          <div className="verif-type-card">
-            <div className="verif-type-icon">🏠</div>
-            <div>
-              <strong>Comprobante de domicilio</strong>
-              <p>Factura de agua, luz, teléfono, internet o cable con tu nombre y dirección. Obligatorio.</p>
-            </div>
-          </div>
-          <div className="verif-type-card">
-            <div className="verif-type-icon">🏦</div>
-            <div>
-              <strong>Extracto bancario</strong>
-              <p>Extracto reciente con tu nombre y dirección. Opcional.</p>
-            </div>
-          </div>
-          <div className="verif-type-card">
-            <div className="verif-type-icon">📷</div>
-            <div>
-              <strong>Foto personal</strong>
-              <p>Foto clara de tu rostro para confirmar que eres la misma persona del documento.</p>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Status de verificación */}
