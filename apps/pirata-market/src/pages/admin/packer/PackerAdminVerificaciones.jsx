@@ -307,13 +307,37 @@ export default function PackerAdminVerificaciones() {
     setError('')
     setSuccess('')
     const now = new Date().toISOString()
+    const { error: profileError } = await supabase
+      .from('packer_profiles')
+      .update({
+        level: 'basico',
+        identity_verified: false,
+        address_verified: false,
+        bank_verified: false,
+      })
+      .eq('id', selected.user_id)
+
+    if (profileError) {
+      setError(`No se pudo reiniciar el perfil Packer: ${profileError.message}`)
+      setActionLoading(false)
+      return
+    }
+
     const { error: requestError } = await supabase
       .from('packer_verification_requests')
-      .update({ status: 'rejected', admin_note: rejectNote.trim(), reviewed_at: now })
+      .update({
+        status: 'rejected',
+        admin_note: rejectNote.trim(),
+        reviewed_at: now,
+        identity_docs: [],
+        domicile_docs: [],
+        bank_docs: [],
+        selfie_url: null,
+      })
       .eq('id', selected.id)
 
     if (requestError) {
-      setError(`No se pudo rechazar la solicitud: ${requestError.message}`)
+      setError(`El perfil se reinició, pero no se pudo rechazar la solicitud: ${requestError.message}`)
       setActionLoading(false)
       return
     }
@@ -322,8 +346,13 @@ export default function PackerAdminVerificaciones() {
       status: 'rejected',
       admin_note: rejectNote.trim(),
       reviewed_at: now,
+      identity_docs: [],
+      domicile_docs: [],
+      bank_docs: [],
+      selfie_url: null,
+      user: { ...selected.user, identity_verified: false, address_verified: false, bank_verified: false, level: 'basico' },
     })
-    setSuccess('Solicitud rechazada y motivo guardado.')
+    setSuccess('Solicitud rechazada y documentos habilitados para una nueva carga.')
     setActionLoading(false)
   }
 
@@ -332,6 +361,7 @@ export default function PackerAdminVerificaciones() {
     setActionLoading(true)
     setError('')
     setSuccess('')
+    const now = new Date().toISOString()
 
     const { error: profileError } = await supabase
       .from('packer_profiles')
@@ -349,10 +379,34 @@ export default function PackerAdminVerificaciones() {
       return
     }
 
+    const { error: requestError } = await supabase
+      .from('packer_verification_requests')
+      .update({
+        status: 'rejected',
+        reviewed_at: now,
+        identity_docs: [],
+        domicile_docs: [],
+        bank_docs: [],
+        selfie_url: null,
+      })
+      .eq('id', selected.id)
+
+    if (requestError) {
+      setError(`El perfil se reinició, pero no se pudo revocar la solicitud: ${requestError.message}`)
+      setActionLoading(false)
+      return
+    }
+
     updateRequestInState(selected.id, {
+      status: 'rejected',
+      reviewed_at: now,
+      identity_docs: [],
+      domicile_docs: [],
+      bank_docs: [],
+      selfie_url: null,
       user: { ...selected.user, identity_verified: false, address_verified: false, bank_verified: false, level: 'basico' },
     })
-    setSuccess('Verificación revocada del perfil Packer.')
+    setSuccess('Verificación revocada y documentos habilitados para una nueva carga.')
     setActionLoading(false)
   }
 

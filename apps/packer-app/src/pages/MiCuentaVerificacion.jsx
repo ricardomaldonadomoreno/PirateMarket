@@ -97,6 +97,8 @@ export default function MiCuentaVerificacion({ user, profile }) {
     })
   }
 
+  const isResettable = verifRequest?.status === 'rejected'
+
   const handleSubmitVerification = async () => {
     if (identityFiles.length === 0 || domicileFiles.length === 0) {
       setVerifError('El documento de identidad y comprobante de domicilio son obligatorios')
@@ -170,9 +172,9 @@ export default function MiCuentaVerificacion({ user, profile }) {
       )}
       {verifRequest?.status === 'rejected' && (
         <div className="mc-notice danger">
-          Tu solicitud fue rechazada.
+          Tu solicitud fue rechazada y los documentos anteriores fueron liberados.
           {verifRequest.admin_note && <><br />Motivo: <strong>{verifRequest.admin_note}</strong></>}
-          <br />Puedes volver a enviar documentos corregidos.
+          <br />Puedes cargar y enviar documentos corregidos.
         </div>
       )}
       {verifRequest?.status === 'approved' && (
@@ -188,7 +190,7 @@ export default function MiCuentaVerificacion({ user, profile }) {
           </span>
         </div>
         <p className="verif-hint">Se usará para verificar que eres la misma persona del documento.</p>
-        {verifRequest && verifRequest.status !== 'rejected' ? (
+        {verifRequest && !isResettable ? (
           <div className="verif-locked-notice">Documentos ya enviados. No se pueden modificar hasta revisión del admin.</div>
         ) : (
           <>
@@ -213,7 +215,7 @@ export default function MiCuentaVerificacion({ user, profile }) {
           </span>
         </div>
         <p className="verif-hint">Sube fotos de tu documento: Anverso y Reverso. Las imágenes se comprimen automáticamente.</p>
-        {verifRequest && verifRequest.status !== 'rejected' ? (
+        {verifRequest && !isResettable ? (
           <div className="verif-locked-notice">Documentos ya enviados. No se pueden modificar hasta revisión del admin.</div>
         ) : (
           <>
@@ -245,7 +247,7 @@ export default function MiCuentaVerificacion({ user, profile }) {
           </span>
         </div>
         <p className="verif-hint">Factura de agua, luz, teléfono, internet o cable con tu nombre y dirección. Las imágenes se comprimen automáticamente.</p>
-        {verifRequest && verifRequest.status !== 'rejected' ? (
+        {verifRequest && !isResettable ? (
           <div className="verif-locked-notice">Documentos ya enviados. No se pueden modificar hasta revisión del admin.</div>
         ) : (
           <>
@@ -277,7 +279,7 @@ export default function MiCuentaVerificacion({ user, profile }) {
           </span>
         </div>
         <p className="verif-hint">El extracto puede contener una sola transacción. Lo importante es que sea visible tu nombre completo y dirección, igual que en tus documentos de identidad y domicilio. Acepta imágenes y PDFs.</p>
-        {verifRequest && verifRequest.status !== 'rejected' ? (
+        {verifRequest && !isResettable ? (
           <div className="verif-locked-notice">Documentos ya enviados. No se pueden modificar hasta revisión del admin.</div>
         ) : (
           <>
@@ -319,7 +321,7 @@ export default function MiCuentaVerificacion({ user, profile }) {
       {verifSaved && <div className="mc-success">Documentos enviados — en revisión</div>}
 
       {/* Botón enviar: solo si no hay request o si fue rechazado (para corregir) */}
-      {(!verifRequest || verifRequest.status === 'rejected') && (
+      {(!verifRequest || isResettable) && (
         <div className="verif-footer">
           <button className="btn btn-primary t-btn-primary"
             onClick={handleSubmitVerification}
