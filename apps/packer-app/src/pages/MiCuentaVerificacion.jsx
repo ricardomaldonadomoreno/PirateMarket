@@ -97,18 +97,34 @@ export default function MiCuentaVerificacion({ user, profile }) {
     })
   }
 
+  const handleIdentitySideChange = (side, file) => {
+    setIdentityFiles(previous => {
+      const next = [...previous]
+      next[side] = file
+      return next
+    })
+  }
+
+  const removeIdentitySide = (side) => {
+    setIdentityFiles(previous => {
+      const next = [...previous]
+      next[side] = null
+      return next
+    })
+  }
+
   const isResettable = verifRequest?.status === 'rejected'
 
   const handleSubmitVerification = async () => {
-    if (identityFiles.length === 0 || domicileFiles.length === 0) {
-      setVerifError('El documento de identidad y comprobante de domicilio son obligatorios')
+    if (!identityFiles[0] || !identityFiles[1] || domicileFiles.length === 0) {
+      setVerifError('Debes seleccionar el anverso y el reverso del documento de identidad, además del comprobante de domicilio')
       return
     }
     setUploadingDocs(true)
     setVerifError('')
     setComprError('')
     try {
-      const identityUrls = await uploadDocFiles(identityFiles, 'identity')
+      const identityUrls = await uploadDocFiles(identityFiles.filter(Boolean), 'identity')
       const domicileUrls = await uploadDocFiles(domicileFiles, 'domicile')
       const bankUrls = bankFiles.length > 0 ? await uploadDocFiles(bankFiles, 'bank') : []
 
@@ -214,27 +230,35 @@ export default function MiCuentaVerificacion({ user, profile }) {
             {profile?.identity_verified ? 'Verificado' : verifRequest?.identity_docs?.length ? 'Enviado' : 'Pendiente'}
           </span>
         </div>
-        <p className="verif-hint">Sube fotos de tu documento: Anverso y Reverso. Las imágenes se comprimen automáticamente.</p>
+        <p className="verif-hint">Sube una imagen del anverso y otra del reverso de tu documento. Las imágenes se comprimen automáticamente.</p>
         {verifRequest && !isResettable ? (
           <div className="verif-locked-notice">Documentos ya enviados. No se pueden modificar hasta revisión del admin.</div>
         ) : (
-          <>
-            <input type="file" accept="image/*" multiple id="identity-input" style={{ display: 'none' }}
-              onChange={e => setIdentityFiles(Array.from(e.target.files))} />
-            <label htmlFor="identity-input" className="btn btn-secondary">
-              Seleccionar documentos ({identityFiles.length} archivo{identityFiles.length !== 1 ? 's' : ''})
-            </label>
-            {identityFiles.length > 0 && (
-              <div className="verif-preview-grid">
-                {identityFiles.map((f, i) => (
-                  <div key={i} className="verif-preview-item">
-                    <img src={URL.createObjectURL(f)} alt={`id-${i}`} />
-                    <button className="verif-preview-remove" onClick={() => removeFile(setIdentityFiles, i)} type="button">X</button>
+          <div className="verif-sides-grid">
+            {[{ side: 0, label: 'Anverso', inputId: 'identity-front-input' }, { side: 1, label: 'Reverso', inputId: 'identity-back-input' }].map(({ side, label, inputId }) => (
+              <div className="verif-side-upload" key={inputId}>
+                <strong>{label}</strong>
+                <input
+                  type="file"
+                  accept="image/*"
+                  id={inputId}
+                  style={{ display: 'none' }}
+                  onChange={e => handleIdentitySideChange(side, e.target.files?.[0] || null)}
+                />
+                <label htmlFor={inputId} className="btn btn-secondary">
+                  {identityFiles[side] ? `Cambiar ${label.toLowerCase()}` : `Seleccionar ${label.toLowerCase()}`}
+                </label>
+                {identityFiles[side] ? (
+                  <div className="verif-preview-item">
+                    <img src={URL.createObjectURL(identityFiles[side])} alt={label} />
+                    <button className="verif-preview-remove" onClick={() => removeIdentitySide(side)} type="button">X</button>
                   </div>
-                ))}
+                ) : (
+                  <div className="verif-side-empty">Sin archivo seleccionado</div>
+                )}
               </div>
-            )}
-          </>
+            ))}
+          </div>
         )}
       </div>
 

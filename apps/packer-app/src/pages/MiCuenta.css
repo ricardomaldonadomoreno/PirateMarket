@@ -511,6 +511,48 @@
   border: 1px solid var(--dark-border);
 }
 
+.verif-sides-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.verif-side-upload {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.75rem;
+  border: 1px solid var(--dark-border);
+  border-radius: var(--radius-md);
+  background: rgba(34, 34, 34, 0.35);
+}
+
+.verif-side-upload > strong {
+  color: var(--text-light);
+  font-size: 0.85rem;
+}
+
+.verif-side-upload .btn {
+  align-self: flex-start;
+}
+
+.verif-side-upload .verif-preview-item {
+  width: 100%;
+}
+
+.verif-side-empty {
+  display: flex;
+  min-height: 100px;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed var(--dark-border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  text-align: center;
+}
+
 .verif-preview-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
@@ -725,6 +767,7 @@
 
 /* ── RESPONSIVE ── */
 @media (max-width: 900px) {
+  .verif-sides-grid { grid-template-columns: 1fr; }
   .mc-layout { grid-template-columns: 1fr; }
   .mc-sidebar { position: static; }
   .mc-sidebar-profile {
