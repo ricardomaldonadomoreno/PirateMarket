@@ -71,6 +71,7 @@ export default function PublicarViajero({ user }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [identityVerified, setIdentityVerified] = useState(false)
+  const [addressVerified, setAddressVerified] = useState(false)
   const [verifiedAddr, setVerifiedAddr] = useState(null)
   const [verifiedUsedFor, setVerifiedUsedFor] = useState(null) // 'origin' | 'destination' | null
   const [loadingProfile, setLoadingProfile] = useState(true)
@@ -80,12 +81,13 @@ export default function PublicarViajero({ user }) {
     setLoadingProfile(true)
     supabase
       .from('packer_profiles')
-      .select('address_city, address_country, address_text, address_lat, address_lng, address_locked, identity_verified')
+      .select('address_city, address_country, address_text, address_lat, address_lng, address_locked, identity_verified, address_verified')
       .eq('id', user.id)
       .maybeSingle()
       .then(({ data }) => {
         if (data) {
           setIdentityVerified(!!data.identity_verified)
+          setAddressVerified(!!data.address_verified)
           if (data.address_city && data.address_locked) {
             setVerifiedAddr({
               city: data.address_city,
@@ -137,8 +139,8 @@ export default function PublicarViajero({ user }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!identityVerified) {
-      setError('Debes verificar tu identidad antes de publicar un servicio. Ve a Mi Cuenta > Verificación.')
+    if (!identityVerified || !addressVerified) {
+      setError('Debes verificar tu identidad y domicilio físico antes de publicar un servicio. Ve a Mi Cuenta > Verificación.')
       return
     }
     if (!originCity || !destinationCity) {
@@ -158,12 +160,10 @@ export default function PublicarViajero({ user }) {
       type: 'viajero',
       status: 'activo',
       origin_city: originCity.city,
-      origin_country: originCity.country,
       origin_lat: originCoords?.lat || originCity.lat,
       origin_lng: originCoords?.lng || originCity.lng,
       origin_address: originAddress,
       destination_city: destinationCity.city,
-      destination_country: destinationCity.country,
       destination_lat: destinationCoords?.lat || destinationCity.lat,
       destination_lng: destinationCoords?.lng || destinationCity.lng,
       destination_address: destinationAddress,
