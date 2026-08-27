@@ -193,6 +193,28 @@ export default function PublicarViajero({ user }) {
     }
   }
 
+  const renderFixedAddress = (city, address, coords) => {
+    const hasCoordinates = coords
+      && Number.isFinite(Number(coords.lat))
+      && Number.isFinite(Number(coords.lng))
+
+    return (
+      <div className="pub-fixed-address-card">
+        <div className="pub-fixed-address-icon"><MapPin size={20} /></div>
+        <div className="pub-fixed-address-content">
+          <div className="pub-fixed-address-city">{city?.city || city}</div>
+          <div className="pub-fixed-address-text">{address}</div>
+          {hasCoordinates && (
+            <div className="pub-fixed-address-coords">
+              {Number(coords.lat).toFixed(5)}, {Number(coords.lng).toFixed(5)}
+            </div>
+          )}
+        </div>
+        <div className="pub-fixed-address-badge">Dirección fija</div>
+      </div>
+    )
+  }
+
   return (
     <div className="pub-page">
       <div className="pub-layout container">
@@ -243,8 +265,12 @@ export default function PublicarViajero({ user }) {
             <div className="pub-section">
               <div className="pub-section-label"><MapPin size={14} /> ¿Dónde puedes recibir el paquete?</div>
               <p className="pub-hint">Indica tu domicilio o un punto de encuentro cercano donde el remitente te entregará el paquete.</p>
-              <div className="pub-verified-section-row">
-                <button type="button" className="pub-verified-section-btn" onClick={() => fillWithVerifiedAddress('origin')} disabled={!verifiedAddr || verifiedUsedFor === 'destination'}>
+              {verifiedUsedFor === 'origin' ? (
+                renderFixedAddress(originCity, originAddress, originCoords || originCoordsFromCity)
+              ) : (
+                <>
+                  <div className="pub-verified-section-row">
+                    <button type="button" className="pub-verified-section-btn" onClick={() => fillWithVerifiedAddress('origin')} disabled={!verifiedAddr || verifiedUsedFor === 'destination'}>
                   <MapPin size={13} /> Usar mi dirección oficial
                 </button>
                 {verifiedUsedFor === 'destination' && verifiedAddr && (
@@ -286,16 +312,22 @@ export default function PublicarViajero({ user }) {
                     </MapContainer>
                     <p className="pub-map-hint">Haz clic en el mapa para marcar el punto exacto</p>
                   </div>
-                )}
-              </div>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
 
             {/* DESTINO */}
             <div className="pub-section">
               <div className="pub-section-label"><MapPin size={14} /> ¿Dónde entregarás el paquete?</div>
               <p className="pub-hint">Indica dónde estarás al llegar — tu hotel, domicilio o un punto acordado donde el receptor pueda recoger.</p>
-              <div className="pub-verified-section-row">
-                <button type="button" className="pub-verified-section-btn" onClick={() => fillWithVerifiedAddress('destination')} disabled={!verifiedAddr || verifiedUsedFor === 'origin'}>
+              {verifiedUsedFor === 'destination' ? (
+                renderFixedAddress(destinationCity, destinationAddress, destinationCoords || destinationCoordsFromCity)
+              ) : (
+                <>
+                  <div className="pub-verified-section-row">
+                    <button type="button" className="pub-verified-section-btn" onClick={() => fillWithVerifiedAddress('destination')} disabled={!verifiedAddr || verifiedUsedFor === 'origin'}>
                   <MapPin size={13} /> Usar mi dirección oficial
                 </button>
                 {verifiedUsedFor === 'origin' && verifiedAddr && (
@@ -337,11 +369,13 @@ export default function PublicarViajero({ user }) {
                     </MapContainer>
                     <p className="pub-map-hint">Haz clic en el mapa para marcar el punto exacto</p>
                   </div>
-                )}
-              </div>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
 
-            {/* FECHAS */}
+            {/* FECHA */}
             <div className="pub-section">
               <div className="pub-section-label"><Calendar size={14} /> Fechas del viaje</div>
               <p className="pub-hint">La fecha de llegada ayuda al receptor a saber cuándo estará disponible su paquete.</p>
