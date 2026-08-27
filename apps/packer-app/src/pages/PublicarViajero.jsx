@@ -72,6 +72,7 @@ export default function PublicarViajero({ user }) {
   const [error, setError] = useState('')
   const [identityVerified, setIdentityVerified] = useState(false)
   const [addressVerified, setAddressVerified] = useState(false)
+  const [profileLoaded, setProfileLoaded] = useState(false)
   const [verifiedAddr, setVerifiedAddr] = useState(null)
   const [verifiedUsedFor, setVerifiedUsedFor] = useState(null) // 'origin' | 'destination' | null
 
@@ -95,6 +96,7 @@ export default function PublicarViajero({ user }) {
             })
           }
         }
+        setProfileLoaded(true)
       })
   }, [user])
 
@@ -225,10 +227,12 @@ export default function PublicarViajero({ user }) {
         {/* ── Columna derecha: formulario ── */}
         <div className="pub-form-col">
           <form onSubmit={handleSubmit} className="pub-form">
-            <div className="pub-verification-notice" role="status">
-              <ShieldAlert size={17} />
-              <span>Debes verificar tu identidad y domicilio físico antes de publicar un servicio. Ve a Mi Cuenta &gt; Verificación.</span>
-            </div>
+            {profileLoaded && (!identityVerified || !addressVerified) && (
+              <div className="pub-verification-notice" role="status">
+                <ShieldAlert size={17} />
+                <span>Debes verificar tu identidad y domicilio físico antes de publicar un servicio. Ve a Mi Cuenta &gt; Verificación.</span>
+              </div>
+            )}
 
             {/* ORIGEN */}
             <div className="pub-section">
