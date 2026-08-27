@@ -70,34 +70,36 @@ export default function PublicarViajero({ user }) {
   const [description, setDescription] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [identityVerified, setIdentityVerified] = useState(false)
-  const [addressVerified, setAddressVerified] = useState(false)
+  const [verificationApproved, setVerificationApproved] = useState(false)
   const [profileLoaded, setProfileLoaded] = useState(false)
   const [verifiedAddr, setVerifiedAddr] = useState(null)
   const [verifiedUsedFor, setVerifiedUsedFor] = useState(null) // 'origin' | 'destination' | null
 
   useEffect(() => {
     if (!user) { navigate('/auth'); return }
-    supabase
-      .from('packer_profiles')
-      .select('address_city, address_country, address_text, address_lat, address_lng, address_locked, identity_verified, address_verified')
-      .eq('id', user.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data) {
-          setIdentityVerified(!!data.identity_verified)
-          setAddressVerified(!!data.address_verified)
-          if (data.address_city && data.address_locked) {
-            setVerifiedAddr({
-              city: data.address_city,
-              country: data.address_country,
-              lat: data.address_lat,
-              lng: data.address_lng,
-            })
-          }
-        }
-        setProfileLoaded(true)
-      })
+    Promise.all([
+      supabase
+        .from('packer_profiles')
+        .select('address_city, address_country, address_text, address_lat, address_lng, address_locked')
+        .eq('id', user.id)
+        .maybeSingle(),
+      supabase
+        .from('packer_verification_requests')
+        .select('status')
+        .eq('user_id', user.id)
+        .maybeSingle(),
+    ]).then(([{ data: profileData }, { data: verificationData }]) => {
+      if (profileData?.address_city && profileData.address_locked) {
+        setVerifiedAddr({
+          city: profileData.address_city,
+          country: profileData.address_country,
+          lat: profileData.address_lat,
+          lng: profileData.address_lng,
+        })
+      }
+      setVerificationApproved(verificationData?.status === 'approved')
+      setProfileLoaded(true)
+    })
   }, [user])
 
   // Al seleccionar ciudad, mostrar sus coords como referencia (solo si no hay coords manuales previas)
@@ -138,7 +140,7 @@ export default function PublicarViajero({ user }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!identityVerified || !addressVerified) {
+    if (!verificationApproved) {
       setError('Debes verificar tu identidad y domicilio físico antes de publicar un servicio. Ve a Mi Cuenta > Verificación.')
       return
     }
@@ -227,7 +229,7 @@ export default function PublicarViajero({ user }) {
         {/* ── Columna derecha: formulario ── */}
         <div className="pub-form-col">
           <form onSubmit={handleSubmit} className="pub-form">
-            {profileLoaded && (!identityVerified || !addressVerified) && (
+            {profileLoaded && !verificationApproved && (
               <div className="pub-verification-notice" role="status">
                 <ShieldAlert size={17} />
                 <span>Debes verificar tu identidad y domicilio físico antes de publicar un servicio. Ve a Mi Cuenta &gt; Verificación.</span>
