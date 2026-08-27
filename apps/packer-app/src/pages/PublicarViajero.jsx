@@ -225,6 +225,10 @@ export default function PublicarViajero({ user }) {
         {/* ── Columna derecha: formulario ── */}
         <div className="pub-form-col">
           <form onSubmit={handleSubmit} className="pub-form">
+            <div className="pub-verification-notice" role="status">
+              <ShieldAlert size={17} />
+              <span>Debes verificar tu identidad y domicilio físico antes de publicar un servicio. Ve a Mi Cuenta &gt; Verificación.</span>
+            </div>
 
             {/* ORIGEN */}
             <div className="pub-section">

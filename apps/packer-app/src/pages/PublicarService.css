@@ -155,6 +155,24 @@
   gap: 1.25rem;
 }
 
+.pub-verification-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.85rem 1rem;
+  background: rgba(203, 149, 70, 0.08);
+  border: 1px solid rgba(203, 149, 70, 0.35);
+  border-radius: var(--radius-sm);
+  color: var(--gold-light);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.pub-verification-notice svg {
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
 .pub-section {
   display: flex;
   flex-direction: column;
