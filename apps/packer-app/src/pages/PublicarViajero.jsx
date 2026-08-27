@@ -74,11 +74,9 @@ export default function PublicarViajero({ user }) {
   const [addressVerified, setAddressVerified] = useState(false)
   const [verifiedAddr, setVerifiedAddr] = useState(null)
   const [verifiedUsedFor, setVerifiedUsedFor] = useState(null) // 'origin' | 'destination' | null
-  const [loadingProfile, setLoadingProfile] = useState(true)
 
   useEffect(() => {
     if (!user) { navigate('/auth'); return }
-    setLoadingProfile(true)
     supabase
       .from('packer_profiles')
       .select('address_city, address_country, address_text, address_lat, address_lng, address_locked, identity_verified, address_verified')
@@ -97,7 +95,6 @@ export default function PublicarViajero({ user }) {
             })
           }
         }
-        setLoadingProfile(false)
       })
   }, [user])
 
@@ -188,8 +185,6 @@ export default function PublicarViajero({ user }) {
       navigate('/packer/mi-cuenta/viajes')
     }
   }
-
-  if (loadingProfile) return <div className="pub-page"><div className="loading" style={{ width: 40, height: 40, margin: '4rem auto' }} /></div>
 
   return (
     <div className="pub-page">
