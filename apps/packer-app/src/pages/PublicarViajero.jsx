@@ -89,10 +89,11 @@ export default function PublicarViajero({ user }) {
         .eq('user_id', user.id)
         .maybeSingle(),
     ]).then(([{ data: profileData }, { data: verificationData }]) => {
-      if (profileData?.address_city && profileData.address_locked) {
+      if (profileData?.address_city && profileData.address_text && profileData.address_locked) {
         setVerifiedAddr({
           city: profileData.address_city,
           country: profileData.address_country,
+          addressText: profileData.address_text,
           lat: profileData.address_lat,
           lng: profileData.address_lng,
         })
@@ -129,10 +130,12 @@ export default function PublicarViajero({ user }) {
     if (!verifiedAddr) return
     if (target === 'origin' && !originCity) {
       setOriginCity({ city: verifiedAddr.city, country: verifiedAddr.country, lat: verifiedAddr.lat, lng: verifiedAddr.lng })
+      setOriginAddress(verifiedAddr.addressText)
       setOriginCoords({ lat: verifiedAddr.lat, lng: verifiedAddr.lng })
       setVerifiedUsedFor('origin')
     } else if (target === 'destination' && !destinationCity) {
       setDestinationCity({ city: verifiedAddr.city, country: verifiedAddr.country, lat: verifiedAddr.lat, lng: verifiedAddr.lng })
+      setDestinationAddress(verifiedAddr.addressText)
       setDestinationCoords({ lat: verifiedAddr.lat, lng: verifiedAddr.lng })
       setVerifiedUsedFor('destination')
     }
