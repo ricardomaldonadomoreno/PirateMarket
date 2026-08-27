@@ -128,12 +128,12 @@ export default function PublicarViajero({ user }) {
 
   const fillWithVerifiedAddress = (target) => {
     if (!verifiedAddr) return
-    if (target === 'origin' && !originCity) {
+    if (target === 'origin') {
       setOriginCity({ city: verifiedAddr.city, country: verifiedAddr.country, lat: verifiedAddr.lat, lng: verifiedAddr.lng })
       setOriginAddress(verifiedAddr.addressText)
       setOriginCoords({ lat: verifiedAddr.lat, lng: verifiedAddr.lng })
       setVerifiedUsedFor('origin')
-    } else if (target === 'destination' && !destinationCity) {
+    } else if (target === 'destination') {
       setDestinationCity({ city: verifiedAddr.city, country: verifiedAddr.country, lat: verifiedAddr.lat, lng: verifiedAddr.lng })
       setDestinationAddress(verifiedAddr.addressText)
       setDestinationCoords({ lat: verifiedAddr.lat, lng: verifiedAddr.lng })
