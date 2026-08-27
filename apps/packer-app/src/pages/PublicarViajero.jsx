@@ -270,12 +270,10 @@ export default function PublicarViajero({ user }) {
               ) : (
                 <>
                   <div className="pub-verified-section-row">
-                    <button type="button" className="pub-verified-section-btn" onClick={() => fillWithVerifiedAddress('origin')} disabled={!verifiedAddr || verifiedUsedFor === 'destination'}>
+                    <button type="button" className="pub-verified-section-btn" onClick={() => fillWithVerifiedAddress('origin')} disabled={!verifiedAddr}>
                   <MapPin size={13} /> Usar mi dirección oficial
                 </button>
-                {verifiedUsedFor === 'destination' && verifiedAddr && (
-                  <span className="pub-verified-inline-used">Ya usada en destino</span>
-                )}
+
               </div>
               <div className="pub-address-block">
                 <CityAutocomplete
@@ -327,12 +325,10 @@ export default function PublicarViajero({ user }) {
               ) : (
                 <>
                   <div className="pub-verified-section-row">
-                    <button type="button" className="pub-verified-section-btn" onClick={() => fillWithVerifiedAddress('destination')} disabled={!verifiedAddr || verifiedUsedFor === 'origin'}>
+                    <button type="button" className="pub-verified-section-btn" onClick={() => fillWithVerifiedAddress('destination')} disabled={!verifiedAddr}>
                   <MapPin size={13} /> Usar mi dirección oficial
                 </button>
-                {verifiedUsedFor === 'origin' && verifiedAddr && (
-                  <span className="pub-verified-inline-used">Ya usada en origen</span>
-                )}
+
               </div>
               <div className="pub-address-block">
                 <CityAutocomplete
