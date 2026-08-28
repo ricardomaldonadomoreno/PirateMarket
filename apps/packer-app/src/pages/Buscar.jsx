@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../../../pirata-market/src/lib/supabase'
+import CityAutocomplete from '../../../pirata-market/src/components/CityAutocomplete'
 import {
   Search, MapPin, Calendar, Plane, Car, Package,
   Shield, ShieldCheck, Star, Check, ArrowRight,
@@ -41,9 +42,18 @@ export default function TraficanteBuscar() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
 
-  // Params desde URL
+  // Ubicaciones desde URL; se conserva el texto antiguo como respaldo
+  const locationFromParams = (prefix) => {
+    const city = searchParams.get(`${prefix}_city`)
+    const state = searchParams.get(`${prefix}_state`)
+    const country = searchParams.get(`${prefix}_country`)
+    if (!city && !state && !country) return null
+    return { city: city || null, state: state || null, country: country || null }
+  }
   const [origin, setOrigin] = useState(searchParams.get('origen') || '')
   const [destination, setDestination] = useState(searchParams.get('destino') || '')
+  const [originLocation, setOriginLocation] = useState(() => locationFromParams('origen'))
+  const [destinationLocation, setDestinationLocation] = useState(() => locationFromParams('destino'))
 
   // Filtros
   const [showFilters, setShowFilters] = useState(false)
@@ -68,8 +78,14 @@ export default function TraficanteBuscar() {
       .select('*')
       .eq('status', 'activo')
 
-    if (origin) query = query.ilike('origin_city', `%${origin}%`)
-    if (destination) query = query.ilike('destination_city', `%${destination}%`)
+    if (originLocation?.city) query = query.ilike('origin_city', `%${originLocation.city}%`)
+    else if (originLocation?.state) query = query.ilike('origin_state', `%${originLocation.state}%`)
+    else if (originLocation?.country) query = query.ilike('origin_country', `%${originLocation.country}%`)
+    else if (origin) query = query.ilike('origin_city', `%${origin}%`)
+    if (destinationLocation?.city) query = query.ilike('destination_city', `%${destinationLocation.city}%`)
+    else if (destinationLocation?.state) query = query.ilike('destination_state', `%${destinationLocation.state}%`)
+    else if (destinationLocation?.country) query = query.ilike('destination_country', `%${destinationLocation.country}%`)
+    else if (destination) query = query.ilike('destination_city', `%${destination}%`)
     if (transportMode) query = query.eq('transport_mode', transportMode)
 
     if (sortBy === 'date') query = query.order('departure_date', { ascending: true })
@@ -105,7 +121,7 @@ export default function TraficanteBuscar() {
     }
 
     setLoading(false)
-  }, [origin, destination, transportMode, sortBy, minPrice, maxPrice])
+  }, [origin, destination, originLocation, destinationLocation, transportMode, sortBy, minPrice, maxPrice])
 
   // Búsqueda automática al cargar con params
   useEffect(() => {
@@ -118,8 +134,19 @@ export default function TraficanteBuscar() {
   const handleSearch = (e) => {
     e?.preventDefault()
     const params = new URLSearchParams()
-    if (origin) params.set('origen', origin)
-    if (destination) params.set('destino', destination)
+    const addLocationParams = (prefix, location, legacyValue) => {
+      if (!location) {
+        if (legacyValue) params.set(prefix, legacyValue)
+        return
+      }
+      const label = location.city || location.state || location.country
+      if (label) params.set(prefix, label)
+      if (location.city) params.set(`${prefix}_city`, location.city)
+      if (location.state) params.set(`${prefix}_state`, location.state)
+      if (location.country) params.set(`${prefix}_country`, location.country)
+    }
+    addLocationParams('origen', originLocation, origin)
+    addLocationParams('destino', destinationLocation, destination)
     setSearchParams(params)
     doSearch()
   }
@@ -144,23 +171,29 @@ export default function TraficanteBuscar() {
             <div className="t-buscar-fields">
               <div className="t-buscar-field">
                 <label><MapPin size={14} /> Origen</label>
-                <input
-                  className="input"
-                  type="text"
-                  placeholder="Ciudad de origen"
-                  value={origin}
-                  onChange={e => setOrigin(e.target.value)}
-                />
+                  <CityAutocomplete
+                    label="Origen"
+                    placeholder="Ciudad de origen"
+                    value={originLocation}
+                    onChange={(location) => {
+                      setOriginLocation(location)
+                      setOrigin(location?.city || location?.state || location?.country || '')
+                    }}
+                    allowPartial
+                  />
               </div>
               <div className="t-buscar-field">
                 <label><MapPin size={14} /> Destino</label>
-                <input
-                  className="input"
-                  type="text"
-                  placeholder="Ciudad de destino"
-                  value={destination}
-                  onChange={e => setDestination(e.target.value)}
-                />
+                  <CityAutocomplete
+                    label="Destino"
+                    placeholder="Ciudad de destino"
+                    value={destinationLocation}
+                    onChange={(location) => {
+                      setDestinationLocation(location)
+                      setDestination(location?.city || location?.state || location?.country || '')
+                    }}
+                    allowPartial
+                  />
               </div>
             </div>
             <div className="t-buscar-actions">

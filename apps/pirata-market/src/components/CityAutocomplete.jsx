@@ -15,6 +15,7 @@ export default function CityAutocomplete({
   value,
   onChange,
   disabled = false,
+  allowPartial = false,
 }) {
   const allCountries = useMemo(() => Country.getAllCountries(), [])
 
@@ -170,14 +171,30 @@ export default function CityAutocomplete({
     setSelectedCountry(c)
     setCountryInput(c.name)
     setShowCountryDropdown(false)
-    onChange(null)
+    onChange(allowPartial ? {
+      city: null,
+      country: c.name,
+      country_code: c.isoCode,
+      state: null,
+      state_code: null,
+      lat: null,
+      lng: null,
+    } : null)
   }
 
   const selectState = (s) => {
     setSelectedState(s)
     setStateInput(s.name)
     setShowStateDropdown(false)
-    onChange(null)
+    onChange(allowPartial ? {
+      city: null,
+      country: selectedCountry.name,
+      country_code: selectedCountry.isoCode,
+      state: s.name,
+      state_code: s.isoCode,
+      lat: null,
+      lng: null,
+    } : null)
   }
 
   const selectCity = (c) => {

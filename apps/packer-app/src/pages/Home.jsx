@@ -76,8 +76,16 @@ export default function TraficanteHome({ user }) {
   const handleSearch = (e) => {
     e.preventDefault()
     const params = new URLSearchParams()
-    if (origin?.city) params.set('origen', origin.city)
-    if (destination?.city) params.set('destino', destination.city)
+    const addLocationParams = (prefix, location) => {
+      if (!location) return
+      const label = location.city || location.state || location.country
+      if (label) params.set(prefix, label)
+      if (location.city) params.set(`${prefix}_city`, location.city)
+      if (location.state) params.set(`${prefix}_state`, location.state)
+      if (location.country) params.set(`${prefix}_country`, location.country)
+    }
+    addLocationParams('origen', origin)
+    addLocationParams('destino', destination)
     navigate(`/packer/buscar?${params.toString()}`)
   }
 
@@ -137,6 +145,7 @@ export default function TraficanteHome({ user }) {
                       placeholder="Selecciona la ciudad de origen"
                       value={origin}
                       onChange={setOrigin}
+                      allowPartial
                     />
                   </div>
                   <div className="t-field-hero">
@@ -146,6 +155,7 @@ export default function TraficanteHome({ user }) {
                       placeholder="Selecciona la ciudad de destino"
                       value={destination}
                       onChange={setDestination}
+                      allowPartial
                     />
                   </div>
                 </div>
