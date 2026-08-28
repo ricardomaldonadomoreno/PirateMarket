@@ -211,6 +211,17 @@
   gap: 0.75rem;
 }
 
+.pub-weight-price-row {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.85fr) minmax(0, 2.15fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.pub-weight-price-row > .pub-section {
+  min-width: 0;
+}
+
 .pub-field input[type="date"].input {
   color-scheme: dark;
   accent-color: var(--gold);
@@ -623,6 +634,11 @@
 
   .pub-row {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .pub-weight-price-row {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
   }
 
   .pub-actions {

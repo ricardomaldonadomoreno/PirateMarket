@@ -436,32 +436,34 @@ export default function PublicarViajero({ user }) {
               </div>
             </div>
 
-            {/* PESO */}
-            <div className="pub-section">
-              <div className="pub-section-label"><Weight size={14} /> Peso disponible</div>
-              <div className="pub-field">
-                <label>Peso máximo que puedes llevar (kg)</label>
-                <input className="input" type="number" min="0" step="0.5" placeholder="Ej: 10" value={maxWeight} onChange={e => setMaxWeight(e.target.value)} />
+            <div className="pub-weight-price-row">
+              {/* PESO */}
+              <div className="pub-section">
+                <div className="pub-section-label"><Weight size={14} /> Peso disponible</div>
+                <div className="pub-field">
+                  <label>Peso máximo que puedes llevar (kg)</label>
+                  <input className="input" type="number" min="0" step="0.5" placeholder="Ej: 10" value={maxWeight} onChange={e => setMaxWeight(e.target.value)} />
+                </div>
               </div>
-            </div>
 
-            {/* PRECIO */}
-            <div className="pub-section">
-              <div className="pub-section-label"><DollarSign size={14} /> Precio</div>
-              <div className="pub-row">
-                <div className="pub-field">
-                  <label>Moneda</label>
-                  <select className="input" value={currency} onChange={e => setCurrency(e.target.value)}>
-                    {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
-                <div className="pub-field">
-                  <label>Precio por paquete</label>
-                  <input className="input" type="number" min="0" step="0.5" placeholder="Ej: 15" value={price} onChange={e => setPrice(e.target.value)} />
-                </div>
-                <div className="pub-field">
-                  <label>Precio por kg (opcional)</label>
-                  <input className="input" type="number" min="0" step="0.5" placeholder="Ej: 5" value={pricePerKg} onChange={e => setPricePerKg(e.target.value)} />
+              {/* PRECIO */}
+              <div className="pub-section">
+                <div className="pub-section-label"><DollarSign size={14} /> Precio</div>
+                <div className="pub-row">
+                  <div className="pub-field">
+                    <label>Moneda</label>
+                    <select className="input" value={currency} onChange={e => setCurrency(e.target.value)}>
+                      {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+                  <div className="pub-field">
+                    <label>Precio por paquete</label>
+                    <input className="input" type="number" min="0" step="0.5" placeholder="Ej: 15" value={price} onChange={e => setPrice(e.target.value)} />
+                  </div>
+                  <div className="pub-field">
+                    <label>Precio por kg (opcional)</label>
+                    <input className="input" type="number" min="0" step="0.5" placeholder="Ej: 5" value={pricePerKg} onChange={e => setPricePerKg(e.target.value)} />
+                  </div>
                 </div>
               </div>
             </div>
