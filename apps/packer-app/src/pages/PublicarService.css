@@ -211,6 +211,21 @@
   gap: 0.75rem;
 }
 
+.pub-field input[type="date"].input {
+  color-scheme: dark;
+  accent-color: var(--gold);
+}
+
+.pub-field input[type="date"].input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.8;
+  filter: invert(76%) sepia(36%) saturate(690%) hue-rotate(359deg) brightness(88%) contrast(88%);
+}
+
+.pub-field input[type="date"].input:hover::-webkit-calendar-picker-indicator {
+  opacity: 1;
+}
+
 /* ── Chips ── */
 .pub-chips {
   display: flex;
