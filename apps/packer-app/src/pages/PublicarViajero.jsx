@@ -7,7 +7,7 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import {
   Plane, MapPin, Calendar, Weight, DollarSign, FileText,
-  AlertTriangle, CheckCircle2, Info, ShieldAlert, ArrowRight
+  AlertTriangle, CheckCircle2, Info, ShieldAlert, ArrowRight, ChevronDown
 } from 'lucide-react'
 import './PublicarService.css'
 
@@ -70,6 +70,7 @@ export default function PublicarViajero({ user }) {
   const [description, setDescription] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [showInfo, setShowInfo] = useState(false)
   const [verificationApproved, setVerificationApproved] = useState(false)
   const [profileLoaded, setProfileLoaded] = useState(false)
   const [verifiedAddr, setVerifiedAddr] = useState(null)
@@ -224,34 +225,46 @@ export default function PublicarViajero({ user }) {
       <div className="pub-layout container">
         {/* ── Columna izquierda: descripción ── */}
         <div className="pub-info-col">
-          <div className="pub-header">
+                    <div className="pub-header">
             <div className="pub-header-icon"><Plane size={24} /></div>
-            <h1 className="pub-title">Publicar viaje como viajero</h1>
-            <p className="pub-subtitle">Tienes un viaje programado y espacio libre en tu equipaje. Monétizalo.</p>
+            <div className="pub-header-copy">
+              <h1 className="pub-title">Publicar viaje como viajero</h1>
+              <p className="pub-subtitle">Tienes un viaje programado y espacio libre en tu equipaje. Monétizalo.</p>
+              <button
+                type="button"
+                className="pub-info-toggle"
+                onClick={() => setShowInfo(prev => !prev)}
+                aria-expanded={showInfo}
+                aria-controls="traveler-info-details"
+              >
+                {showInfo ? 'Ocultar información' : 'Más información'}
+                <ChevronDown size={15} className={showInfo ? 'is-open' : ''} />
+              </button>
+            </div>
           </div>
-
-          <div className="pub-info-grid">
-            {ADVANTAGES.map((a, i) => (
-              <div key={i} className="pub-info-card">
-                <a.Icon size={18} className="pub-info-icon" />
-                <strong className="pub-info-title">{a.title}</strong>
-                <span className="pub-info-desc">{a.desc}</span>
-              </div>
-            ))}
-          </div>
-
-          <div className="pub-warnings">
-            <h3 className="pub-warnings-title">
-              <ShieldAlert size={15} /> Lo que debes saber
-            </h3>
-            <ul className="pub-warnings-list">
-              {WARNINGS.map((w, i) => (
-                <li key={i}>
-                  <Info size={13} className="pub-warn-icon" />
-                  {w}
-                </li>
+          <div id="traveler-info-details" className={`pub-info-details ${showInfo ? 'is-open' : ''}`}>
+            <div className="pub-info-grid">
+              {ADVANTAGES.map((a, i) => (
+                <div key={i} className="pub-info-card">
+                  <a.Icon size={18} className="pub-info-icon" />
+                  <strong className="pub-info-title">{a.title}</strong>
+                  <span className="pub-info-desc">{a.desc}</span>
+                </div>
               ))}
-            </ul>
+            </div>
+            <div className="pub-warnings">
+              <h3 className="pub-warnings-title">
+                <ShieldAlert size={15} /> Lo que debes saber
+              </h3>
+              <ul className="pub-warnings-list">
+                {WARNINGS.map((w, i) => (
+                  <li key={i}>
+                    <Info size={13} className="pub-warn-icon" />
+                    {w}
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </div>
 

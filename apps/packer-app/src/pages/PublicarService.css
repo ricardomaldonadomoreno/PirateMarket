@@ -68,6 +68,39 @@
   opacity: 0.85;
 }
 
+.pub-header-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.pub-info-toggle {
+  display: none;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.7rem;
+  padding: 0.35rem 0;
+  border: 0;
+  background: transparent;
+  color: var(--gold);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pub-info-toggle svg {
+  transition: transform 0.2s ease;
+}
+
+.pub-info-toggle svg.is-open {
+  transform: rotate(180deg);
+}
+
+.pub-info-details {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
 /* ── Ventajas / Info grid ── */
 .pub-info-grid {
   display: grid;
@@ -599,8 +632,16 @@
     gap: 1.5rem;
   }
 
-  .pub-info-col {
+    .pub-info-col {
     position: static;
+  }
+
+  .pub-info-toggle {
+    display: inline-flex;
+  }
+
+  .pub-info-details:not(.is-open) {
+    display: none;
   }
 
   .pub-info-grid {
