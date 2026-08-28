@@ -147,6 +147,10 @@ export default function PublicarViajero({ user }) {
       setError('Debes verificar tu identidad y domicilio físico antes de publicar un servicio. Ve a Mi Cuenta > Verificación.')
       return
     }
+    if (!verifiedUsedFor) {
+      setError('Selecciona dónde usarás tu dirección oficial: en el origen o en el destino del viaje.')
+      return
+    }
     if (!originCity || !destinationCity) {
       setError('Completa el origen y destino')
       return
@@ -261,6 +265,34 @@ export default function PublicarViajero({ user }) {
               </div>
             )}
 
+            <div className="pub-official-choice" role="group" aria-labelledby="official-address-choice-title">
+              <div className="pub-section-label" id="official-address-choice-title"><MapPin size={14} /> ¿Dónde usarás tu dirección oficial?</div>
+              <p className="pub-hint">Elige si tu dirección oficial corresponde al origen o al destino de este viaje.</p>
+              <div className="pub-verified-section-row">
+                <button
+                  type="button"
+                  className={`pub-verified-section-btn ${verifiedUsedFor === 'origin' ? 'active' : ''}`}
+                  onClick={() => fillWithVerifiedAddress('origin')}
+                  disabled={!verifiedAddr}
+                  aria-pressed={verifiedUsedFor === 'origin'}
+                >
+                  <MapPin size={13} /> Usar en origen del viaje
+                </button>
+                <button
+                  type="button"
+                  className={`pub-verified-section-btn ${verifiedUsedFor === 'destination' ? 'active' : ''}`}
+                  onClick={() => fillWithVerifiedAddress('destination')}
+                  disabled={!verifiedAddr}
+                  aria-pressed={verifiedUsedFor === 'destination'}
+                >
+                  <MapPin size={13} /> Usar en destino del viaje
+                </button>
+              </div>
+              {!verifiedAddr && profileLoaded && (
+                <span className="pub-verified-hint">Completa y guarda tu dirección oficial en Mi Cuenta para poder seleccionarla.</span>
+              )}
+            </div>
+
             {/* ORIGEN */}
             <div className="pub-section">
               <div className="pub-section-label"><MapPin size={14} /> ¿Dónde puedes recibir el paquete?</div>
@@ -269,12 +301,6 @@ export default function PublicarViajero({ user }) {
                 renderFixedAddress(originCity, originAddress, originCoords || originCoordsFromCity)
               ) : (
                 <>
-                  <div className="pub-verified-section-row">
-                    <button type="button" className="pub-verified-section-btn" onClick={() => fillWithVerifiedAddress('origin')} disabled={!verifiedAddr}>
-                  <MapPin size={13} /> Usar mi dirección oficial
-                </button>
-
-              </div>
               <div className="pub-address-block">
                 <CityAutocomplete
                   label="Ciudad y país"
@@ -324,12 +350,6 @@ export default function PublicarViajero({ user }) {
                 renderFixedAddress(destinationCity, destinationAddress, destinationCoords || destinationCoordsFromCity)
               ) : (
                 <>
-                  <div className="pub-verified-section-row">
-                    <button type="button" className="pub-verified-section-btn" onClick={() => fillWithVerifiedAddress('destination')} disabled={!verifiedAddr}>
-                  <MapPin size={13} /> Usar mi dirección oficial
-                </button>
-
-              </div>
               <div className="pub-address-block">
                 <CityAutocomplete
                   label="Ciudad y país"
