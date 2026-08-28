@@ -341,6 +341,14 @@
   color: var(--text-muted);
 }
 
+.pub-address-pending {
+  padding: 0.55rem 0.7rem;
+  border: 1px dashed var(--dark-border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
 .pub-address-block {
   display: flex;
   flex-direction: column;

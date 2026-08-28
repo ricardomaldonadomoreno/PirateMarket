@@ -296,10 +296,12 @@ export default function PublicarViajero({ user }) {
             {/* ORIGEN */}
             <div className="pub-section">
               <div className="pub-section-label"><MapPin size={14} /> ¿Dónde puedes recibir el paquete?</div>
-              <p className="pub-hint">Indica tu domicilio o un punto de encuentro cercano donde el remitente te entregará el paquete.</p>
-              {verifiedUsedFor === 'origin' ? (
-                renderFixedAddress(originCity, originAddress, originCoords || originCoordsFromCity)
-              ) : (
+              {verifiedUsedFor ? (
+                <>
+                  <p className="pub-hint">Indica tu domicilio o un punto de encuentro cercano donde el remitente te entregará el paquete.</p>
+                  {verifiedUsedFor === 'origin' ? (
+                    renderFixedAddress(originCity, originAddress, originCoords || originCoordsFromCity)
+                  ) : (
                 <>
               <div className="pub-address-block">
                 <CityAutocomplete
@@ -339,16 +341,22 @@ export default function PublicarViajero({ user }) {
                     )}
                   </div>
                 </>
+                  )}
+                </>
+              ) : (
+                <p className="pub-address-pending">Selecciona arriba dónde usarás tu dirección oficial.</p>
               )}
             </div>
 
             {/* DESTINO */}
             <div className="pub-section">
               <div className="pub-section-label"><MapPin size={14} /> ¿Dónde entregarás el paquete?</div>
-              <p className="pub-hint">Indica dónde estarás al llegar — tu hotel, domicilio o un punto acordado donde el receptor pueda recoger.</p>
-              {verifiedUsedFor === 'destination' ? (
-                renderFixedAddress(destinationCity, destinationAddress, destinationCoords || destinationCoordsFromCity)
-              ) : (
+              {verifiedUsedFor ? (
+                <>
+                  <p className="pub-hint">Indica dónde estarás al llegar — tu hotel, domicilio o un punto acordado donde el receptor pueda recoger.</p>
+                  {verifiedUsedFor === 'destination' ? (
+                    renderFixedAddress(destinationCity, destinationAddress, destinationCoords || destinationCoordsFromCity)
+                  ) : (
                 <>
               <div className="pub-address-block">
                 <CityAutocomplete
@@ -388,6 +396,10 @@ export default function PublicarViajero({ user }) {
                     )}
                   </div>
                 </>
+                  )}
+                </>
+              ) : (
+                <p className="pub-address-pending">Selecciona arriba dónde usarás tu dirección oficial.</p>
               )}
             </div>
 
