@@ -267,7 +267,7 @@ export default function PublicarViajero({ user }) {
 
             <div className="pub-official-choice" role="group" aria-labelledby="official-address-choice-title">
               <div className="pub-section-label" id="official-address-choice-title"><MapPin size={14} /> ¿Dónde usarás tu dirección oficial?</div>
-              <p className="pub-hint">Elige si tu dirección oficial corresponde al origen o al destino de este viaje.</p>
+              <p className="pub-hint">Elige si tu domicilio verificado será el origen o el destino de este viaje.</p>
               <div className="pub-verified-section-row">
                 <button
                   type="button"
@@ -295,10 +295,10 @@ export default function PublicarViajero({ user }) {
 
             {/* ORIGEN */}
             <div className="pub-section">
-              <div className="pub-section-label"><MapPin size={14} /> ¿Dónde puedes recibir el paquete?</div>
+              <div className="pub-section-label"><MapPin size={14} /> Origen de tu viaje</div>
               {verifiedUsedFor ? (
                 <>
-                  <p className="pub-hint">Indica tu domicilio o un punto de encuentro cercano donde el remitente te entregará el paquete.</p>
+                  <p className="pub-hint">Dirección de salida donde recibirás los paquetes que transportarás.</p>
                   {verifiedUsedFor === 'origin' ? (
                     renderFixedAddress(originCity, originAddress, originCoords || originCoordsFromCity)
                   ) : (
@@ -350,10 +350,10 @@ export default function PublicarViajero({ user }) {
 
             {/* DESTINO */}
             <div className="pub-section">
-              <div className="pub-section-label"><MapPin size={14} /> ¿Dónde entregarás el paquete?</div>
+              <div className="pub-section-label"><MapPin size={14} /> Destino de tu viaje</div>
               {verifiedUsedFor ? (
                 <>
-                  <p className="pub-hint">Indica dónde estarás al llegar — tu hotel, domicilio o un punto acordado donde el receptor pueda recoger.</p>
+                  <p className="pub-hint">Dirección de llegada donde entregarás los paquetes.</p>
                   {verifiedUsedFor === 'destination' ? (
                     renderFixedAddress(destinationCity, destinationAddress, destinationCoords || destinationCoordsFromCity)
                   ) : (
