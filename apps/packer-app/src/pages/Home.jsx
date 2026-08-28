@@ -5,6 +5,7 @@ import {
   MapPin, Calendar, Lock, Scale, FileText, Zap,
   Circle, CircleDot, ShieldCheck, Crown
 } from 'lucide-react'
+import CityAutocomplete from '../../../pirata-market/src/components/CityAutocomplete'
 import './Home.css'
 
 const LEVELS = [
@@ -62,8 +63,8 @@ function useFadeIn() {
 
 export default function TraficanteHome({ user }) {
   const navigate = useNavigate()
-  const [origin, setOrigin] = useState('')
-  const [destination, setDestination] = useState('')
+  const [origin, setOrigin] = useState(null)
+  const [destination, setDestination] = useState(null)
 
   const heroRef = useFadeIn()
   const earnRef = useFadeIn()
@@ -75,8 +76,8 @@ export default function TraficanteHome({ user }) {
   const handleSearch = (e) => {
     e.preventDefault()
     const params = new URLSearchParams()
-    if (origin) params.set('origen', origin)
-    if (destination) params.set('destino', destination)
+    if (origin?.city) params.set('origen', origin.city)
+    if (destination?.city) params.set('destino', destination.city)
     navigate(`/packer/buscar?${params.toString()}`)
   }
 
@@ -131,22 +132,20 @@ export default function TraficanteHome({ user }) {
                 <div className="t-hero-search-fields">
                   <div className="t-field-hero">
                     <label><MapPin size={13} /> Ciudad de origen</label>
-                    <input
-                      className="input"
-                      type="text"
-                      placeholder="Ej: Santa Cruz, Bolivia"
+                    <CityAutocomplete
+                      label="Ciudad de origen"
+                      placeholder="Selecciona la ciudad de origen"
                       value={origin}
-                      onChange={e => setOrigin(e.target.value)}
+                      onChange={setOrigin}
                     />
                   </div>
                   <div className="t-field-hero">
                     <label><MapPin size={13} /> Ciudad de destino</label>
-                    <input
-                      className="input"
-                      type="text"
-                      placeholder="Ej: São Paulo, Brasil"
+                    <CityAutocomplete
+                      label="Ciudad de destino"
+                      placeholder="Selecciona la ciudad de destino"
                       value={destination}
-                      onChange={e => setDestination(e.target.value)}
+                      onChange={setDestination}
                     />
                   </div>
                 </div>
